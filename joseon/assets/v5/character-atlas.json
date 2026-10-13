@@ -1,0 +1,261 @@
+{
+  "npc": {
+    "name": "npc-casual.webp",
+    "size": [
+      1536,
+      1024
+    ],
+    "frames": [
+      [
+        [
+          94,
+          3,
+          290,
+          506
+        ],
+        [
+          429,
+          5,
+          295,
+          507
+        ],
+        [
+          838,
+          7,
+          251,
+          505
+        ],
+        [
+          1175,
+          8,
+          286,
+          504
+        ]
+      ],
+      [
+        [
+          33,
+          512,
+          311,
+          496
+        ],
+        [
+          465,
+          512,
+          258,
+          499
+        ],
+        [
+          775,
+          512,
+          361,
+          496
+        ],
+        [
+          1157,
+          512,
+          329,
+          498
+        ]
+      ]
+    ],
+    "roles": [
+      "village-scholar",
+      "hanyang-guide",
+      "palace-official",
+      "palace-craftsman",
+      "elder-farmer",
+      "observatory-apprentice",
+      "king-sejong",
+      "envoy"
+    ],
+    "recommendedMissionIndices": {
+      "chapter1": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "chapter2": [
+        4,
+        5,
+        6,
+        7
+      ]
+    }
+  },
+  "cat": {
+    "name": "cat-walk.webp",
+    "size": [
+      1024,
+      1536
+    ],
+    "frames": [
+      [
+        [
+          62,
+          11,
+          168,
+          304
+        ],
+        [
+          310,
+          11,
+          168,
+          293
+        ],
+        [
+          554,
+          10,
+          170,
+          301
+        ],
+        [
+          801,
+          13,
+          165,
+          293
+        ]
+      ],
+      [
+        [
+          32,
+          317,
+          244,
+          296
+        ],
+        [
+          289,
+          318,
+          231,
+          290
+        ],
+        [
+          525,
+          316,
+          244,
+          297
+        ],
+        [
+          789,
+          316,
+          226,
+          295
+        ]
+      ],
+      [
+        [
+          11,
+          627,
+          258,
+          226
+        ],
+        [
+          269,
+          626,
+          251,
+          228
+        ],
+        [
+          525,
+          631,
+          245,
+          223
+        ],
+        [
+          770,
+          635,
+          249,
+          217
+        ]
+      ],
+      [
+        [
+          35,
+          892,
+          226,
+          273
+        ],
+        [
+          288,
+          893,
+          228,
+          254
+        ],
+        [
+          540,
+          896,
+          224,
+          254
+        ],
+        [
+          799,
+          895,
+          215,
+          271
+        ]
+      ],
+      [
+        [
+          51,
+          1181,
+          162,
+          303
+        ],
+        [
+          303,
+          1182,
+          163,
+          305
+        ],
+        [
+          557,
+          1182,
+          161,
+          296
+        ],
+        [
+          812,
+          1183,
+          162,
+          303
+        ]
+      ]
+    ],
+    "directions": {
+      "S": {
+        "row": 0,
+        "flip": false
+      },
+      "SE": {
+        "row": 1,
+        "flip": false
+      },
+      "E": {
+        "row": 2,
+        "flip": false
+      },
+      "NE": {
+        "row": 3,
+        "flip": false
+      },
+      "N": {
+        "row": 4,
+        "flip": false
+      },
+      "NW": {
+        "row": 3,
+        "flip": true
+      },
+      "W": {
+        "row": 2,
+        "flip": true
+      },
+      "SW": {
+        "row": 1,
+        "flip": true
+      }
+    },
+    "renderingAdvice": "For stable size across walk poses and directions, use a constant source-pixel scale, not a fixed destination height per trimmed frame. Position each frame by foot anchor (bottom center); mirror west horizontally. Pause at frame 0 when idle, retaining the last movement direction."
+  }
+}

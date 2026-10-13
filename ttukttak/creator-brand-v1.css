@@ -1,0 +1,11 @@
+/* A compact, shared creator signature for the four title screens. */
+.creator-dragon-logo{display:inline-block;width:25px;height:25px;max-width:none;object-fit:contain;border-radius:6px;background:#fff;flex:0 0 25px;vertical-align:middle;filter:none;pointer-events:none}
+.creator-signature{display:inline-flex;align-items:center;gap:5px;white-space:nowrap;vertical-align:middle}
+.start-card .start-credit{display:flex;align-items:center;gap:6px}
+.start-card .start-credit .creator-dragon-logo{width:23px;height:23px;flex-basis:23px}
+.start .creator-credit .creator-dragon-logo{width:25px;height:25px;flex-basis:25px}
+.title-footer .creator-credit{display:inline-flex;align-items:center;gap:5px}
+.title-footer .creator-dragon-logo{width:23px;height:23px;flex-basis:23px}
+.start-card .creator-brand-credit{display:flex;justify-content:center;align-items:center;gap:6px;margin:4px 0 9px;color:#cfdece;font-size:12px;font-weight:500;line-height:1.5;letter-spacing:0}
+.start-card .creator-brand-credit .creator-dragon-logo{width:23px;height:23px;flex-basis:23px}
+@media(max-width:550px){.creator-dragon-logo,.start .creator-credit .creator-dragon-logo{width:23px;height:23px;flex-basis:23px}.start-card .start-credit .creator-dragon-logo,.title-footer .creator-dragon-logo,.start-card .creator-brand-credit .creator-dragon-logo{width:21px;height:21px;flex-basis:21px}}

@@ -1,0 +1,126 @@
+/* Keep the original portrait reading order; group the workbench only in wide views. */
+.activity-layout{display:flex;flex-direction:column}
+.activity-visual,.board-stack,.activity-tools{display:contents}
+.activity-layout :is(.activity-visual,.board-stack,.activity-tools)>*{order:var(--activity-order,0)}
+
+@media (min-width:740px) and (orientation:landscape){
+ body.is-world,body.is-order{height:100dvh;overflow:hidden}
+ .is-world #app,.is-order #app{height:100%;display:flex;flex-direction:column}
+ .is-world .topbar,.is-order .topbar{height:56px;min-height:56px;padding:0 20px;gap:12px;flex-shrink:0}
+ .is-world .brand strong,.is-order .brand strong{font-size:20px}
+ .is-world .brand small,.is-order .brand small{display:none}
+ .is-world .brand-mark,.is-order .brand-mark{width:34px;height:34px;font-size:25px}
+ .is-world .top-actions,.is-order .top-actions{gap:8px}
+ .is-world .icon-btn,.is-order .icon-btn{width:44px;height:44px;min-width:44px}
+ .is-world .save-warning,.is-order .save-warning{flex:none;font-size:12px;padding:5px 12px}
+
+ /* The map occupies the space left by the compact HUD, with no page scroll. */
+ .rpg-page{width:100%;max-width:1600px;flex:1;min-height:0;display:flex;padding:8px 14px 10px}
+ .rpg-shell{width:100%;display:flex;flex-direction:column;border:1px solid #55735b;border-radius:18px}
+ .rpg-mission{padding:8px 18px;min-height:0;flex:none;gap:12px}
+ .rpg-mission>div{display:grid;grid-template-columns:auto 1fr;column-gap:13px;align-items:center}
+ .rpg-mission .eyebrow{grid-row:1/3;font-size:11px;white-space:nowrap;line-height:1.6}
+ .rpg-mission h1{font-size:20px;margin:0;line-height:1.35}
+ .rpg-mission p{font-size:12px;max-width:none;margin:2px 0 0}
+ .rpg-mission .btn{min-height:44px;max-width:none;padding:8px 12px;font-size:13px}
+ .rpg-viewport{height:auto;min-height:0;max-height:none;flex:1}
+ .rpg-map-buttons{top:12px;right:14px}.map-control{min-height:44px}
+ .rpg-controls{bottom:16px;left:20px;right:20px}
+ .world-caption{bottom:22px;max-width:calc(100% - 450px);min-width:0;font-size:12px;padding:7px 12px}
+ .rpg-day-track{padding:7px 14px;gap:24px;flex:none}
+ .rpg-day-track span{display:flex;gap:7px;align-items:center;min-width:55px}
+ .rpg-day-track b{width:24px;height:24px;font-size:12px}.rpg-day-track small{font-size:11px}
+ .rpg-key-help{display:none}
+
+ /* Diagram and answer tools share the screen, while the primary actions stay put. */
+ .is-order .app-main{width:100%;max-width:1440px;flex:1;min-height:0;display:flex;flex-direction:column;padding:8px 16px 12px}
+ .is-order .order-top{flex:none;margin-bottom:7px;gap:12px}
+ .is-order .order-title{display:flex;align-items:center;gap:14px}
+ .is-order .order-title .eyebrow{font-size:11px;max-width:150px;line-height:1.5;letter-spacing:0}
+ .is-order .order-title h1{font-size:21px;margin:0;line-height:1.3}
+ .is-order .order-top .btn{min-height:44px;padding:8px 14px;font-size:13px}
+ .is-order .game-layout{display:flex;flex:1;min-height:0}
+ .is-order .game-sidebar{display:none}
+ .is-order .task-card{display:flex;flex-direction:column;width:100%;min-height:0;border-radius:18px;overflow:hidden}
+ .is-order .task-ribbon{padding:8px 16px;gap:10px;flex:none;border-radius:0}
+ .is-order .task-ribbon .avatar{width:36px;height:36px;flex:none}
+ .is-order .task-ribbon p{font-size:14px;line-height:1.45}
+ .is-order .task-ribbon strong{display:inline;font-size:12px;margin:0 10px 0 0;color:#60714e}
+ .is-order .activity{flex:1;min-height:0;padding:9px 14px;display:flex;flex-direction:column;overflow:hidden}
+ .is-order .question-navigation{flex:none;margin:0 0 7px;gap:12px}
+ .is-order .question-navigation .btn{min-height:44px;padding:7px 12px;font-size:12px}
+ .is-order .question-navigation span{font-size:12px}
+ .is-order .activity-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(280px,1fr);gap:18px;flex:1;min-height:0;overflow:hidden}
+ .is-order .activity-visual,.is-order .activity-tools{display:flex;flex-direction:column;min-width:0;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#b0bba0 #f5f2e6;scroll-padding:12px}
+ .is-order .activity-visual{align-items:center;padding:0 6px 12px 0}
+ .is-order .board-stack{display:block;flex:none;max-width:100%;width:min(100%,max(360px,calc((100dvh - 348px)*var(--board-ratio,1.4))))}
+ .is-order .board-stack>*{width:100%}
+ .is-order .activity-tools{padding:0 8px 18px 0;gap:9px}
+ .is-order .activity-tools>*{flex:none;order:var(--activity-order,0);margin-top:0;margin-bottom:0}
+ .is-order .activity .workbench{width:100%;margin:0 0 8px}
+ .is-order .activity .workbench svg{width:100%;height:auto;max-height:none;display:block}
+ .is-order .step-label{font-size:12px;line-height:1.6;padding:6px 10px;border-radius:8px;background:#f1ecd8}
+ .is-order .activity-heading{font-size:15px;line-height:1.65}
+ .is-order .choice-grid{gap:8px}.is-order .choice{min-height:48px;padding:10px 6px;line-height:1.5;font-size:14px}
+ .is-order .choice svg{height:58px;margin:0 auto 3px}
+ .is-order .choice-grid.four{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .is-order .tools{gap:8px;justify-content:center}
+ .is-order .tools button{min-height:44px;padding:9px 11px;font-size:13px}
+ .is-order .tools .group{display:flex;flex-wrap:wrap}
+ .is-order .tools .group button{min-width:44px;padding:8px}
+ .is-order .mapping-note{font-size:13px;line-height:1.6;padding:10px}
+ .is-order .match-options{gap:8px;flex-wrap:wrap}.is-order .match-options button{min-width:48px;height:48px}
+ .is-order .numeric-fields{padding:10px;gap:14px;flex-wrap:wrap}
+ .is-order .numeric-fields label{font-size:14px}.is-order .numeric-fields input{min-height:48px;font-size:22px}
+ .is-order .activity .stack .choice{font-size:14px}.is-order .fine{font-size:12px;line-height:1.6}
+ .is-order .flag-grid{width:min(100%,max(288px,calc(100dvh - 348px)));max-width:400px;margin:auto}
+ .is-order .flag-row{display:flex;justify-content:center}.is-order .color-palette{gap:10px;flex-wrap:wrap}
+ .is-order .swatch{width:44px;height:44px}
+ .is-order .activity-footer{position:relative;inset:auto;transform:none;width:100%;max-width:none;flex:none;z-index:10;display:grid;grid-template-columns:1fr auto;gap:4px 20px;padding:8px 18px max(8px,env(safe-area-inset-bottom));border-top:1px solid #d9cfb6;box-shadow:0 -3px 12px #25483e0a;background:#fff9ed}
+ .is-order .activity-footer .feedback{font-size:13px;line-height:1.5;max-height:55px;overflow:auto}
+ .is-order .activity-footer .btn{min-height:48px;min-width:165px;padding:10px 22px;font-size:16px}
+ .is-order .hint-button{min-height:48px;font-size:14px;padding:2px 0;gap:9px}.is-order .hint-button .avatar{width:34px;height:34px}
+ .is-order .hint-button small{font-size:11px}
+ .is-order .order-scroll-hint{display:block;position:absolute;bottom:calc(100% + 3px);right:18px;width:auto;min-height:32px;padding:5px 12px;border:1px solid #bdcbaa;border-radius:9px;background:#e9efdf;color:#325f4a;font-size:12px;box-shadow:0 2px 7px #29432c12}
+ .is-order .order-scroll-hint[hidden]{display:none}.is-order #toast{bottom:90px}
+
+ /* A landscape opening places the title and the play menu beside one another. */
+ .title-screen{min-height:100dvh;display:grid;grid-template-columns:1.2fr 1fr;grid-template-rows:auto 1fr auto;gap:12px 50px;padding:20px clamp(25px,6vw,110px)}
+ .title-top,.title-footer{grid-column:1/-1}.title-logo{padding:12px 0 24px}
+ .title-logo h1{font-size:clamp(70px,9vw,122px)}
+ .title-menu{align-self:center;justify-self:center;max-width:390px;margin:30px 0 0;padding:23px 25px 15px}
+ .title-friend{width:108px;height:108px;top:-80px;bottom:auto}
+ .friend-left{left:0}.friend-right{right:0}.title-subtitle{font-size:17px;letter-spacing:3px}
+ .title-prologue{font-size:14px;letter-spacing:1px}.title-play{min-height:60px}
+ .title-shade{background:linear-gradient(90deg,#12352ccc,#163b3170 50%,#15392dac),linear-gradient(0deg,#0d302fe0,transparent 35%)}
+
+ .world-repair-overlay{inset:56px 0 0;padding:12px}
+ .repair-reveal{width:min(100%,1100px)}
+ .repair-reveal-body:has(.repair-film){display:grid;grid-template-columns:minmax(0,1.6fr) minmax(250px,1fr);column-gap:20px;align-items:start}
+ .repair-reveal-body:has(.repair-film)>.tag,.repair-reveal-body:has(.repair-film)>h2,.repair-reveal-body:has(.repair-film)>.restore-lesson{grid-column:1/-1;justify-self:center}
+ .repair-reveal-body:has(.repair-film)>.repair-film{grid-column:1;grid-row:4/7;width:100%;margin:8px 0 0}
+ .repair-reveal-body:has(.repair-film)>.repair-comparison-details,.repair-reveal-body:has(.repair-film)>.day-story{grid-column:2}
+ .repair-reveal-body{padding:14px 20px 12px}.repair-reveal h2{font-size:22px;margin:6px 0}
+ .repair-reveal .repair-film-stage{max-height:clamp(160px,calc(100dvh - 410px),520px)}
+ .repair-reveal-footer{padding:9px 20px}.repair-reveal-footer .btn{max-width:420px}
+ .repair-reveal .day-story .swatch{width:44px;height:44px}
+}
+@media (min-width:740px) and (orientation:landscape) and (max-height:560px){
+ .title-screen{padding:10px 35px;gap:4px 35px}.title-logo h1{font-size:66px}
+ .title-prologue{font-size:12px;margin-bottom:7px}.title-subtitle{font-size:14px;margin-top:13px}
+ .title-menu{margin-top:20px;padding:15px 20px 9px}.title-friend{width:70px;height:70px;top:-51px}
+ .title-play{min-height:48px;font-size:20px}.title-footer>p{margin-bottom:3px;font-size:11px}.title-footer>div{font-size:11px}
+ .is-order .topbar,.is-world .topbar{height:48px;min-height:48px}
+ .is-order .task-ribbon{padding:5px 12px}.is-order .task-ribbon .avatar{display:none}
+ .is-order .activity-layout{grid-template-columns:minmax(0,1.35fr) minmax(275px,1fr);gap:12px}
+ .is-order .question-navigation{margin-bottom:4px}.is-order .activity{padding:5px 10px}
+ .is-order .order-top{margin-bottom:4px}.is-order .order-title h1{font-size:18px}
+ .is-order .activity-footer{padding:5px 12px}.is-order .activity-footer .feedback{max-height:38px}
+ .rpg-page{padding:0}.rpg-shell{border-radius:0}.rpg-mission{padding:4px 12px}
+ .rpg-mission h1{font-size:17px}.rpg-mission p{font-size:11px}
+ .rpg-day-track{padding:4px 10px}.rpg-controls{bottom:10px;left:12px;right:12px}
+ .world-caption{display:none}.world-repair-overlay{inset:48px 0 0}
+ .character-dialog{padding:15px 22px}.character-dialog h2{font-size:21px}.character-intro{font-size:13px}
+ .first-avatar-picker{margin:8px 0}.first-avatar-card{padding:5px}.first-avatar-card .first-avatar{width:90px;height:90px}
+ .character-dialog .dialog-actions{margin-top:8px}.begin-adventure{min-height:44px}
+}

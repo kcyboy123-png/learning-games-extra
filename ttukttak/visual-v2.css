@@ -1,0 +1,48 @@
+.nf[hidden]{display:none!important}
+.mission-heading{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.mission-heading .speaker{flex:1;min-width:0}
+.mission-mini{width:100px;height:74px;object-fit:cover;border-radius:12px;border:1px solid #d5b56a66}
+.craft-diagram{max-width:310px;background:#faf5e7;border-radius:14px;margin:12px auto}
+.craft-diagram svg{display:block;width:100%}
+.board-models{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.board-models figure{margin:0;flex:1;min-width:140px;background:#faf5e7;border-radius:12px}
+.board-models svg{width:100%;display:block}
+.mission-art{margin:12px 0 16px;display:grid;grid-template-columns:minmax(160px,260px) 1fr;align-items:center;gap:20px;background:#233a3b;border:1px solid #75908755;border-radius:18px;overflow:hidden}
+.mission-art img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+.mission-art figcaption{padding:16px;font-size:1.15rem;line-height:1.6;color:#f8e2b5;font-family:var(--display)}
+.mill-scene{position:relative;width:230px;max-width:100%;border:2px solid #b89864;border-radius:16px;overflow:hidden;align-self:center}
+.mill-scene img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+.mill-badge{position:absolute;bottom:9px;left:10px;border-radius:20px;padding:5px 12px;background:#183b3ee8;color:#fff5d9;font-weight:bold}
+.water-spark{position:absolute;left:57%;top:30%;color:#d0faff;font-size:36px;animation:water-splash .55s ease-out both;pointer-events:none}
+@keyframes water-splash{from{opacity:1;transform:translateY(-15px) scale(.6)}to{opacity:0;transform:translateY(22px) scale(1.6)}}
+.pour{gap:18px;align-items:center;background:linear-gradient(135deg,#264547,#192d37);padding:16px;border-radius:20px;border:1px solid #6f908566}
+.pour .tank{height:170px;flex-shrink:0;background:#0d2930;border-color:#b1d6d6;overflow:visible;margin-top:28px}
+.pour .tank .water{background:linear-gradient(#69d9e1cc,#248babc9);border-top:3px solid #d0ffff}
+.pour .tank .tl{font-size:14px;color:#fff;text-shadow:0 1px 2px #071d2c;transform:translateY(50%)}
+.pour .tank .tl.top{font-size:12px;line-height:1.1;left:0;right:auto;top:-28px;bottom:auto!important;transform:none}
+.pour .tank .water{border-radius:0 0 10px 10px}
+.pour .cupbtn{min-width:102px;min-height:130px;background:#f4d49e;color:#3a312a;border:2px solid #c59855;border-radius:18px}
+.pour .poursum{flex-basis:100%;text-align:center}
+.fracin .wtog{min-height:40px;color:#e8ecd6;border-color:#8fae9e}
+.fracin .wtog:focus-visible,.nf:focus-visible{outline:3px solid #ffcb77;outline-offset:3px}
+.fracnote{font-size:.85rem;line-height:1.45;margin:8px 0;color:#bdcdbf}
+.flag-diagram{max-width:370px;margin:12px auto;background:#faf5e7;border-radius:16px;padding:8px}
+.flag-diagram svg{width:100%;display:block}
+.start-card .hero-pick img{height:90px!important;max-width:75px;object-fit:contain}
+.start-card .hero-pick button{align-items:center;min-height:106px}
+@media(max-width:600px){.mission-art{grid-template-columns:135px 1fr;gap:0}.mission-art figcaption{font-size:16px;padding:12px}.mill-scene{width:145px}.pour{gap:12px;padding:12px}.pour .tank{width:88px;height:145px}.pour .cupbtn{min-height:66px;width:100%;display:flex;align-items:center;justify-content:center;gap:18px}.pour .cupbtn .cup{transform:scale(.65);margin:0}.start-card .hero-pick img{height:74px!important}.start-card .hero-pick button{min-height:88px}.flag-diagram{max-width:300px}}
+@media(prefers-reduced-motion:reduce){.water-spark{animation:none;display:none}}
+@media(max-width:600px){.pour .cupbtn{flex-direction:row;height:76px;min-height:76px;padding:8px}.pour .cupbtn .cup{height:50px;width:46px;flex-shrink:0}.pour .cupbtn .cup:after{display:none}}
+
+.mill-pour-effect{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none}
+.is-pouring .mill-pour-effect{opacity:1}
+.pour-jug{transform-origin:140px 35px}.is-pouring .pour-jug{animation:jug-tip .85s ease-in-out both}
+.pour-stream{stroke-dasharray:55;stroke-dashoffset:55}.is-pouring .pour-stream{animation:water-flow .85s ease-in-out both}
+.pour-ripple,.pour-drops{opacity:0;transform-origin:113px 84px}.is-pouring .pour-ripple{animation:ripple-out .6s .2s ease-out both}.is-pouring .pour-drops{animation:drop-out .5s .25s ease-out both}
+.pour .water{transition:height .65s .12s ease-in-out}
+.pour-live{position:absolute;left:8px;right:8px;top:8px;font-size:13px;text-align:center;color:white;background:#183b3ee8;border-radius:12px}.pour-live:empty{display:none}
+@keyframes jug-tip{0%,100%{transform:rotate(0)}30%,70%{transform:rotate(-32deg)}}
+@keyframes water-flow{0%,15%{stroke-dashoffset:55;opacity:0}35%,70%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:-55;opacity:0}}
+@keyframes ripple-out{0%{opacity:0;transform:scale(.3)}35%{opacity:1}100%{opacity:0;transform:scale(1.6)}}
+@keyframes drop-out{0%{opacity:0;transform:translateY(0)}30%{opacity:1;transform:translateY(-5px)}100%{opacity:0;transform:translateY(9px)}}
+@media(prefers-reduced-motion:reduce){.pour .water{transition:none}.mill-pour-effect{display:none}}

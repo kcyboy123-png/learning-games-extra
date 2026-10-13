@@ -1,0 +1,37 @@
+'use strict';
+(()=>{const legacy=JOSEON_MISSIONS.render,V=JOSEON_V2_ART;
+JOSEON_MISSIONS.render=function(m,root,G){
+ const s=G.draft(m.id).play,pic=V.picture,esc=G.escape,again=()=>JOSEON_MISSIONS.render(m,root,G),save=()=>G.save();
+ if(m.id===27){
+  JOSEON_MEDIA.releaseIn(root);s.cast||=[];s.performanceStep||=0;s.line??=null;
+  if(s.performanceStep===0){
+   root.innerHTML=`<div class="performance-heading"><span class="eyebrow">첫 번째 공연 · 판소리</span><h3>세 사람이 모이면 이야기가 살아나요</h3></div><div class="stage-view stage7"><img class="stage-backdrop" src="${JOSEON_V5_IMAGES.stage7?.src||JOSEON_V5_IMAGES.stage5.src}" alt="판소리를 함께 즐기는 마을의 흙마당">${[0,1,2].map(i=>`<img class="stage-actor cast-${i} ${s.cast.includes(i)?'revealed':'silhouette'}" data-actor="${i}" src="${JOSEON_V5_IMAGES['actor5:'+i].src}" alt="${['소리꾼','고수','관객'][i]}">`).join('')}</div><div class="cast-buttons">${['소리꾼','고수','관객'].map((n,i)=>`<button class="chip ${s.cast.includes(i)?'selected':''}" data-cast="${i}" ${s.cast.includes(i)?'disabled':''}>${n}<small>${['노래·말·몸짓으로 이야기해요','북 장단을 치며 호흡을 맞춰요','추임새와 호응을 더해요'][i]}</small></button>`).join('')}</div><p class="cast-status" role="status">세 역할을 눌러 마당을 채워 주세요. ${s.cast.length} / 3</p><div class="actions end"><button class="gold-button" id="start-performance" ${s.cast.length<3?'disabled':''}>공연 시작하기 →</button></div>`;
+   root.querySelectorAll('[data-cast]').forEach(b=>b.onclick=()=>{const i=+b.dataset.cast;if(s.cast.includes(i))return;s.cast.push(i);save();const actor=root.querySelector('[data-actor="'+i+'"]');actor.classList.remove('silhouette');actor.classList.add('revealed','just-arrived');b.classList.add('selected');b.disabled=true;root.querySelector('.cast-status').textContent=['소리꾼이 이야기를 전해요.','고수가 북 장단을 맞춰요.','관객이 호응하며 함께 즐겨요.'][i]+' '+s.cast.length+' / 3';root.querySelector('#start-performance').disabled=s.cast.length<3;});
+   root.querySelector('#start-performance').onclick=()=>{s.performanceStep=1;save();again();};return;
+  }
+  if(s.performanceStep===1){root.innerHTML=`<div class="paper"><span class="eyebrow">판소리 한 장면</span><h3>소리꾼과 고수의 호흡을 살펴봐요</h3></div><video class="performance7-video" src="assets/v2/performance.mp4" autoplay muted playsinline preload="auto" aria-label="판소리 공연 재구성 영상"></video><p class="source-note">학습을 위해 재구성한 공연 장면이에요.</p><div class="actions end"><button class="primary" id="next-performance">두 번째 공연 · 탈놀이로 →</button></div>`;root.querySelector('#next-performance').onclick=()=>{root.querySelector('video').pause();s.performanceStep=2;save();again();};return;}
+  const lines=['지위만 내세우는 양반의 잘못을 웃음으로 드러내요.','힘없는 사람을 괴롭히는 일을 훌륭하다고 칭찬해요.','신분이 높으면 어떤 잘못도 비판하면 안 된다고 해요.'];s.lineOrder||=G.shuffle([0,1,2]);
+  root.innerHTML=`<div class="performance-heading"><span class="eyebrow">두 번째 공연 · 탈놀이</span><h3>웃음 속에 어떤 이야기를 담을까요?</h3></div><div class="mask7">${pic('chapter7:4')}</div><p>탈놀이는 양반의 잘못을 익살스럽게 비판하기도 했어요. 어울리는 대사를 골라요.</p><div class="answers">${s.lineOrder.map(i=>`<button class="answer ${s.line===i?'selected':''}" data-line="${i}">${lines[i]}</button>`).join('')}</div><div class="feedback" role="status"></div><div class="actions end"><button class="primary" id="performance-check">두 공연의 특징 기록하기 →</button></div>`;
+  root.querySelectorAll('[data-line]').forEach(b=>b.onclick=()=>{s.line=+b.dataset.line;save();root.querySelectorAll('[data-line]').forEach(x=>x.classList.toggle('selected',x===b));});
+  root.querySelector('#performance-check').onclick=()=>{const f=root.querySelector('.feedback');if(s.line===null)return f.textContent='어울리는 대사를 하나 골라요.';if(s.line!==0){const charged=G.mistake(m.id,'performance:'+s.line);f.textContent='탈놀이는 사회의 잘못을 웃음으로 비판하기도 했어요.'+(charged?' −10점':'');return;}G.coreComplete(m,'판소리 세 역할을 만나 공연을 보고, 탈놀이의 풍자를 구분함');};return;
+ }
+ if(m.id===28&&!s.tradeMeaning){
+  root.innerHTML=`<div class="mission-banner">${pic('chapter8:0')}<p>항구에 낯선 배가 도착했어요. 다른 나라와 물건을 사고팔자는 제안이 왔어요.</p></div><span class="eyebrow">토론 전에 뜻부터 알아봐요</span><h3>‘통상’은 어떤 일일까요?</h3><div class="answers">${G.shuffle([0,1,2,3]).map(i=>`<button class="answer" data-meaning="${i}">${['나라 사이에 물건을 사고파는 일','한 마을 안에서만 물건을 나누는 일','다른 나라의 땅을 군대로 차지하는 일','왕실 조상에게 제사를 지내는 일'][i]}</button>`).join('')}</div><div class="feedback" role="status"></div>`;
+  root.querySelectorAll('[data-meaning]').forEach(b=>b.onclick=()=>{if(+b.dataset.meaning!==0){const charged=G.mistake(m.id,'trade-meaning:'+b.dataset.meaning);root.querySelector('.feedback').textContent='통상은 나라와 나라 사이의 물건 거래예요.'+(charged?' −10점':'');return;}s.tradeMeaning=true;save();again();});return;
+ }
+ if(m.id===28&&s.tradeDebrief){
+  root.innerHTML=`<div class="mission-banner">${pic('chapter8:0')}<p>토론 뒤, 실제 역사는 어떻게 이어졌을까요?</p></div><div class="trade-timeline"><article><b>통상을 둘러싼 서로 다른 생각</b><p>새 문물을 받아들이자는 의견과 침략을 걱정하는 의견이 있었어요.</p></article><article><b>일본의 무력 압박</b><p>일본은 군함을 보내 조선을 위협하며 문을 열도록 압박했어요.</p></article><article><b>1876년 · 강화도 조약과 개항</b><p>조선은 일본과 조약을 맺고 항구를 열었어요. 그러나 일본에 유리한 불평등한 조항이 담겼어요.</p></article></div><div class="paper"><h3>거래를 한다면 조건도 중요해요</h3><p>조선에서 일본인이 죄를 지어도 <b>일본이 재판하는 권리</b>를 인정했어요. 서로 같은 조건의 거래였는지 생각해 봐요.</p></div><div class="actions end"><button class="primary" id="trade-record">조약의 조건까지 확인하기 →</button></div>`;
+  root.querySelector('#trade-record').onclick=()=>G.coreComplete(m,'통상의 뜻과 두 의견을 연결하고, 일본의 압박에서 강화도 조약으로 이어진 과정을 살핌');return;
+ }
+ legacy(m,root,G);
+ if(m.id===28){const b=root.querySelector('#v2-next');if(b)b.onclick=()=>{s.tradeDebrief=true;save();again();};}
+ if(m.id===5){const descriptions={sky:'하늘의 둥근 움직임을 본뜬 기구로, 해·달·별의 위치와 움직임을 살폈어요.',rain:'그릇에 모인 빗물의 깊이를 재어, 지역마다 내린 비의 양을 비교했어요.',sun:'오목한 면에 생긴 해 그림자의 위치로 시각과 절기를 알았어요.',water:'흐르는 물의 힘을 이용해 자동으로 종 등을 울려 시각을 알린 물시계예요.'};root.querySelectorAll('[data-tool]').forEach(b=>{const p=b.querySelector('small');if(p)p.textContent=descriptions[b.dataset.tool];});}
+ if(m.id===3&&s.step===2)window.JOSEON_V7?.rain(root.querySelector('.palace-inspection'),G);
+ if(m.id===16){const fields=root.querySelector('.farm-fields'),tasks=root.querySelector('[data-task]')?.parentElement;if(fields&&tasks){fields.before(tasks);tasks.classList.add('farm-tasks7');}}
+ if(m.id===18){const inv=root.querySelector('.market-inventory');if(inv){const cells=[...inv.children];inv.innerHTML='<section class="inventory-group"><h3>거래에 쓸 재산</h3><div class="inventory-cells"></div></section><section class="inventory-group purchases"><h3>가족에게 가져갈 물건</h3><div class="inventory-cells"></div></section>';cells.forEach((c,i)=>inv.querySelectorAll('.inventory-cells')[i<2?0:1].append(c));}}
+ if(m.id===21){root.querySelector('.mission-banner')?.querySelector('svg,img')?.replaceWith(fragment(pic('research7:0')));root.querySelectorAll('[data-issue]').forEach(b=>{b.querySelector('svg,img')?.replaceWith(fragment(pic('research7:'+(+b.dataset.issue+1))));});}
+ if(m.id===29){if(s.stage===2)root.querySelector('.street-panorama img')?.setAttribute('src',JOSEON_V5_IMAGES['street7:3'].src);root.querySelectorAll('[data-street]').forEach((b,i)=>{const key=(b.textContent.includes('전차')?'street7:0':b.textContent.includes('전화')?'street7:1':b.textContent.includes('전신')?'street7:2':null);if(key)b.querySelector('svg,img')?.replaceWith(fragment(pic(key)));else if(s.stage===2)b.querySelector('svg,img')?.remove();});}
+ if(m.id===31){root.classList.add('newspaper7');}
+};
+function fragment(html){const t=document.createElement('template');t.innerHTML=html;return t.content.firstElementChild;}
+})();

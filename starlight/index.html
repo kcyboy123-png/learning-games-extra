@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#203e36">
+<meta name="author" content="창용쌤">
+<meta name="description" content="창용쌤이 만든 역사 학습 게임. 루미와 함께 고조선과 삼국의 단서를 찾아 떠나는 별빛 시간탐험대. 직접 움직이고, 도전하고, 나만의 박물관을 완성해 보세요.">
+<title>별빛 시간탐험대 — 고조선과 삼국의 비밀</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23203e36'/%3E%3Cpath d='m16 5 3.1 7 7.6.8-5.7 5 1.6 7.5-6.6-3.9-6.6 3.9 1.6-7.5-5.7-5 7.6-.8Z' fill='%23eecb82'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css?v=10"><link rel="stylesheet" href="play-v2.css?v=9"><link rel="stylesheet" href="journey-v3.css?v=4"><link rel="stylesheet" href="review-v4.css"><link rel="stylesheet" href="adventure-v11.css?v=12"><link rel="stylesheet" href="exploration-v13.css"><link rel="stylesheet" href="opening-v14.css"><link rel="stylesheet" href="cinema-v16.css"><link rel="stylesheet" href="classroom-v17.css"><link rel="preload" as="image" href="assets/baekje.png"><link rel="preload" as="image" href="assets/lumi.png">
+<style id="device-guide-style">/* Device guidance is a suggestion: it never locks screen orientation or play. */
+.device-orientation-guide,.start-card .device-orientation-guide,.start .device-orientation-guide{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 12px;margin:12px 0 8px;padding:8px 10px;border:1px solid #d8e7cb40;border-radius:10px;background:#ffffff0b;color:#e6eddc;font:500 12px/1.6 system-ui,-apple-system,"Noto Sans KR",sans-serif;word-break:keep-all;text-align:center}
+.device-orientation-guide span{white-space:nowrap}.device-orientation-guide strong{font-size:inherit;color:#ffe09a;font-weight:750}
+.start .device-orientation-guide{justify-content:flex-start;width:fit-content;max-width:100%}
+#tutorial-scene .device-orientation-guide{margin:0 0 10px;font-size:14px;background:#ffffff10}
+#device-rotate-tip{position:fixed;z-index:99990;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:8px 8px 8px 15px;border:1px solid #b9ccb5;border-radius:14px;background:#f8f5eaff;color:#234b40;box-shadow:0 5px 25px #102d2940;font:500 13px/1.55 system-ui,-apple-system,"Noto Sans KR",sans-serif;word-break:keep-all}
+#device-rotate-tip[hidden]{display:none!important}#device-rotate-tip p{margin:0;color:inherit;font:inherit}#device-rotate-tip strong{color:inherit;font-weight:750}
+#device-rotate-tip button{flex:none;display:grid;place-items:center;width:44px;height:44px;min-width:44px;min-height:44px;margin:0;padding:0;border:0;border-radius:9px;background:#234b4010;box-shadow:none;color:#234b40;font:22px/1 system-ui;cursor:pointer}
+#device-rotate-tip button:focus-visible{outline:3px solid #426b53;outline-offset:2px}
+@media(max-height:650px) and (orientation:landscape){.device-orientation-guide,.start-card .device-orientation-guide,.start .device-orientation-guide{margin:7px 0 5px;padding:5px 8px;font-size:12px}}
+</style><link rel="stylesheet" href="creator-brand-v1.css?v=actual-logo-20261010"><link rel="stylesheet" href="polish-v18.css?v=20261011"><script src="music-defaults-v1.js?v=20261011" data-game="starlight"></script></head><body><main id="app"><canvas id="world" aria-label="길을 누르거나 방향키로 루미를 움직이는 탐험 지도"></canvas><div id="markers"></div><div id="hud"></div><div id="controls"></div><div id="overlay"></div><div id="toast" role="status" aria-live="polite"></div><div id="score-change" aria-live="polite"></div></main><dialog id="modal" aria-labelledby="modal-title"></dialog><noscript>이 게임을 실행하려면 브라우저에서 자바스크립트를 켜 주세요.</noscript><script src="data.js?v=17"></script><script src="quests-v2.js?v=17"></script><script src="mission-rules-v6.js?v=12"></script><script src="play-v2.js?v=17"></script><script src="journey-v3.js?v=17"></script><script src="review-v4.js?v=17"></script><script src="audio-v4.js?v=19"></script><script src="adventure-v11.js?v=17"></script><script src="exploration-v13.js"></script><script src="opening-v17.js?v=harin-20261006"></script><script src="hero-atlas-v15.js"></script><script src="hero-motion-v15.js"></script><script src="cinema-v16.js"></script><script src="classroom-v17.js"></script><script src="game.js?v=polish-20261011b"></script><script id="device-guide-script">(()=>{
+ 'use strict';
+ const key='device-orientation-tip-v1:'+document.title;
+ const narrowLandscape=matchMedia('(orientation:landscape) and (max-height:500px) and (max-width:1000px)');
+ let dismissed=false,shown=false;
+ try{dismissed=sessionStorage.getItem(key)==='dismissed';}catch{}
+ const tip=document.createElement('aside');tip.id='device-rotate-tip';tip.hidden=true;tip.setAttribute('aria-label','휴대폰 화면 방향 안내');
+ tip.innerHTML='<p>휴대폰은 <strong>세로로</strong> 돌리면 더 편해요.<br>지금 방향으로 계속해도 괜찮아요.</p><button type="button" aria-label="화면 방향 안내 닫기">×</button>';
+ document.body.append(tip);
+ function dismiss(){dismissed=true;tip.hidden=true;try{sessionStorage.setItem(key,'dismissed');}catch{}}
+ tip.querySelector('button').addEventListener('click',dismiss);
+ function update(){if(dismissed)return;if(narrowLandscape.matches){tip.hidden=false;shown=true;}else if(shown)dismiss();}
+ narrowLandscape.addEventListener('change',update);update();
+})();
+</script></body></html>
+

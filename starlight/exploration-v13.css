@@ -1,0 +1,11 @@
+.star-pickup{position:absolute;width:48px;height:48px;padding:8px;transform:translate(-50%,-50%);background:none;border:0;overflow:visible;isolation:isolate;touch-action:manipulation}
+.star-pickup::before{content:'';position:absolute;inset:2px;border-radius:50%;background:radial-gradient(circle,#fff4bdba 0,#ffd57555 30%,#ffcf6a00 70%);z-index:-1;transition:transform .35s,opacity .35s}
+.star-pickup svg{display:block;width:32px;height:32px;overflow:visible;filter:drop-shadow(0 2px 2px #49351fbf) drop-shadow(0 0 5px #ffe8a2);animation:star-shimmer 2.8s ease-in-out infinite;animation-delay:var(--star-delay)}
+.star-pickup .star-label{position:absolute;left:50%;top:45px;transform:translateX(-50%);padding:3px 8px;border-radius:12px;background:#214637ee;color:#fff0bb;font-size:10px;font-weight:700;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .25s}
+.star-pickup.near::before{transform:scale(1.75);background:radial-gradient(circle,#fffdeac9 0,#ffd86d73 35%,#ffd86d00 70%)}
+.star-pickup.near svg{filter:drop-shadow(0 2px 2px #594020) drop-shadow(0 0 12px #fff1a1);animation:star-near 1.7s ease-in-out infinite}
+.star-pickup.near .star-label,.star-pickup:focus-visible .star-label,.star-pickup:hover .star-label{opacity:1}
+.star-pickup:focus-visible{outline:2px solid #fff2ab;outline-offset:3px;border-radius:50%}
+@keyframes star-shimmer{0%,100%{transform:scale(.9);opacity:.82}50%{transform:scale(1.06);opacity:1}}
+@keyframes star-near{0%,100%{transform:scale(1.13) rotate(-5deg)}50%{transform:scale(1.3) rotate(5deg)}}
+@media(prefers-reduced-motion:reduce){.star-pickup svg{animation:none}.star-pickup.near svg{transform:scale(1.22)}.star-pickup::before,.star-pickup .star-label{transition:none}}

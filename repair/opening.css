@@ -1,0 +1,23 @@
+/* A short optional opening, contained on phones instead of cropping the film. */
+body.opening-visible{overflow:hidden}
+#opening-cinema{width:100vw;max-width:none;height:100svh;max-height:100svh;margin:0;border:0;border-radius:0;padding:max(18px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left));background:#102d26;color:#fff5da;box-sizing:border-box;overflow:auto}
+#opening-cinema::backdrop{background:#102d26;backdrop-filter:none}
+#opening-cinema[open]{display:flex;align-items:center;justify-content:center}
+.opening-wrap{width:min(1120px,100%);margin:auto;min-width:0}
+.opening-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
+.opening-heading p{font-size:12px;color:#d3ddc7;margin:0 0 5px}
+#opening-cinema h2{font-size:18px;line-height:1.4;margin:0;letter-spacing:-.3px}
+.opening-skip{background:#f7d789!important;color:#244634!important;font-weight:700;white-space:nowrap}
+#opening-cinema button{min-height:44px;padding:10px 17px;border:1px solid #fff4d64a;border-radius:12px;background:#244b3d;color:#fff5da;font:inherit;font-size:14px;cursor:pointer}
+#opening-cinema button:focus-visible{outline:3px solid #ffe9a0;outline-offset:3px}
+.opening-stage{display:flex;justify-content:center;background:#0b1f1b;border-radius:16px;overflow:hidden}
+.opening-stage video{display:block;width:100%;aspect-ratio:16/9;max-height:calc(100svh - 195px);object-fit:contain;background:#0b1f1b}
+#opening-cinema progress{display:block;appearance:none;width:100%;height:3px;margin:10px 0 14px;border:0;border-radius:3px;background:#ffffff20;accent-color:#edcb7a}
+#opening-cinema progress::-webkit-progress-bar{background:#ffffff20;border-radius:3px}
+#opening-cinema progress::-webkit-progress-value{background:#edcb7a;border-radius:3px}
+#opening-cinema progress::-moz-progress-bar{background:#edcb7a;border-radius:3px}
+.opening-controls{display:flex;align-items:center;gap:10px}
+.opening-controls>span{margin-left:auto;font-size:12px;color:#d3ddc7}
+.opening-status{font-size:12px;line-height:1.6;color:#d3ddc7;margin:12px 0 0;min-height:20px;text-align:center}
+@media(max-width:600px){#opening-cinema{padding-left:14px;padding-right:14px}.opening-heading{gap:8px}#opening-cinema h2{font-size:15px}.opening-heading p{font-size:11px}#opening-cinema button{font-size:12px;padding:9px 12px}.opening-stage{border-radius:12px}.opening-controls{gap:8px}.title-other{gap:3px}.title-other button{font-size:13px;padding:8px 10px}}
+@media(max-height:480px) and (orientation:landscape){#opening-cinema{padding:8px 16px}.opening-heading{margin-bottom:6px}.opening-heading p,.opening-status{display:none}#opening-cinema h2{font-size:14px}.opening-stage video{max-height:calc(100svh - 130px)}#opening-cinema progress{margin:6px 0}.opening-wrap{width:min(850px,100%)}}

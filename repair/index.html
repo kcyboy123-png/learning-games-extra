@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#234f44">
+<meta name="description" content="포개고, 접고, 돌려서 모양숲의 축제를 완성해요. 5학년 합동과 대칭, 35개의 직접 조작하는 수리 주문.">
+<title>딱맞네 수리점 · 모양숲 반짝 축제</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%23234f44'/%3E%3Cpath d='M15 17h21v30H15zM28 17h21v30H28z' fill='%23f6c663' stroke='%23fff9e8' stroke-width='3'/%3E%3Cpath d='M32 10v44' stroke='%23234f44' stroke-dasharray='4 3' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="world.css"><link rel="stylesheet" href="opening.css"><link rel="stylesheet" href="restoration.css"><link rel="stylesheet" href="landscape.css">
+<style id="device-guide-style">/* Device guidance is a suggestion: it never locks screen orientation or play. */
+.device-orientation-guide,.start-card .device-orientation-guide,.start .device-orientation-guide{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 12px;margin:12px 0 8px;padding:8px 10px;border:1px solid #d8e7cb40;border-radius:10px;background:#ffffff0b;color:#e6eddc;font:500 12px/1.6 system-ui,-apple-system,"Noto Sans KR",sans-serif;word-break:keep-all;text-align:center}
+.device-orientation-guide span{white-space:nowrap}.device-orientation-guide strong{font-size:inherit;color:#ffe09a;font-weight:750}
+.start .device-orientation-guide{justify-content:flex-start;width:fit-content;max-width:100%}
+#tutorial-scene .device-orientation-guide{margin:0 0 10px;font-size:14px;background:#ffffff10}
+#device-rotate-tip{position:fixed;z-index:99990;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 24px);box-sizing:border-box;display:flex;align-items:center;gap:12px;padding:8px 8px 8px 15px;border:1px solid #b9ccb5;border-radius:14px;background:#f8f5eaff;color:#234b40;box-shadow:0 5px 25px #102d2940;font:500 13px/1.55 system-ui,-apple-system,"Noto Sans KR",sans-serif;word-break:keep-all}
+#device-rotate-tip[hidden]{display:none!important}#device-rotate-tip p{margin:0;color:inherit;font:inherit}#device-rotate-tip strong{color:inherit;font-weight:750}
+#device-rotate-tip button{flex:none;display:grid;place-items:center;width:44px;height:44px;min-width:44px;min-height:44px;margin:0;padding:0;border:0;border-radius:9px;background:#234b4010;box-shadow:none;color:#234b40;font:22px/1 system-ui;cursor:pointer}
+#device-rotate-tip button:focus-visible{outline:3px solid #426b53;outline-offset:2px}
+@media(max-height:650px) and (orientation:landscape){.device-orientation-guide,.start-card .device-orientation-guide,.start .device-orientation-guide{margin:7px 0 5px;padding:5px 8px;font-size:12px}}
+</style><link rel="stylesheet" href="creator-brand-v1.css?v=actual-logo-20261010"><link rel="stylesheet" href="polish-v1.css?v=20261011"><script src="music-defaults-v1.js?v=20261011" data-game="repair"></script></head>
+<body>
+<a class="skip-link" href="#main">게임 화면으로 이동</a>
+<div id="app"></div><div id="toast" role="status" aria-live="polite"></div>
+<dialog id="modal" aria-labelledby="modal-title"></dialog>
+<noscript>이 게임은 도형을 움직이기 위해 자바스크립트를 사용합니다. 브라우저에서 자바스크립트를 켜 주세요.</noscript>
+<script>window.addEventListener('error',function(e){if((e.target&&e.target.tagName==='SCRIPT')||(e.message&&!document.getElementById('app').children.length)){var box=document.getElementById('app');box.innerHTML='<main style="padding:40px;font-family:sans-serif;line-height:1.8"><h1>게임을 불러오지 못했어요</h1><p>연결을 확인한 뒤 다시 열어 주세요. 오프라인 파일은 압축을 모두 푼 뒤 실행해 주세요.</p><button type="button" onclick="location.reload()" style="padding:14px 22px">다시 불러오기</button></main>'}},true);</script>
+<script src="data.js"></script><script src="geometry.js"></script><script src="music.js"></script><script src="opening.js"></script><script src="restoration.js"></script><script src="app.js?v=actual-logo-20261010"></script><script src="activities.js?v=polish-20261011"></script><script src="world.js?v=polish-20261011"></script>
+<script id="device-guide-script">(()=>{
+ 'use strict';
+ const key='device-orientation-tip-v1:'+document.title;
+ const narrowLandscape=matchMedia('(orientation:landscape) and (max-height:500px) and (max-width:1000px)');
+ let dismissed=false,shown=false;
+ try{dismissed=sessionStorage.getItem(key)==='dismissed';}catch{}
+ const tip=document.createElement('aside');tip.id='device-rotate-tip';tip.hidden=true;tip.setAttribute('aria-label','휴대폰 화면 방향 안내');
+ tip.innerHTML='<p>휴대폰은 <strong>세로로</strong> 돌리면 더 편해요.<br>지금 방향으로 계속해도 괜찮아요.</p><button type="button" aria-label="화면 방향 안내 닫기">×</button>';
+ document.body.append(tip);
+ function dismiss(){dismissed=true;tip.hidden=true;try{sessionStorage.setItem(key,'dismissed');}catch{}}
+ tip.querySelector('button').addEventListener('click',dismiss);
+ function update(){if(dismissed)return;if(narrowLandscape.matches){tip.hidden=false;shown=true;}else if(shown)dismiss();}
+ narrowLandscape.addEventListener('change',update);update();
+})();
+</script></body>
+</html>

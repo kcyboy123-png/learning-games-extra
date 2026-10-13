@@ -1,0 +1,65 @@
+/* v18 finishing layer: clearer next action, readable quest labels, finger-sized targets. Loaded last. */
+
+/* 1. Bottom-right action is always usable: far = walk to the next step, near = start the mission. */
+.interact{background:#fff9eaf7;color:#2a4b3b;border:1px solid #fff5d9;box-shadow:0 4px 0 #9fae8f,0 6px 18px #18352733;line-height:1.35;text-align:center;word-break:keep-all}
+.interact.ready{background:#f1cf8b;color:#3e3c20;border-color:#ffe9b0;box-shadow:0 4px 0 #947842,0 0 0 4px #ffe8a455}
+.interact small{font-size:12px;font-weight:600;color:inherit;opacity:.8}
+.interact:active{transform:translateY(2px)}
+@media(hover:none) and (pointer:coarse){.interact .key-note{display:none}}
+
+/* 2. Quest labels: stable width, kept inside the screen by game.js; the next quest shows its direction at the edge. */
+.marker.current{z-index:2}
+.marker .bubble{width:max-content;font-size:13px}
+.marker .npc-name{font-size:11px}
+.marker .bubble[data-edge="left"]::before{content:'◀ ';color:#a8742a}
+.marker .bubble[data-edge="right"]::after{content:' ▶';color:#a8742a}
+
+/* 3. Finger-sized targets everywhere. */
+.close{flex:0 0 44px;width:44px;height:44px}
+.btn.small,.hint-button,.cinema-toggle,.cinema-celebration .cinema-toggle{min-height:44px}
+.mini-help summary,.rank-guide summary{padding:12px 0}
+.journal-item summary{padding:10px 0}
+
+/* A soft shadow at the bottom of a scrollable dialog shows that more content is below. */
+#modal{background:linear-gradient(#fff9ea,#fff9ea) center bottom/100% 30px no-repeat local,radial-gradient(farthest-side at 50% 100%,#2439233d,#24392300) center bottom/100% 12px no-repeat scroll,#fff9ea}
+
+/* 4. One-column missions (phone, portrait tablet): instruction first, board second, buttons within reach. */
+@media not all and (min-width:740px) and (orientation:landscape){
+ .mission-layout{display:flex;flex-direction:column}
+ .mission-sidebar{display:contents}
+ .mission-sidebar>.mission-brief{order:-3}
+ .mission-sidebar>.mission-context{order:-2}
+ .mission-sidebar>.mini-meter{order:-1}
+ #modal[data-mode="timing"] .mini-actions,#modal[data-mode="forge"] .mini-actions,#modal[data-mode="boat"] .mini-actions,#modal[data-mode="trade"] .mini-actions,#modal[data-mode="harbor"] .mini-actions,#modal[data-mode="roads"] .mini-actions{position:sticky;bottom:0;z-index:3;margin-top:0;padding:14px 0 max(10px,env(safe-area-inset-bottom));background:linear-gradient(#fff9ea00,#fff9ea 12px)}
+}
+
+@media(max-width:700px){
+ /* Phone HUD: the menu becomes one row under the cards, so the right side of the map stays open. */
+ .hud-nav{top:calc(max(9px,env(safe-area-inset-top)) + 88px);left:12px;right:12px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+ .hud-nav button{min-width:0;min-height:44px;padding:6px 2px;font-size:12px;white-space:nowrap}
+ .objective{top:calc(max(9px,env(safe-area-inset-top)) + 140px);max-width:230px}
+ .objective small{font-size:11px}
+ .objective button{font-size:14px;min-height:32px}
+ .place-card small{font-size:10px}
+ .score-card small{font-size:10px;letter-spacing:0}
+ .marker .bubble{font-size:12px;max-width:172px}
+ .interact{font-size:14px;padding:12px 14px;max-width:176px;min-height:56px}
+ .interact small{font-size:11px}
+ .dpad{grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,46px)}
+ .start .link-btn{font-size:13px}
+ /* Mission and review text a child can read at arm's length. */
+ .mission-brief p{font-size:14px;line-height:1.6}
+ .mission-context{font-size:12px}
+ .mini-status{font-size:13px}
+ .gesture-note,.mini-help{font-size:12px}
+ .hint-button,.review-actions .hint-button{font-size:13px}
+ .hint-panel p{font-size:13px}
+ .review-choice b{font-size:14px}
+ .review-feedback p{font-size:13px}
+ .round-failed p{font-size:12px}
+}
+@media(max-width:350px){
+ .hud-nav button{font-size:11px}
+ .interact{max-width:150px;font-size:13px}
+ .mission-brief p{font-size:13px}
+}

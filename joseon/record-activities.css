@@ -1,0 +1,87 @@
+/* Mission knowledge becomes a short, editable record before the reward. */
+.record-activity{--record-ink:#214941;--record-gold:#b88638;color:#253e38}
+.record-topline{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:12px;color:#6c7668;margin:0 0 16px}
+.record-type{border:1px solid #cfdbc8;border-radius:30px;padding:6px 12px;color:var(--record-ink);background:#eef2e6;font-weight:750}
+.record-content[hidden]{display:none!important}
+.record-prompt{font-size:20px;line-height:1.45;margin:0 0 16px;color:#203f39;outline:none}
+.record-blank-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.12fr);gap:22px;align-items:center}
+.record-scene{margin:0;min-width:0;overflow:hidden;border-radius:15px;background:#efe9d9;border:1px solid #ddd9c8}
+.record-activity .record-picture{display:block;width:100%;height:230px;max-height:none;object-fit:contain;background:#f0eadb}
+.record-sentence{font-size:20px;font-weight:600;line-height:1.95;margin:0 0 10px;word-break:keep-all;overflow-wrap:anywhere}
+/* v20: the blank is a roomy box sized by the longest option (same rule for every blank) so filling it barely shifts the line. */
+.record-gap{display:inline-block;vertical-align:baseline;box-sizing:border-box;min-width:min(100%,calc(var(--gap-chars,8)*1em + 26px));max-width:100%;text-align:center;font-size:17px;font-weight:700;line-height:1.5;padding:5px 12px;margin:2px 2px;border:2px dashed #ad873f;border-radius:9px;color:#937235;background:#f3e6c3;white-space:normal;word-break:keep-all;overflow-wrap:anywhere}
+.record-gap.filled{background:#e2ecdf;color:#1e5248;border-style:solid;border-color:#458574}
+.record-blank-hint{display:flex;align-items:center;gap:6px;margin:0 0 10px;font-size:13px;line-height:1.5;color:#5f6f5d}
+.record-blank-hint::before{content:'↓';font-weight:800;color:#b88638;flex:none}
+.record-options{display:grid;gap:9px}
+.record-pieces .record-choice{font-size:17px;line-height:1.5;min-height:52px;padding:12px 16px;border-radius:14px;word-break:keep-all;overflow-wrap:anywhere;justify-content:flex-start}
+.record-choice{display:flex;gap:10px;align-items:center;text-align:left;min-height:50px;padding:12px 15px;border:1.5px solid #d4d7c7;border-radius:12px;background:#fffdf6;font:inherit;font-size:15px;line-height:1.45;color:#2e4339;transition:background .12s,border-color .12s}
+.record-choice:hover,.record-source:hover,.record-target:hover{border-color:#8caa91;background:#f3f7ec}
+.record-choice.selected,.record-source.selected{border-color:#2d7667;background:#e7f1e6;box-shadow:0 0 0 2px #2d76671a}
+.record-choice:focus-visible,.record-source:focus-visible,.record-target:focus-visible{outline:3px solid #a97832;outline-offset:3px}
+.record-radio{flex:0 0 16px;width:16px;height:16px;border:1.5px solid #8caa91;border-radius:50%}
+.selected .record-radio{border:5px solid #2d7667;background:#fff}
+.record-panels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:16px}
+.record-panels.single{grid-template-columns:1fr}
+.record-panels .record-picture{height:165px}
+.record-panels.single .record-picture{height:205px}
+.record-scene figcaption{padding:9px 12px;text-align:center;font-size:14px;background:#f8f3e7;line-height:1.4}
+.record-scene figcaption span{display:block;color:#6b7164;font-size:12px;margin-top:4px}
+.record-link-guide{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px;margin:0 0 12px}
+.record-link-guide small{color:#747c6b;margin-left:auto;font-size:12px}
+.record-links{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:64px;position:relative}
+.record-left,.record-right{display:grid;grid-template-rows:repeat(2,minmax(150px,1fr));gap:13px;position:relative;z-index:1}
+.record-source,.record-target{position:relative;min-width:0;border:1.5px solid #d1d8c5;border-radius:13px;background:#fffdf6;color:#2e4339;font:inherit;cursor:pointer;padding:8px 12px;line-height:1.5}
+.record-source{display:flex;align-items:center;flex-direction:column;justify-content:center;font-weight:700;font-size:14px}
+.record-source .record-picture{height:120px;width:100%;max-height:none;background:transparent}
+.record-target{display:flex;align-items:center;justify-content:center;flex-direction:column;font-size:16px;text-align:center;padding:16px}
+.record-target.linked,.record-source.linked{border-color:#4f8974;background:#eff5e8}
+.record-link-label{display:block;font-size:11px;color:#3a715e;margin-top:6px;min-height:17px}
+.record-port{position:absolute;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:#fbf9ed;border:2px solid #5a8e77}
+.record-source .record-port{right:-7px}.record-target .record-port{left:-7px}
+.linked .record-port{background:#3b7f68}
+.record-wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:2}
+.record-wires path{fill:none;stroke:#4b896f;stroke-width:3;stroke-linecap:round}
+.record-link-status{font-size:12px;color:#627864;margin:9px 0 0;min-height:18px}
+.record-feedback:empty{display:none}
+.record-feedback{margin-top:12px;padding:12px 14px;border-radius:10px;background:#edf2e6;line-height:1.6;font-size:14px}
+.record-feedback.bad{background:#fff0e4;border:1px solid #ddb18e;color:#7c482f}
+.record-invalid{border-color:#ba7750!important}
+.record-actions{display:flex;gap:14px;align-items:center;justify-content:space-between;border-top:1px solid #dddcca;margin-top:18px;padding-top:15px}
+.record-actions>div{display:flex;flex-direction:column;gap:3px;align-items:flex-start}
+.record-actions small{font-size:11px;color:#7b806e}
+.record-actions .gold-button{min-height:48px;padding:13px 22px;white-space:nowrap}
+.record-actions .gold-button:disabled{opacity:.48;cursor:not-allowed;transform:none}
+.record-film{position:relative;min-height:240px;aspect-ratio:16/9;background:#153d35;border-radius:16px;overflow:hidden}
+.record-film-poster{position:absolute;inset:0}
+.record-film-poster .record-picture{height:100%}
+.record-next{text-align:center;padding:18px}
+.record-next .record-scene{max-width:420px;margin:0 auto 14px}
+.record-next p{font-size:19px;line-height:1.7;max-width:580px;margin:0 auto 20px}
+.record-next .record-stamp{display:block;margin:0 auto 12px}
+.record-earned-summary{font-weight:650;color:#244d40}
+@media(max-width:620px){
+ .record-topline{font-size:11px;margin-bottom:12px;gap:5px}.record-type{padding:5px 8px}
+ .record-prompt{font-size:17px;margin-bottom:12px}
+ .record-blank-layout{grid-template-columns:1fr;gap:12px}
+ .record-blank-layout .record-picture{height:156px}
+ .record-sentence{font-size:18px;line-height:1.9;margin-bottom:8px}
+ .record-gap{font-size:16px;padding:4px 10px}
+ .record-blank-hint{font-size:12px;margin-bottom:8px}
+ .record-choice{font-size:14px;min-height:46px;padding:10px 12px}
+ .record-pieces .record-choice{font-size:16px;min-height:48px;padding:10px 13px}
+ .record-panels{gap:8px;margin-bottom:12px}.record-panels .record-picture{height:122px}.record-panels.single .record-picture{height:164px}
+ .record-scene figcaption{padding:7px;font-size:12px}.record-scene figcaption span{font-size:11px}
+ .record-links{column-gap:32px;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr)}
+ .record-left,.record-right{grid-template-rows:repeat(2,minmax(132px,1fr));gap:10px}
+ .record-source,.record-target{padding:8px;font-size:13px}.record-source .record-picture{height:92px}
+ .record-link-guide{font-size:12px;gap:6px}.record-link-guide small{margin:0;width:100%}
+ .record-actions{position:sticky;bottom:-20px;background:#faf7ed;padding:12px 0;margin-top:12px;z-index:4;gap:8px}
+ .record-actions .gold-button{font-size:14px;padding:12px}.record-actions .link-button{font-size:12px}.record-actions small{font-size:10px}
+ .record-film{min-height:180px}.record-next{padding:8px}.record-next p{font-size:17px}
+}
+@media(min-width:621px) and (max-height:650px){
+ .record-activity .record-picture{height:160px}.record-panels .record-picture{height:112px}.record-panels.single .record-picture{height:135px}
+ .record-source .record-picture{height:73px}.record-left,.record-right{grid-template-rows:repeat(2,minmax(103px,1fr))}
+ .record-sentence{font-size:18px}.record-gap{font-size:16px;padding:4px 10px}.record-choice{min-height:43px;padding:8px 12px;font-size:14px}.record-pieces .record-choice{font-size:16px;min-height:46px}.record-prompt{font-size:18px}
+}

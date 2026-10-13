@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#183c39"><meta name="description" content="창용쌤의 조선 기록원정대. 별하와 함께 조선의 생활을 탐험하고, 자료로 문제를 해결하는 역사 학습 RPG.">
+<title>조선 기록원정대 · 별하와 먹동이의 시간 기록장</title>
+<link rel="icon" href="assets/emblem.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/fonts/fonts.css?v=20261012-21"><link rel="stylesheet" href="style.css?v=20261012-21"><link rel="stylesheet" href="v2.css?v=20261012-21">
+<link rel="stylesheet" href="v4.css?v=20261012-21">
+<link rel="stylesheet" href="v5.css?v=20261012-21">
+<link rel="stylesheet" href="v7.css?v=20261012-21">
+<link rel="stylesheet" href="v8.css?v=20261012-21">
+<link rel="stylesheet" href="v9.css?v=20261012-21"><link rel="stylesheet" href="v11.css?v=20261012-21">
+<link rel="stylesheet" href="record-activities.css?v=20261012-21">
+</head>
+<body>
+<main id="app">
+ <section id="home" class="home">
+  <div class="home-art" aria-hidden="true"></div><div class="home-shade"></div><div class="home-motes" aria-hidden="true"></div><div class="paper-leaves" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <header class="home-nav"><a class="brand" href="#" aria-label="조선 기록원정대 처음 화면"><img class="creator-dragon" src="assets/v6/changyong-dragon.png" alt="창용쌤의 용 로고"><span>창용쌤의 역사 학습 게임</span></a><button class="quiet-light" data-action="guide">교실에서 함께하기 <span data-icon="arrow"></span></button></header>
+  <div class="hero-copy"><div class="eyebrow"><span class="tiny-line"></span>별하와 먹동이의 시간 기록장</div><h1>조선<br><em>기록원정대</em></h1><p class="hero-description">한 장의 기록을 펼치면,<br>조선의 이야기가 시작돼.</p><div class="home-start"><button class="gold-button" id="start"><span>모험 시작하기</span><span data-icon="arrow"></span></button><p id="resume-label" class="resume-label"></p></div><div class="home-links"><button data-action="guide">학습 안내</button><span>·</span><button data-action="settings">설정</button><span>·</span><button data-action="sources">학습 자료</button></div></div>
+  <div class="hero-person" aria-hidden="true"><div class="hero-orbit"></div><svg class="home-hero" viewBox="200 12 450 987"><defs><clipPath id="home-hero-clip"><rect x="200" y="12" width="450" height="987"/></clipPath></defs><image href="assets/v4/hero-poses.webp" width="1536" height="1024" clip-path="url(#home-hero-clip)"/></svg><svg class="home-cat" viewBox="258 649 364 370"><defs><clipPath id="home-cat-clip"><rect x="258" y="649" width="364" height="370"/></clipPath></defs><image href="assets/v2/byeolha-poses.webp" width="1536" height="1024" clip-path="url(#home-cat-clip)"/></svg><div class="hero-name">별하 <span>기록을 잇는 작은 탐험가</span></div></div>
+  <div class="home-caption"><span>첫 번째 여정</span><b>새 나라를 꿈꾸던 사람들</b><span class="caption-line"></span><span>그림 속으로 떠나는 역사 탐험</span></div>
+ </section>
+ <section id="game" class="game hidden" aria-label="조선 탐험">
+  <header class="game-header"><button class="brand game-brand" data-action="home"><span data-icon="seal"></span><span>조선 <b>기록원정대</b></span></button><div class="chapter-heading"><span id="chapter-eyebrow"></span><h2 id="chapter-name"></h2></div><div class="header-right"><span class="score"><span data-icon="spark"></span><b id="score">1,000</b><small>점</small></span><button class="icon-btn" data-action="journal" aria-label="기록장 열기"><span data-icon="book"></span></button><button class="icon-btn" data-action="settings" aria-label="설정"><span data-icon="settings"></span></button></div></header>
+  <div class="play-layout"><aside class="quest-sidebar"><div class="sidebar-title"><span class="eyebrow">이번 장의 기록</span><strong id="quest-count">0 / 4</strong></div><div class="quest-track"><i id="quest-progress"></i></div><nav id="quest-list" aria-label="미션 장소"></nav><div class="companion-note"><div id="companion-portrait" class="portrait"></div><div><b id="companion-name"></b><p id="companion-line"></p></div></div><button class="book-link" data-action="chapters"><span data-icon="compass"></span> 시간 이동 <span data-icon="arrow"></span></button></aside>
+  <div id="world" class="world"><canvas id="map" aria-label="탐험 지도. 길이나 인물을 누르거나 방향키로 이동하세요."></canvas><div id="world-pins"></div><button id="mobile-review" class="primary mobile-review hidden">여행의 기억 3문제 →</button><div class="map-top"><span id="world-place"></span><button id="map-fit" class="glass-btn" aria-label="지도 전체 보기"><span data-icon="compass"></span>전체 보기</button></div><div class="map-bottom"><div class="control-tip"><span data-icon="pointer"></span>길을 누르면 이동 · 인물을 누르면 대화</div><button id="interact" class="interact"><span data-icon="chat"></span><span>가까운 친구와 이야기</span><kbd>E</kbd></button></div><div class="dpad" aria-label="방향 이동"><button data-dir="up" aria-label="위로">↑</button><button data-dir="left" aria-label="왼쪽">←</button><button data-dir="down" aria-label="아래로">↓</button><button data-dir="right" aria-label="오른쪽">→</button></div><div id="chapter-flash" class="chapter-flash hidden"></div></div></div>
+  <footer class="game-footer"><span id="save-status"><i></i>자동 저장</span><span id="era-label"></span><button data-action="journal">나의 기록 <b id="total-count">0 / 32</b><span data-icon="arrow"></span></button></footer>
+ </section>
+ <dialog id="dialog"><div id="dialog-inner"></div></dialog>
+ <div id="toast" role="status" aria-live="polite"></div>
+</main>
+<script src="data.js?v=20261012-21"></script><script src="v2-data.js?v=20261012-21"></script><script src="v4-data.js?v=20261012-21"></script><script src="v5-data.js?v=20261012-21"></script><script src="v7-data.js?v=20261012-21"></script><script src="v8-data.js?v=20261012-21"></script><script src="v11-data.js?v=20261012-21"></script><script src="record-data.js?v=20261012-21"></script><script src="v5-images.js?v=20261012-21"></script><script src="v7-images.js?v=20261012-21"></script><script src="v8-images.js?v=20261012-21"></script><script src="v5-atlas.js?v=20261012-21"></script><script src="v2-art.js?v=20261012-21"></script><script src="v4-art.js?v=20261012-21"></script><script src="v5-art.js?v=20261012-21"></script><script src="media-manifest.js?v=20261012-21"></script><script src="v5-media.js?v=20261012-21"></script><script src="hero-atlas-v15.js?v=20261012-21"></script><script src="hero-motion-v15.js?v=20261012-21"></script><script src="art.js?v=20261012-21"></script><script src="v8-npc.js?v=20261012-21"></script>
+<script src="world.js?v=20261012-21"></script><script src="missions.js?v=20261012-21"></script><script src="v2-action.js?v=20261012-21"></script><script src="v5-action.js?v=20261012-21"></script><script src="v2-missions.js?v=20261012-21"></script><script src="v4-missions.js?v=20261012-21"></script><script src="v5-missions.js?v=20261012-21"></script><script src="v7-missions.js?v=20261012-21"></script><script src="v8-missions.js?v=20261012-21"></script><script src="v11-missions.js?v=20261012-21"></script>
+<script src="v7-effects.js?v=20261012-21"></script><script src="v11-effects.js?v=20261012-21"></script><script src="storage.js?v=20261012-21"></script><script src="record-activities.js?v=20261012-21"></script><script src="app.js?v=20261012-21"></script>
+</body></html>

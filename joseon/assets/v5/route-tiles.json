@@ -1,0 +1,75 @@
+{
+  "file": "assets/v5/route-tiles.webp",
+  "size": [
+    1536,
+    1024
+  ],
+  "mode": "RGBA",
+  "sprites": [
+    {
+      "id": "mountain",
+      "rect": [
+        8,
+        204,
+        493,
+        586
+      ],
+      "alphaBounds": [
+        0,
+        8,
+        512,
+        1024
+      ],
+      "label": "소나무와 바위 군락",
+      "ref": "route5:0"
+    },
+    {
+      "id": "village",
+      "rect": [
+        516,
+        264,
+        498,
+        503
+      ],
+      "alphaBounds": [
+        513,
+        33,
+        1022,
+        1014
+      ],
+      "label": "조선 초가집",
+      "ref": "route5:1"
+    },
+    {
+      "id": "shelter",
+      "rect": [
+        1038,
+        225,
+        480,
+        561
+      ],
+      "alphaBounds": [
+        1031,
+        31,
+        1520,
+        958
+      ],
+      "label": "따뜻한 피란 쉼터",
+      "ref": "route5:2"
+    }
+  ],
+  "alphaRange": [
+    0,
+    254
+  ],
+  "boundaryAlphaMax": [
+    1,
+    1,
+    0,
+    0,
+    0,
+    0
+  ],
+  "hasTransparentBackground": true,
+  "cropNote": "Visible artwork alpha > 12 bounds plus 8px safe padding; atlas cell-edge alpha <= 1, no neighboring object crosses boundaries."
+}

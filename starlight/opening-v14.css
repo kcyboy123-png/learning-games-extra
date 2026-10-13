@@ -1,0 +1,88 @@
+html.opening-active, html.opening-active body { overflow: hidden; overscroll-behavior: none; }
+#opening-scene {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  overflow: clip;
+  color: #fff7df;
+  background: #162e2b;
+  box-shadow: none;
+}
+#opening-scene::backdrop { background: #162e2b; }
+#opening-scene .opening-backdrop {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(#132a2699, #132a26c9), url('assets/lumi-opening-v14.jpg') center 60% / cover;
+  filter: blur(24px);
+}
+#opening-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+#opening-scene .opening-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(#102c2980, transparent 27%, transparent 72%, #102c29dc);
+  pointer-events: none;
+}
+.opening-heading {
+  position: absolute;
+  top: max(30px, env(safe-area-inset-top));
+  left: 20px;
+  right: 20px;
+  text-align: center;
+  text-shadow: 0 2px 16px #13231fe0;
+  pointer-events: none;
+}
+.opening-heading p { margin: 0 0 8px; font-size: 12px; letter-spacing: .08em; color: #f7e5bd; }
+.opening-heading h2 { margin: 0 0 8px; font-size: clamp(26px, 4vw, 42px); font-weight: 700; }
+.opening-heading #opening-description { font-size: 13px; color: #fff6df; letter-spacing: .02em; }
+.opening-footer {
+  position: absolute;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  left: max(18px, env(safe-area-inset-left));
+  right: max(18px, env(safe-area-inset-right));
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+#opening-status { margin: 0; font-size: 12px; color: #f8edd2; text-shadow: 0 2px 8px #142d28; }
+.opening-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.opening-actions button {
+  min-height: 44px;
+  padding: 10px 15px;
+  border: 1px solid #f2dfb566;
+  border-radius: 24px;
+  background: #14362de6;
+  color: #fff7df;
+  font-size: 13px;
+  font-weight: 600;
+}
+.opening-actions button:hover { background: #285747; }
+.opening-actions button:focus-visible { outline: 3px solid #ffdda0; outline-offset: 3px; }
+.opening-actions #opening-skip { background: #efcc88; color: #382d1e; border-color: #efcc88; }
+.opening-progress { width: min(320px, 80vw); height: 3px; border-radius: 3px; background: #fff4d42e; overflow: hidden; }
+.opening-progress span { display: block; width: 0; height: 100%; background: #f5d591; }
+@media (max-height: 520px) and (min-width: 650px) {
+  .opening-heading { top: 28px; right: 70%; left: 20px; }
+  .opening-heading h2 { font-size: 24px; line-height: 1.5; }
+  .opening-footer { left: 71%; right: 14px; bottom: 25px; text-align: center; }
+  .opening-actions { gap: 6px; }
+  .opening-progress { width: 100%; }
+}
+@media (max-width: 360px) {
+  .opening-actions button { font-size: 12px; padding-inline: 12px; }
+  .opening-heading { top: max(20px, env(safe-area-inset-top)); }
+  .opening-heading h2 { font-size: 26px; }
+}
