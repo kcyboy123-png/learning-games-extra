@@ -23,7 +23,7 @@ window.installOpeningV14 = function (G) {
       <div class="opening-shade" aria-hidden="true"></div>
       <header class="opening-heading">
         <p>창용쌤의 역사 학습 게임</p>
-        <h2 id="opening-title">별빛 시간탐험대</h2>
+        <h2 id="opening-title">삼국시대 시간탐험대</h2>
         <p id="opening-description">루미와 함께, 역사 속으로.</p>
       </header>
       <footer class="opening-footer">

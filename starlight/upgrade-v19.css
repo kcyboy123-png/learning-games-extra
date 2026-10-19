@@ -1,0 +1,63 @@
+/* v19 layer: quiet idle friends, the short departure, and picture checks. Loaded last. */
+
+/* 1. Friends breathe, step a little and glance around now and then; most of the cycle is still.
+   Only the sprite moves, so the name tag, quest label and the button's tap area stay where they are. */
+.marker .npc-body{transform-origin:50% 92%;animation:npc-idle var(--idle-time,12s) ease-in-out var(--idle-delay,0s) infinite}
+@keyframes npc-idle{
+ 0%,16%,44%,80%,100%{transform:translateX(0) scale(1,1)}
+ 8%{transform:translateX(0) scale(1.01,1.025)}
+ 50%,56%{transform:translateX(-3px) scale(1,1)}
+ 60%,70%{transform:translateX(-3px) scale(-1,1)}
+ 74%{transform:translateX(-3px) scale(1,1)}
+}
+@media(prefers-reduced-motion:reduce){.marker .npc-body{animation:none}}
+
+/* 2. Departure: the still picture replaces the clip, so the progress line is not needed. */
+#opening-scene.still .opening-progress{visibility:hidden}
+
+/* 3. Picture checks reuse the memory-question layout. Pictures are never cropped. */
+.check-pictures{display:grid;grid-template-columns:repeat(var(--n,1),minmax(0,1fr));gap:8px}
+.check-pictures[data-count="2"]{--n:2}.check-pictures[data-count="3"]{--n:3}
+.check-figure{margin:0;display:flex;flex-direction:column;gap:5px;min-width:0}
+/* --fh is the frame height; sprite crops derive their width from it (like the enlarged view),
+   so a narrow column shrinks the whole crop instead of squeezing a fixed-height box. */
+.check-frame{--fh:clamp(140px,26dvh,210px);height:var(--fh);padding:6px;border-radius:14px;background:linear-gradient(125deg,#eef0dc,#f7ecd3);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.check-pictures:not([data-count="1"]) .check-frame{--fh:clamp(92px,17dvh,140px)}
+.check-frame>img{display:block;width:100%;height:100%;object-fit:contain}
+.check-frame .life-scene{width:min(100%,calc(var(--fh) - 12px));height:auto;aspect-ratio:1;margin:0 auto}
+/* Same half-sheet crop as .king-portrait.jangsu/.gwanggaeto; 3/4 is one portrait's true shape. */
+.check-frame .king-portrait{width:min(100%,calc((var(--fh) - 12px) * .75));height:auto;aspect-ratio:3/4;margin:0 auto}
+/* Each picture is a button that opens the enlarged view. */
+button.check-frame{position:relative;width:100%;border:0;color:inherit;font:inherit;cursor:zoom-in;-webkit-tap-highlight-color:transparent}
+button.check-frame:focus-visible{outline:3px solid #426b53;outline-offset:2px}
+.check-zoom-mark{position:absolute;right:5px;bottom:5px;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#fff9eae6;box-shadow:0 1px 4px #2a3b2a33;font-style:normal;font-size:14px;pointer-events:none}
+.check-zoom-tip{margin:6px 0 0;font-size:12px;color:#66745a;text-align:center}
+.check-zoom[open]{display:flex;flex-direction:column;align-items:center;gap:10px;width:min(960px,calc(100% - 20px));max-height:calc(100dvh - 20px);padding:12px;cursor:zoom-out;overflow:auto}
+.check-zoom figure{margin:0;width:100%;display:flex;flex-direction:column;gap:8px}
+.check-zoom-art{--h:min(70dvh,620px);height:var(--h);padding:6px;border-radius:14px;background:linear-gradient(125deg,#eef0dc,#f7ecd3);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.check-zoom-art>img{display:block;width:100%;height:100%;object-fit:contain}
+.check-zoom-art .life-scene{width:min(100%,calc(var(--h) - 12px));height:auto;aspect-ratio:1}
+.check-zoom-art .king-portrait{width:min(100%,calc((var(--h) - 12px) * .75));height:auto;aspect-ratio:3/4;margin:0}
+.check-zoom figcaption{font-size:15px;line-height:1.5;color:#4f5f45;text-align:center;word-break:keep-all}
+.check-zoom-close{min-width:120px}
+@media(max-height:500px){.check-zoom-art{--h:calc(100dvh - 130px)}}
+.check-figure figcaption{font-size:12px;line-height:1.45;color:#66745a;text-align:center;word-break:keep-all}
+.picture-check .review-dots{margin:0 0 10px}
+.review.picture-check .review-choices{grid-template-columns:1fr}
+.check-note{margin:4px 0 0;font-size:13px;color:#8a6a35;text-align:center}
+.check-rule{margin:10px 0 0;font-size:11px;line-height:1.6;color:#7f8a72;text-align:center;word-break:keep-all}
+.check-achieve{font-weight:700;color:#55703f}
+@media(max-width:700px){.picture-check h3{margin:4px 0 10px}.check-figure figcaption{font-size:11px}}
+@media(min-width:740px) and (orientation:landscape){
+ .review.picture-check{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px}
+ .check-frame{--fh:min(50dvh,380px)}
+ .check-pictures[data-count="2"] .check-frame{--fh:min(38dvh,290px)}
+ .check-pictures[data-count="3"] .check-frame{--fh:min(30dvh,220px)}
+ .check-figure figcaption{font-size:13px}
+ .picture-check .review-choice{min-height:52px}
+ .check-note,.check-rule{text-align:left}
+}
+@media(min-width:740px) and (orientation:landscape) and (max-height:620px){
+ .check-frame{--fh:min(46dvh,260px)}
+ .check-pictures:not([data-count="1"]) .check-frame{--fh:min(30dvh,170px)}
+}
