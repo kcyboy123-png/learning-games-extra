@@ -1,0 +1,222 @@
+/* ==========================================================================
+   생각별 수집단 · world.css  (collection.css 뒤에 로드)
+   홈 = 정원 탐험 맵. 배경 assets/exploration-map.png 없으면 그라디언트 폴백.
+   ========================================================================== */
+.world-home{padding-top:6px;display:flex;flex-direction:column;gap:12px}
+
+/* ---- 상단: 제목 · 탐험가 · 수집 수 ---- */
+.world-top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.world-title h1{margin:0;font-size:clamp(22px,3vw,30px);line-height:1.1;letter-spacing:-.02em}
+.world-title .eyebrow{margin:0 0 2px}
+.world-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hero-pick.world-hero{margin:0}
+.world-count{min-height:var(--tap);white-space:nowrap}
+
+/* ---- 구역 바로가기 ---- */
+.world-zones{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.wz-jump{
+  min-height:var(--tap);padding:8px 10px;border:2px solid transparent;border-radius:var(--radius-md);
+  background:var(--c-cream);box-shadow:0 3px 0 var(--c-line-strong);
+  font:inherit;font-weight:800;font-size:14px;color:var(--c-navy);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;line-height:1.15;
+}
+.wz-jump small{font-size:11px;font-weight:600;color:var(--c-navy-mute)}
+.wz-jump-mild{border-color:#bfe9d6}.wz-jump-medium{border-color:#ffd9a8}.wz-jump-spicy{border-color:#ffbfc6}
+.wz-jump:hover{transform:translateY(-1px)}
+.wz-jump:focus-visible{outline:3px solid var(--c-mint-deep);outline-offset:2px}
+
+/* ---- 프레임 / 뷰포트 / 스테이지 ---- */
+.world-frame{position:relative}
+.world-viewport{
+  position:relative;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;
+  height:clamp(380px,56vh,620px);border-radius:var(--radius-xl);
+  box-shadow:var(--shadow-card);border:4px solid #fff;
+  background:#b9e6c7;cursor:pointer;
+}
+.world-viewport:focus-visible{outline:4px solid var(--c-mint-deep);outline-offset:3px}
+.world-stage{position:absolute;left:0;top:0;will-change:transform;background:#b9e6c7}
+/* 2400x1500 월드: 스테이지 자체 배경은 끄고(뒤에 오는 expansion/rpg-polish 보다 높은 특이성),
+   기존 그림은 .world-ground 에 2.25배로 확대해 깔고 그 위에 코드 지형(SVG)을 그린다. */
+.world-frame .world-viewport .world-stage{background-image:none;background-color:#b9e6c7}
+.world-ground{position:absolute;inset:0;pointer-events:none;background-repeat:no-repeat;background-size:2400px 1500px;opacity:.9}
+.ground-meadow{background-image:url("assets/exploration-map.png")}
+.ground-forest,.ground-ice,.ground-harbor,.ground-stars{background-image:url("assets/regions-four.png");background-size:4800px 3000px}
+.ground-forest{background-position:left top}.ground-ice{background-position:right top}.ground-harbor{background-position:left bottom}.ground-stars{background-position:right bottom}
+/* 지형 SVG: 충돌 도형과 같은 데이터로 그려진다. 클릭은 스테이지로 통과 */
+.world-terrain{position:absolute;left:0;top:0;display:block;pointer-events:none}
+.ws-lantern{animation:ws-pulse 2.6s ease-in-out infinite}
+.ws-glow{animation:ws-breathe 5s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
+/* 장식 소품 (assets/terrain-props-v3.png · 3열 2행: 숲, 연못, 돌 아치 / 오두막, 수정, 등대). 없으면 아무것도 안 보임 */
+.world-props,.world-places{position:absolute;inset:0;pointer-events:none}
+.world-prop{position:absolute;display:block;background:url("assets/terrain-props-v3.png") no-repeat;background-size:300% 200%;opacity:.95}
+.prop-grove{background-position:0% 0%}.prop-pond{background-position:50% 0%}.prop-stonearch{background-position:100% 0%}
+.prop-cottage{background-position:0% 100%}.prop-crystalcluster{background-position:50% 100%}.prop-lighthouse{background-position:100% 100%}
+/* 이름 붙은 장소 · 매운맛 경고 */
+.world-place{
+  position:absolute;transform:translate(-50%,-50%);padding:6px 14px;border-radius:999px;
+  background:#fffdf8e6;box-shadow:var(--shadow-soft);color:var(--c-navy);text-align:center;line-height:1.15;white-space:nowrap;
+}
+.world-place b{display:block;font-size:15px;font-weight:900}
+.world-place small{display:block;font-size:11px;font-weight:700;color:var(--c-navy-mute)}
+.world-place.spicy{background:#2b1b4de8;color:#ffe7a6;box-shadow:0 0 0 3px #8c62d966,0 0 24px #8c62d9aa}
+.world-place.spicy small{color:#d9c7ff}
+.world-spicy-sign{
+  position:absolute;transform:translate(-50%,-50%) rotate(-3deg);padding:7px 14px;border-radius:10px;
+  background:#3a1d6be6;color:#ffd97a;border:3px dashed #ffd97a;font-size:13px;font-weight:900;white-space:nowrap;
+  box-shadow:0 0 18px #8c62d9aa;
+}
+/* 미니맵 (읽기 전용) */
+.world-minimap{
+  position:absolute;right:12px;top:12px;z-index:8;width:176px;aspect-ratio:1.6;border-radius:12px;overflow:hidden;
+  border:3px solid #fffdf8e6;box-shadow:var(--shadow-soft);background:#1f2d4d33;pointer-events:none;opacity:.94;
+}
+.world-minimap svg{display:block;width:100%;height:100%}
+
+/* 구역 영역 + HTML 라벨 */
+.wz{position:absolute;border-radius:36px;pointer-events:none}
+.wz-mild{background:#8fd7a833}.wz-medium{background:#c9d87d33}.wz-spicy{background:#ff9d7b33}
+.wz-label{
+  position:absolute;left:18px;top:14px;padding:8px 14px;border-radius:999px;
+  background:#fffdf8e6;box-shadow:var(--shadow-soft);font-weight:900;font-size:16px;color:var(--c-navy);
+  display:flex;flex-direction:column;line-height:1.1;
+}
+.wz-label small{font-size:11px;font-weight:700;color:var(--c-navy-mute)}
+
+/* ---- 친구 버튼 ---- */
+.wc{
+  position:absolute;transform:translate(-50%,-50%);padding:6px 6px 2px;border:0;background:transparent;
+  display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font:inherit;
+  min-width:var(--tap);min-height:var(--tap);
+}
+.wc .spirit{--size:96px;transition:transform .25s ease,filter .25s ease,opacity .25s ease}
+.wc-medium .spirit{--size:116px}.wc-spicy .spirit{--size:140px}
+.wc.hidden-friend .spirit{filter:brightness(0);opacity:.32}
+.wc.got .spirit{animation:wc-bob 3.2s ease-in-out infinite}
+.wc:nth-child(odd) .spirit{animation-delay:-1.4s}
+.wc-name{
+  padding:3px 10px;border-radius:999px;background:#fffdf8e6;font-size:13px;font-weight:800;color:var(--c-navy);
+  box-shadow:0 2px 0 var(--c-line-strong)
+}
+.wc.hidden-friend .wc-name{color:var(--c-navy-mute)}
+.wc:hover .spirit,.wc:focus-visible .spirit{transform:scale(1.06)}
+.wc:focus-visible{outline:3px solid var(--c-mint-deep);outline-offset:-2px;border-radius:20px}
+.wc.near .spirit{transform:scale(1.12);filter:drop-shadow(0 0 14px #ffe59a) drop-shadow(0 6px 6px #1f2d4d1f)}
+.wc.near.hidden-friend .spirit{opacity:.5}
+.wc.near .wc-name{background:var(--c-sun)}
+.wc.is-companion .wc-art{opacity:.35;filter:grayscale(.4) drop-shadow(0 6px 6px #1f2d4d1f)}
+.wc.is-companion .wc-name::after{content:" · 동행 중";font-weight:600;color:var(--c-mint-ink)}
+.wc::before{content:"";position:absolute;left:50%;bottom:22px;width:60%;height:14px;transform:translateX(-50%);border-radius:50%;background:#1f2d4d14;z-index:-1}
+
+/* ---- 플레이어 / 동행 ---- */
+.world-player,.world-companion{position:absolute;left:0;top:0;pointer-events:none;will-change:transform}
+.world-player{z-index:5}
+.world-companion{z-index:4}
+.world-hero-art.hero-art{width:124px;height:124px;margin:-116px 0 0 -62px;display:block}
+.world-player-shadow{position:absolute;left:-28px;top:-8px;width:56px;height:16px;border-radius:50%;background:#1f2d4d22}
+.moving .world-hero-art{animation:hero-walk .36s ease-in-out infinite}
+.world-companion-art.spirit{--size:72px;margin:-66px 0 0 -36px;display:block;animation:wc-bob 2.4s ease-in-out infinite}
+/* 구조 링: 방금 만난 친구 옆 재등장 */
+.wc.rescued::after,.world-player.rescued::after{
+  content:"";position:absolute;left:50%;top:50%;width:150px;height:150px;border-radius:50%;
+  border:4px solid var(--c-sun);box-shadow:0 0 0 6px #ffe59a55;transform:translate(-50%,-50%);
+  animation:rescue-ring 1.6s ease-out 3;pointer-events:none;
+}
+.world-player.rescued::after{top:-50px}
+
+/* ---- 만남 버튼 (뷰포트 하단 중앙) ---- */
+.world-encounter{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:9}
+.world-encounter[hidden]{display:none}
+.world-encounter-btn{min-height:52px;padding:0 26px;font-size:17px;box-shadow:var(--shadow-pop);animation:enc-pop .25s ease-out}
+
+/* ---- D-pad ---- */
+.world-dpad{
+  position:absolute;right:14px;bottom:14px;z-index:9;display:grid;gap:4px;
+  grid-template-columns:repeat(3,46px);grid-template-rows:repeat(3,46px);
+  grid-template-areas:". up ." "left . right" ". down .";
+}
+.world-dpad button{
+  width:46px;height:46px;border:0;border-radius:12px;background:#fffdf8d9;color:var(--c-navy);
+  font-size:16px;box-shadow:0 3px 0 var(--c-line-strong);cursor:pointer;touch-action:none;
+}
+.world-dpad [data-dir="up"]{grid-area:up}.world-dpad [data-dir="down"]{grid-area:down}
+.world-dpad [data-dir="left"]{grid-area:left}.world-dpad [data-dir="right"]{grid-area:right}
+.world-dpad button.held,.world-dpad button:active{background:var(--c-sun);transform:translateY(2px);box-shadow:0 1px 0 var(--c-line-strong)}
+.world-dpad button:focus-visible{outline:3px solid var(--c-mint-deep)}
+
+/* ---- 안내 · 목록 ---- */
+.world-guide{margin:0;text-align:center;font-size:13px;color:var(--c-navy-mute)}
+.world-guide kbd{padding:1px 6px;border-radius:6px;background:var(--c-cream);border:1px solid var(--c-line-strong);font:inherit;font-size:12px}
+.world-list{border-radius:var(--radius-lg);background:var(--c-cream);box-shadow:var(--shadow-soft);padding:6px 14px}
+.world-list summary{cursor:pointer;font-weight:800;padding:8px 0;min-height:var(--tap);display:flex;align-items:center}
+.world-list ul{list-style:none;margin:0 0 8px;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:6px}
+.wl-item{
+  width:100%;display:grid;grid-template-columns:32px 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center;text-align:left;
+  padding:6px 10px;min-height:var(--tap);border:1px solid var(--c-line);border-radius:var(--radius-sm);background:#fff;font:inherit;cursor:pointer;
+}
+.wl-item .spirit{grid-row:1/3}
+.wl-item b{font-size:14px}.wl-item small{font-size:11px;color:var(--c-navy-mute)}
+.wl-item:hover{background:var(--c-mint-soft)}
+.wl-item:focus-visible{outline:3px solid var(--c-mint-deep)}
+
+/* ---- 애니메이션 ---- */
+@keyframes wc-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes hero-walk{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-5px) rotate(2deg)}}
+@keyframes enc-pop{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+@keyframes rescue-ring{0%{opacity:1;transform:translate(-50%,-50%) scale(.5)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}}
+@keyframes ws-pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes ws-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+/* ---- 반응형: 태블릿 가로 1024 / 폰 세로 390 ---- */
+@media (max-width:1024px){
+  .world-viewport{height:clamp(360px,54vh,560px)}
+}
+@media (max-width:640px){
+  .world-home{gap:10px}
+  .world-top{align-items:center}
+  .world-title h1{font-size:22px}
+  .world-zones{gap:6px}
+  .wz-jump{font-size:13px;padding:6px 4px}
+  .wz-jump small{display:none}
+  .world-viewport{height:clamp(340px,52vh,520px);border-radius:var(--radius-lg)}
+  .wz-label{font-size:14px;padding:6px 10px}
+  .wc .spirit{--size:84px}.wc-medium .spirit{--size:100px}.wc-spicy .spirit{--size:120px}
+  .world-dpad{grid-template-columns:repeat(3,42px);grid-template-rows:repeat(3,42px);right:10px;bottom:10px}
+  .world-dpad button{width:42px;height:42px}
+  .world-encounter{left:10px;right:110px;transform:none;bottom:10px}
+  .world-encounter-btn{width:100%;font-size:15px;padding:0 12px}
+  .world-list ul{grid-template-columns:1fr}
+  .world-minimap{width:120px;right:8px;top:8px;border-width:2px}
+  .world-place b{font-size:13px}.world-place small{font-size:10px}
+}
+
+/* ---- 동작 줄이기 ---- */
+@media (prefers-reduced-motion:reduce){
+  .wc.got .spirit,.moving .world-hero-art,.world-companion-art.spirit,.world-encounter-btn,.wc.rescued::after,.world-player.rescued::after,.ws-lantern,.ws-glow{animation:none}
+  .wc .spirit,.wz-jump{transition:none}
+  .wc.rescued::after,.world-player.rescued::after{opacity:.8}
+}
+@media print{.world-frame,.world-dpad,.world-zones{display:none!important}}
+.spicy-warning{position:absolute;z-index:16;top:68px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);padding:12px 20px;border:1px solid #efc777;border-radius:14px;background:#211831ed;color:#ffe8ad;text-align:center;pointer-events:none;box-shadow:0 6px 28px #160e3266}
+.spicy-warning[hidden]{display:none}.spicy-warning b,.spicy-warning span{display:block}.spicy-warning span{font-size:13px;margin-top:4px}
+.world-frame .danger-zone .world-encounter{top:max(180px,45%)}
+.world-viewport.danger-zone{box-shadow:inset 0 0 65px #7a46af99}
+.world-viewport.encounter-jolt .world-weather{animation:encounter-flash .45s ease-out}
+.world-viewport.encounter-jolt{animation:encounter-jolt .3s ease-out}
+@keyframes encounter-jolt{0%,100%{translate:0 0}25%{translate:-3px 1px}55%{translate:3px -1px}80%{translate:-1px 0}}
+@keyframes encounter-flash{0%{background:#fff2b94d}100%{background:transparent}}
+@media(prefers-reduced-motion:reduce){.world-viewport.encounter-jolt,.world-viewport.encounter-jolt .world-weather{animation:none}}
+
+.world-field-guide{display:flex;gap:18px;align-items:center;margin:12px 0 18px;padding:14px 18px;border:1px solid #cfddcc;border-radius:20px;background:#f5f8ed;color:#244945}.world-field-guide>img{width:150px;height:96px;object-fit:cover;border-radius:12px}.world-field-guide b{font-size:17px}.world-field-guide p{margin:6px 0 10px;font-size:14px;line-height:1.6}.world-field-guide.field-forest{background:#eef5e9}.world-field-guide.field-ice{background:#edf7ff;border-color:#c3ddeb}.world-field-guide.field-harbor{background:#fff3e3;border-color:#efd5ad}.world-field-guide.field-stars{background:#f1edfc;border-color:#d3c7ec}.world-taste-counts{display:flex;gap:8px;flex-wrap:wrap}.world-taste-counts span{border-radius:24px;padding:5px 12px;font-size:13px;background:#fff;border:1px solid #cad9ca}.world-taste-counts b{font-size:13px}.world-taste-counts .taste-mild{color:#216d50}.world-taste-counts .taste-medium{color:#874b13}.world-taste-counts .taste-spicy{color:#634298}
+.world-viewport[data-region="forest"] .world-weather{box-shadow:inset 0 0 55px #234d3022;background:linear-gradient(125deg,#d6eaca0d,transparent 70%)}.world-viewport[data-region="ice"] .world-weather{box-shadow:inset 0 0 48px #e7f7ff55}.world-viewport[data-region="harbor"] .world-weather{background:linear-gradient(120deg,#ffc67b12,transparent 60%)}.world-viewport[data-region="stars"] .world-weather{box-shadow:inset 0 0 60px #39286f33}
+@media(max-width:600px){.world-field-guide{gap:10px;padding:12px}.world-field-guide>img{width:82px;height:100px}.world-field-guide b{font-size:15px}.world-field-guide p{font-size:12px}.world-taste-counts{gap:4px}.world-taste-counts span{padding:4px 7px;font-size:11px}.world-taste-counts b{font-size:11px}}
+
+.teacher-preview-bar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:16px 20px;margin-bottom:18px;border:2px solid #b395d2;border-radius:18px;background:#f5effd;color:#4e376e}.teacher-preview-bar p{margin:5px 0;font-size:14px}.teacher-preview-bar nav{display:flex;gap:8px;flex-wrap:wrap}.teacher-preview-bar a{padding:8px 12px;border-radius:12px;background:white;color:#4e376e;text-decoration:none}.teacher-preview-bar a[aria-current="page"]{background:#655087;color:white}.teacher-preview-help{padding:16px;border-radius:16px;background:#f5effd;margin-bottom:20px}
+
+/* Keep the map and movement controls together on the first exploration screen. */
+.exploration-home .world-home{gap:10px}
+.exploration-home .world-title .eyebrow{display:none}
+.exploration-home .world-top{align-items:center}
+.exploration-home .world-field-guide{margin:0}
+@media(min-width:641px){
+ .exploration-home .world-frame .world-viewport{height:clamp(280px,calc(100svh - 240px),680px)}
+}
