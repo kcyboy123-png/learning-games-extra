@@ -556,7 +556,7 @@ body.forest-cinema .cinema-bar{pointer-events:auto;}
 .quick-listen{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
 .view-bar{justify-content:flex-start;gap:8px;flex-wrap:wrap;}
 .view-bar .view-toggle{margin-left:auto;}
-body.forest-mode .workspace{background:#fffdf6eb;margin-bottom:24px;border-radius:22px;}
+body.forest-mode:not(.forest-cinema) .workspace{background:#fffdf6eb;margin-bottom:24px;border-radius:22px;}
 body.forest-mode .home,body.forest-mode .library,body.forest-mode .concert{position:relative;z-index:2;margin-top:var(--band);background:#fffdf6ed;border-radius:22px;padding:20px;}
 body.forest-mode .home .intro{background:none!important;min-height:0;padding:16px;}
 body.forest-mode .home .intro-copy{background:transparent;box-shadow:none;}
