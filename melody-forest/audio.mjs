@@ -37,7 +37,31 @@ export class Player {
       this.context = new Audio();
       this.master = this.context.createGain();
       this.master.gain.value = this.volume * .65;
-      this.master.connect(this.context.destination);
+      // Keep the recorded stereo attack dry; a quiet room return adds body without washing out notes.
+      this.room = this.context.createConvolver();
+      this.roomGain = this.context.createGain();
+      this.roomGain.gain.value = .13;
+      this.roomImpulse = this.context.createBuffer(2, Math.ceil(this.context.sampleRate * 1.4), this.context.sampleRate);
+      for (let channel = 0; channel < 2; channel++) {
+        const data = this.roomImpulse.getChannelData(channel);
+        let seed = 733 + channel * 419, smooth = 0;
+        for (let i = 0; i < data.length; i++) {
+          seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+          smooth = smooth * .65 + (seed / 4294967296 * 2 - 1) * .35;
+          data[i] = i < this.context.sampleRate * .018 ? 0 : smooth * Math.exp(-6 * i / data.length);
+        }
+      }
+      this.room.buffer = this.roomImpulse;
+      this.room.connect(this.roomGain);
+      this.roomGain.connect(this.master);
+      this.limiter = this.context.createDynamicsCompressor();
+      this.limiter.threshold.value = -6;
+      this.limiter.knee.value = 6;
+      this.limiter.ratio.value = 4;
+      this.limiter.attack.value = .003;
+      this.limiter.release.value = .2;
+      this.master.connect(this.limiter);
+      this.limiter.connect(this.context.destination);
       this.context.onstatechange = () => this.stateChanged();
     }
     if (this.context.state === 'suspended') await this.context.resume();
@@ -103,6 +127,7 @@ export class Player {
       voice.gain.disconnect();
     }
     this.voices.clear();
+    if (this.room) { this.room.buffer = null; this.room.buffer = this.roomImpulse; }
   }
 
   at(time, generation, callback) {
@@ -127,17 +152,21 @@ export class Player {
       const source = this.context.createBufferSource(), gain = this.context.createGain();
       source.buffer = sample.buffer;
       source.playbackRate.value = 2 ** ((pitch - root) / 12);
-      const length = duration * .98, release = Math.min(.16, length * .28);
+      const held = Math.max(.04, duration * .96);
+      const release = instrument === 'pluck' ? .18 : pitch < 60 ? .65 : .48;
+      const length = held + release;
       const volume = level * sample.scale;
       gain.gain.setValueAtTime(0, time);
       gain.gain.linearRampToValueAtTime(volume, time + .004);
-      gain.gain.setValueAtTime(volume, time + length - release);
-      gain.gain.linearRampToValueAtTime(0, time + length);
+      gain.gain.setValueAtTime(volume, time + held);
+      gain.gain.exponentialRampToValueAtTime(Math.max(.00001, volume * .001), time + length);
+      gain.gain.linearRampToValueAtTime(0, time + length + .015);
       source.connect(gain);
       gain.connect(this.master);
+      gain.connect(this.room);
       this.trackVoice(source, gain);
       source.start(time);
-      source.stop(time + length + .005);
+      source.stop(time + length + .02);
       return;
     }
     const partials = instrument === 'pad' ? [[.9988, 'sine', .35], [1.0012, 'sine', .35], [2, 'sine', .1], [3, 'sine', .035]]
@@ -233,13 +262,13 @@ export class Player {
       }
       for (const event of backing) {
         const time = origin + ((event.bar - start) * 4 + event.beat) * beatSeconds;
-        if (event.pitch === undefined) this.drum(event.instrument, time, event.duration * beatSeconds, event.level);
+        if (event.pitch === undefined) this.drum(event.instrument, time, event.duration * beatSeconds, event.level * 1.2);
         else {
-          this.tone(event.pitch, time, event.duration * beatSeconds, event.instrument, event.level);
+          this.tone(event.pitch, time, event.duration * beatSeconds, event.instrument, event.level * 1.2);
           if (onBackingNote) this.at(time, generation, () => onBackingNote(event.pitch));
         }
       }
-      this.at(origin + track.duration, generation, () => {
+      this.at(origin + track.duration + .7, generation, () => {
         this.stop();
         onEnd();
       });
@@ -254,11 +283,12 @@ export class Player {
 
   async preview(pitch, instrument = 'piano') {
     if (pitch === null) return false;
-    this.stop();
+    if (this.scheduled) this.stop();
+    else this.generation++; // Let earlier key strikes ring while cancelling stale sample loads.
     const generation = this.generation;
     if (!await this.ready(generation)) return false;
     if (SAMPLE_INSTRUMENTS.has(instrument) && !await this.loadPiano([pitch], generation)) return false;
-    this.tone(pitch, this.context.currentTime + .02, .55, instrument, .18);
+    this.tone(pitch, this.context.currentTime + .02, 1.1, instrument, .18);
     return true;
   }
 }
