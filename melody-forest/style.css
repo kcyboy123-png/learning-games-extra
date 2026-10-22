@@ -493,7 +493,7 @@ body.forest-cinema .cinema-bar button{min-height:52px;font-size:16px;}
 .forest-actions{gap:6px;}
 .forest-actions button{font-size:14px;padding:9px 12px;}
 @media(max-width:600px){.forest-card{width:min(320px,100%);padding:10px 12px;}.forest-intro{padding-top:12px;}.forest-card .eyebrow{display:none;}.forest-card h1{font-size:22px;}.forest-actions button{flex:1 1 45%;font-size:13px;padding:8px;}.forest-actions button:last-child{flex-basis:100%;}.forest-card p{font-size:14px;}}
-body.forest-mode:not(.forest-cinema) #forest-host{height:calc(var(--band) + 68px);bottom:auto;}
+body.forest-mode #forest-host{height:100%;bottom:0;}
 body.forest-mode:has(.forest-intro) #forest-host{height:100%;}
 @media(min-width:700px) and (max-height:850px){
  body.forest-mode{--band:130px;}
@@ -551,3 +551,16 @@ body.forest-cinema .cinema-bar{pointer-events:auto;}
 .forest-status:not(.sr-only){position:fixed;left:50%;top:45%;transform:translateX(-50%);background:#fffdf3e8;padding:12px 20px;border-radius:14px;z-index:3;}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
 .forest-sound-choice{display:flex;gap:10px;align-items:center;min-height:44px;margin:4px 0 10px}.forest-sound-choice input{width:22px;height:22px}
+
+/* A notebook floats inside the same forest on every screen. */
+.quick-listen{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.view-bar{justify-content:flex-start;gap:8px;flex-wrap:wrap;}
+.view-bar .view-toggle{margin-left:auto;}
+body.forest-mode .workspace{background:#fffdf6eb;margin-bottom:24px;border-radius:22px;}
+body.forest-mode .home,body.forest-mode .library,body.forest-mode .concert{position:relative;z-index:2;margin-top:var(--band);background:#fffdf6ed;border-radius:22px;padding:20px;}
+body.forest-mode .home .intro{background:none!important;min-height:0;padding:16px;}
+body.forest-mode .home .intro-copy{background:transparent;box-shadow:none;}
+body.forest-mode .entrance-control,body.forest-mode .home .forest-entry,body.forest-mode .concert-art{display:none;}
+.keyboard-panel .free-choice{margin:8px 0 0;}
+@media(max-width:600px){.quick-listen{flex:1 1 100%;}.quick-listen button{flex:1;}.view-bar .view-toggle{margin-left:0;}.palette{flex-wrap:wrap;}}
+@media print{body.forest-mode .home,body.forest-mode .library,body.forest-mode .concert{margin-top:0;background:white;}}

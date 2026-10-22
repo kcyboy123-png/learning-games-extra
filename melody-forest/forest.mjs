@@ -498,7 +498,8 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     camPos.lerp(goalPos, a); camLook.lerp(goalLook, a);
     camera.position.copy(camPos); camera.lookAt(camLook);
     // In compose the notebook covers the lower screen, so the shot is framed into the upper band; cinema uses the full frame.
-    const liftGoal = 0; state.lift += (liftGoal - state.lift) * (rm ? 1 : 1 - Math.exp(-dt * 2.5));
+    const notebook=state.phase==='compose'&&!state.cinema; camera.zoom+=((notebook?.45:1)-camera.zoom)*(rm?1:1-Math.exp(-dt*2.5));
+    const liftGoal = notebook ? .32 : 0; state.lift += (liftGoal - state.lift) * (rm ? 1 : 1 - Math.exp(-dt * 2.5));
     const w = renderer.domElement.width, h = renderer.domElement.height;
     if (state.lift > .001) camera.setViewOffset(w, h, 0, h * state.lift, w, h); else camera.clearViewOffset();
     let busy = false;
@@ -573,5 +574,6 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     }
   };
 }
+
 
 

@@ -16,23 +16,29 @@ export function forestReduce(phase, event) {
   return FLOW[event]?.[phase] ?? phase;
 }
 
-// The scene only shows on the edit screen; the cinematic view needs real sound (first beat), not just a play request.
+// The forest stays behind the library and backing choices; the cinematic view needs real sound (first beat), not just a play request.
 export function forestView({phase, screen, playing, audible}) {
-  const visible = !!phase && screen === 'edit';
-  return {visible, intro: visible && phase !== 'compose', cinema: visible && phase === 'compose' && !!playing && !!audible};
+  const visible = !!phase;
+  return {visible, intro: visible && screen === 'edit' && phase !== 'compose', cinema: visible && screen === 'edit' && phase === 'compose' && !!playing && !!audible};
 }
 
 // Exploring is seen through the player's own eyes; sitting and composing use the external seated shot.
 export function forestAtPiano(p) { return Number.isFinite(p.x) && Number.isFinite(p.z) && p.z >= .65 && p.z <= 1.8 && Math.abs(p.x) <= 1.05; }
 export function forestCamera(phase) { return phase === 'opening' ? 'opening' : phase === 'sit' || phase === 'compose' ? 'seated' : 'first-person'; }
-export const FOREST_OPENING_SECONDS = 3.8;
+export const FOREST_OPENING_SECONDS = 5.2;
 // A short high view settles into the exact walking eye; the picture fades well before the camera reaches it.
 export function forestOpeningShot(position, eye, progress) {
-  const t=Math.max(0,Math.min(1,progress)),u=Math.max(0,(t-.18)/.82),k=u*u*(3-2*u),v=Math.min(1,t/.18);
-  const from={x:position.x+3.4-.45*v*v*(3-2*v),y:position.y+3.1,z:position.z+3.8};
-  const look={x:position.x-.3,y:position.y+.85,z:position.z-2.7};
-  const blend=(a,b)=>({x:a.x+(b.x-a.x)*k,y:a.y+(b.y-a.y)*k,z:a.z+(b.z-a.z)*k});
-  return {position:blend(from,eye.position),target:blend(look,eye.target)};
+  const t=Math.max(0,Math.min(1,progress)),k=t*t*t*(t*(t*6-15)+10);
+  // An arcing dolly descends beside the child before easing into the walking eye.
+  const from={x:position.x+4.3,y:position.y+4.2,z:position.z+4.7};
+  const control={x:position.x-2.2,y:position.y+3.5,z:position.z+3.1};
+  const positionAt={},target={};
+  const look={x:position.x-.4,y:position.y+.85,z:position.z-3.2};
+  for(const axis of ['x','y','z']){
+    positionAt[axis]=(1-k)*(1-k)*from[axis]+2*(1-k)*k*control[axis]+k*k*eye.position[axis];
+    target[axis]=look[axis]+(eye.target[axis]-look[axis])*k;
+  }
+  return {position:positionAt,target};
 }
 // Standing is visible only during the opening; ordinary walking remains first person.
 export function forestCharacter(phase, sitT = 0, openingT = 0) {
@@ -40,7 +46,7 @@ export function forestCharacter(phase, sitT = 0, openingT = 0) {
   return {visible: opacity > 0, opacity};
 }
 
-// Six stages, one per featured backing. A stage is scenery only: choosing one never touches the song or its progression.
+// Six stages, one per featured backing. The UI protects the current song before changing maps.
 export const FOREST_MAPS = [
   {id: 'basic', name: '햇살이 머무는 숲', icon: '☀'},
   {id: 'pop', name: '리듬 놀이터', icon: '🎈'},
