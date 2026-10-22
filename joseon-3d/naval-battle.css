@@ -1,0 +1,131 @@
+/* 수군 학익진 협동 훈련 (naval-v9) — 모든 규칙은 .naval-v9 아래로 한정해요.
+   #dialog의 공용 button 규칙(min-height:48px, width:100% 등)보다 높은 특이성으로 덮어써요. */
+.naval-v9{color:#29413f;text-align:left;--nv-gold:#efd39b;--nv-ink:#1b4859;--nv-cream:#fff4ce}
+.naval-v9 .naval-defs{position:absolute;width:0;height:0;overflow:hidden}
+.naval-v9 .naval-sprite{display:block;width:100%;height:100%;overflow:hidden}
+.naval-v9 .naval-sprite image{image-rendering:auto}
+.naval-v9 button{box-sizing:border-box;width:auto;max-width:none;margin:0}
+.naval-v9 .naval-gold{display:inline-block;min-height:48px;padding:12px 22px;border-radius:999px;border:1px solid #d9b56b;background:linear-gradient(#f8e3b2,var(--nv-gold));color:#273d3e;font-weight:700;font-size:16px;box-shadow:0 8px 24px #13252d33;cursor:pointer}
+.naval-v9 .naval-gold:hover{filter:brightness(1.04)}
+.naval-v9 button:focus-visible{outline:3px solid #8b572a;outline-offset:3px}
+.naval-v9 .naval-note{font-size:13px;line-height:1.7;color:#5f6a56;margin:8px 0 0}
+.naval-v9 .naval-eyebrow{display:block;font-size:12px;letter-spacing:.08em;color:#805326;font-weight:700}
+.naval-v9 h3{font-size:clamp(20px,2.2vw,27px);line-height:1.35;margin:6px 0 10px;word-break:keep-all;color:#253e36}
+.naval-v9 p{font-size:15px;line-height:1.7;margin:6px 0}
+
+/* ---------- 출항 전 안내 ---------- */
+.naval-v9 .naval-intro{display:grid;grid-template-columns:1.1fr 1fr;gap:22px;align-items:center}
+.naval-v9 .naval-poster{position:relative;aspect-ratio:4/3;min-height:260px;border-radius:20px;overflow:hidden;background:#35647a;border:4px solid #31585f;isolation:isolate;box-shadow:inset 0 0 40px #0c354a66}
+.naval-v9 .naval-poster-sea{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(1.05)}
+.naval-v9 .naval-poster .naval-sprite,.naval-v9 .naval-poster-turtle{position:absolute;width:30%;height:36%;object-fit:contain;filter:drop-shadow(0 10px 6px #083444aa)}
+.naval-v9 .naval-poster-left{left:4%;bottom:26%;transform:rotate(10deg)}
+.naval-v9 .naval-poster-right{right:4%;bottom:26%;transform:rotate(-10deg)}
+.naval-v9 .naval-poster-turtle{left:35%;bottom:8%;width:32%;height:40%}
+.naval-v9 .naval-poster-enemy{left:50%;top:6%;width:22%;height:26%;transform:translateX(-50%) scale(.85);opacity:.9}
+.naval-v9 .naval-intro-text p:first-of-type{font-size:16px}
+.naval-v9 .naval-howto{padding-left:22px;margin:10px 0}
+.naval-v9 .naval-howto li{margin:9px 0;line-height:1.6;font-size:15px}
+.naval-v9 .naval-howto b{color:#8d5f1c}
+.naval-v9 .naval-retry-note{background:#f6e7cf;border-radius:10px;padding:10px 12px;font-size:14px;color:#7b4a1d}
+.naval-v9 .naval-sail{margin-top:14px;width:100%;max-width:360px}
+
+/* ---------- HUD ---------- */
+.naval-v9 .naval-hud{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:10px 14px;margin-bottom:10px;border-radius:12px;background:#e5ecd9;color:#284b36;font-size:15px}
+.naval-v9 .naval-hit{display:inline-block;font-size:17px}
+.naval-v9 .naval-hit.bump{animation:nv-bump .35s both}
+.naval-v9 .naval-breach{color:#8a3a2a;font-weight:700}
+.naval-v9 .naval-pause{margin-left:auto;min-height:44px;min-width:44px;padding:8px 14px;border-radius:999px;font-size:14px;background:#213b3de8;color:#fff9e9;border:1px solid #f7edce55}
+.naval-v9 .naval-pause[aria-pressed="true"]{background:var(--nv-gold);color:#273d3e}
+.naval-v9 .naval-pause:disabled{opacity:.5;cursor:default}
+
+/* ---------- 바다 훈련장 ---------- */
+.naval-v9 .naval-field{position:relative;height:clamp(280px,calc(100dvh - 340px),440px);border:4px solid #31585f;border-radius:22px;background:#35647a;overflow:hidden;isolation:isolate;user-select:none;-webkit-user-select:none}
+.naval-v9 .naval-water{position:absolute;inset:0;background:linear-gradient(#0e485b22,#123f5b88),url('assets/naval/naval-sea.webp') center/cover;animation:nv-sea-breathe 6s ease-in-out infinite alternate}
+.naval-v9 .naval-zone{position:absolute;left:8%;right:8%;top:40%;height:28%;border:2px dashed #f4d280aa;border-radius:50%;background:#f9d38118;pointer-events:none;z-index:1}
+.naval-v9 .naval-zone-ripples{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.naval-v9 .naval-zone-ripples path{fill:none;stroke:#ffe9b5;stroke-width:2;stroke-opacity:.6;stroke-dasharray:10 8;animation:nv-ripple 3s linear infinite}
+.naval-v9 .naval-zone>span{position:absolute;bottom:5px;left:50%;transform:translateX(-50%);white-space:nowrap;color:var(--nv-cream);font-size:12px;font-weight:700;text-shadow:0 1px 2px #124451}
+.naval-v9 .naval-ally{position:absolute;z-index:3;width:18%;height:29%;bottom:10%;pointer-events:none;filter:drop-shadow(0 10px 5px #083444aa)}
+.naval-v9 .naval-ally>img,.naval-v9 .naval-ally>.naval-sprite{width:100%;height:100%;object-fit:contain}
+.naval-v9 .naval-ally-0{left:3%;bottom:19%;transform:rotate(12deg)}
+.naval-v9 .naval-ally-1{left:41%;bottom:2%}
+.naval-v9 .naval-ally-2{right:3%;bottom:19%;transform:rotate(-12deg)}
+.naval-v9 .naval-ally b{position:absolute;left:50%;bottom:5px;transform:translateX(-50%);font-size:11px;white-space:nowrap;color:#fff3d5;background:#1b4859b0;padding:3px 8px;border-radius:20px}
+.naval-v9 .naval-flash{position:absolute;left:10%;top:15%;width:80%;height:40%;opacity:0;pointer-events:none}
+.naval-v9 .naval-ally.firing{filter:drop-shadow(0 0 8px #ffeb9c)}
+.naval-v9 .naval-ally.firing .naval-flash{animation:nv-cannon-flare .3s both}
+.naval-v9 .naval-shore{position:absolute;left:0;right:0;bottom:0;height:20px;line-height:20px;text-align:center;font-size:11px;color:#fff3d5;background:#214754;z-index:2}
+.naval-v9 .naval-ready{position:absolute;right:12px;top:10px;color:var(--nv-cream);font-size:12px;background:#214857ab;border-radius:12px;padding:8px 10px;z-index:6;transition:opacity .15s}
+.naval-v9 .reloading .naval-ready{opacity:.55}
+.naval-v9 .naval-warning{position:absolute;left:50%;top:14%;transform:translateX(-50%);z-index:7;background:#a64b3af0;color:white;padding:10px 18px;border-radius:14px;font-weight:700;text-align:center;font-size:15px;box-shadow:0 8px 24px #0c3e5188;animation:nv-rise .3s both;pointer-events:none}
+.naval-v9 .naval-warning small{display:block;font-size:12px;font-weight:400;margin-top:2px}
+
+/* 적선: 네이티브 버튼. 44px 이상 터치 영역 */
+.naval-v9 .naval-enemy{position:absolute;z-index:4;width:72px;height:88px;min-width:44px;min-height:44px;padding:0;border:0;border-radius:12px;background:transparent;color:inherit;filter:drop-shadow(0 8px 2px #0c3e5177);touch-action:manipulation;cursor:crosshair;transition:filter .12s}
+.naval-v9 .naval-enemy>.naval-sprite{width:100%;height:100%;pointer-events:none}
+.naval-v9 .naval-enemy>span{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:10px;line-height:1.2;background:#a64b3a;color:white;border-radius:9px;padding:1px 6px;white-space:nowrap;pointer-events:none}
+.naval-v9 .naval-enemy:hover{filter:drop-shadow(0 8px 2px #0c3e5177) brightness(1.08)}
+.naval-v9 .naval-enemy.in-zone{filter:drop-shadow(0 0 10px #ffd979) drop-shadow(0 8px 2px #0c3e5177)}
+.naval-v9 .naval-enemy.in-zone>span{background:#b8832a}
+.naval-v9 .naval-enemy:disabled{opacity:1;cursor:default}
+.naval-v9 .naval-enemy.sunk{animation:nv-sink .28s both;pointer-events:none}
+.naval-v9 .naval-enemy.breached{animation:nv-breach .3s both;pointer-events:none}
+.naval-v9 .naval-enemy:focus-visible{outline:3px solid #ffe9b5;outline-offset:2px}
+.naval-v9 .reloading .naval-enemy{cursor:progress}
+.naval-v9 .is-paused .naval-enemy,.naval-v9 .is-over .naval-enemy{pointer-events:none}
+
+/* 명중 효과 */
+.naval-v9 .naval-impact{position:absolute;z-index:5;pointer-events:none}
+.naval-v9 .naval-splash{position:absolute;width:110px;height:75px;transform:translate(-50%,-50%);animation:nv-splash .6s both}
+.naval-v9 .naval-impact b{position:absolute;white-space:nowrap;color:#fff3b6;font-size:18px;text-shadow:0 2px 2px #124451;animation:nv-hit-label .6s both;transform:translate(-50%,-50%)}
+.naval-v9 .naval-impact.is-combo b{color:#ffe28a;font-size:22px}
+
+/* 일시 정지 */
+.naval-v9 .naval-pause-layer{position:absolute;inset:0;z-index:9;display:grid;place-content:center;gap:12px;text-align:center;background:#10282bb3;backdrop-filter:blur(2px);color:#fff9e9;padding:20px}
+.naval-v9 .naval-pause-layer[hidden]{display:none}
+.naval-v9 .naval-pause-text{font-size:16px;font-weight:700;margin:0;text-shadow:0 2px 4px #0b2a33}
+.naval-v9 .naval-resume{justify-self:center}
+
+/* 결과 */
+.naval-v9 .naval-feedback{margin-top:12px;padding:12px 16px;border-radius:14px;background:#f1ecdd;font-size:15px;line-height:1.6;color:#2d443b}
+.naval-v9 .naval-feedback h3{margin:0 0 6px;font-size:clamp(18px,2vw,23px)}
+.naval-v9 .naval-feedback .naval-next,.naval-v9 .naval-feedback .naval-retry{margin-top:10px;width:100%;max-width:420px}
+
+/* 움직임 줄이기 */
+.naval-v9.is-reduced *,.naval-v9.is-reduced *::before,.naval-v9.is-reduced *::after{animation:none!important;transition:none!important}
+.naval-v9.is-reduced .naval-pause-layer{backdrop-filter:none}
+@media(prefers-reduced-motion:reduce){.naval-v9 *,.naval-v9 *::before,.naval-v9 *::after{animation:none!important;transition:none!important}}
+
+@keyframes nv-splash{from{scale:.2;opacity:1}to{scale:1.6;opacity:0}}
+@keyframes nv-hit-label{to{translate:0 -35px;opacity:0}}
+@keyframes nv-sink{to{opacity:0;translate:0 25px;rotate:15deg}}
+@keyframes nv-breach{to{opacity:0;translate:0 18px;scale:.85}}
+@keyframes nv-sea-breathe{to{filter:brightness(1.1);transform:scale(1.018)}}
+@keyframes nv-cannon-flare{0%{opacity:0;scale:.3}30%{opacity:1;scale:1}100%{opacity:0;scale:1.1}}
+@keyframes nv-ripple{to{stroke-dashoffset:-36}}
+@keyframes nv-bump{30%{transform:scale(1.12);color:#8d5f1c}}
+@keyframes nv-rise{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* 태블릿 가로 1024x768: 대화상자 높이 안에 들어오도록 */
+@media(max-width:1100px){.naval-v9 .naval-intro{gap:16px}.naval-v9 .naval-poster{min-height:220px}}
+@media(max-height:800px) and (min-width:700px){.naval-v9 .naval-field{height:clamp(260px,calc(100dvh - 330px),420px)}.naval-v9 .naval-poster{min-height:200px;aspect-ratio:16/10}.naval-v9 .naval-howto li{margin:6px 0}}
+
+/* 휴대폰 세로 390x844 */
+@media(max-width:700px){
+ .naval-v9 .naval-intro{grid-template-columns:1fr;gap:12px}
+ .naval-v9 .naval-poster{aspect-ratio:16/9;min-height:0;height:190px}
+ .naval-v9 .naval-poster .naval-sprite,.naval-v9 .naval-poster-turtle{height:46%}
+ .naval-v9 .naval-howto li,.naval-v9 p{font-size:14px}
+ .naval-v9 .naval-hud{padding:8px 10px;gap:6px 10px;font-size:13px}
+ .naval-v9 .naval-hit{font-size:15px;flex-basis:100%}
+ .naval-v9 .naval-pause{padding:6px 10px;font-size:13px}
+ .naval-v9 .naval-field{height:clamp(300px,46dvh,400px)}
+ .naval-v9 .naval-enemy{width:56px;height:72px}
+ .naval-v9 .naval-ally{width:21%;height:26%}
+ .naval-v9 .naval-ally b{font-size:9px;padding:2px 6px}
+ .naval-v9 .naval-zone>span{font-size:10px}
+ .naval-v9 .naval-ready{font-size:11px;padding:6px 8px}
+ .naval-v9 .naval-splash{width:80px;height:55px}
+ .naval-v9 .naval-feedback{font-size:14px;padding:10px 12px}
+}
+@media(max-width:700px) and (orientation:landscape){.naval-v9 .naval-field{height:clamp(220px,calc(100dvh - 260px),360px)}}

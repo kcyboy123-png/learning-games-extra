@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>조선 기록원정대 · 3D 탐험</title><link rel="stylesheet" href="assets/fonts/fonts.css"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="chapter.css"><link rel="stylesheet" href="game-menu.css"></head><body>
+<canvas id="world" aria-label="별하와 먹동이가 걷는 조선 마을"></canvas><div class="vignette" aria-hidden="true"></div>
+<header><div><span class="creator-credit">창용쌤 제작</span><span class="eyebrow" id="era">조선 기록원정대 · 공간 시범판</span><h1>시간의 길을 준비하고 있어요</h1></div><button id="motion" aria-pressed="false" hidden>움직임 줄이기</button></header>
+<section id="welcome"><div class="intro"><p class="eyebrow" id="chapter-number"></p><h2 id="chapter-title"></h2><p id="chapter-intro"></p><button id="start" disabled>마을을 준비하고 있어요…</button><button id="restart" class="restart" hidden>처음부터 다시하기</button></div></section>
+<main id="hud" hidden><aside id="quest"><span>오늘의 발걸음</span><strong id="progress"></strong><small id="distance"></small><button id="find-next">다음 기록으로 걸어가기 →</button></aside><div id="bottom"><div class="dpad" aria-label="이동 방향"><button data-dir="up" aria-label="앞으로 이동">↑</button><button data-dir="left" aria-label="왼쪽으로 이동">←</button><button data-dir="down" aria-label="뒤로 이동">↓</button><button data-dir="right" aria-label="오른쪽으로 이동">→</button></div><div class="actions"><p id="hint">사람이나 길을 눌러 이동해요</p><button id="talk" disabled>이야기가 있는 곳에 다가가요</button></div></div><p class="footnote">1~8장 공간 시범판 · 학습용 창작 배치 · 기존 공개 조선의 기록과 별도로 저장돼요.</p></main>
+<section id="prop-note" hidden aria-live="polite"><strong></strong><p></p><button>계속 둘러보기</button></section>
+<dialog id="dialog" aria-label="조선 기록원정대 학습 활동"></dialog><div id="status" role="status" aria-live="polite"></div>
+<script src="assets/hero-atlas-v7.js"></script><script src="assets/v5-atlas.js"></script><script type="module" src="chapter-app.mjs"></script>
+</body></html>
