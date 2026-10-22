@@ -1,0 +1,22 @@
+Salamander Grand Piano — recorded by Alexander Holm
+Instrument: Yamaha C5 acoustic grand piano.
+License: Creative Commons Attribution 3.0 Unported (CC BY 3.0)
+https://creativecommons.org/licenses/by/3.0/
+
+Source distribution and license notice:
+https://github.com/Tonejs/audio/tree/master/salamander
+https://github.com/Tonejs/audio/blob/master/salamander/README
+MP3 files downloaded 2026-10-16 from:
+https://raw.githubusercontent.com/Tonejs/audio/master/salamander/
+
+Bundled selection: Ds2, Fs2, A2, C3, Ds3, Fs3, A3, C4, Ds4, Fs4,
+A4, C5, Ds5, Fs5, A5, C6 (16 MP3 recordings).
+The files are unmodified copies of the Tone.js distribution. This application
+selects the nearest recording, changes playback rate to match the desired note,
+and applies gain normalization and a short release envelope during playback.
+These playback transformations are not changes to the distributed MP3 files.
+No endorsement by Alexander Holm or the Tone.js project is implied.
+
+The upstream README is included alongside this notice as UPSTREAM-README.txt.
+The app's original musical arrangements and synthesized pad/percussion are
+separate from these piano recordings. No Tone.js runtime code is included.
