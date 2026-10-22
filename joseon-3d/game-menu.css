@@ -9,3 +9,4 @@ header>.header-actions{flex:none;display:flex;gap:8px;align-items:flex-start;jus
 #game-menu p,#game-menu details p{word-break:keep-all;overflow-wrap:break-word}
 
 .creator-credit{display:block;font-size:11px;color:#f6e7be;margin-bottom:4px;letter-spacing:.04em}.intro h2,.intro p{word-break:keep-all;overflow-wrap:break-word}#game-menu .menu-heading{position:sticky;top:-26px;z-index:2;background:#fbf5e7;padding:12px 0;border-bottom:1px solid #ddd0b6}#menu-chapter-details{scroll-margin-top:100px}#menu-chapters a{scroll-margin-top:100px}@media(max-width:600px){#game-menu .menu-heading{top:-16px}.creator-credit{font-size:10px}header .eyebrow{letter-spacing:.04em}}
+#menu-chapters button:disabled{display:block;text-align:left;white-space:normal;color:#737267;background:#eae7dd;border:1px dashed #aaa58f;border-radius:8px;padding:10px 12px;min-height:60px;opacity:1;cursor:not-allowed}

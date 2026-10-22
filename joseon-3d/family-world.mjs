@@ -20,15 +20,21 @@ export const artSrc=name=>`assets/field-v18/${name}.png`;
 export function createFieldWorld({THREE,scene,camera,world,walk,stop,question,notice}){
  const observed=scenes.map(()=>new Set()),buttons=[],hits=[],rings=[],targets=fieldTargets.flat();
  let active=-1,pending=-1,pendingAt=null,focus=null,canUse=false,current={x:0,z:15};
- const panel=document.createElement('section');panel.id='field-notes';panel.hidden=true;
+ const panel=document.createElement('dialog');panel.id='field-notes';panel.hidden=true;panel.setAttribute('aria-labelledby','field-title');panel.setAttribute('tabindex','-1');
  panel.innerHTML=`<span class="eyebrow">사람들의 이야기 · 현장 조사</span><strong id="field-title">짐과 망루의 흔적을 살펴봐요</strong><figure id="field-figure" hidden><img id="field-image" alt="" decoding="async"><figcaption>학습을 위한 재구성 그림</figcaption></figure><p id="field-text" aria-live="polite"></p><div><button id="field-dismiss">계속 둘러보기</button><button id="field-question" hidden>두 단서로 까닭 생각하기 →</button></div>`;
  document.body.append(panel);
  const text=panel.querySelector('#field-text'),title=panel.querySelector('#field-title'),answer=panel.querySelector('#field-question');
  const figure=panel.querySelector('#field-figure'),img=panel.querySelector('#field-image');
  img.onerror=()=>{figure.hidden=true;};img.onload=()=>{figure.hidden=false;};
  function showArt(name,alt){figure.hidden=true;img.alt=alt;const src=artSrc(name);if(img.getAttribute('src')===src){figure.hidden=!(img.complete&&img.naturalWidth>0);return;}img.src=src;}
- panel.querySelector('#field-dismiss').onclick=()=>{panel.hidden=true;focus=null;};
- answer.onclick=()=>{if(active<0||observed[active].size!==2)return;panel.hidden=true;focus=null;question(active);};
+ function hidePanel(){if(panel.open)panel.close();panel.hidden=true;focus=null;}
+ function showPanel(){stop();panel.hidden=false;panel.inert=false;if(!panel.open)panel.showModal();panel.scrollTop=0;panel.focus();}
+ // Native modal focus prevents the world from receiving movement or E while a clue is read.
+ panel.addEventListener('keydown',e=>{e.stopPropagation();if(e.code==='KeyE')e.preventDefault();});
+ panel.addEventListener('cancel',e=>{e.preventDefault();hidePanel();});
+ panel.addEventListener('close',()=>{if(!panel.open){panel.hidden=true;focus=null;}});
+ panel.querySelector('#field-dismiss').onclick=hidePanel;
+ answer.onclick=()=>{if(active<0||observed[active].size!==2)return;hidePanel();question(active);};
  const wood=world.clueMaterials.wood.clone();wood.color.set(0x807465);
  const ruin=new THREE.Group();ruin.position.set(-8.7,0,13.1);scene.add(ruin);
  function beam(x,y,z,w,h,d,rz=0){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),wood);m.position.set(x,y,z);m.rotation.z=rz;m.castShadow=true;ruin.add(m);}
@@ -78,7 +84,7 @@ export function createFieldWorld({THREE,scene,camera,world,walk,stop,question,no
  function inspect(i,arrived=false){
   if(active<0||!canUse||Math.floor(i/2)!==active)return;
   const p=targets[i],s=scenes[active],seen=observed[active],k=i%2;
-  panel.hidden=true;focus=null;
+  hidePanel();
   if(!withinReach(current,p,REACH,world)){
    const go=chooseApproach(world,current,p,{walkable,route});
    if(!go||!walk(go)){pending=-1;pendingAt=null;notice('단서 옆의 열린 길로 조금 더 다가가 주세요.');}
@@ -89,21 +95,21 @@ export function createFieldWorld({THREE,scene,camera,world,walk,stop,question,no
   title.textContent=`${s.clues[k].name} · ${seen.size}/2`;
   showArt(fieldArt[active][k],`${s.clues[k].name} — 학습용 재구성 그림`);
   text.textContent=s.clues[k].text+' “'+s.voice+'”'+(active===2?' 모든 승려나 불교 전체가 같았다는 뜻은 아니에요.':'');
-  answer.hidden=seen.size!==2;panel.hidden=false;
+  answer.hidden=seen.size!==2;showPanel();
  }
  return{
-  activate(i=0){active=i;pending=-1;pendingAt=null;focus=null;title.textContent=`${scenes[i].name} · 단서 ${observed[i].size}/2`;showArt(introArt[i],`${scenes[i].name} 장면을 학습용으로 재구성한 그림`);text.textContent=`“${scenes[i].voice}” 두 단서를 누르거나, 가까이 가서 E키로 살펴보세요.`;answer.hidden=observed[i].size!==2;panel.hidden=false;},
+  activate(i=0){active=i;pending=-1;pendingAt=null;focus=null;title.textContent=`${scenes[i].name} · 단서 ${observed[i].size}/2`;showArt(introArt[i],`${scenes[i].name} 장면을 학습용으로 재구성한 그림`);text.textContent=`“${scenes[i].voice}” 두 단서를 누르거나, 가까이 가서 E키로 살펴보세요.`;answer.hidden=observed[i].size!==2;showPanel();},
   pick(ray){if(active<0||!canUse)return false;const h=ray.intersectObjects(hits.slice(active*2,active*2+2),false)[0];if(!h)return false;inspect(h.object.userData.clue);return true;},
-  interact(){if(active<0||!canUse)return false;if(!panel.hidden){if(observed[active].size===2)answer.onclick();else {panel.hidden=true;focus=null;}return true;}const i=nearest();if(i<0)return false;inspect(i);return true;},
-  actionLabel(){if(active<0||!canUse)return '';if(!panel.hidden)return observed[active].size===2?'까닭 생각하기 · E':'계속 둘러보기 · E';const i=nearest();return i<0?'':`${labels[active][i%2]} 살펴보기 · E`;},
-  cancel(){pending=-1;pendingAt=null;focus=null;panel.hidden=true;},
+  interact(){if(panel.open)return true;if(active<0||!canUse)return false;const i=nearest();if(i<0)return false;inspect(i);return true;},
+  actionLabel(){if(active<0||!canUse)return '';if(panel.open)return '단서창의 버튼을 눌러 계속해요';const i=nearest();return i<0?'':`${labels[active][i%2]} 살펴보기 · E`;},
+  cancel(){pending=-1;pendingAt=null;hidePanel();},
   getFocus:()=>focus,
   count:()=>active<0?0:observed[active].size,
   isActive:()=>active>=0,
-  isOpen:()=>!panel.hidden&&canUse,
+  isOpen:()=>panel.open,
   update(pos,enabled,done,time,reduced){
    current=pos;canUse=enabled&&active>=0&&!done.includes(active);
-   if(active>=0&&done.includes(active)){active=-1;panel.hidden=true;focus=null;pending=-1;pendingAt=null;}
+   if(active>=0&&done.includes(active)){active=-1;hidePanel();pending=-1;pendingAt=null;}
    document.body.classList.toggle('investigating',active>=0&&canUse);
    if(pending>=0&&pendingAt&&canUse&&Math.hypot(pos.x-pendingAt.x,pos.z-pendingAt.z)<.3)inspect(pending,true);
    const placed=[];
@@ -116,7 +122,7 @@ export function createFieldWorld({THREE,scene,camera,world,walk,stop,question,no
     buttons[i].textContent=`${v.x<-.85?'← ':v.x>.85?'→ ':''}${seen.has(i%2)?'✓':'＋'} ${labels[Math.floor(i/2)][i%2]}`;
     rings[i].visible=same&&canUse;rings[i].material.opacity=seen.has(i%2)?.22:reduced?.6:.55+Math.sin(time*2)*.12;
    });
-   panel.inert=!canUse;
+   panel.inert=false;
   }
  };
 }
