@@ -3,7 +3,7 @@
    좌표(--x0 --y0 --x1 --y1 --lift --ang --nw --nh --travel)는 effects.mjs가 발사 때 한 번 재서 .fx에 넣는다. */
 
 /* ---------- 배우 상자: 그림 너비·높이 대비 비율. 부모가 그림에 맞춰 조정한다 ---------- */
-.stage { --actor-l: .02; --actor-t: .46; --actor-w: .34; --actor-h: .48; }
+.stage { --spring:cubic-bezier(.34,1.56,.64,1); --settle:cubic-bezier(.22,1,.36,1); --prepare:150ms; --actor-l: .02; --actor-t: .46; --actor-w: .34; --actor-h: .48; }
 .actor {
   position: absolute; pointer-events: none;
   left: calc(var(--actor-l) * 100%); top: calc(var(--actor-t) * 100%);
@@ -26,8 +26,8 @@
 
 .actor.firing .actor-sprite {
   animation:
-    actor-frames var(--frames-ms) step-end both,                     /* 1 → 2 → 3 → 0 */
-    actor-recoil .55s cubic-bezier(.2, .9, .3, 1.15);                /* 반동은 변형으로만 */
+    actor-frames var(--frames-ms) step-end var(--prepare) forwards,                     /* 1 → 2 → 3 → 0 */
+    actor-recoil .6s var(--settle);                /* 반동은 변형으로만 */
 }
 /* step-end: 각 값은 다음 키프레임까지 유지된다. 햄찌 볼 가득→뿜→깜빡, 펭귄 발사→엉덩방아→눈 모자 쓰고 섬, 토끼 귀 젖힘→회복→정돈 */
 @keyframes actor-frames {
@@ -37,9 +37,11 @@
   100% { background-position: 0 0; }
 }
 @keyframes actor-recoil {
-  0%   { transform: none; }
-  18%  { transform: translate(var(--kick-x), var(--kick-y)) rotate(var(--kick-rot)); }
-  55%  { transform: translate(calc(var(--kick-x) * -.25), 0) rotate(calc(var(--kick-rot) * -.3)); }
+  0% { transform: none; }
+  25% { transform: translate(1%, 1.5%) scale(1.06,.94); }
+  38% { transform: translate(var(--kick-x), var(--kick-y)) rotate(var(--kick-rot)) scale(.95,1.05); }
+  58% { transform: translate(.5%,0) rotate(1deg) scale(1.02,.98); }
+  78% { transform: scale(.995,1.005); }
   100% { transform: none; }
 }
 
@@ -63,13 +65,13 @@
    중심 맞춤은 margin으로 해서 개별 translate/rotate 속성이 제 중심으로 돈다 */
 .shot {
   position: absolute; left: 0; top: 0;
-  animation: shot-fly var(--travel) linear forwards;
+  opacity:0; animation: shot-fly var(--travel) cubic-bezier(.22,.55,.48,1) var(--prepare) forwards;
 }
 .shot-body {
   position: absolute; left: 0; top: 0; display: block;
   --bw: calc(2.4 * var(--u)); --bh: calc(2.4 * var(--u));
   width: var(--bw); height: var(--bh); margin: calc(var(--bh) / -2) 0 0 calc(var(--bw) / -2);
-  animation: shot-arc var(--travel) both;
+  animation: shot-arc var(--travel) var(--prepare) both;
 }
 @keyframes shot-fly {
   0%   { transform: translate(var(--x0), var(--y0)); opacity: 1; }
@@ -88,7 +90,7 @@
   background: linear-gradient(90deg, #2b1a0f 0 30%, #e9d8b4 30% 48%, #2b1a0f 48% 72%, #e9d8b4 72%);
   box-shadow: inset 0 0 0 .18cqw #2b1a0f;
   rotate: 0deg;
-  animation: shot-arc var(--travel) both, spin .32s linear infinite;
+  animation: shot-arc var(--travel) var(--prepare) both, spin .32s var(--settle) var(--prepare) infinite;
 }
 @keyframes spin { to { rotate: 360deg; } }
 /* 펭귄: 포구에서 눈뭉치가 둥실 날아간다 */
@@ -102,16 +104,24 @@
   --bw: calc(2.6 * var(--u)); --bh: calc(5.2 * var(--u));
   background: linear-gradient(180deg, #5cb648 0 24%, #ff8c3a 24%);
   clip-path: polygon(50% 0, 100% 24%, 64% 100%, 36% 100%, 0 24%);
-  rotate: calc(var(--ang) + 90deg);
+  animation: shot-arc var(--travel) var(--prepare) both, carrot-turn var(--travel) var(--settle) var(--prepare) both;
 }
-.shot.rabbit::before {   /* 당근 뒤에 깔리는 연기 (::before라 몸통보다 아래에 그려진다) */
-  content: ''; position: absolute; left: 0; top: 0;
-  width: calc(2.2 * var(--u)); height: calc(2.2 * var(--u)); border-radius: 50%;
-  margin: calc(-1.1 * var(--u)) 0 0 calc(-1.1 * var(--u));
-  background: radial-gradient(circle, rgba(255, 255, 255, .95), rgba(255, 255, 255, 0) 70%);
-  animation: smoke .3s ease-out infinite;
+@keyframes carrot-turn {
+  from { rotate:calc(var(--ang) - 120deg); }
+  50% { rotate:calc(var(--ang) - 90deg); }
+  to { rotate:calc(var(--ang) - 60deg); }
 }
-@keyframes smoke { 0% { scale: .6; opacity: .9; } 100% { scale: 1.6; opacity: 0; } }
+.muzzle-smoke { position:absolute;left:var(--x0);top:var(--y0); }
+.cotton {
+ position:absolute;width:3.2cqw;height:2.8cqw;border-radius:48%;
+ background:radial-gradient(ellipse at 35% 30%,#fffef9,#eee8dc 65%,#ddd4c300 75%);
+ opacity:0;animation:cotton-puff .65s var(--settle) var(--prepare) forwards;
+}
+@keyframes cotton-puff {
+ 0% { transform:translate(-50%,-50%) scale(.2);opacity:.9; }
+ 25% { opacity:.8; }
+ 100% { transform:translate(calc(-50% + (var(--i) - 2) * 1.5cqw),calc(-50% - (var(--i) + 1) * .7cqw)) scale(1.7);opacity:0; }
+}
 
 /* ---------- 결과 장식: 숫자 중심(--x1 --y1)에 --travel 뒤 나타나 숫자 뒤에서 열린다 ---------- */
 .hit { position: absolute; left: 0; top: 0; transform: translate(var(--x1), var(--y1)); }
@@ -122,7 +132,7 @@
 .puff {
   width: calc(var(--nh) * .9); height: calc(var(--nh) * .9); border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 255, 255, .85), rgba(255, 255, 255, 0) 70%);
-  animation: puff .55s ease-out var(--travel) both;
+  animation: puff .55s ease-out calc(var(--prepare) + var(--travel)) both;
 }
 @keyframes puff { 0% { transform: translate(-50%, -50%) scale(.2); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; } }
 
@@ -131,7 +141,7 @@
   width: calc(4 * var(--u)); height: calc(8 * var(--u));
   background: repeating-linear-gradient(90deg, #2b1a0f 0 .45cqw, #e9d8b4 .45cqw .9cqw);
   box-shadow: inset 0 0 0 .2cqw #2b1a0f;
-  animation: shell var(--decor-ms) cubic-bezier(.2, .9, .3, 1.1) var(--travel) both;
+  animation: shell var(--decor-ms) var(--spring) calc(var(--prepare) + var(--travel)) both;
 }
 .shell.left  { --dir: -1; border-radius: 100% 0 0 100% / 50% 0 0 50%; }
 .shell.right { --dir: 1;  border-radius: 0 100% 100% 0 / 0 50% 50% 0; }
@@ -148,7 +158,7 @@
   width: calc(var(--nw) + 9 * var(--u)); height: calc(var(--nh) + 4 * var(--u)); border-radius: 50%;
   background: radial-gradient(ellipse at 50% 45%, #ffffff 55%, #eaf4fd 80%, #cfe3f5);
   box-shadow: 0 0 0 .35cqw rgba(190, 216, 240, .9), 0 .5cqw 1cqw rgba(70, 110, 150, .18);
-  animation: stamp var(--decor-ms) ease-out var(--travel) both;
+  animation: stamp var(--decor-ms) ease-out calc(var(--prepare) + var(--travel)) both;
 }
 @keyframes stamp {
   0%   { transform: translate(-50%, -50%) scale(.25, .25); opacity: 0; }
@@ -161,7 +171,7 @@
 .chip {
   width: calc(1.3 * var(--u)); height: calc(1.3 * var(--u)); border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #fff, #d6ecff);
-  animation: chip .7s cubic-bezier(.1, .7, .3, 1) var(--travel) both;
+  animation: chip .7s cubic-bezier(.1, .7, .3, 1) calc(var(--prepare) + var(--travel)) both;
 }
 @keyframes chip {
   0%   { transform: translate(-50%, -50%) scale(.4); opacity: 1; }
@@ -174,7 +184,7 @@
   border-radius: 100% 0 100% 0;
   background: linear-gradient(160deg, #8fd36a, #4ea33a 70%);
   box-shadow: inset 0 0 0 .18cqw rgba(40, 90, 30, .35);
-  animation: leaf var(--decor-ms) cubic-bezier(.2, .9, .3, 1.2) var(--travel) both;
+  animation: leaf var(--decor-ms) var(--spring) calc(var(--prepare) + var(--travel)) both;
 }
 @keyframes leaf {
   0%   { transform: translate(-50%, -50%) rotate(var(--la)) scale(0); opacity: 0; }
@@ -216,10 +226,20 @@
 .actor.firing::after {
  content:var(--cue);position:absolute;right:2%;top:12%;font:700 clamp(20px,3cqw,44px)/1.2 SUIT;
  color:var(--ink);white-space:nowrap;text-shadow:2px 2px white,-2px -2px white,2px -2px white,-2px 2px white;
- animation:comic-pop .85s ease-out both;pointer-events:none;
+ animation:comic-pop .85s var(--spring) var(--prepare) both;pointer-events:none;
 }
 @keyframes comic-pop { 0%{opacity:0;transform:translateY(10px) scale(.5) rotate(-9deg)} 12%,65%{opacity:1;transform:translateY(0) scale(1) rotate(5deg)}100%{opacity:0;transform:translateY(-15px) scale(.95)} }
 @media(prefers-reduced-motion:reduce){.actor.firing::after{display:none}}
 /* Warm seed husks and leaf veins match the felt palette. */
 .shell { background:repeating-linear-gradient(100deg,transparent 0 8px,#f6dfacaa 9px 11px,transparent 12px 19px),linear-gradient(100deg,#332419,#a07847 45%,#61452c);box-shadow:inset 0 0 0 1px #76512d,inset 3px 2px 5px #ffe8b34d; }
 .leaf::after {content:"";position:absolute;width:2px;height:72%;background:#d4eda37a;left:50%;top:14%;transform:rotate(32deg);border-radius:50%;}
+
+/* Lift the painted felt plate too; the rest of the scene stays still. */
+@media(min-aspect-ratio:1/1) and (prefers-reduced-motion:no-preference) {
+ .stage.impact::before {
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:inherit;clip-path:ellipse(22.5% 29% at 50% 51%);
+  transform-origin:50% 51%;animation:plate-impact .32s cubic-bezier(.22,1,.36,1) both;
+ }
+}
+@keyframes plate-impact { 0%,100% { transform:scale(1); } 40% { transform:scale(1.03); } }

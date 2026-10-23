@@ -88,8 +88,8 @@ button { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-colo
 }
 .number[data-len="3"] { font-size: 13.5cqw; letter-spacing: -.06em; }
 .stage[data-phase="idle"] .number { color: color-mix(in srgb, var(--ink) 55%, #fff); }
-.result.pop .number { animation: pop .25s cubic-bezier(.2, 1.4, .4, 1); }
-@keyframes pop { 0% { transform: scale(.55); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.result.pop .number { animation: pop .42s cubic-bezier(.22,1,.36,1); }
+@keyframes pop { 0% { transform: scale(.3); } 48% { transform: scale(1.12); } 76% { transform: scale(.97); } 100% { transform: scale(1); } }
 .caption {
   margin: 0; font-size: clamp(12px, 2.1cqw, 30px); font-weight: 700; color: var(--ink);
   text-shadow: 0 .12cqw 0 #fff, 0 0 .9cqw rgba(255, 255, 255, .95);
@@ -256,3 +256,17 @@ body { background:#efe4cf; }
  .stage[data-phase="exhausted"] .fire { font-size:15px; }
 }
 
+
+/* Same physical feedback for mouse, touch and Space. */
+.fire.pressed { animation:button-press .42s cubic-bezier(.34,1.56,.64,1); }
+.fire:active { transform:translateY(3px) scale(.97); }
+@keyframes button-press {
+ 0%,35% { transform:translateY(3px) scale(.97); }
+ 68% { transform:translateY(-1px) scale(1.015); }
+ 100% { transform:none; }
+}
+.board.impact { animation:board-impact .32s cubic-bezier(.22,1,.36,1); }
+@keyframes board-impact { 0%,100% { scale:1; } 40% { scale:1.03; } }
+@media(prefers-reduced-motion:reduce) {
+ .fire.pressed,.board.impact { animation:none; }
+}

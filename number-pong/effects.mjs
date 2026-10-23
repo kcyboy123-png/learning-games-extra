@@ -2,9 +2,10 @@
 // 배경 전체는 절대 움직이지 않는다. 움직이는 것은 왼쪽 아래 배우(친구+대포) 스프라이트, 발사체, 숫자 뒤 결과 장식뿐이다.
 // 흐름: 발사 → 배우 4프레임(발사/반동 → 우스꽝 회복 → 깜빡/정돈 → 대기) + 발사체가 숫자 중심으로 날아감
 //      → 도착 시각(--travel)에 테마 장식이 숫자 뒤에서 열림 → hold 뒤 전부 정리.
-// 숫자는 render()가 먼저 적어 두므로 연출은 숫자를 가리거나 늦추지 않는다.
+// 번호는 준비 동작과 비행이 끝나는 순간 표시한다.
 // DOM 측정(getBoundingClientRect)은 발사 때 한 번뿐이고, 그 뒤는 CSS 애니메이션이 맡는다.
 
+export const PREPARE_MS = 150;
 export const FX = Object.freeze({
   // muzzle: 발사체가 나오는 자리(배우 상자 너비·높이 대비 비율). 햄찌는 입, 나머지는 포구.
   // lift: 포물선 높이(무대 높이 대비). travel: 비행 ms. hold: 연출 전체 정리 시각 ms. drop: 당근 떨어질 확률.
@@ -82,7 +83,7 @@ export function createEffects({
   function fire(themeId) {
     clear();
     const spec = FX[themeId] ?? FX.hamster;
-    if (sound) pop(themeId);
+    if (sound) pop(themeId, reducedMotion.matches ? 0 : PREPARE_MS);
     if (reducedMotion.matches) return null;
 
     const a = computeAnchors(spec, stage.getBoundingClientRect(), actor.getBoundingClientRect(), number.getBoundingClientRect());
@@ -92,10 +93,17 @@ export function createEffects({
     s.setProperty('--lift', px(a.lift)); s.setProperty('--ang', `${Math.round(a.angle)}deg`);
     s.setProperty('--nw', px(a.nw)); s.setProperty('--nh', px(a.nh));
     s.setProperty('--travel', `${spec.travel}ms`);
+    s.setProperty('--prepare', `${PREPARE_MS}ms`);
 
     const shot = make('i', `shot ${themeId}`);
     shot.append(make('i', 'shot-body'));
-    fx.replaceChildren(shot, buildHit(themeId, a));
+    const smoke = make('span', 'muzzle-smoke');
+    for (let i = 0; i < 5; i++) {
+      const puff = make('i', 'cotton');
+      puff.style.setProperty('--i', i);
+      smoke.append(puff);
+    }
+    fx.replaceChildren(shot, buildHit(themeId, a), smoke);
 
     void actor.offsetWidth;          // 같은 프레임 안에서 클래스를 다시 붙여도 애니메이션이 처음부터 돌도록
     actor.classList.add('firing');
@@ -109,13 +117,13 @@ export function createEffects({
   }
 
   // 아주 짧은 테마 효과음. 사용자 동작(클릭·스페이스)에서만 불리고, 음악이나 자동 재생은 없다.
-  function pop(themeId) {
+  function pop(themeId, delay) {
     try {
       const Ctx = globalThis.AudioContext || globalThis.webkitAudioContext;
       if (!Ctx) return;
       audio ??= new Ctx();
-      if (audio.state === 'suspended') audio.resume();
-      const t = audio.currentTime;
+      if (audio.state === 'suspended') audio.resume().catch(() => {});
+      const t = audio.currentTime + delay / 1000;
       const gain = audio.createGain();
       gain.gain.setValueAtTime(0.0001, t);
       gain.gain.exponentialRampToValueAtTime(0.06, t + 0.01);

@@ -4,7 +4,7 @@ import {
 } from './picker.mjs?v=4';
 import { parseTotal, remainingText } from './format.mjs';
 import { getTheme, loadTheme, nextTheme, regionStyle, saveTheme, THEME_KEY, THEMES } from './themes.mjs?v=2';
-import { createEffects } from './effects.mjs?v=2';
+import { createEffects, FX, PREPARE_MS } from './effects.mjs?v=3';
 
 const $ = id => document.getElementById(id);
 const el = {
@@ -24,6 +24,13 @@ let themeId = loadTheme(storage);
 let spaceHeld = false;   // Space를 누르고 있는 동안 다시 발사하지 않는다
 let busyUntil = 0;       // 팝 연출 중 겹치는 발사(클릭+Space, 더블클릭)를 막는다
 let liveTimer = 0;
+let revealTimer = 0;
+function cancelReveal() {
+  clearTimeout(revealTimer); revealTimer = 0;
+  el.board.classList.remove('impact');
+  el.stage.classList.remove('impact');
+  el.fire.classList.remove('pressed');
+}
 
 // ---------- 저장 ----------
 function persist() {
@@ -51,6 +58,7 @@ function ask(message) {
 
 // ---------- 테마 ----------
 function applyTheme(id, { say = false } = {}) {
+  cancelReveal();
   themeId = id;
   const theme = getTheme(id);
   effects.clear();                 // 이전 친구의 발사체·장식이 새 장면에 남지 않게 한다 (번호는 그대로)
@@ -116,12 +124,14 @@ function render() {
   }
 }
 
-// 숫자는 render()가 이미 적어 둔 뒤라 첫 프레임부터 읽힌다. 팝은 숫자, 나머지는 배우·발사체·장식이 맡는다.
-function popNumber(theme) {
+function popNumber() {
   el.result.classList.remove('pop');
-  void el.result.offsetWidth; // 애니메이션 재시작
+  el.board.classList.remove('impact');
+  el.stage.classList.remove('impact');
+  void el.result.offsetWidth;
   el.result.classList.add('pop');
-  effects.fire(theme.id);     // 이전 연출이 돌고 있으면 교체한다
+  el.board.classList.add('impact');
+  el.stage.classList.add('impact');
 }
 
 // ---------- 발사 ----------
@@ -143,15 +153,25 @@ function fire() {
     return;
   }
 
-  busyUntil = now + POP_MS;
   const result = draw(state);
   if (!result.entry) return;
-  state = revealLast(result.state); // 연출이 0.25초뿐이라 바로 확정하고 저장한다
+  const delay = reducedMotion.matches ? 0 : PREPARE_MS + FX[themeId].travel;
+  busyUntil = now + (reducedMotion.matches ? POP_MS : delay + 420);
+  state = revealLast(result.state); // 화면을 닫아도 추첨 결과는 보존한다.
   persist();
-  render();
-  popNumber(getTheme(themeId));
-  const after = drawStatus(state);
-  announce(after.ok ? `${result.entry.numbers[0]}번!` : `${result.entry.numbers[0]}번! 마지막 번호예요.`);
+  cancelReveal();
+  void el.fire.offsetWidth;
+  el.fire.classList.add('pressed');
+  effects.fire(themeId);
+  const reveal = () => {
+    revealTimer = 0;
+    render();
+    popNumber();
+    const after = drawStatus(state);
+    announce(after.ok ? `${result.entry.numbers[0]}번!` : `${result.entry.numbers[0]}번! 마지막 번호예요.`);
+  };
+  if (delay) revealTimer = setTimeout(reveal, delay);
+  else reveal();
 }
 
 // ---------- 범위 입력 ----------
@@ -187,6 +207,8 @@ function commitTotal() {
   }
   const next = applyConfig(state, { ...state.config, total, excluded: [] });
   if (!next) { setRangeError('1부터 100까지 숫자만 돼요'); return false; }
+  cancelReveal();
+  effects.clear();
   state = next;
   clearRangeError();
   persist();
@@ -237,12 +259,12 @@ window.addEventListener('keyup', event => {
   if (event.target === el.fire) event.preventDefault();
 });
 window.addEventListener('blur', () => { spaceHeld = false; });
-document.addEventListener('visibilitychange', () => { if (document.hidden) spaceHeld = false; });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { spaceHeld = false; cancelReveal(); effects.clear(); render(); } });
 
 // 다른 탭에서 바뀐 기록을 따라간다 (같은 저장키를 두 창이 쓸 때)
 window.addEventListener('storage', event => {
   if (event.storageArea !== storage) return;
-  if (event.key === STORAGE_KEY && loadState(storage)) { state = loadPongState(storage); render(); }
+  if (event.key === STORAGE_KEY && loadState(storage)) { cancelReveal(); effects.clear(); state = loadPongState(storage); render(); }
   if (event.key === THEME_KEY) { const id = loadTheme(storage); if (id !== themeId) applyTheme(id); }
 });
 
