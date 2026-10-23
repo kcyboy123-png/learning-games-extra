@@ -15,7 +15,7 @@ export const THEMES = Object.freeze([
   }),
   Object.freeze({
     id: 'penguin', name: '펭몽이', image: 'assets/penguin.png',
-    scene: 'assets/penguin-scene.png', actor: 'assets/penguin-actor.png',
+    scene: 'assets/penguin-scene.png', actor: 'assets/penguin-separated-v1.png',
     color: '#3f8fd6', ink: '#163a5c', particle: 'snow',
     fire: '눈덩이 발사!', ammo: '눈덩이', announce: '펭몽이 친구로 바꿨어요',
     regions: Object.freeze({ title: [35, 8, 66, 18], board: [30, 27, 70, 77], panel: [74, 55, 95, 91] })

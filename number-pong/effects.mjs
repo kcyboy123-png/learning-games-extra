@@ -10,7 +10,7 @@ export const FX = Object.freeze({
   // muzzle: 발사체가 나오는 자리(배우 상자 너비·높이 대비 비율). 햄찌는 입, 나머지는 포구.
   // lift: 포물선 높이(무대 높이 대비). travel: 비행 ms. hold: 연출 전체 정리 시각 ms. drop: 당근 떨어질 확률.
   hamster: Object.freeze({ muzzle: [0.66, 0.42], lift: 0.10, travel: 160, hold: 2400, drop: 0 }),
-  penguin: Object.freeze({ muzzle: [0.95, 0.45], lift: 0.26, travel: 480, hold: 2800, drop: 0 }),
+  penguin: Object.freeze({ muzzle: [0.91, 0.57], lift: 0.26, travel: 480, hold: 2800, drop: 0 }),
   rabbit:  Object.freeze({ muzzle: [0.83, 0.53], lift: 0.08, travel: 160, hold: 2600, drop: 0.35 })
 });
 
@@ -34,6 +34,15 @@ export function createEffects({
   let timer = 0;
   let extras = [];      // 배우 상자에 덧붙인 장식(당근 떨어짐)
   let audio = null;
+  let playing = null;
+  const samples = {};
+  if (sound && typeof globalThis.Audio === 'function') {
+    for (const id of Object.keys(FX)) {
+      const sample = new globalThis.Audio(`assets/suno-${id}-launch-v1.mp3`);
+      sample.preload = 'auto'; sample.volume = 0.45;
+      samples[id] = sample;
+    }
+  }
 
   const px = n => `${Math.round(n * 100) / 100}px`;
   const make = (tag, className) => { const node = doc.createElement(tag); node.className = className; return node; };
@@ -41,6 +50,7 @@ export function createEffects({
   // 지금 도는 연출을 모두 지운다. 다음 발사·테마 변경·움직임 줄이기 전환에서 호출한다.
   function clear() {
     if (timer) { timers.clearTimeout(timer); timer = 0; }
+    if (playing) { playing.pause(); playing = null; }
     actor.classList.remove('firing');
     fx.replaceChildren();
     for (const node of extras) node.remove();
@@ -124,6 +134,16 @@ export function createEffects({
 
   // 아주 짧은 테마 효과음. 사용자 동작(클릭·스페이스)에서만 불리고, 음악이나 자동 재생은 없다.
   function pop(themeId, delay) {
+    const sample = samples[themeId];
+    if (sample?.readyState >= 2) {
+      try {
+        // Files include 150 ms of silence so playback starts inside the user gesture.
+        sample.currentTime = delay ? 0 : PREPARE_MS / 1000;
+        playing = sample;
+        sample.play()?.catch(() => {});
+        return;
+      } catch { /* Keep the existing tiny synth as a loading fallback. */ }
+    }
     try {
       const Ctx = globalThis.AudioContext || globalThis.webkitAudioContext;
       if (!Ctx) return;

@@ -3,8 +3,8 @@ import {
   applyConfig, draw, drawStatus, loadPongState, loadState, resetHistory, revealLast, saveState, STORAGE_KEY
 } from './picker.mjs?v=4';
 import { parseTotal, remainingText } from './format.mjs';
-import { getTheme, loadTheme, nextTheme, regionStyle, saveTheme, THEME_KEY, THEMES } from './themes.mjs?v=3';
-import { createEffects, FX, PREPARE_MS } from './effects.mjs?v=4';
+import { getTheme, loadTheme, nextTheme, regionStyle, saveTheme, THEME_KEY, THEMES } from './themes.mjs?v=4';
+import { createEffects, FX, PREPARE_MS } from './effects.mjs?v=5';
 
 const $ = id => document.getElementById(id);
 const el = {
