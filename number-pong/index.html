@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>번호퐁 친구들 · 교실 번호뽑기</title>
+<link rel="preload" href="assets/fonts/SUIT-Bold.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="style.css?v=3">
+</head>
+<body>
+<main class="stage" id="stage" data-theme="hamster" data-phase="idle" aria-label="번호퐁 친구들">
+
+  <h1 class="title" id="title">번호퐁 친구들</h1>
+
+  <button class="theme-button" id="themeButton" type="button" aria-describedby="themeStatus">
+    <span class="theme-dot" aria-hidden="true"></span>
+    <span class="theme-label">친구 바꾸기</span>
+    <span class="theme-name" id="themeName">햄찌</span>
+  </button>
+
+  <section class="board" id="board" aria-label="뽑힌 번호">
+    <div class="particles" id="particles" aria-hidden="true"></div>
+    <div class="result" id="result" >
+      <span class="number" id="number">?</span>
+    </div>
+    <p class="caption" id="caption">발사를 눌러 시작해요</p>
+  </section>
+
+  <form class="panel" id="panel" novalidate>
+    <label class="range" for="total">
+      <span class="range-label">몇 번까지?</span>
+      <span class="range-entry">
+        <input id="total" name="total" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
+          maxlength="3" value="30" aria-describedby="rangeHint">
+        <b aria-hidden="true">번</b>
+      </span>
+    </label>
+    <small class="range-hint" id="rangeHint">1 ~ 100</small>
+    <button class="fire" id="fire" type="submit" aria-keyshortcuts="Space">해바라기씨 발사!</button>
+  </form>
+
+  <p class="notice" id="notice" role="status" hidden></p>
+  <p class="sr-only" id="live" aria-live="polite" aria-atomic="true"></p>
+  <p class="sr-only" id="themeStatus" aria-live="polite" aria-atomic="true"></p>
+</main>
+<script type="module" src="app.mjs?v=4"></script>
+</body>
+</html>
