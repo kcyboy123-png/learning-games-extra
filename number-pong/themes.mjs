@@ -14,17 +14,17 @@ export const THEMES = Object.freeze([
     regions: Object.freeze({ title: [35, 8, 66, 18], board: [30, 27, 70, 77], panel: [74, 55, 95, 91] })
   }),
   Object.freeze({
-    id: 'penguin', name: '펭귄', image: 'assets/penguin.png',
+    id: 'penguin', name: '펭몽이', image: 'assets/penguin.png',
     scene: 'assets/penguin-scene.png', actor: 'assets/penguin-actor.png',
     color: '#3f8fd6', ink: '#163a5c', particle: 'snow',
-    fire: '눈덩이 발사!', ammo: '눈덩이', announce: '펭귄 친구로 바꿨어요',
+    fire: '눈덩이 발사!', ammo: '눈덩이', announce: '펭몽이 친구로 바꿨어요',
     regions: Object.freeze({ title: [35, 8, 66, 18], board: [30, 27, 70, 77], panel: [74, 55, 95, 91] })
   }),
   Object.freeze({
-    id: 'rabbit', name: '토끼', image: 'assets/rabbit.png',
+    id: 'rabbit', name: '토실이', image: 'assets/rabbit.png',
     scene: 'assets/rabbit-scene.png', actor: 'assets/rabbit-actor.png',
     color: '#ef7a3c', ink: '#4e3b2a', particle: 'carrot',
-    fire: '당근 발사!', ammo: '당근', announce: '토끼 친구로 바꿨어요',
+    fire: '당근 발사!', ammo: '당근', announce: '토실이 친구로 바꿨어요',
     regions: Object.freeze({ title: [35, 8, 66, 18], board: [31, 26, 69, 78], panel: [74, 57, 95, 94] })
   })
 ]);

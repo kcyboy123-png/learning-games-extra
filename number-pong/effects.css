@@ -59,7 +59,7 @@
 }
 
 /* ---------- 연출 층 ---------- */
-.fx { position: absolute; inset: 0; pointer-events: none; overflow: hidden; --u: 1cqw; --decor-ms: 1.15s; }
+.fx { position: absolute; inset: 0; pointer-events: none; overflow: hidden; --u: 1cqw; --decor-ms: 1.6s; }
 
 /* 발사체: 바깥(.shot)은 출발→도착 직선, 안쪽(.shot-body)은 위로 떠올랐다 내려와 포물선이 된다.
    중심 맞춤은 margin으로 해서 개별 translate/rotate 속성이 제 중심으로 돈다 */
@@ -317,3 +317,36 @@
 }
 
 .stage[data-theme="hamster"] .muzzle-smoke { display:none; }
+
+/* Macro-textured props share one alpha atlas. Reserve the digit area in every frame. */
+.fx {
+ --safe-w:max(calc(var(--nw) * 1.25),38cqw);--safe-h:calc(var(--nh) * 1.25);
+ --sx0:calc(var(--x1) - var(--safe-w) / 2);--sx1:calc(var(--x1) + var(--safe-w) / 2);
+ --sy0:calc(var(--y1) - var(--safe-h) / 2);--sy1:calc(var(--y1) + var(--safe-h) / 2);
+ mask-image:radial-gradient(ellipse calc(var(--safe-w) / 2) calc(var(--safe-h) * .65) at var(--x1) var(--y1),transparent 100%,#000 116%);
+}
+@media(max-aspect-ratio:1/1){.fx{--safe-w:max(calc(var(--nw) * 1.25),60cqw);}}
+.shot.hamster .shot-body,.shell,.leaf,.snow-flurry {
+ background-image:url(assets/tactile-effects-v1.png);background-size:200% 200%;
+ background-repeat:no-repeat;border:0;border-radius:0;box-shadow:none;clip-path:none;
+}
+.shot.hamster .shot-body { --bw:5cqw;--bh:5cqw;background-position:0 0; }
+.shell { width:9cqw;height:9cqw;background-position:100% 0; }
+.leaf { width:9cqw;height:9cqw;background-position:100% 100%; }
+.leaf::after { display:none; }
+@keyframes shell {
+ 0% { transform:translate(calc(-50% + var(--dir) * (var(--safe-w) / 2 + 4cqw)),-50%) scale(.55) rotate(calc(var(--dir) * -10deg));opacity:0; }
+ 16% { transform:translate(calc(-50% + var(--dir) * (var(--safe-w) / 2 + 5cqw)),-55%) scale(1) rotate(calc(var(--dir) * -22deg));opacity:1; }
+ 68% { opacity:1; }
+ 100% { transform:translate(calc(-50% + var(--dir) * (var(--safe-w) / 2 + 6cqw)),-25%) scale(.9) rotate(calc(var(--dir) * -32deg));opacity:0; }
+}
+@keyframes leaf {
+ 0% { transform:translate(calc(-50% + var(--lx) * (var(--safe-w) / 2 + 6cqw)),calc(-50% + var(--ly) * (var(--safe-h) / 2 + 4cqw))) rotate(var(--la)) scale(.45);opacity:0; }
+ 16% { transform:translate(calc(-50% + var(--lx) * (var(--safe-w) / 2 + 6cqw)),calc(-50% + var(--ly) * (var(--safe-h) / 2 + 4cqw))) rotate(calc(var(--la) - 10deg)) scale(1);opacity:1; }
+ 60% { opacity:.95; }
+ 100% { transform:translate(calc(-50% + var(--lx) * (var(--safe-w) / 2 + 8cqw)),calc(-50% + var(--ly) * (var(--safe-h) / 2 + 6cqw) + 2cqw)) rotate(calc(var(--la) + 18deg)) scale(.85);opacity:0; }
+}
+.stamp { width:calc(var(--safe-w) + 12cqw);height:calc(var(--safe-h) + 10cqw);background:none;box-shadow:none;border-radius:0; }
+.snow-flurry { position:absolute;inset:0;background-position:0 100%;transform:rotate(var(--turn));opacity:.8; }
+.chip { background:#fff;border-radius:40% 60% 35% 65%;width:.6cqw;height:.5cqw;box-shadow:0 0 .4cqw #ebf5ff; }
+@media(prefers-reduced-motion:reduce){.fx{display:none;}}

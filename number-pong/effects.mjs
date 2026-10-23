@@ -56,7 +56,13 @@ export function createEffects({
       hit.append(make('i', 'shell left'), make('i', 'shell right'));
     } else if (themeId === 'penguin') {
       // 눈뭉치가 숫자 둘레에 눈도장을 찍고 조각이 튄다
-      hit.append(make('i', 'stamp'));
+      const stamp = make('i', 'stamp');
+      for (let i = 0; i < 4; i++) {
+        const spray = make('i', 'snow-flurry');
+        spray.style.setProperty('--turn', `${i * 90}deg`);
+        stamp.append(spray);
+      }
+      hit.append(stamp);
       for (let i = 0; i < SNOW_CHIPS; i++) {
         const chip = make('i', 'chip');
         const ang = (i / SNOW_CHIPS) * Math.PI * 2 - Math.PI / 2 + (random() - 0.5) * 0.7;

@@ -3,8 +3,8 @@ import {
   applyConfig, draw, drawStatus, loadPongState, loadState, resetHistory, revealLast, saveState, STORAGE_KEY
 } from './picker.mjs?v=4';
 import { parseTotal, remainingText } from './format.mjs';
-import { getTheme, loadTheme, nextTheme, regionStyle, saveTheme, THEME_KEY, THEMES } from './themes.mjs?v=2';
-import { createEffects, FX, PREPARE_MS } from './effects.mjs?v=3';
+import { getTheme, loadTheme, nextTheme, regionStyle, saveTheme, THEME_KEY, THEMES } from './themes.mjs?v=3';
+import { createEffects, FX, PREPARE_MS } from './effects.mjs?v=4';
 
 const $ = id => document.getElementById(id);
 const el = {
@@ -67,7 +67,7 @@ function applyTheme(id, { say = false } = {}) {
   for (const [key, box] of Object.entries(theme.regions)) {
     for (const [prop, value] of Object.entries(regionStyle(box))) el.stage.style.setProperty(`--${key}-${prop}`, value);
   }
-  el.title.textContent = {hamster:'햄찌의 씨앗포',penguin:'펭귄의 눈뭉치포',rabbit:'토끼의 당근 로켓포'}[theme.id];
+  el.title.textContent = {hamster:'햄찌의 씨앗포',penguin:'펭몽이의 눈뭉치포',rabbit:'토실이의 당근 로켓포'}[theme.id];
   el.themeName.textContent = theme.name;
   el.themeButton.setAttribute('aria-label', `친구 바꾸기 (지금은 ${theme.name})`);
   document.title = `번호퐁 친구들 · ${theme.name}`;
@@ -88,6 +88,7 @@ function cycleTheme() {
 
 // 그림을 미리 받아 두면 친구를 바꿀 때 깜빡임이 줄어든다. 아직 없는 그림(새 장면·배우 시트)이면 조용히 실패한다.
 function preloadImages() {
+  const texture = new Image(); texture.src = 'assets/tactile-effects-v1.png';
   for (const theme of THEMES) {
     for (const src of [theme.scene, theme.actor]) { const img = new Image(); img.decoding = 'async'; img.src = src; }
   }
