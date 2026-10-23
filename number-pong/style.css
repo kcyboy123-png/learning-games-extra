@@ -270,3 +270,14 @@ body { background:#efe4cf; }
 @media(prefers-reduced-motion:reduce) {
  .fire.pressed,.board.impact { animation:none; }
 }
+
+/* The painted button surface follows its label when pressed on desktop. */
+@media(min-aspect-ratio:1/1) and (min-height:501px) and (prefers-reduced-motion:no-preference) {
+ .fire { isolation:isolate; }
+ .fire.pressed::before {
+  content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;
+  background-image:var(--skin);background-size:var(--skin-size);background-position:var(--skin-position);
+  animation:button-skin .42s forwards;
+ }
+}
+@keyframes button-skin { 0%,99% { opacity:1; } 100% { opacity:0; } }

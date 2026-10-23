@@ -160,6 +160,13 @@ function fire() {
   state = revealLast(result.state); // 화면을 닫아도 추첨 결과는 보존한다.
   persist();
   cancelReveal();
+  if (!reducedMotion.matches) {
+    const stageBox = el.stage.getBoundingClientRect();
+    const buttonBox = el.fire.getBoundingClientRect();
+    el.fire.style.setProperty('--skin', `url(${getTheme(themeId).scene})`);
+    el.fire.style.setProperty('--skin-size', `${stageBox.width}px ${stageBox.height}px`);
+    el.fire.style.setProperty('--skin-position', `${stageBox.left - buttonBox.left}px ${stageBox.top - buttonBox.top}px`);
+  }
   void el.fire.offsetWidth;
   el.fire.classList.add('pressed');
   effects.fire(themeId);
