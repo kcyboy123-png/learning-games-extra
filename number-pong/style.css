@@ -38,10 +38,10 @@ button { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-colo
   --board-left: 30%; --board-top: 27%; --board-width: 40%; --board-height: 50%;
   --panel-left: 74%; --panel-top: 55%; --panel-width: 21%; --panel-height: 36%;
 }
-/* 그림이 아직 없을 때를 위한 부드러운 바탕. 그림이 오면 그 위에 덮인다. */
-.stage[data-theme="hamster"] { --accent: #d9892b; --ink: #5a3418; background-image: url(assets/hamster.png), linear-gradient(180deg, #ffe9b8 0%, #f5c98a 60%, #d9a56b 100%); }
-.stage[data-theme="penguin"] { --accent: #3f8fd6; --ink: #163a5c; background-image: url(assets/penguin.png), linear-gradient(180deg, #e8f6ff 0%, #b9dcf5 60%, #86b9e4 100%); }
-.stage[data-theme="rabbit"]  { --accent: #ef7a3c; --ink: #4e3b2a; background-image: url(assets/rabbit.png),  linear-gradient(180deg, #f3ffd9 0%, #cdeea0 60%, #9fd27a 100%); }
+/* 친구·대포를 뺀 배경과 투명 배우를 분리한다. 원본 그림은 중복 다운로드하지 않는다. */
+.stage[data-theme="hamster"] { --accent: #d9892b; --ink: #5a3418; background-image: url(assets/hamster-scene.png),  linear-gradient(180deg, #ffe9b8 0%, #f5c98a 60%, #d9a56b 100%); }
+.stage[data-theme="penguin"] { --accent: #3f8fd6; --ink: #163a5c; background-image: url(assets/penguin-scene.png),  linear-gradient(180deg, #e8f6ff 0%, #b9dcf5 60%, #86b9e4 100%); }
+.stage[data-theme="rabbit"]  { --accent: #ef7a3c; --ink: #4e3b2a; background-image: url(assets/rabbit-scene.png),    linear-gradient(180deg, #f3ffd9 0%, #cdeea0 60%, #9fd27a 100%); }
 
 /* ---------- 제목 (그림 속 빈 간판 자리) ---------- */
 .title {
@@ -96,25 +96,7 @@ button { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-colo
 }
 .stage[data-phase="exhausted"] .caption { color: var(--accent); }
 
-/* ---------- 파티클: 씨앗 · 눈 · 당근 ---------- */
-.particles { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
-.particle {
-  position: absolute; left: 50%; top: 50%; display: block;
-  --dx: 0; --dy: 0; --rot: 0deg;
-  animation: fly .6s cubic-bezier(.1, .7, .3, 1) forwards;
-}
-.particle.seed  { width: 1.1cqw; height: 1.9cqw; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: linear-gradient(90deg, #3a2414, #8a5a34 55%, #e7d2ab); }
-.particle.snow  { width: 1.3cqw; height: 1.3cqw; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff, #d6ecff); box-shadow: 0 0 .5cqw rgba(255, 255, 255, .9); }
-.particle.carrot {
-  width: 1.1cqw; height: 2.3cqw;
-  background: linear-gradient(180deg, #5cb648 0 28%, #ff8c3a 28%);
-  clip-path: polygon(50% 0, 100% 28%, 60% 100%, 40% 100%, 0 28%);
-}
-@keyframes fly {
-  0%   { transform: translate(-50%, -50%) scale(.4) rotate(0deg); opacity: 1; }
-  70%  { opacity: 1; }
-  100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1) rotate(var(--rot)); opacity: 0; }
-}
+/* 발사 연출(배우 스프라이트 · 발사체 · 숫자 뒤 장식)은 effects.css에 있다. */
 
 /* ---------- 오른쪽 입력 + 발사 (그림 속 오른쪽 패널 자리) ---------- */
 .panel {
@@ -183,15 +165,13 @@ button { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-colo
   }
   .title { position: static; width: auto; height: auto; margin-top: 56px; font-size: 7cqw; }
   .theme-button { right: 12px; top: max(12px, env(safe-area-inset-top)); font-size: 14px; }
-  .board { position: static; width: auto; height: auto; flex: 1; gap: 8px; }
+  /* 세로에서는 흐름 배치지만 relative+z-index로 두어 절대 배치된 연출 층(.fx) 위에 숫자가 그려진다 */
+  .board { position: relative; inset:auto; z-index: 1; width: auto; height: auto; flex: 1; gap: 8px; }
   .number { font-size: 36cqw; text-shadow: 0 .8cqw 0 #fff, .8cqw 0 0 #fff, -.8cqw 0 0 #fff, 0 -.8cqw 0 #fff, 0 2cqw 4cqw rgba(0, 0, 0, .25); }
   .number[data-len="3"] { font-size: 32cqw; }
   .caption { font-size: clamp(14px, 4.5cqw, 22px); }
-  .particle.seed { width: 3cqw; height: 5cqw; }
-  .particle.snow { width: 3.4cqw; height: 3.4cqw; }
-  .particle.carrot { width: 3cqw; height: 6cqw; }
   .panel {
-    position: static; width: auto; height: auto;
+    position: relative; inset:auto; z-index: 1; width: auto; height: auto;   /* 배우 상자 아래쪽이 겹쳐도 입력판이 위에 온다 */
     flex-direction: row; align-items: center; flex-wrap: wrap; gap: 10px;
     padding: 10px 12px; border-radius: 18px; background: var(--paper);
     box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
@@ -208,8 +188,7 @@ button { cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-colo
 
 /* ---------- 움직임 줄이기 ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .result.pop .number, .theme-button.swapped, .range-hint.error, .particle { animation: none; }
-  .particle { display: none; }
+  .result.pop .number, .theme-button.swapped, .range-hint.error { animation: none; }
   .theme-button, .fire, .theme-dot, .theme-name { transition: none; }
 }
 
@@ -242,7 +221,8 @@ body { background:#efe4cf; }
 .stage[data-theme="rabbit"] .range-entry { top:23%; }
 .stage[data-theme="rabbit"] .fire { top:56%;height:36%; }
 @media(max-aspect-ratio:1/1) {
- .stage { background-size:auto 68%;background-position:18% 68%;background-color:#f9edcf; }
+ /* 세로 그림 배치 값은 변수로 두어 effects.css의 배우 상자가 같은 자리를 따라간다 */
+ .stage { --bg-h:68cqh;--bg-fx:.18;--bg-fy:.68;background-size:auto var(--bg-h);background-position:calc(var(--bg-fx) * 100%) calc(var(--bg-fy) * 100%);background-color:#f9edcf; }
  .stage[data-theme="penguin"] { background-color:#e7f1fa; }
  .stage[data-theme="rabbit"] { background-color:#eff1d9; }
  .title { font-size:7cqw;margin-top:54px;padding:10px;border-radius:18px;background:#fff9; }
@@ -275,3 +255,4 @@ body { background:#efe4cf; }
  .range-hint:not(.error) { display:none; }
  .stage[data-phase="exhausted"] .fire { font-size:15px; }
 }
+

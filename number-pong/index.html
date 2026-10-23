@@ -6,7 +6,8 @@
 <meta name="color-scheme" content="light">
 <title>번호퐁 친구들 · 교실 번호뽑기</title>
 <link rel="preload" href="assets/fonts/SUIT-Bold.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="effects.css?v=2">
 </head>
 <body>
 <main class="stage" id="stage" data-theme="hamster" data-phase="idle" aria-label="번호퐁 친구들">
@@ -19,9 +20,12 @@
     <span class="theme-name" id="themeName">햄찌</span>
   </button>
 
+  <!-- 배우(왼쪽 아래 친구+대포)와 연출 층은 결과판보다 앞에 두어 숫자 뒤에 깔린다 -->
+  <div class="actor" id="actor" aria-hidden="true"><div class="actor-sprite"></div></div>
+  <div class="fx" id="fx" aria-hidden="true"></div>
+
   <section class="board" id="board" aria-label="뽑힌 번호">
-    <div class="particles" id="particles" aria-hidden="true"></div>
-    <div class="result" id="result" >
+    <div class="result" id="result">
       <span class="number" id="number">?</span>
     </div>
     <p class="caption" id="caption">발사를 눌러 시작해요</p>
@@ -44,6 +48,6 @@
   <p class="sr-only" id="live" aria-live="polite" aria-atomic="true"></p>
   <p class="sr-only" id="themeStatus" aria-live="polite" aria-atomic="true"></p>
 </main>
-<script type="module" src="app.mjs?v=4"></script>
+<script type="module" src="app.mjs?v=6"></script>
 </body>
 </html>

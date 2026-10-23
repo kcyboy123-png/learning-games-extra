@@ -1,14 +1,15 @@
-// 번호퐁 친구들 · 화면 연결. 뽑기 규칙은 picker.mjs, 표시 문구는 format.mjs, 테마는 themes.mjs.
+// 번호퐁 친구들 · 화면 연결. 뽑기 규칙은 picker.mjs, 표시 문구는 format.mjs, 테마는 themes.mjs, 발사 연출은 effects.mjs.
 import {
   applyConfig, draw, drawStatus, loadPongState, loadState, resetHistory, revealLast, saveState, STORAGE_KEY
 } from './picker.mjs?v=4';
 import { parseTotal, remainingText } from './format.mjs';
-import { getTheme, loadTheme, nextTheme, regionStyle, saveTheme, THEME_KEY, THEMES } from './themes.mjs';
+import { getTheme, loadTheme, nextTheme, regionStyle, saveTheme, THEME_KEY, THEMES } from './themes.mjs?v=2';
+import { createEffects } from './effects.mjs?v=2';
 
 const $ = id => document.getElementById(id);
 const el = {
   stage: $('stage'), title: $('title'), themeButton: $('themeButton'), themeName: $('themeName'),
-  themeStatus: $('themeStatus'), board: $('board'), particles: $('particles'), result: $('result'),
+  themeStatus: $('themeStatus'), board: $('board'), actor: $('actor'), fx: $('fx'), result: $('result'),
   number: $('number'), caption: $('caption'), panel: $('panel'), total: $('total'),
   rangeHint: $('rangeHint'), fire: $('fire'), notice: $('notice'), live: $('live')
 };
@@ -16,6 +17,7 @@ const el = {
 const storage = (() => { try { return globalThis.localStorage; } catch { return null; } })();
 const reducedMotion = globalThis.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
 const POP_MS = 250;
+const effects = createEffects({ stage: el.stage, actor: el.actor, fx: el.fx, number: el.number, reducedMotion });
 
 let state = loadPongState(storage);
 let themeId = loadTheme(storage);
@@ -51,6 +53,8 @@ function ask(message) {
 function applyTheme(id, { say = false } = {}) {
   themeId = id;
   const theme = getTheme(id);
+  effects.clear();                 // 이전 친구의 발사체·장식이 새 장면에 남지 않게 한다 (번호는 그대로)
+  el.result.classList.remove('pop'); // 돌던 숫자 확대 연출도 함께 멈춘다. 번호 값과 기록은 그대로 둔다
   el.stage.dataset.theme = theme.id;
   for (const [key, box] of Object.entries(theme.regions)) {
     for (const [prop, value] of Object.entries(regionStyle(box))) el.stage.style.setProperty(`--${key}-${prop}`, value);
@@ -74,9 +78,11 @@ function cycleTheme() {
   saveTheme(storage, id); // 실패해도 화면은 이미 바뀌었으니 조용히 넘어간다
 }
 
-// 그림을 미리 받아 두면 친구를 바꿀 때 깜빡임이 줄어든다. 아직 없는 그림이면 조용히 실패한다.
+// 그림을 미리 받아 두면 친구를 바꿀 때 깜빡임이 줄어든다. 아직 없는 그림(새 장면·배우 시트)이면 조용히 실패한다.
 function preloadImages() {
-  for (const theme of THEMES) { const img = new Image(); img.decoding = 'async'; img.src = theme.image; }
+  for (const theme of THEMES) {
+    for (const src of [theme.scene, theme.actor]) { const img = new Image(); img.decoding = 'async'; img.src = src; }
+  }
 }
 
 // ---------- 그리기 ----------
@@ -110,30 +116,12 @@ function render() {
   }
 }
 
+// 숫자는 render()가 이미 적어 둔 뒤라 첫 프레임부터 읽힌다. 팝은 숫자, 나머지는 배우·발사체·장식이 맡는다.
 function popNumber(theme) {
   el.result.classList.remove('pop');
   void el.result.offsetWidth; // 애니메이션 재시작
   el.result.classList.add('pop');
-  burst(theme);
-}
-
-function burst(theme) {
-  if (reducedMotion.matches) return;
-  const count = 12;
-  const frag = document.createDocumentFragment();
-  for (let i = 0; i < count; i++) {
-    const p = document.createElement('i');
-    p.className = `particle ${theme.particle}`;
-    const angle = (i / count) * Math.PI * 2 + (Math.random() - .5) * .6;
-    const dist = 9 + Math.random() * 7; // cqw: 무대 너비 기준
-    p.style.setProperty('--dx', `${(Math.cos(angle) * dist).toFixed(2)}cqw`);
-    p.style.setProperty('--dy', `${(Math.sin(angle) * dist * .8).toFixed(2)}cqw`);
-    p.style.setProperty('--rot', `${Math.round((Math.random() - .5) * 540)}deg`);
-    p.addEventListener('animationend', () => p.remove(), { once: true });
-    frag.appendChild(p);
-  }
-  el.particles.replaceChildren(frag);
-  setTimeout(() => { if (el.particles.childElementCount) el.particles.replaceChildren(); }, 1200);
+  effects.fire(theme.id);     // 이전 연출이 돌고 있으면 교체한다
 }
 
 // ---------- 발사 ----------

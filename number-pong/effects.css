@@ -1,0 +1,225 @@
+/* 번호퐁 친구들 · 발사 연출. 배경 그림은 고정이고, 왼쪽 아래 배우(친구+대포)와 발사체·숫자 뒤 장식만 움직인다.
+   층 순서(index.html): 배경 → .actor → .fx → .board(숫자) → .panel. 장식은 늘 숫자 뒤에 깔린다.
+   좌표(--x0 --y0 --x1 --y1 --lift --ang --nw --nh --travel)는 effects.mjs가 발사 때 한 번 재서 .fx에 넣는다. */
+
+/* ---------- 배우 상자: 그림 너비·높이 대비 비율. 부모가 그림에 맞춰 조정한다 ---------- */
+.stage { --actor-l: .02; --actor-t: .46; --actor-w: .34; --actor-h: .48; }
+.actor {
+  position: absolute; pointer-events: none;
+  left: calc(var(--actor-l) * 100%); top: calc(var(--actor-t) * 100%);
+  width: calc(var(--actor-w) * 100%); height: calc(var(--actor-h) * 100%);
+  transform-origin: 50% 100%;
+  animation: breathe 3.4s ease-in-out infinite;   /* 대기: 아주 살짝 숨 쉬기 */
+}
+@keyframes breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.006, 1.016); } }
+
+/* 투명 2x2 시트. 한 칸 = 상자 전체라 background-size 200%. 0 대기(좌상) 1 발사(우상) 2 회복(좌하) 3 깜빡/정돈(우하) */
+.actor-sprite {
+  position: absolute; inset: 0;
+  background-repeat: no-repeat; background-size: 200% 200%; background-position: 0 0;
+  transform-origin: 50% 100%;
+  --frames-ms: 1100ms; --kick-x: -2.5%; --kick-y: .5%; --kick-rot: -3deg;
+}
+.stage[data-theme="hamster"] .actor-sprite { background-image: url(assets/hamster-actor.png); }
+.stage[data-theme="penguin"] .actor-sprite { background-image: url(assets/penguin-actor.png); --frames-ms: 2300ms; --kick-x: -4.5%; --kick-y: 2%; --kick-rot: -6deg; }
+.stage[data-theme="rabbit"]  .actor-sprite { background-image: url(assets/rabbit-actor.png);  --frames-ms: 1300ms; --kick-x: -1.5%; --kick-y: -4%; --kick-rot: -2deg; }
+
+.actor.firing .actor-sprite {
+  animation:
+    actor-frames var(--frames-ms) step-end both,                     /* 1 → 2 → 3 → 0 */
+    actor-recoil .55s cubic-bezier(.2, .9, .3, 1.15);                /* 반동은 변형으로만 */
+}
+/* step-end: 각 값은 다음 키프레임까지 유지된다. 햄찌 볼 가득→뿜→깜빡, 펭귄 발사→엉덩방아→눈 모자 쓰고 섬, 토끼 귀 젖힘→회복→정돈 */
+@keyframes actor-frames {
+  0%   { background-position: 100% 0; }
+  22%  { background-position: 0 100%; }
+  50%  { background-position: 100% 100%; }
+  100% { background-position: 0 0; }
+}
+@keyframes actor-recoil {
+  0%   { transform: none; }
+  18%  { transform: translate(var(--kick-x), var(--kick-y)) rotate(var(--kick-rot)); }
+  55%  { transform: translate(calc(var(--kick-x) * -.25), 0) rotate(calc(var(--kick-rot) * -.3)); }
+  100% { transform: none; }
+}
+
+/* 토끼: 가끔 귀 사이에서 당근이 하나 굴러떨어진다 (배우 상자 안에서만) */
+.drop {
+  position: absolute; left: 36%; top: 4%; width: 6%; height: 15%;
+  background: linear-gradient(180deg, #5cb648 0 26%, #ff8c3a 26%);
+  clip-path: polygon(50% 0, 100% 26%, 62% 100%, 38% 100%, 0 26%);
+  animation: drop-fall 1.05s cubic-bezier(.4, 0, .8, .6) .3s both;
+}
+@keyframes drop-fall {
+  0%   { transform: translateY(0) rotate(-25deg); opacity: 0; }
+  12%  { opacity: 1; }
+  100% { transform: translateY(470%) rotate(70deg); opacity: 0; }
+}
+
+/* ---------- 연출 층 ---------- */
+.fx { position: absolute; inset: 0; pointer-events: none; overflow: hidden; --u: 1cqw; --decor-ms: 1.15s; }
+
+/* 발사체: 바깥(.shot)은 출발→도착 직선, 안쪽(.shot-body)은 위로 떠올랐다 내려와 포물선이 된다.
+   중심 맞춤은 margin으로 해서 개별 translate/rotate 속성이 제 중심으로 돈다 */
+.shot {
+  position: absolute; left: 0; top: 0;
+  animation: shot-fly var(--travel) linear forwards;
+}
+.shot-body {
+  position: absolute; left: 0; top: 0; display: block;
+  --bw: calc(2.4 * var(--u)); --bh: calc(2.4 * var(--u));
+  width: var(--bw); height: var(--bh); margin: calc(var(--bh) / -2) 0 0 calc(var(--bw) / -2);
+  animation: shot-arc var(--travel) both;
+}
+@keyframes shot-fly {
+  0%   { transform: translate(var(--x0), var(--y0)); opacity: 1; }
+  92%  { opacity: 1; }
+  100% { transform: translate(var(--x1), var(--y1)); opacity: 0; }
+}
+@keyframes shot-arc {
+  0%   { translate: 0 0; animation-timing-function: ease-out; }
+  50%  { translate: 0 calc(-1 * var(--lift)); animation-timing-function: ease-in; }
+  100% { translate: 0 0; }
+}
+/* 햄찌: 입에서 튀어나온 해바라기씨가 빙글 돈다 */
+.shot.hamster .shot-body {
+  --bw: calc(1.8 * var(--u)); --bh: calc(3 * var(--u));
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: linear-gradient(90deg, #2b1a0f 0 30%, #e9d8b4 30% 48%, #2b1a0f 48% 72%, #e9d8b4 72%);
+  box-shadow: inset 0 0 0 .18cqw #2b1a0f;
+  rotate: 0deg;
+  animation: shot-arc var(--travel) both, spin .32s linear infinite;
+}
+@keyframes spin { to { rotate: 360deg; } }
+/* 펭귄: 포구에서 눈뭉치가 둥실 날아간다 */
+.shot.penguin .shot-body {
+  --bw: calc(4.2 * var(--u)); --bh: calc(4.2 * var(--u)); border-radius: 50%;
+  background: radial-gradient(circle at 35% 32%, #fff, #e4f1fc 60%, #bcd7ee);
+  box-shadow: 0 .3cqw .6cqw rgba(60, 100, 140, .25);
+}
+/* 토끼: 당근 로켓은 날아가는 방향으로 머리를 두고 뒤로 작은 연기를 남긴다 */
+.shot.rabbit .shot-body {
+  --bw: calc(2.6 * var(--u)); --bh: calc(5.2 * var(--u));
+  background: linear-gradient(180deg, #5cb648 0 24%, #ff8c3a 24%);
+  clip-path: polygon(50% 0, 100% 24%, 64% 100%, 36% 100%, 0 24%);
+  rotate: calc(var(--ang) + 90deg);
+}
+.shot.rabbit::before {   /* 당근 뒤에 깔리는 연기 (::before라 몸통보다 아래에 그려진다) */
+  content: ''; position: absolute; left: 0; top: 0;
+  width: calc(2.2 * var(--u)); height: calc(2.2 * var(--u)); border-radius: 50%;
+  margin: calc(-1.1 * var(--u)) 0 0 calc(-1.1 * var(--u));
+  background: radial-gradient(circle, rgba(255, 255, 255, .95), rgba(255, 255, 255, 0) 70%);
+  animation: smoke .3s ease-out infinite;
+}
+@keyframes smoke { 0% { scale: .6; opacity: .9; } 100% { scale: 1.6; opacity: 0; } }
+
+/* ---------- 결과 장식: 숫자 중심(--x1 --y1)에 --travel 뒤 나타나 숫자 뒤에서 열린다 ---------- */
+.hit { position: absolute; left: 0; top: 0; transform: translate(var(--x1), var(--y1)); }
+/* 모든 장식은 animation 축약형에 지연 var(--travel)과 both를 직접 적는다 (축약형이 longhand를 덮기 때문) */
+.hit > * { position: absolute; left: 0; top: 0; display: block; }
+
+/* 공통: 도착 순간 작은 하얀 퍼프 */
+.puff {
+  width: calc(var(--nh) * .9); height: calc(var(--nh) * .9); border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, .85), rgba(255, 255, 255, 0) 70%);
+  animation: puff .55s ease-out var(--travel) both;
+}
+@keyframes puff { 0% { transform: translate(-50%, -50%) scale(.2); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.3); opacity: 0; } }
+
+/* 햄찌: 씨앗이 숫자에 닿아 껍질 두 쪽이 좌우로 갈라지고 디지트 양 옆에 잠깐 머문다 */
+.shell {
+  width: calc(4 * var(--u)); height: calc(8 * var(--u));
+  background: repeating-linear-gradient(90deg, #2b1a0f 0 .45cqw, #e9d8b4 .45cqw .9cqw);
+  box-shadow: inset 0 0 0 .2cqw #2b1a0f;
+  animation: shell var(--decor-ms) cubic-bezier(.2, .9, .3, 1.1) var(--travel) both;
+}
+.shell.left  { --dir: -1; border-radius: 100% 0 0 100% / 50% 0 0 50%; }
+.shell.right { --dir: 1;  border-radius: 0 100% 100% 0 / 0 50% 50% 0; }
+@keyframes shell {
+  0%   { transform: translate(-50%, -50%) scale(.3) rotate(0); opacity: 0; }
+  10%  { opacity: 1; }
+  12%  { transform: translate(calc(-50% + var(--dir) * (var(--nw) / 2 + 2.2 * var(--u))), -58%) scale(1) rotate(calc(var(--dir) * -24deg)); }
+  80%  { transform: translate(calc(-50% + var(--dir) * (var(--nw) / 2 + 2.2 * var(--u))), -52%) scale(1) rotate(calc(var(--dir) * -18deg)); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--dir) * (var(--nw) / 2 + 2.2 * var(--u))), -40%) scale(.9) rotate(calc(var(--dir) * -18deg)); opacity: 0; }
+}
+
+/* 펭귄: 눈뭉치가 숫자 둘레에 납작한 눈도장을 찍고(퍽) 조각이 튄다. 크림색 눈판 위에서도 보이도록 푸른 테를 두른다 */
+.stamp {
+  width: calc(var(--nw) + 9 * var(--u)); height: calc(var(--nh) + 4 * var(--u)); border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 45%, #ffffff 55%, #eaf4fd 80%, #cfe3f5);
+  box-shadow: 0 0 0 .35cqw rgba(190, 216, 240, .9), 0 .5cqw 1cqw rgba(70, 110, 150, .18);
+  animation: stamp var(--decor-ms) ease-out var(--travel) both;
+}
+@keyframes stamp {
+  0%   { transform: translate(-50%, -50%) scale(.25, .25); opacity: 0; }
+  14%  { transform: translate(-50%, -50%) scale(1.15, .82); opacity: 1; }   /* 퍽: 납작하게 */
+  30%  { transform: translate(-50%, -50%) scale(.96, 1.04); }
+  42%  { transform: translate(-50%, -50%) scale(1, 1); }
+  78%  { opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.02, 1.02); opacity: 0; }
+}
+.chip {
+  width: calc(1.3 * var(--u)); height: calc(1.3 * var(--u)); border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff, #d6ecff);
+  animation: chip .7s cubic-bezier(.1, .7, .3, 1) var(--travel) both;
+}
+@keyframes chip {
+  0%   { transform: translate(-50%, -50%) scale(.4); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--cx) * (var(--nw) / 2 + 6 * var(--u))), calc(-50% + var(--cy) * (var(--nh) / 2 + 5 * var(--u)))) scale(1); opacity: 0; }
+}
+
+/* 토끼: 당근 로켓이 터지며 초록 잎 여섯 장이 숫자 둘레에 활짝 열린다 */
+.leaf {
+  width: calc(3.2 * var(--u)); height: calc(5.6 * var(--u));
+  border-radius: 100% 0 100% 0;
+  background: linear-gradient(160deg, #8fd36a, #4ea33a 70%);
+  box-shadow: inset 0 0 0 .18cqw rgba(40, 90, 30, .35);
+  animation: leaf var(--decor-ms) cubic-bezier(.2, .9, .3, 1.2) var(--travel) both;
+}
+@keyframes leaf {
+  0%   { transform: translate(-50%, -50%) rotate(var(--la)) scale(0); opacity: 0; }
+  10%  { opacity: 1; }
+  12%  { transform: translate(calc(-50% + var(--lx) * (var(--nw) / 2 + 2.6 * var(--u))), calc(-50% + var(--ly) * (var(--nh) / 2 + 1.4 * var(--u)))) rotate(var(--la)) scale(1); }
+  80%  { transform: translate(calc(-50% + var(--lx) * (var(--nw) / 2 + 2.6 * var(--u))), calc(-50% + var(--ly) * (var(--nh) / 2 + 1.4 * var(--u)))) rotate(calc(var(--la) + 6deg)) scale(1); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--lx) * (var(--nw) / 2 + 2.6 * var(--u))), calc(-50% + var(--ly) * (var(--nh) / 2 + 2.4 * var(--u)))) rotate(calc(var(--la) + 10deg)) scale(.85); opacity: 0; }
+}
+
+/* ---------- 휴대폰 세로: 배우 상자를 실제 그림이 놓인 자리에 맞춘다 (style.css의 --bg-h --bg-fx --bg-fy와 같은 값) ---------- */
+@media (max-aspect-ratio: 1 / 1) {
+  .stage { --bg-w: calc(var(--bg-h) * 16 / 9); --bg-x: calc(var(--bg-fx) * (100cqw - var(--bg-w))); --bg-y: calc(var(--bg-fy) * (100cqh - var(--bg-h))); }
+  .actor {
+    left: calc(var(--bg-x) + var(--bg-w) * var(--actor-l)); top: calc(var(--bg-y) + var(--bg-h) * var(--actor-t));
+    width: calc(var(--bg-w) * var(--actor-w)); height: calc(var(--bg-h) * var(--actor-h));
+  }
+  .fx { --u: 1.8cqw; }
+}
+
+/* ---------- 움직임 줄이기: 숨 쉬기·프레임·발사체·장식 모두 멈추고 숫자만 바로 보인다 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .actor, .actor.firing .actor-sprite, .shot, .shot-body, .shot.rabbit::before, .hit > *, .drop { animation: none; }
+  .fx { display: none; }
+}
+
+/* Square sprite cells retain the felt characters' proportions. */
+.stage[data-theme="hamster"] { --actor-l:.025; --actor-t:.43; --actor-w:.29; --actor-h:.51556; }
+.stage[data-theme="penguin"] { --actor-l:.015; --actor-t:.30; --actor-w:.35; --actor-h:.62222; }
+.stage[data-theme="rabbit"] { --actor-l:.005; --actor-t:.34; --actor-w:.35; --actor-h:.62222; }
+.actor-sprite { filter:drop-shadow(0 .6cqw .4cqw #38281024); }
+@media(max-aspect-ratio:1/1) {
+ .actor { left:3%;top:auto;bottom:15%;width:70%;height:auto;aspect-ratio:1; }
+ .stage[data-theme="hamster"] .actor { width:62%; }
+}
+
+.stage[data-theme="hamster"] { --cue:"퉤앳!"; }
+.stage[data-theme="penguin"] { --cue:"퐁!"; }
+.stage[data-theme="rabbit"] { --cue:"뿅!"; }
+.actor.firing::after {
+ content:var(--cue);position:absolute;right:2%;top:12%;font:700 clamp(20px,3cqw,44px)/1.2 SUIT;
+ color:var(--ink);white-space:nowrap;text-shadow:2px 2px white,-2px -2px white,2px -2px white,-2px 2px white;
+ animation:comic-pop .85s ease-out both;pointer-events:none;
+}
+@keyframes comic-pop { 0%{opacity:0;transform:translateY(10px) scale(.5) rotate(-9deg)} 12%,65%{opacity:1;transform:translateY(0) scale(1) rotate(5deg)}100%{opacity:0;transform:translateY(-15px) scale(.95)} }
+@media(prefers-reduced-motion:reduce){.actor.firing::after{display:none}}
+/* Warm seed husks and leaf veins match the felt palette. */
+.shell { background:repeating-linear-gradient(100deg,transparent 0 8px,#f6dfacaa 9px 11px,transparent 12px 19px),linear-gradient(100deg,#332419,#a07847 45%,#61452c);box-shadow:inset 0 0 0 1px #76512d,inset 3px 2px 5px #ffe8b34d; }
+.leaf::after {content:"";position:absolute;width:2px;height:72%;background:#d4eda37a;left:50%;top:14%;transform:rotate(32deg);border-radius:50%;}
