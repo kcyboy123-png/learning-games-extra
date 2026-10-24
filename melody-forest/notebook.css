@@ -71,3 +71,9 @@ body.forest-mode:not(.forest-cinema) .workspace{background:#f8faf3f5;border-colo
 .measure-select button span{margin-left:8px;font-weight:400}
 .measure-select button[aria-pressed=true]{background:#35644f;border-color:#35644f;color:white}
 @media(max-width:600px){.measure-select{padding:8px;gap:4px}.measure-select button{font-size:13px;padding:8px 3px}.measure-select button span{margin-left:3px}}
+
+.classroom{background:#f8faf3f5;border-radius:20px;margin-top:24px;padding:24px;min-height:70vh}
+.classroom-tabs,.classroom-rooms{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.classroom form{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin:20px 0}.classroom form label{display:grid;gap:8px;max-width:100%;flex:1;min-width:180px}.classroom input{width:100%;min-height:48px;border:1px solid #a5ba99;border-radius:8px;padding:10px;background:white}.classroom form p{flex-basis:100%}
+.classroom-current{border-top:1px solid #bacab0;margin-top:20px;padding-top:20px}.classroom-code{font-size:26px;letter-spacing:.12em;color:#345a48}.classroom-error{background:#fff0db;border-left:4px solid #916427;padding:12px;overflow-wrap:anywhere}.classroom-fallback{border-top:1px solid #bacab0;padding-top:18px;margin-top:28px}.classroom-fallback p{font-size:14px;color:#526458}.classroom-login{display:flex;align-items:center;gap:12px}.classroom .work-list small{overflow-wrap:anywhere}
+@media(max-width:600px){.classroom{padding:16px}.classroom .work-list li{flex-wrap:wrap}.classroom .work-list li>div{width:100%}.classroom-code{font-size:22px}}
