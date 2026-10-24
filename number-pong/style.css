@@ -295,5 +295,5 @@ body { background:#efe4cf; }
 
 @media(min-aspect-ratio:1/1) {
  .board .caption { position:absolute;bottom:9%;left:0;width:100%; }
- .board .number { translate:0 .04em; }
+ .board .number { translate:0 .04em;letter-spacing:0; }
 }
