@@ -4,7 +4,7 @@ import {
 } from './picker.mjs?v=4';
 import { parseTotal, remainingText } from './format.mjs';
 import { getTheme, loadTheme, nextTheme, regionStyle, saveTheme, THEME_KEY, THEMES } from './themes.mjs?v=4';
-import { createEffects, FX, PREPARE_MS } from './effects.mjs?v=5';
+import { createEffects, FX, PREPARE_MS } from './effects.mjs?v=6';
 
 const $ = id => document.getElementById(id);
 const el = {
@@ -246,7 +246,6 @@ el.themeButton.addEventListener('click', cycleTheme);
 
 window.addEventListener('keydown', event => {
   if (event.code !== 'Space' && event.key !== ' ') return;
-  if (event.target === el.themeButton) return;        // 버튼 고유 동작(테마 바꾸기)은 그대로
   if (event.target === el.total) {                    // 입력칸에서는 Space로 값을 적용하고 발사
     event.preventDefault();
     if (event.repeat || spaceHeld) return;
@@ -264,7 +263,7 @@ window.addEventListener('keyup', event => {
   if (event.code !== 'Space' && event.key !== ' ') return;
   spaceHeld = false;
   // 일부 브라우저는 keyup에서 버튼을 클릭 처리하므로 발사 버튼의 중복 발사를 막는다
-  if (event.target === el.fire) event.preventDefault();
+  if (event.target === el.fire || event.target === el.themeButton) event.preventDefault();
 });
 window.addEventListener('blur', () => { spaceHeld = false; });
 document.addEventListener('visibilitychange', () => { if (document.hidden) { spaceHeld = false; cancelReveal(); effects.clear(); render(); } });

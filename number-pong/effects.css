@@ -291,7 +291,7 @@
 .actor-cannon { display:none; }
 .stage[data-theme="penguin"] .actor { animation:none; }
 .stage[data-theme="penguin"] .actor-sprite {
- inset:auto;left:0;bottom:0;width:74%;height:74%;clip-path:inset(2% 0 0);
+ inset:auto;left:0;bottom:0;width:74%;height:74%;clip-path:inset(4% 0 0);
  background-image:url(assets/penguin-separated-v1.png);
  animation:breathe 3.4s ease-in-out infinite;
 }
@@ -344,7 +344,7 @@
  }
 /* Only the landing decorations avoid the digit; keep the flight visible. */
 .hit { inset:0;transform:none;
- mask-image:radial-gradient(ellipse calc(var(--safe-w) / 2) calc(var(--safe-h) * .65) at var(--x1) var(--y1),transparent 100%,#000 116%);
+ mask-image:radial-gradient(ellipse calc(var(--safe-w) / 2) calc(var(--safe-h) * .45) at var(--x1) var(--y1),transparent 100%,#000 116%);
 }
 .hit > * { left:var(--x1);top:var(--y1); }
 @media(max-aspect-ratio:1/1){.fx{--safe-w:max(calc(var(--nw) * 1.25),60cqw);}}
@@ -363,11 +363,12 @@
  100% { transform:translate(calc(-50% + var(--dir) * (var(--safe-w) / 2 + 6cqw)),-25%) scale(.9) rotate(calc(var(--dir) * -32deg));opacity:0; }
 }
 @keyframes leaf {
- 0% { transform:translate(calc(-50% + var(--lx) * (var(--safe-w) / 2 + 6cqw)),calc(-50% + var(--ly) * (var(--safe-h) / 2 + 4cqw))) rotate(var(--la)) scale(.45);opacity:0; }
- 16% { transform:translate(calc(-50% + var(--lx) * (var(--safe-w) / 2 + 6cqw)),calc(-50% + var(--ly) * (var(--safe-h) / 2 + 4cqw))) rotate(calc(var(--la) - 10deg)) scale(1);opacity:1; }
- 60% { opacity:.95; }
- 100% { transform:translate(calc(-50% + var(--lx) * (var(--safe-w) / 2 + 8cqw)),calc(-50% + var(--ly) * (var(--safe-h) / 2 + 6cqw) + 2cqw)) rotate(calc(var(--la) + 18deg)) scale(.85);opacity:0; }
+ 0% { transform:translate(calc(-50% + var(--lx) * var(--leaf-rx)),calc(-50% + var(--ly) * var(--leaf-ry))) rotate(var(--la)) scale(.45);opacity:0; }
+ 18% { transform:translate(calc(-50% + var(--lx) * var(--leaf-rx)),calc(-50% + var(--ly) * var(--leaf-ry))) rotate(calc(var(--la) - 10deg)) scale(1);opacity:1; }
+ 65% { opacity:.95; }
+ 100% { transform:translate(calc(-50% + var(--lx) * (var(--leaf-rx) + 1cqw)),calc(-50% + var(--ly) * (var(--leaf-ry) + 1cqw))) rotate(calc(var(--la) + 10deg)) scale(.85);opacity:0; }
 }
+
 .stamp { width:calc(var(--safe-w) + 12cqw);height:calc(var(--safe-h) + 10cqw);background:none;box-shadow:none;border-radius:0; }
 .snow-flurry { position:absolute;inset:0;background-position:0 100%;transform:rotate(var(--turn));opacity:.8; }
 .chip { background:#fff;border-radius:40% 60% 35% 65%;width:.6cqw;height:.5cqw;box-shadow:0 0 .4cqw #ebf5ff; }
@@ -376,3 +377,20 @@
 @media(prefers-reduced-motion:reduce){.stage[data-theme="penguin"] .actor-sprite,.stage[data-theme="penguin"] .actor.firing .actor-cannon{animation:none;}}
 
 .shot.hamster { animation-timing-function:cubic-bezier(.4,.2,.6,.8); }
+
+.stage[data-theme="rabbit"] .fx { --leaf-rx:22cqw;--leaf-ry:14.5cqw; }
+.stage[data-theme="rabbit"] .hit > * { top:calc(var(--y1) - .6cqw); }
+.stage[data-theme="hamster"] .shell { animation-duration:1.95s; }
+.stage[data-theme="penguin"] .chip { width:.85cqw;height:.7cqw;animation-duration:1s; }
+@keyframes chip {
+ 0% { transform:translate(calc(-50% + var(--cx) * (var(--safe-w) / 2)),calc(-50% + var(--cy) * var(--safe-h) * .7)) scale(.3);opacity:0; }
+ 16% { opacity:1; }
+ 100% { transform:translate(calc(-50% + var(--cx) * (var(--safe-w) / 2 + 7cqw)),calc(-50% + var(--cy) * (var(--safe-h) * .7 + 6cqw))) scale(1.1);opacity:0; }
+}
+.snow-flurry { animation:snow-swirl 1.3s var(--settle) calc(var(--prepare) + var(--travel)) both; }
+@keyframes snow-swirl {
+ 0% { transform:rotate(calc(var(--turn) - 12deg)) scale(.8);opacity:0; }
+ 22% { opacity:1; }
+ 100% { transform:rotate(calc(var(--turn) + 12deg)) scale(1.08);opacity:0; }
+}
+@media(max-aspect-ratio:1/1){.stage[data-theme="rabbit"] .fx{--leaf-rx:38cqw;--leaf-ry:24cqw;}}

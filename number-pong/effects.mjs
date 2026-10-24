@@ -15,7 +15,7 @@ export const FX = Object.freeze({
 });
 
 const LEAF_COUNT = 6;
-const SNOW_CHIPS = 5;
+const SNOW_CHIPS = 14;
 
 // 무대 좌표(px)로 바꾼 출발점·도착점·포물선 값. 순수 함수라 따로 시험한다.
 export function computeAnchors(spec, stage, actor, number) {
