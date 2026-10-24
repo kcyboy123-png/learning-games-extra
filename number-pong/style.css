@@ -284,9 +284,16 @@ body { background:#efe4cf; }
 
 /* Center the editable number and two-line launch label within their painted recesses. */
 @media(min-aspect-ratio:1/1) and (min-height:501px) {
- .stage[data-theme="hamster"] .range-entry {top:20%;}
- .stage[data-theme="penguin"] .range-entry {top:27%;}
- .stage[data-theme="rabbit"] .range-entry {top:17%;}
- .stage[data-theme] .fire {display:flex;flex-direction:column;justify-content:center;align-items:center;padding-bottom:10%;}
+ .stage[data-theme="hamster"] .range-entry {top:23%;}
+ .stage[data-theme="penguin"] .range-entry {top:30%;left:17%;}
+ .stage[data-theme="penguin"] .range-label {left:5%;}
+ .stage[data-theme="penguin"] .fire {left:11%;}
+ .stage[data-theme="rabbit"] .range-entry {top:20%;}
+ .stage[data-theme] .fire {display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0 0 10%;}
  .stage[data-theme] .fire::after {margin-top:1px;line-height:1;}
+}
+
+@media(min-aspect-ratio:1/1) {
+ .board .caption { position:absolute;bottom:9%;left:0;width:100%; }
+ .board .number { translate:0 .04em; }
 }

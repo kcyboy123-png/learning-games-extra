@@ -291,7 +291,7 @@
 .actor-cannon { display:none; }
 .stage[data-theme="penguin"] .actor { animation:none; }
 .stage[data-theme="penguin"] .actor-sprite {
- inset:auto;left:0;bottom:0;width:74%;height:74%;
+ inset:auto;left:0;bottom:0;width:74%;height:74%;clip-path:inset(2% 0 0);
  background-image:url(assets/penguin-separated-v1.png);
  animation:breathe 3.4s ease-in-out infinite;
 }
@@ -341,14 +341,18 @@
  --safe-w:max(calc(var(--nw) * 1.25),38cqw);--safe-h:calc(var(--nh) * 1.25);
  --sx0:calc(var(--x1) - var(--safe-w) / 2);--sx1:calc(var(--x1) + var(--safe-w) / 2);
  --sy0:calc(var(--y1) - var(--safe-h) / 2);--sy1:calc(var(--y1) + var(--safe-h) / 2);
+ }
+/* Only the landing decorations avoid the digit; keep the flight visible. */
+.hit { inset:0;transform:none;
  mask-image:radial-gradient(ellipse calc(var(--safe-w) / 2) calc(var(--safe-h) * .65) at var(--x1) var(--y1),transparent 100%,#000 116%);
 }
+.hit > * { left:var(--x1);top:var(--y1); }
 @media(max-aspect-ratio:1/1){.fx{--safe-w:max(calc(var(--nw) * 1.25),60cqw);}}
 .shot.hamster .shot-body,.shell,.leaf,.snow-flurry {
  background-image:url(assets/tactile-effects-v1.png);background-size:200% 200%;
  background-repeat:no-repeat;border:0;border-radius:0;box-shadow:none;clip-path:none;
 }
-.shot.hamster .shot-body { --bw:3.8cqw;--bh:3.8cqw;background-position:0 0; }
+.shot.hamster .shot-body { --bw:4.6cqw;--bh:4.6cqw;background-position:0 0; }
 .shell { width:7cqw;height:7cqw;background-position:100% 0; }
 .leaf { width:9cqw;height:9cqw;background-position:100% 100%; }
 .leaf::after { display:none; }
@@ -370,3 +374,5 @@
 @media(prefers-reduced-motion:reduce){.fx{display:none;}}
 
 @media(prefers-reduced-motion:reduce){.stage[data-theme="penguin"] .actor-sprite,.stage[data-theme="penguin"] .actor.firing .actor-cannon{animation:none;}}
+
+.shot.hamster { animation-timing-function:cubic-bezier(.4,.2,.6,.8); }
