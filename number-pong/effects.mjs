@@ -9,9 +9,9 @@ export const PREPARE_MS = 150;
 export const FX = Object.freeze({
   // muzzle: 발사체가 나오는 자리(배우 상자 너비·높이 대비 비율). 햄찌는 입, 나머지는 포구.
   // lift: 포물선 높이(무대 높이 대비). travel: 비행 ms. hold: 연출 전체 정리 시각 ms. drop: 당근 떨어질 확률.
-  hamster: Object.freeze({ muzzle: [0.66, 0.42], lift: 0.10, travel: 160, hold: 2400, drop: 0 }),
+  hamster: Object.freeze({ muzzle: [0.66, 0.42], lift: 0.10, travel: 280, hold: 2900, drop: 0 }),
   penguin: Object.freeze({ muzzle: [0.91, 0.57], lift: 0.26, travel: 480, hold: 2800, drop: 0 }),
-  rabbit:  Object.freeze({ muzzle: [0.83, 0.53], lift: 0.08, travel: 160, hold: 2600, drop: 0.35 })
+  rabbit:  Object.freeze({ muzzle: [0.83, 0.53], lift: 0.08, travel: 220, hold: 2600, drop: 0.35 })
 });
 
 const LEAF_COUNT = 6;
@@ -67,9 +67,9 @@ export function createEffects({
     } else if (themeId === 'penguin') {
       // 눈뭉치가 숫자 둘레에 눈도장을 찍고 조각이 튄다
       const stamp = make('i', 'stamp');
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 2; i++) {
         const spray = make('i', 'snow-flurry');
-        spray.style.setProperty('--turn', `${i * 90}deg`);
+        spray.style.setProperty('--turn', `${i * 165}deg`);
         stamp.append(spray);
       }
       hit.append(stamp);

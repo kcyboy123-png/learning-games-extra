@@ -4,7 +4,7 @@ import {
 } from './picker.mjs?v=4';
 import { parseTotal, remainingText } from './format.mjs';
 import { getTheme, loadTheme, nextTheme, regionStyle, saveTheme, THEME_KEY, THEMES } from './themes.mjs?v=4';
-import { createEffects, FX, PREPARE_MS } from './effects.mjs?v=6';
+import { createEffects, FX, PREPARE_MS } from './effects.mjs?v=7';
 
 const $ = id => document.getElementById(id);
 const el = {
