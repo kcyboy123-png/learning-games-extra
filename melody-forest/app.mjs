@@ -175,5 +175,6 @@ document.addEventListener('keydown',e=>{if(document.querySelector('dialog[open]'
 player.onInterrupt=()=>{if(!playing)return;stop();render();toast('소리가 멈춰서 악보로 돌아왔어요. 다시 듣기를 눌러 주세요.');};
 player.onLoading=loading=>{if(loading)toast('피아노 소리를 준비하고 있어요… 잠깐만 기다려 주세요.');else if(document.querySelector('#toast').textContent.startsWith('피아노 소리를 준비'))document.querySelector('#toast').classList.remove('show');};player.setVolume(volume);ambienceSync();
 // The app opens into the forest with the saved song; without WebGL the home screen shows as before.
-if(new URL(location.href).searchParams.has('room')){screen='classroom';render();}else if(webglAvailable())openForest();else render();if(warning)toast('저장된 작품을 읽지 못했어요. 작품 파일을 불러와 주세요.');
+if(webglAvailable())openForest();else render();if(warning)toast('저장된 작품을 읽지 못했어요. 작품 파일을 불러와 주세요.');
+
 
