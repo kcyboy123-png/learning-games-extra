@@ -440,7 +440,7 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
       const eye = forestEye(g, g.y, view);
       goalPos.set(eye.position.x, eye.position.y, eye.position.z); goalLook.set(eye.target.x, eye.target.y, eye.target.z); return Infinity;
     }
-    if (state.cinema && !orbitChanged) {const t=motion.matches?0:1-Math.exp(-state.cineT/18),a=motion.matches?0:Math.sin(state.cineT*.09)*.18*t;goalPos.set(2.7+4.1*t+a,2.5+2*t,SEAT_Z+2.4+2*t-a);goalLook.set(-.1+.1*t,.78+.07*t,-.2-.2*t);return 2.4;}
+    if (state.cinema && !orbitChanged) {const t=motion.matches?0:1-Math.exp(-state.cineT/18),a=motion.matches?0:Math.sin(state.cineT*.09)*.18*t;goalPos.set(6.8-4.1*t+a,4.5-2*t,SEAT_Z+4.4-2*t-a);goalLook.set(-.1+.1*t,.78+.07*t,-.2-.2*t);return 2.4;}
     if (!orbitChanged) {goalPos.set(GIRL_X+2.7,2.5,SEAT_Z+2.4);goalLook.set(GIRL_X-.1,.78,-.2);return 2.4;}
     goalLook.set(g.x,g.y+.8,g.z-.5);
     const dx = Math.sin(orbit.yaw), dz = Math.cos(orbit.yaw);
