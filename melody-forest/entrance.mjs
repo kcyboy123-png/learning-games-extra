@@ -15,7 +15,7 @@ function openEntrance(root){
   const overlay=document.createElement('section');
   overlay.className='entrance-overlay';overlay.tabIndex=-1;
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
-  overlay.setAttribute('aria-label','노래가 자라는 숲 입장 영상');
+  overlay.setAttribute('aria-label','피아노의 숲 입장 영상');
   const video=document.createElement('video');
   video.className='entrance-film';video.muted=true;video.playsInline=true;video.preload='auto';video.loop=false;
   video.setAttribute('aria-hidden','true');video.poster='assets/art/entrance-poster.webp';
