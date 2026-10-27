@@ -125,8 +125,8 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
     if(Math.hypot(x,z)<1.8)continue;pebbles.push({p:V(x,surfaceY(x,z)+.018,z),r:[0,edgeR()*6.28,0],s:[.025+edgeR()*.05,.015+edgeR()*.018,.03+edgeR()*.05]});
     if(i%3===0)mossPads.push({p:V(x+side*.16,surfaceY(x,z)+.016,z),r:[0,edgeR()*6.28,0],s:[.12+edgeR()*.15,.025,.08+edgeR()*.1]});
   }
-  add(new THREE.SphereGeometry(1,8,5),lambert({color:0xc7c0a4}),pebbles);
-  add(new THREE.SphereGeometry(1,10,5),lambert({color:theme.deep}),mossPads);
+  add(new THREE.SphereGeometry(1,8,5),lambert({color:0xc7c0a4,vertexColors:false}),pebbles);
+  add(new THREE.SphereGeometry(1,10,5),lambert({color:theme.deep,vertexColors:false}),mossPads);
   // Mossy rocks: faceted stone with moss baked on upward faces.
   const rockBase = lumpy(new THREE.IcosahedronGeometry(1, 3), .09, 2.3);
   const rockGeo = merge([[rockBase, null, 0xb7ae9c, (y, ny) => ny > .45 ? 1 : .82]]), rc = rockGeo.attributes.color, rn = rockGeo.attributes.normal, moss = C(0x7d9a45);
@@ -268,7 +268,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,
     uniforms: {color: {value: C(0xffdf9e)}, opacity: {value: .22}},
     vertexShader: 'varying float vF;varying float vV;void main(){vec4 w=modelMatrix*instanceMatrix*vec4(position,1.);vec3 n=normalize(mat3(modelMatrix*instanceMatrix)*normal);vF=abs(dot(n,normalize(cameraPosition-w.xyz)));vV=position.y+.5;gl_Position=projectionMatrix*viewMatrix*w;}',
-    fragmentShader: 'uniform vec3 color;uniform float opacity;varying float vF;varying float vV;void main(){float a=pow(vF,2.2)*smoothstep(0.,.3,vV)*smoothstep(1.,.55,vV);gl_FragColor=vec4(color,a*opacity);\n#include <colorspace_fragment>\n}'
+    fragmentShader: 'uniform vec3 color;uniform float opacity;varying float vF;varying float vV;void main(){float a=pow(vF,2.2)*smoothstep(0.,.3,vV)*(1.-smoothstep(.55,1.,vV));gl_FragColor=vec4(color,a*opacity);\n#include <colorspace_fragment>\n}'
   });
   const shafts = [[.4, -.3, 1.25], [-3.4, -4.2, 1.0], [3.4, -3.5, .9], [-4.2, 1.8, .8], [2.6, 4.4, .75], [-1.2, 6.5, .6], [2.1,8.7,.7],[-2.6,9.4,.55]].map(([x, z, s]) =>
     ({p: V(x, 0, z).addScaledVector(sunDir, 7.5), r: [0, 0, 0], s: [s, 16, s], q: new THREE.Quaternion().setFromUnitVectors(V(0, 1, 0), sunDir)}));
@@ -520,9 +520,14 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     for (let i = 0; i < WHITE_KEYS; i++) if (piano.press[i] > 0) { piano.press[i] = Math.max(0, piano.press[i] - dt * 2.6); busy = true; }
     if (busy || state.keysDirty) { piano.drawKeys(); state.keysDirty = busy; }
     pose(dt);landmarks.animate(state.time,rm);
+    // Entrance glow settles continuously into the map's own daylight or moonlight.
+    const entrance = state.phase === 'opening' && !rm ? Math.pow(1-state.openingT, 2) : 0;
+    world.shaftMat.uniforms.opacity.value = theme.shafts * (1.35 + entrance * .9);
+    world.shaftMat.uniforms.color.value.set(theme.sun);
+    sun.intensity = theme.power * (1 + entrance * .22);
+    renderer.toneMappingExposure = theme.exposure * (1 + entrance * .06);
     if (!rm) {
       world.grassTime.value=state.time;
-      world.shaftMat.uniforms.opacity.value = theme.shafts + Math.sin(state.time * .5) * .008;
       const p = world.motes.geometry.attributes.position;
       world.moteBase.forEach((b, i) => p.setXYZ(i, b[0] + Math.sin(state.time * .21 + b[3]) * .5, b[1] + Math.sin(state.time * .33 + b[3] * 2) * .35, b[2] + Math.cos(state.time * .17 + b[3]) * .5));
       p.needsUpdate = true;
