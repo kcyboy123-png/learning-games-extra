@@ -113,12 +113,20 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   };
 
   // Stepping stones winding from the entrance to the bench.
-  const stoneGeo = merge([[new THREE.CylinderGeometry(.3, .33, .09, 24, 1), null, 0xd9d0bc, (y, ny) => ny > .5 ? 1.08 : .78]]);
+  const stoneGeo = merge([[new THREE.LatheGeometry([[0,-.045],[.29,-.045],[.325,-.025],[.33,.015],[.30,.045],[0,.045]].map(([r,y])=>new THREE.Vector2(r,y)),28), null, 0xd9d0bc, (y, ny) => ny > .5 ? 1.08 : .78]]);
   const stones = [];
   for (let k = 0; k < 19; k++) { const t = .02 + k * .052, p = PATH.getPointAt(Math.min(.97, t)), side = (k % 2 ? 1 : -1) * .12;
     stones.push({p: V(p.x + side, surfaceY(p.x, p.z) + .035, p.z), r: [0, R() * 3, 0], s: [.8 + R() * .45, 1, .7 + R() * .35]}); }
   add(stoneGeo, lambert(), stones, () => C(0xffffff).multiplyScalar(.9 + R() * .15));
 
+  // Fine pebbles and soft moss soften the edge of the path without obstructing it.
+  const edgeR=rng(6027),pebbles=[],mossPads=[];
+  for(let i=0;i<130;i++){const p=PATH.getPointAt(edgeR()*.95),side=i%2?1:-1,x=p.x+side*(.48+edgeR()*.3),z=p.z+(edgeR()-.5)*.18;
+    if(Math.hypot(x,z)<1.8)continue;pebbles.push({p:V(x,surfaceY(x,z)+.018,z),r:[0,edgeR()*6.28,0],s:[.025+edgeR()*.05,.015+edgeR()*.018,.03+edgeR()*.05]});
+    if(i%3===0)mossPads.push({p:V(x+side*.16,surfaceY(x,z)+.016,z),r:[0,edgeR()*6.28,0],s:[.12+edgeR()*.15,.025,.08+edgeR()*.1]});
+  }
+  add(new THREE.SphereGeometry(1,8,5),lambert({color:0xc7c0a4}),pebbles);
+  add(new THREE.SphereGeometry(1,10,5),lambert({color:theme.deep}),mossPads);
   // Mossy rocks: faceted stone with moss baked on upward faces.
   const rockBase = lumpy(new THREE.IcosahedronGeometry(1, 3), .09, 2.3);
   const rockGeo = merge([[rockBase, null, 0xb7ae9c, (y, ny) => ny > .45 ? 1 : .82]]), rc = rockGeo.attributes.color, rn = rockGeo.attributes.normal, moss = C(0x7d9a45);
@@ -198,19 +206,25 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
 
   // Flowers in three tints along the path and the clearing rim; grass tufts everywhere close.
   const flower = (petal) => { const parts = [[new THREE.CylinderGeometry(.006, .008, .2, 4), mat({p: V(0, .1, 0)}), 0x5d8a3a]];
-    for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2; parts.push([new THREE.SphereGeometry(.034, 6, 4), mat({p: V(Math.cos(a) * .036, .2, Math.sin(a) * .036), r: [0, -a, 0], s: [1.15, .32, .62]}), petal]); }
-    parts.push([new THREE.SphereGeometry(.02, 6, 4), mat({p: V(0, .208, 0)}), 0xf3b63f]); return merge(parts); };
+    for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2; parts.push([new THREE.SphereGeometry(.034, 10, 6), mat({p: V(Math.cos(a) * .036, .2, Math.sin(a) * .036), r: [0, -a, 0], s: [1.3, .42, .80]}), petal]); }
+    for(const side of[-1,1])parts.push([new THREE.SphereGeometry(.035,8,4),mat({p:V(side*.027,.09,0),r:[0,0,side*.6],s:[1.35,.25,.6]}),0x729547]);
+    parts.push([new THREE.SphereGeometry(.02, 10, 6), mat({p: V(0, .208, 0)}), 0xf3b63f]); return merge(parts); };
   const flowerMat = lambert();
   [0xf6a5b8, 0xfff6ea, 0xc8b2ee].forEach((tint, f) => {
     const list = [];
-    for (let k = 0; k < 70; k++) { let x, z;
-      if (k < 34) { const p = PATH.getPointAt(R() * .97), side = R() < .5 ? -1 : 1; x = p.x + side * (.55 + R() * .9); z = p.z + (R() - .5) * .6; }
+    for (let k = 0; k < 110; k++) { let x, z;
+      if (k < 58) { const p = PATH.getPointAt(R() * .97), side = R() < .5 ? -1 : 1; x = p.x + side * (.55 + R() * .9); z = p.z + (R() - .5) * .6; }
       else { const a = R() * Math.PI * 2, r = 2.6 + R() * 4.5; x = Math.cos(a) * r; z = Math.sin(a) * r - .6; }
       if (Math.hypot(x - GIRL_X, z - .3) < 1.9 || Math.hypot(x, z + .9) < 1.9 || pathDist(x, z) < .45) continue;
       list.push({p: V(x, surfaceY(x, z), z), r: [(R() - .5) * .3, R() * 6, (R() - .5) * .3], s: .9 + R() * .9});
     }
     add(flower(tint), flowerMat, list);
   });
+  // Bell-shaped woodland flowers add a second silhouette at the edge of the clearing.
+  const bells=[];for(let k=0;k<36;k++){const p=PATH.getPointAt(.15+R()*.7),side=k%2?1:-1,x=p.x+side*(1+R()*.6),z=p.z;if(Math.hypot(x,z)<2.2)continue;bells.push({p:V(x,surfaceY(x,z),z),r:[0,R()*6.28,0],s:.8+R()*.6});}
+  const bellParts=[[new THREE.CylinderGeometry(.009,.012,.42,6),mat({p:V(0,.21,0)}),0x628144]];
+  for(let j=0;j<3;j++){const y=.23+j*.08,x=j%2?.07:-.07;bellParts.push(rod(V(0,y,0),V(x,y+.025,0),.006,5));bellParts.push([new THREE.CylinderGeometry(.018,.04,.07,10,1,true),mat({p:V(x,y,0),r:[0,0,x*3]}),j%2?0xc5b4e7:0xa0aed5]);}
+  add(merge(bellParts),lambert({side:THREE.DoubleSide}),bells);
   const bladeParts=[];
   for(let k=0;k<4;k++){
     const pos=[],indices=[],h=.25+k*.035;

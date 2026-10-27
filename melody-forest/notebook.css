@@ -77,3 +77,17 @@ body.forest-mode:not(.forest-cinema) .workspace{background:#f8faf3f5;border-colo
 .classroom form{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin:20px 0}.classroom form label{display:grid;gap:8px;max-width:100%;flex:1;min-width:180px}.classroom input{width:100%;min-height:48px;border:1px solid #a5ba99;border-radius:8px;padding:10px;background:white}.classroom form p{flex-basis:100%}
 .classroom-current{border-top:1px solid #bacab0;margin-top:20px;padding-top:20px}.classroom-code{font-size:26px;letter-spacing:.12em;color:#345a48}.classroom-error{background:#fff0db;border-left:4px solid #916427;padding:12px;overflow-wrap:anywhere}.classroom-fallback{border-top:1px solid #bacab0;padding-top:18px;margin-top:28px}.classroom-fallback p{font-size:14px;color:#526458}.classroom-login{display:flex;align-items:center;gap:12px}.classroom .work-list small{overflow-wrap:anywhere}
 @media(max-width:600px){.classroom{padding:16px}.classroom .work-list li{flex-wrap:wrap}.classroom .work-list li>div{width:100%}.classroom-code{font-size:22px}}
+
+/* Ivory fronts and raised ebony silhouettes. White keys retain the learning input. */
+.piano{gap:2px;padding:15px 9px 10px;background:linear-gradient(100deg,#182a25,#345346 48%,#162820);border:1px solid #172c23;border-radius:10px;box-shadow:inset 0 3px 3px #ffffff20,0 5px 10px #142d2424;overflow:hidden}
+.piano .key{overflow:visible;flex:1 0 48px;width:48px;min-width:48px;height:150px;padding-bottom:12px;border:1px solid #b8b4a8;border-top:4px solid #a25950;border-radius:0 0 5px 5px;background:linear-gradient(90deg,#e4e2d8 0%,#fffefa 13%,#fffdf4 80%,#e9e4d8);box-shadow:inset 0 -7px 0 #d6d0c2,inset 0 -9px 2px #fffffff0,0 3px 2px #0006;color:#344238}
+.piano .key[data-key]{margin-left:0}
+.piano .key:disabled{opacity:1;color:#777c73;background:linear-gradient(90deg,#d6d4ca,#efeee5 14%,#ece9df 85%,#d5d0c3)}
+.piano .key .black-key{position:absolute;z-index:2;pointer-events:auto;cursor:default;top:-4px;left:75%;width:54%;height:78px;border:1px solid #111916;border-radius:0 0 4px 4px;background:linear-gradient(90deg,#111a17,#3d4841 18%,#202c25 74%,#101a15);box-shadow:inset 0 -7px 0 #101713,inset 1px 1px 1px #ffffff40,3px 5px 4px #0005}
+.piano .key.tone{background:linear-gradient(90deg,#dce6da,#fbfff6 15%,#f6fcef 85%,#dbe7d2);border-color:#7f9d79;box-shadow:inset 0 -7px 0 #a4bd99,inset 0 -9px 2px #f9fff5,0 3px 2px #0006}
+.piano .key .dot{position:absolute;bottom:52px;left:calc(50% - 4px);width:8px;height:8px;background:#4b8059;box-shadow:0 0 0 3px #e1edda;border-radius:50%;margin:0}
+.piano .key b{font-size:19px}.piano .key small{font-size:11px}
+.piano .key.pressing,.piano .key:active:not(:disabled){transform:translateY(3px);box-shadow:inset 0 -3px 0 #a4b697;background:#dcebd5}
+@media(prefers-reduced-motion:reduce){.piano .key.struck{animation:none}}
+
+.piano-hint{display:block;color:#5c6e60;font-size:12px;margin:8px 4px}.harmony-note{font-size:13px;color:#755128;background:#fff5df;padding:8px 12px;border-radius:8px}.playing-harmony{font-size:15px;font-variant-numeric:tabular-nums}
