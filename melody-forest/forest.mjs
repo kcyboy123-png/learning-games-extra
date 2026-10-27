@@ -520,12 +520,12 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     for (let i = 0; i < WHITE_KEYS; i++) if (piano.press[i] > 0) { piano.press[i] = Math.max(0, piano.press[i] - dt * 2.6); busy = true; }
     if (busy || state.keysDirty) { piano.drawKeys(); state.keysDirty = busy; }
     pose(dt);landmarks.animate(state.time,rm);
-    // Entrance glow settles continuously into the map's own daylight or moonlight.
-    const entrance = state.phase === 'opening' && !rm ? Math.pow(1-state.openingT, 2) : 0;
-    world.shaftMat.uniforms.opacity.value = theme.shafts * (1.35 + entrance * .9);
+    // Hold the first impression through the wide shot, then ease into normal map lighting.
+    const entrance = state.phase === 'opening' && !rm ? 1-smooth(.45, 1, state.openingT) : 0;
+    world.shaftMat.uniforms.opacity.value = theme.shafts * (1.35 + entrance * 2.7);
     world.shaftMat.uniforms.color.value.set(theme.sun);
-    sun.intensity = theme.power * (1 + entrance * .22);
-    renderer.toneMappingExposure = theme.exposure * (1 + entrance * .06);
+    sun.intensity = theme.power * (1 + entrance * .38);
+    renderer.toneMappingExposure = theme.exposure * (1 + entrance * .09);
     if (!rm) {
       world.grassTime.value=state.time;
       const p = world.motes.geometry.attributes.position;
