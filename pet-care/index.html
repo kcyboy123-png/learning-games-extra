@@ -1,0 +1,893 @@
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>나만의 펫 키우기</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap">
+<style>
+/* 본문용 SUIT (OFL 계열 라이선스 동봉: assets/fonts/SUIT-LICENSE.txt). 제목은 Jua 유지. */
+@font-face{font-family:'SUIT';src:url('assets/fonts/SUIT-Regular.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+@font-face{font-family:'SUIT';src:url('assets/fonts/SUIT-Bold.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
+/* layout: one cozy room fills the screen. a soft card floats at the bottom with name, day, mood and 5 big buttons. */
+:root{--wall:#f6e7d2;--floor:#d9b48a;--paper:#fffaf3;--ink:#4a3f35;--dim:#6b5f50;--hero:#7a5a3a;--hero-p:var(--dim);--line:#eadcc7;--pink:#f2a7a0;--mint:#9fd3b6;--sun:#ffd27a;--bad:#d86a5a;
+ --f-head:'Jua',sans-serif;--f-body:'SUIT','Gowun Dodum','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden}
+body{background:var(--wall);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5}
+#room{position:fixed;inset:0;width:100%;height:100%;display:block}
+#stage{position:fixed;inset:0;pointer-events:none}
+#pet{position:absolute;width:150px;height:150px;left:40%;bottom:34%;transition:left 1.6s linear,bottom 1.6s linear;pointer-events:auto;cursor:pointer;touch-action:none}
+#pet>svg{width:100%;height:100%;overflow:visible}
+#pet.spr{height:auto;bottom:auto;transition:none;will-change:left,top}
+#pet.spr img{display:block;width:100%;height:auto;pointer-events:none;-webkit-user-drag:none}
+#pet.spr.flip img,#npc.flip img{transform:scaleX(-1)}
+#shadow{position:absolute;border-radius:50%;background:radial-gradient(rgba(60,40,20,.38),rgba(60,40,20,0) 68%);pointer-events:none}
+#npc{position:absolute;pointer-events:none}#npc img{display:block;width:100%;filter:hue-rotate(-14deg) saturate(.95) brightness(.95)}
+.dimg{width:200px;height:200px;object-fit:contain;display:block;margin:0 auto}.pet .dimg{width:90px;height:90px}.photo .dimg{background:linear-gradient(#f6e7d2 60%,#d9b48a 60%)}
+#pet.spr{animation:none}
+#ball{position:absolute;width:30px;height:30px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffd27a,#e08a3c);box-shadow:0 3px 0 rgba(0,0,0,.12);bottom:36%;left:70%;transition:left 1.2s}
+#mess{position:absolute;font-size:26px;bottom:35%;left:22%;pointer-events:auto;cursor:pointer}
+.bubble{position:absolute;background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:6px 12px;font-size:14px;bottom:calc(34% + 150px);left:50%;transform:translateX(-50%);white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis;animation:pop .3s;pointer-events:none}
+@keyframes pop{from{opacity:0;transform:translate(-50%,8px)}}
+#top{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.chip{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:6px 12px;font-size:13px;color:var(--dim);box-shadow:0 2px 0 var(--line)}
+.chip b{font:17px var(--f-head);font-weight:400;color:var(--ink);display:block}
+#panel{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:3px solid var(--line);border-radius:22px 22px 0 0;
+ padding:14px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));box-shadow:0 -6px 24px rgba(80,60,30,.12)}
+#panel h2{flex-wrap:wrap;font:24px var(--f-head);font-weight:400;margin:0;display:flex;align-items:baseline;gap:10px}
+#panel h2 small{font:14px var(--f-body);color:var(--dim)}
+#mood{margin:4px 0 10px;line-height:1.5;min-height:1.5em}
+#need{font-size:13px;color:var(--dim);margin:-6px 0 10px}
+#mission{background:#fff7e0;border:2px solid #f0d890;border-radius:12px;padding:8px 12px;margin:0 0 10px;font-size:14px}
+.acts{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.acts button{font:15px var(--f-head);color:var(--ink);background:#fff;border:2px solid var(--line);border-radius:16px;padding:10px 2px 8px;cursor:pointer;display:grid;gap:2px;justify-items:center;box-shadow:0 2px 0 var(--line);min-width:0}
+.acts button i{font-style:normal;font-size:26px}
+.acts button.hot{border-color:var(--pink);background:#fff3f1}
+button:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.more{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn{font:15px var(--f-head);color:var(--ink);background:#fff;border:2px solid var(--line);border-radius:12px;padding:8px 14px;cursor:pointer;box-shadow:0 2px 0 var(--line)}
+.btn.go{background:var(--mint);border-color:#6fb08a;box-shadow:0 2px 0 #6fb08a}
+.btn.sm{font-size:13px;padding:6px 10px}
+#sheet{position:fixed;left:0;right:0;bottom:0;max-height:70vh;overflow:auto;background:var(--paper);border-top:3px solid var(--line);border-radius:22px 22px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));box-shadow:0 -6px 24px rgba(80,60,30,.15);z-index:5}
+#sheet h2{font:22px var(--f-head);font-weight:400;margin:0 0 8px}
+#sheet h3{font:16px var(--f-head);font-weight:400;margin:14px 0 6px;color:var(--dim)}
+.bar{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px}.bar span:first-child{width:5em}.bar i{flex:1;height:10px;background:var(--line);border-radius:5px;overflow:hidden;display:block}.bar i b{display:block;height:100%;background:var(--mint)}
+.bar.low i b{background:var(--pink)}
+.log{border-left:3px solid var(--line);padding:4px 10px;margin:6px 0;font-size:14px}.log b{font-family:var(--f-head);font-weight:400;color:var(--dim);display:block;font-size:13px}
+textarea,input{width:100%;font:15px var(--f-body);border:2px solid var(--line);border-radius:12px;padding:10px;box-sizing:border-box;background:#fff;color:var(--ink)}
+.full{position:fixed;inset:0;overflow:auto;background:var(--wall);z-index:10;padding:calc(env(safe-area-inset-top,0px) + 24px) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.full .in{max-width:34em;margin:0 auto;text-align:center}
+.full h1{font:clamp(34px,8vw,52px) var(--f-head);font-weight:400;margin:0 0 6px;color:var(--hero);text-wrap:balance}
+.full p{line-height:1.7;color:var(--hero-p);margin:6px 0}
+.pets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
+.pet{background:var(--paper);border:2px solid var(--line);border-radius:18px;padding:12px 8px;cursor:pointer;font:inherit;color:inherit;display:grid;gap:4px;justify-items:center}
+.pet>svg{width:90px;height:90px}.pet b{font:18px var(--f-head);font-weight:400}.pet small{color:var(--dim)}
+.items{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.item{background:#fff;border:2px solid var(--line);border-radius:16px;padding:10px 6px;cursor:pointer;font:inherit;color:inherit;display:grid;gap:2px;justify-items:center}
+.item i{font-style:normal;font-size:34px}.item.on{border-color:#6fb08a;background:#eef8f1}.item small{color:var(--dim);font-size:12px;text-align:center;min-height:1.2em}
+.photo{background:#fff;border:10px solid #fff;border-bottom-width:40px;box-shadow:0 6px 18px rgba(80,60,30,.2);display:inline-block;transform:rotate(-2deg);margin:10px}
+.photo>svg{width:200px;height:200px;display:block;background:linear-gradient(#f6e7d2 60%,#d9b48a 60%)}
+.photo.tank>svg{background:linear-gradient(#bfe6f6,#7fc4e8)}
+.photo p{margin:6px 0 -34px;font:16px var(--f-head);color:var(--ink)}
+.night{--wall:#4a4f73;--floor:#6b6080;--hero:#ffdfae;--hero-p:#f1e8d8}
+@media (prefers-reduced-motion:reduce){#pet svg *,#ball{animation:none!important;transition:none!important}}
+@media (max-width:420px){.acts button{font-size:12px}.acts button i{font-size:22px}}
+@media (max-height:780px){#panel{padding-top:8px;padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}#panel h2{font-size:20px}#mood{margin:2px 0 4px;min-height:0}#need{margin:0 0 6px;font-size:12px}.acts{gap:6px}.acts button{padding:5px 2px 4px;font-size:13px;border-radius:12px}.acts button i{font-size:20px}.more{margin-top:6px;gap:6px}.btn.sm{font-size:12px;padding:4px 8px}}
+
+.btn,.btn.sm{min-height:44px}.acts button{min-height:56px}#pet:focus-visible{outline:3px solid #6fb08a}#sheet{z-index:1000}.bubble{white-space:normal;text-align:center}#panel{max-height:55dvh;overflow-y:auto}
+.pet-atlas,.portrait{display:block;background-repeat:no-repeat;background-size:500% 400%;aspect-ratio:1}.pet-atlas{width:100%;height:100%}.portrait{margin:auto;max-width:100%}.pet .portrait{width:90px!important;height:90px!important}.photo .portrait{background-color:#f6e7d2}
+#careProps{position:fixed;inset:0;pointer-events:none;z-index:2}.care-prop{position:absolute;pointer-events:auto;border:0;background:transparent;padding:0;cursor:pointer;min-width:44px;min-height:44px;touch-action:manipulation}.care-prop>svg{width:100%;height:100%;filter:drop-shadow(0 5px 4px #58452426)}.care-prop span{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#fffaf3ed;color:#55432e;font:12px var(--f-body);border:1px solid #d9c6a7;border-radius:10px;padding:3px 7px}.care-prop.needs-care span{background:#fff0dc;border-color:#bf7e43}#panel{z-index:10}#top{z-index:4}#stage{z-index:3}.care-prop:hover{filter:brightness(1.04)}#need{color:#685d4e}.growth-card{opacity:1!important}@media(max-width:600px){.care-prop span{font-size:11px}.more{gap:8px}.acts{gap:8px!important}#panel h2 small{font-size:12px}}
+#bondChip{font:13px var(--f-body);border:0;background:#f8eee2;color:#785942;border-radius:20px;padding:7px 12px;min-height:44px;cursor:pointer}#taskChip{border:1px solid #6f987e;background:#e2f1e5;color:#385e47;border-radius:12px;padding:8px 14px;min-height:44px;cursor:pointer}.bond-path{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.bond-path>div{border:1px solid #dfd3c3;border-radius:12px;padding:12px;opacity:.5}.bond-path .reached{opacity:1;background:#eef4e9}.bond-path small{display:block;margin-top:5px}
+#careScene{position:fixed;inset:0;background:#f6efe3;z-index:900;display:flex;flex-direction:column;overflow:auto}.care-view{flex:1;min-height:260px;position:relative;overflow:hidden;background:url('assets/detail/room-anima14.png') center 64%/cover no-repeat;touch-action:none}.care-view.care-special{background-image:url('assets/detail/care-rooms.png');background-size:200% 100%;background-position:left center}#careScene[data-kind=bath] .care-special{background-position:right center}.care-caption{background:#fffaf3;padding:16px max(20px,calc((100vw - 900px)/2));border-top:2px solid #e4d6c2}.care-caption h2{font:26px var(--f-head);margin:4px 0}.care-caption p{margin:8px 0}.care-eyebrow{font-size:12px;color:#896e53;letter-spacing:.06em}.care-caption small{font-size:12px;color:#776c60}.care-caption progress{width:100%;height:10px;accent-color:#76a082}.care-pet{position:absolute;left:50%;top:66%;width:clamp(115px,22vw,240px);height:clamp(115px,22vw,240px);transform:translate(-50%,-70%);filter:drop-shadow(0 8px 5px #543c392b);z-index:2;transition:left 2.2s ease-in-out,top 2.2s ease-in-out;pointer-events:none}.care-pet>svg{width:100%;height:100%}.care-bowl{position:absolute;width:clamp(90px,17vw,185px);height:130px;left:48%;top:72%;transform:translate(-50%,-30%);z-index:3;pointer-events:none}.care-bowl>svg{width:100%;height:100%}.dirty-spot{position:absolute;width:70px;height:62px;transform:translate(-50%,-50%);border:2px dashed #b58d61;border-radius:45%;background:radial-gradient(ellipse,#7c5d3fa6,#8d754b66 60%,transparent 72%);color:#fff;font:12px var(--f-body);cursor:crosshair;touch-action:none;z-index:4}.dirty-spot.cleaned{opacity:0;transition:opacity .4s}.care-ball{position:absolute;width:45px;height:45px;left:70%;top:72%;border-radius:50%;border:3px solid #d28c51;background:radial-gradient(circle at 30% 25%,#ffedb5,#e9a65c);box-shadow:0 8px 7px #6d553c44;transition:left .7s ease-out,top .7s ease-out;cursor:pointer;z-index:5}.care-foam{position:absolute;left:50%;top:67%;width:160px;height:55px;transform:translateX(-50%);z-index:3;background:radial-gradient(ellipse at 20% 60%,#fffc 20%,transparent 23%),radial-gradient(ellipse at 55% 40%,#fffd 30%,transparent 33%),radial-gradient(ellipse at 85% 60%,#fffc 20%,transparent 23%);pointer-events:none}.care-nibble{animation:careNibble 1s ease-in-out infinite}.care-breathe{animation:careBreathe 3s ease-in-out infinite}@keyframes careNibble{50%{transform:translate(-50%,-68%) rotate(-1deg)}}@keyframes careBreathe{50%{transform:translate(-50%,-70%) scale(1.015)}}@media(max-width:520px){.care-caption{padding:12px 16px}.care-caption h2{font-size:22px}.bond-path{grid-template-columns:repeat(2,1fr)}.care-view{min-height:280px}.care-bowl{height:95px}.care-foam{width:100px}}@media(prefers-reduced-motion:reduce){.care-pet,.care-ball{transition:none}.care-nibble,.care-breathe{animation:none}}
+
+#careScene[data-pet=cat] .care-ball{border:0;background:transparent;box-shadow:none;font-size:38px;transform:rotate(-25deg)}#careScene[data-pet=rabbit] .care-ball{background:#e4d1a7;border-color:#b89c70;color:#7c9d62;font-size:30px}#careScene[data-pet=rabbit] .care-pet{transition:left 2.2s ease-in-out,top 2.2s ease-in-out} @media(prefers-reduced-motion:reduce){#careScene[data-pet=rabbit] .care-pet{transition:none}}
+
+
+
+/* BEGIN ENRICHMENT CSS */
+.together-sheet{max-width:860px;margin:auto}.enrich-eyebrow{color:#64816c;letter-spacing:.06em}.together-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:18px 0}.together-card{display:flex;flex-direction:column;gap:8px;text-align:left;padding:18px;border:1px solid #dcd9c8;border-radius:18px;background:#fffcf4;color:#394c3f;min-height:92px;font:inherit}.together-card:not(:disabled):is(button):hover{border-color:#819d82;background:#f3f5e9}.together-card small{line-height:1.6;color:#70796c}.enrich-note{color:#72756b;font-size:13px;line-height:1.7}.enrich-stage{position:relative;height:300px;overflow:hidden;border-radius:20px;background:#e7dfc7 url('assets/detail/room-anima14.png') center 70%/cover}.enrich-stage.park{background-image:url('assets/park.webp')}.enrich-animal{position:absolute;width:170px;height:170px;left:48%;top:51%;transform:translate(-50%,-35%);transition:left 3s ease-in-out,top 3s ease-in-out,opacity 2s;z-index:3}.enrich-animal>*,.memory-picture>*{width:100%!important;height:100%!important}.enrich-target{position:absolute;bottom:18%;padding:8px 12px;background:#fff5d9df;border-radius:12px;color:#5b6748;font-size:13px;z-index:4}.enrich-target.left{left:6%}.enrich-target.right{right:6%}.enrich-friend{position:absolute;width:130px;height:130px;right:3%;top:26%;opacity:.9}.enrich-friend>*{width:100%!important;height:100%!important}.enrich-scenery{position:absolute;font-size:80px;color:#bba768;right:15%;top:10%}.enrich-furniture{position:absolute;width:200px;left:50%;top:52%;transform:translate(-50%,-20%);z-index:2}.enrich-animal.use-decor-0{left:50%!important;top:59%!important}.enrich-animal.use-decor-1{animation:enrich-tunnel 7s ease-in-out forwards}.enrich-animal.use-decor-2{left:50%!important;top:59%!important;transform:translate(-50%,-35%) scale(.65)}.decor-choice svg{height:100px;align-self:center;width:100%}.memory-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px}.memory-card{background:#fffdf5;padding:12px;border:1px solid #dfd8c6;border-radius:15px;box-shadow:0 3px 0 #d6c9ae33}.memory-picture{height:150px;background:radial-gradient(ellipse,#f1ead5,#e1ebd9);border-radius:10px;padding:10px}.memory-card h3{font-size:16px;margin:9px 0}.memory-card p{font-size:13px;line-height:1.6}.memory-card small{color:#77756c}.enrich-touch-target{position:absolute;left:68%;top:68%;width:52px;height:52px;border:2px dashed #6f8f62;border-radius:50%;background:#ecf6c7cc;color:#405b3a;z-index:4}.together-sheet button:focus-visible{outline:3px solid #bc8c36;outline-offset:3px}.together-sheet button:disabled{opacity:.6;cursor:default}@keyframes enrich-tunnel{0%{left:25%;opacity:1}35%{left:46%;opacity:.25}65%{left:57%;opacity:.25}100%{left:77%;opacity:1}}@media(max-width:560px){.together-grid{grid-template-columns:1fr 1fr;gap:8px}.together-card{padding:12px;min-width:0}.enrich-stage{height:260px}.enrich-animal{width:140px;height:140px}.memory-grid{grid-template-columns:1fr 1fr}.memory-card{padding:8px}.memory-picture{height:120px}.enrich-target{font-size:11px;padding:6px}.enrich-target.left{left:2%}.enrich-target.right{right:2%}}@media(prefers-reduced-motion:reduce){.enrich-animal{transition:none}.enrich-animal.use-decor-1{animation:none;left:70%!important}}
+
+.enrich-room-decor{position:fixed;left:39%;top:49%;width:clamp(85px,13vw,170px);padding:0;background:none;border:0;z-index:2;cursor:pointer;touch-action:manipulation}.enrich-room-decor svg{width:100%;height:auto}.enrich-room-decor[hidden]{display:none}.enrich-room-decor:focus-visible{outline:3px solid #8e7344;border-radius:15px}.enrich-settle{animation:enrich-settle 2s ease-in-out forwards}@keyframes enrich-settle{from{margin-top:0}to{margin-top:8px}}@media(prefers-reduced-motion:reduce){.enrich-settle{animation:none}}
+#sheet:has(.together-sheet){max-height:94dvh;box-sizing:border-box}.together-sheet p{line-height:1.55;margin:10px 0}.together-sheet .together-grid{margin:12px 0}.together-sheet .together-card{min-height:78px;padding:13px}.enrich-stage{height:250px}.enrich-target.pref-prop{width:100px;background:transparent;padding:0;text-align:center;bottom:12%}.enrich-target.pref-prop svg{width:85px;height:75px;display:block;margin:auto;filter:drop-shadow(0 4px 3px #543c392b)}.enrich-target.pref-prop small{display:block;background:#fff9e9e8;padding:4px 6px;border-radius:9px}#bTogether{background:#e7efdc;border-color:#9ba98a;color:#354b3a}@media(max-width:560px){.enrich-target.pref-prop{width:85px}.enrich-target.pref-prop svg{width:70px;height:65px}.enrich-stage{height:240px}.together-card small{font-size:12px}}
+
+/* END ENRICHMENT CSS */
+.care-ball{width:90px!important;height:90px!important;border:0!important;box-shadow:none!important;background:transparent!important}.care-ball svg{width:100%;height:100%}.rabbit-stations{display:flex;gap:8px;flex-wrap:wrap}.rabbit-stations button{display:flex;align-items:center;gap:5px;min-height:56px}.rabbit-stations svg{width:58px;height:58px}.care-pet.rabbit-tunnel{animation:tunnel-peek 3.5s ease-in-out}.care-pet.rabbit-sniff{animation:sniff-mat .6s 5 ease-in-out}.care-pet.rabbit-hop{animation:gentle-hop .65s 4 ease-in-out}@keyframes tunnel-peek{0%,100%{opacity:1}45%,65%{opacity:.15}}@keyframes sniff-mat{50%{rotate:3deg}}@keyframes gentle-hop{50%{translate:0 -12px}}@media(prefers-reduced-motion:reduce){.care-pet.rabbit-tunnel,.care-pet.rabbit-sniff,.care-pet.rabbit-hop{animation:none}}
+
+#ball{background:transparent!important;border:0!important;box-shadow:none!important}#ball svg{width:100%;height:100%}#momentNotice{position:fixed;right:16px;top:85px;z-index:22;max-width:300px;padding:15px;border-radius:20px;background:#fffae9ee;border:1px solid #d6bd88;box-shadow:0 5px 25px #63563222}#momentNotice p{margin:7px 0;font-size:14px}#momentNotice[hidden]{display:none}#pet[data-cute=tilt] .pet-atlas{animation:cute-tilt 2s infinite}#pet[data-cute=wiggle] .pet-atlas,#pet[data-cute=knead] .pet-atlas{animation:cute-wiggle .7s infinite}#pet[data-cute=hop] .pet-atlas{animation:gentle-hop .9s 4}#pet[data-cute=peek] .pet-atlas{animation:tunnel-peek 3s 3}#pet[data-cute=sniff] .pet-atlas,#pet[data-cute=groom] .pet-atlas{animation:cute-tilt .8s infinite}#pet[data-cute=heart]{filter:drop-shadow(0 0 12px #f4d49a88)}@keyframes cute-tilt{50%{rotate:4deg}}@keyframes cute-wiggle{50%{translate:3px 2px}}@media(prefers-reduced-motion:reduce){#pet[data-cute] .pet-atlas{animation:none!important}}
+
+
+/* Quiet layered room: readable controls stay separate from generated art. */
+.care-prop>svg{filter:drop-shadow(2px 5px 3px #63432c25)}
+#pet .pet-atlas{filter:drop-shadow(1px 2px 1px #69472a19)}
+#panel{background:linear-gradient(145deg,#fffcf5,#f7f4e9);border-top:1px solid #e2d9c3;box-shadow:0 -9px 28px #4c3a2217}
+.acts button{background:linear-gradient(#fffef9,#f5f1e5);border-color:#ded8c7;box-shadow:0 3px 0 #d8ceba;transition:transform .15s,box-shadow .15s}
+.acts button:active{transform:translateY(2px);box-shadow:0 1px 0 #d8ceba}
+.acts button.hot{background:linear-gradient(#fff7ec,#f6e8ce);border-color:#c9ab77}
+.chip{background:#fffcf2f5;border:1px solid #e6ddc9;box-shadow:0 4px 14px #57432716}
+.care-prop span{background:#fffaf0ef!important;border:1px solid #e4d9c6;border-radius:12px;box-shadow:0 2px 6px #63432c12}
+@media(prefers-reduced-motion:reduce){.acts button{transition:none}}
+/* ===== 가독성 + 단일 낮밤 (2026-10-28) =====
+   원칙: 밝은 패널(종이색)은 짙은 글씨 유지, 어두운 배경(밤 벽·첫화면)만 따뜻한 밝은 글씨. 본문·버튼은 SUIT, 제목은 Jua. */
+.btn,.btn.sm{font:700 15px/1.3 var(--f-body);color:var(--ink)}.btn.sm{font-size:14px}
+.acts button{font:700 14px/1.25 var(--f-body);color:var(--ink)}
+.chip{font-size:14px;color:var(--dim)}#panel h2 small{font-size:14px}#need{font-size:14px;color:var(--dim)}
+.log{font-size:15px}.log b{font-size:14px;color:var(--dim)}.bar{font-size:15px}
+.item small{font-size:13px;color:var(--dim)}.pet small{color:var(--dim)}
+.care-caption small,.enrich-note,.memory-card small,.together-card small,.together-sheet small,#sheet small,.full small{font-size:14px;color:var(--dim)}
+.care-eyebrow{color:#6f563c;font-size:13px}.enrich-eyebrow{color:#4c6a55;font-size:13px}.care-caption p{font-size:16px}
+.care-prop span{font:600 13px var(--f-body)}.bubble{font-size:15px;color:var(--ink)}
+#momentNotice p{font-size:15px}#momentNotice small{font-size:13px;color:var(--dim)}
+.enrich-target{font-size:14px;color:#4f5a3e}.together-card small{line-height:1.5}
+/* 템플릿 안 인라인 12~13px 안내문은 바닥값 14px로 올린다 (구조 변경 없이) */
+.full p[style*="font-size:12px"],.full p[style*="font-size:13px"],#sheet p[style*="font-size:12px"],#sheet p[style*="font-size:13px"],#sheet p[style*="font-size:14px"]{font-size:14px!important}
+.full .pet,.full .item{color:var(--ink)}
+/* 밤: 첫화면·입양 흐름 글씨 (배경은 --wall 남보라) */
+.night .full h1{color:var(--hero)}.night .full p,.night .full>.in>p,.night .full small{color:var(--hero-p)}
+.night .full .pet small,.night .full .item small,.night .full .photo p{color:var(--dim)}
+/* 밤: 별도 돌봄 화면과 함께하는 시간 무대를 기본 방과 같은 빛으로. 입력은 막지 않는다 (pointer-events:none) */
+.care-view,.enrich-stage{isolation:isolate}
+.night .care-view::after,.night .enrich-stage::after{content:'';position:absolute;inset:0;background:rgba(30,36,80,.45);pointer-events:none;z-index:9}
+.night .care-view.care-special::after{background:rgba(52,38,58,.22)}
+/* 조작용 타깃·라벨은 밤 오버레이(z 9) 위(z 10)에 둔다. 라벨은 불투명 짙은 바탕+밝은 글씨로 낮밤 공통. 소품 그림은 밤 조명 유지. */
+.dirty-spot{z-index:10;font:700 13px var(--f-body);color:#fff4dc}.dirty-spot span{display:inline-block;white-space:nowrap;background:#2f2418e8;color:#fff4dc;padding:2px 8px;border-radius:9px;line-height:1.3;box-shadow:0 1px 3px #0006}.night .care-view .dirty-spot{border-color:#e6c48f}
+.enrich-target,.enrich-touch-target{z-index:10}.enrich-target.pref-prop small{background:#2f2418e8;color:#fff4dc;font-weight:700}.night .enrich-target.pref-prop svg{filter:drop-shadow(0 4px 3px #543c392b) brightness(.68) saturate(.85)}
+/* 밤: 기본 방의 DOM 레이어(동물·소품·공·방 소품)도 캔버스 밤 톤에 맞춘다 */
+.night #pet .pet-atlas{filter:drop-shadow(1px 2px 1px #69472a19) brightness(.68) saturate(.85)}
+.night .care-prop>svg{filter:drop-shadow(2px 5px 3px #63432c25) brightness(.68) saturate(.85)}
+.night #ball svg,.night #npc img,.night .enrich-room-decor svg{filter:brightness(.68) saturate(.85)}
+.night #npc img{filter:hue-rotate(-14deg) saturate(.8) brightness(.66)}
+/* ===== 끝 ===== */
+</style>
+
+<canvas id="room"></canvas>
+<div id="careProps" hidden></div><div id="stage" hidden><div id="mess" hidden></div><div id="ball" hidden></div><div id="shadow" hidden></div><div id="npc" hidden></div><div id="pet" role="button" tabindex="0" aria-label="반려동물에게 인사하기"></div></div>
+<div id="top" hidden><div class="chip" id="dayChip"></div><div class="chip" id="clock"></div></div>
+<div id="panel" hidden>
+ <h2><span id="pname"></span><small id="pday"></small></h2>
+ <button id="bondChip" type="button">♡ 처음 만난 사이</button><button id="taskChip" type="button" hidden></button><p id="mood"></p><p id="need"></p><div id="mission" hidden></div>
+ <div class="acts" id="acts"></div>
+ <div class="more"><button class="btn sm" id="bQuiet">쉬게 하기</button><button class="btn sm" id="bGroom">살살 빗질</button><button class="btn sm" id="bStat">상태 보기</button><button class="btn sm" id="bLog">관찰 일지</button><button class="btn sm" id="bTogether">함께하는 시간</button><button class="btn sm" id="bCamera">사진 찍기</button><button class="btn sm" id="bDiscover">성장과 발견</button><button class="btn sm" id="bSit">돌봄 맡기기</button><button class="btn sm" id="bSet">설정</button></div>
+</div>
+<section id="careScene" hidden aria-label="함께 돌보기"></section><div id="sheet" hidden></div>
+<aside id="momentNotice" hidden><small>우리 사이의 특별한 순간</small><p id="momentText"></p><button class="btn sm" id="momentCamera">이 순간 사진 찍기</button><button class="btn sm" id="momentClose">접어 두기</button></aside><div class="full" id="intro"><div class="in"></div></div>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id),H=3600e3,DAY=24*H,TEST=location.hash==='#test';
+let S=null,pose='idle',poseT=0,lastCare='';
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* 실제 그림 자산 (Codex 제작. 아티팩트 파일로 함께 배포). 강아지 12자세: 0~3 걷기, 4 대기, 5 눈감기, 6~7 먹기, 8~9 놀이, 10~11 잠 */
+const ASSET={frames:Array.from({length:12},(_,i)=>`assets/dog/${i}.webp`),room:'assets/detail/room-anima14.png',park:'assets/park.webp',FW:380,FH:360,BASE:350,BG:[1280,853]};
+const IMG={f:ASSET.frames.map(u=>Object.assign(new Image(),{src:u})),room:Object.assign(new Image(),{src:ASSET.room}),park:Object.assign(new Image(),{src:ASSET.park})};
+const now=()=>Date.now()+(S?.offset||0); // offset: 검수용·체험용 시간 이동
+const hour=()=>new Date(now()).getHours();
+/* 단일 낮밤 판정. 게임 시계(now: 검수 offset 포함) 기준이며 S가 없으면 실제 시각. 수면(isResting)과는 별개. */
+const isNight=(t=now())=>{const h=new Date(t).getHours();return h>=21||h<6;};
+function syncNight(){document.body.classList.toggle('night',isNight());}
+const inWin=(wins)=>wins.find(([a,b])=>{const h=hour();return h>=a&&h<b;});
+const day=s=>Math.max(1,Math.min(30,Math.floor((now()-s.adoptedAt)/DAY)+1));
+const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
+/* ====================== 동물별 규칙 (학습용 단순화) ====================== */
+/* 교과서 근거: 강아지 - 전용 사료·깨끗한 물, 배설물 즉시, 목욕 2주 1회, 산책·운동, 정기 검진 (30~31쪽).
+   거피 - 사료 하루 2번 1~2분 안에 먹을 양, 물 주 1회 1/3 갈기, 직사광선 피하고 조명 8시간, 수온 24~26℃ (33쪽).
+   고양이·햄스터는 교과서에 없어 일반적인 반려동물 안내를 바탕으로 단순화함. */
+const SP={
+ dog:{n:'강아지',e:'🐶',lead:'함께 뛰어놀아요',intro:'매일 산책과 운동이 필요해요.<br>전용 사료를 정해진 양만큼. 깨끗한 물은 늘. 배설물은 바로.<br><small>게임에서는 아침·저녁 밥때와 2주 목욕 주기를 써요. 실제 강아지는 나이·건강·수의사 안내에 따라 달라요.</small>',
+  needs:{food:['배부름',100/28],water:['물',100/20],clean:['청결',100/36],play:['활동',100/40],rest:['휴식',100/18]},
+  meals:[[6,10],[17,21]],sleep:h=>h>=22||h<6,messEvery:8,messIcon:'💩',messName:'배설물',
+  items:[['🛏️','방석과 담요','크기에 맞는 집에 넣어요',1],['🥣','밥그릇·물그릇','전용 사료와 깨끗한 물',1],['🦴','장난감 공','놀이와 운동',1],['🐟','어항','강아지에겐 필요 없어요',0],['🎡','쳇바퀴','햄스터 물건이에요',0],['🪵','톱밥 깔짚','햄스터나 곤충용이에요',0]],
+  behav:['꼬리를 살랑살랑 흔들었어요','이름을 부르면 고개를 들어요','공을 물어 와요','가까이 와서 옆에 눕네요','배를 보여 주며 뒹굴어요'],
+  acts:['feed','water','clean','play','walk'],extra:['bath','vet'],
+  touch:s=>s.aff>=25?`${s.name}! 반가워서 폴짝폴짝.`:'살짝 다가와요. 아직 조심스럽네요.',
+  firstCare:'먼저 깨끗한 물을 챙겨 줄까요?',firstBtn:'💧 물 챙겨 주기',firstDo:s=>{s.n.water=100;},
+  tips:'하루 한 번 들러서 밥때와 물과 보금자리를 살펴 주세요. 밤에는 자요.'},
+ cat:{n:'고양이',e:'🐱',lead:'조용히 곁에 있어요',intro:'화장실 모래는 매일 치워요.<br>사료는 정해진 양. 물은 늘 깨끗하게.<br>낮잠을 많이 자요. 자는 고양이는 깨우지 않아요.<br><small>게임에서는 빗질 주기를 2~3일로 둬요. 실제는 털 종류와 상태에 따라 달라요.</small>',
+  needs:{food:['배부름',100/14],water:['물',100/8],litter:['화장실',100/30],play:['놀이',100/22],rest:['휴식',100/16]},
+  meals:[[6,10],[17,21]],sleep:h=>(h>=12&&h<15)||(h>=1&&h<5),messEvery:10,messIcon:'🧺',messName:'화장실 모래',
+  items:[['🧺','화장실 모래','매일 치워야 해요',1],['🥣','밥그릇·물그릇','사료와 깨끗한 물',1],['🪶','깃털 장난감','사냥 놀이',1],['🦴','뼈다귀 간식','강아지 간식이에요',0],['🐾','산책 목줄','고양이는 집 안에서 놀아요',0],['🌡️','어항 히터','물고기 물건이에요',0]],
+  behav:['기지개를 쭉 켰어요','장난감을 쫓아 달려요','창가에서 햇빛을 쬐며 쉬어요','가까이 와서 옆에 눕네요','골골 소리를 내요'],
+  acts:['feed','water','clean','play','brush'],extra:['vet'],
+  touch:s=>s.aff>=25?'골골골. 머리를 손에 비벼요.':'살짝 피했다가 다시 쳐다봐요. 천천히.',
+  firstCare:'먼저 화장실 모래를 깔아 줄까요?',firstBtn:'🧺 화장실 준비하기',firstDo:s=>{s.n.litter=100;},
+  tips:'아침저녁 밥때에 들러 화장실을 치워 주세요. 낮에는 자주 자요.'},
+ ham:{n:'햄스터',e:'🐹',lead:'밤에 깨어나요',intro:'주로 밤에 활동하고 낮에는 자요. 낮잠을 깨우지 않아요. 이 게임의 골든햄스터는 혼자 살며, 활동 부족은 쳇바퀴와 탐색으로 도와요.<br>먹이는 저녁에 하루 한 번 정해진 양. 물은 늘.<br>깔짚은 젖은 곳을 바로 치우고 일주일에 한 번 갈아요.<br>물로 씻기지 않아요. 스스로 털을 손질해요.',
+  needs:{food:['배부름',100/20],water:['물',100/10],bed:['깔짚',100/40],explore:['탐색',100/22],rest:['휴식',100/16]},
+  meals:[[17,23]],sleep:h=>h>=9&&h<18,messEvery:12,messIcon:'💧',messName:'젖은 깔짚',
+  items:[['🪵','깔짚','푹신하게 깔아요',1],['🏠','숨숨집','숨어서 쉬는 곳',1],['🎡','쳇바퀴','밤에 달려요',1],['🛁','목욕통','햄스터는 물로 씻지 않아요',0],['🥣','큰 밥그릇','작은 그릇이면 충분해요',0],['🪶','깃털 장난감','고양이 장난감이에요',0]],
+  behav:['앞발로 먹이를 잡고 먹어요','숨숨집에서 얼굴을 내밀어요','볼주머니가 빵빵해졌어요','쳇바퀴를 신나게 달려요','손 위에 올라왔어요'],
+  acts:['feed','water','clean','explore','hand'],extra:['vet'],
+  touch:s=>s.aff>=25?'코를 벌름벌름. 손 냄새를 맡아요.':'숨숨집으로 쏙. 아직 낯설어요.',
+  firstCare:'먼저 깔짚을 푹신하게 깔아 줄까요?',firstBtn:'🪵 깔짚 깔기',firstDo:s=>{s.n.bed=100;},
+  tips:'저녁에 들러 먹이와 물과 깔짚을 살펴 주세요. 낮에는 자요.'},
+ rabbit:{n:'토끼',e:'🐰',lead:'살금살금 폴짝',intro:'건초와 깨끗한 물은 언제나 먹을 수 있게 준비해요.<br>화장실을 매일 정리하고 안전한 공간에서 운동해요.<br>귀를 잡거나 억지로 안지 않아요. 바닥에서 천천히 친해져요.<br><small>게임은 돌봄을 단순화한 체험이에요. 실제 식단·건강·친구와의 생활은 보호자와 전문가에게 확인해요.</small>',
+ needs:{food:['건초',100/28],water:['물',100/20],clean:['화장실',100/36],play:['활동',100/40],rest:['휴식',100/18]},meals:[[0,24]],sleep:h=>h>=12&&h<16||h>=0&&h<4,messEvery:8,messIcon:'🧹',messName:'화장실',
+ items:[['🌾','건초와 물그릇','언제나 먹을 수 있게',1],['🏠','숨을 집과 화장실','안심하고 쉬는 공간',1],['🧩','안전한 놀이 공간','뛰고 탐색할 공간',1],['🥕','당근만 한가득','당근은 주식이 아니에요',0],['🛁','목욕통','일상적인 물목욕은 하지 않아요',0],['🐟','어항','토끼의 집이 아니에요',0]],
+ behav:['코를 쫑긋 움직여요','숨을 집에서 먼저 나와요','옆에서 편하게 건초를 먹어요','기분 좋게 폴짝 뛰어요','곁에 편안히 누웠어요'],acts:['feed','water','clean','play','gentle'],extra:['vet'],
+ touch:s=>s.aff>=25?'코를 쫑긋. 가까이 와서 냄새를 맡아요.':'바닥에 앉아 기다려요. 억지로 안지 않아요.',firstCare:'건초부터 넉넉히 준비해 줄까요?',firstBtn:'🌾 건초 준비하기',firstDo:s=>{s.n.food=100;s.n.water=100;},tips:'건초와 물은 늘 준비해요. 매일 화장실과 몸 상태를 살펴요.'},
+ fish:{n:'거피',e:'🐠',lead:'물속에서 살아요',intro:'사료는 하루 두 번. 1~2분 안에 먹을 양만.<br>물은 일주일에 한 번 3분의 1만 갈아요.<br>수온은 24~26℃. 조명은 하루 8시간.<br>산책도 목욕도 없어요. 물을 잘 지켜 주는 게 돌봄이에요.',
+  needs:{food:['배부름',100/14],water:['수질',100/168],temp:['수온',100/48],light:['조명',100/24],rest:['휴식',100/18]},
+  meals:[[7,10],[17,20]],sleep:h=>h>=23||h<7,messEvery:0,
+  items:[['🌡️','히터·온도계','24~26℃를 지켜요',1],['🌿','수초와 여과기','산소와 깨끗한 물',1],['💡','조명','하루 8시간',1],['🦴','장난감 공','물고기에겐 필요 없어요',0],['🧺','화장실 모래','고양이 물건이에요',0],['🛏️','방석','물속엔 못 넣어요',0]],
+  behav:['먹이 쪽으로 쪼르르 다가와요','수초 사이를 헤엄쳐요','방향을 휙 바꿔요','꼬리 색이 더 선명해졌어요','손가락을 따라 헤엄쳐요'],
+  acts:['feed','change','heater','lamp','watch'],extra:['vet'],
+  touch:s=>s.aff>=25?'어항 앞에 오니 쪼르르 다가와요.':'수초 뒤로 숨어요. 유리를 두드리지 말아요.',
+  firstCare:'수돗물은 하루 받아 둔 물을 써요. 수온부터 맞출까요?',firstBtn:'🌡️ 히터 켜기',firstDo:s=>{s.n.temp=100;s.heater=true;},
+  tips:'아침저녁 먹이 때 들러 수온과 조명을 확인하세요. 물갈이는 일주일에 한 번.'}};
+for(const k of ['dog','cat','ham','rabbit']){SP[k].needs.coat=['털 손질',100/96];SP[k].extra.push('groom','quiet');}
+const careDay=()=>Math.max(1,Math.floor((now()-S.adoptedAt)/DAY)+1);
+const GROWTH=[{name:'꼬물꼬물 아기',scale:.45},{name:'호기심 꼬마',scale:.58},{name:'장난꾸러기 친구',scale:.74},{name:'씩씩한 친구',scale:.9},{name:'함께 자란 단짝',scale:1}];
+// 실제 생장 속도가 아닌 30일 돌봄의 시각적 보상. 저장된 입양 시각으로 복원한다.
+function dogGrowth(s=S,t=now()){const days=s?.trial?1:Math.max(1,Math.floor((t-s.adoptedAt)/DAY)+1);return Math.min(4,Math.floor((days-1)/6));}
+const ATLAS={"cat":{"width":1402,"height":1122,"rects":[[43,158,195,170],[288,114,215,215],[541,74,253,255],[818,50,251,279],[1098,11,296,318],[17,438,196,167],[271,412,220,190],[537,378,226,224],[802,337,263,267],[1086,332,313,271],[45,735,191,173],[283,685,219,225],[545,659,248,255],[819,639,264,275],[1106,614,291,301],[22,969,201,118],[291,961,208,127],[530,940,260,148],[800,935,283,154],[1088,935,305,152]]},"dog":{"width":1402,"height":1122,"rects":[[56,113,211,207],[314,91,236,228],[582,67,239,254],[844,48,256,272],[1114,21,269,301],[32,424,220,152],[290,391,232,185],[552,351,260,227],[827,360,276,219],[1114,324,279,255],[47,655,221,212],[305,631,237,237],[561,616,251,258],[841,612,271,266],[1125,588,263,294],[27,959,227,121],[284,955,247,125],[549,946,259,138],[823,935,271,145],[1103,915,287,166]]},"ham":{"width":1402,"height":1122,"rects":[[40,103,159,193],[287,59,183,240],[551,33,200,268],[842,11,224,294],[1134,5,245,301],[30,434,179,134],[285,397,197,173],[546,385,220,190],[814,362,261,215],[1110,335,285,243],[30,661,163,192],[274,620,189,232],[541,606,216,247],[841,600,235,253],[1135,587,247,268],[36,945,174,134],[275,927,201,152],[532,908,230,170],[809,892,265,189],[1098,874,288,214]]},"rabbit":{"width":1402,"height":1122,"rects":[[69,138,157,193],[320,93,188,240],[605,61,188,278],[882,30,214,316],[1156,2,230,348],[56,464,175,143],[316,440,208,168],[588,422,231,185],[873,403,238,204],[1157,361,241,243],[74,689,157,205],[326,670,181,236],[604,652,197,264],[880,631,203,292],[1152,604,229,323],[56,969,190,137],[303,976,219,132],[587,959,231,149],[860,944,252,163],[1126,918,276,195]]}};
+const DETAIL={"dog":{"width":1145,"height":1374,"rows":6,"cols":5,"rects":[[46,97,161,156],[233,70,192,184],[421,47,207,207],[635,26,210,229],[844,8,270,248],[38,309,177,165],[237,289,189,193],[435,276,204,207],[655,267,210,217],[876,260,248,231],[23,550,183,99],[219,535,210,115],[434,533,212,121],[654,522,220,133],[876,501,256,155],[37,701,178,172],[232,699,195,178],[434,687,206,192],[655,687,215,200],[878,660,253,228],[30,939,172,146],[227,904,200,180],[429,894,207,192],[646,889,216,203],[870,886,256,206],[45,1150,156,183],[236,1133,195,205],[431,1111,220,229],[666,1115,204,227],[892,1098,229,249]],"notes":[],"rowNames":["idle","play","sleep","hungry","thirsty","sad"]},"cat":{"width":1145,"height":1374,"rows":6,"cols":5,"rects":[[37,138,162,143],[225,100,187,185],[429,64,205,225],[645,39,208,250],[860,6,276,281],[38,358,166,152],[227,328,189,182],[435,314,198,201],[657,303,214,223],[860,287,276,239],[24,581,175,113],[204,567,208,132],[423,565,217,134],[641,562,231,140],[874,535,264,169],[35,786,166,139],[235,759,188,168],[445,747,196,182],[661,723,210,208],[889,698,250,247],[27,995,172,135],[220,965,198,167],[425,951,212,182],[636,939,242,196],[870,934,266,201],[32,1192,171,152],[228,1167,187,180],[441,1150,211,200],[657,1146,230,209],[885,1135,248,222]],"notes":["Adult idle/play components touch. Source is clipped at y=287; slight ear/foot edge truncation may need art replacement for close-up use."],"rowNames":["idle","play","sleep","hungry","thirsty","sad"]},"ham":{"width":1145,"height":1374,"rows":6,"cols":5,"rects":[[32,117,145,169],[212,71,177,216],[434,40,196,247],[648,24,221,264],[880,7,250,281],[35,351,145,159],[221,317,180,197],[440,305,199,212],[666,292,221,226],[895,290,239,231],[26,593,159,122],[215,570,186,146],[425,553,210,162],[658,546,226,170],[900,532,238,185],[30,778,157,158],[225,764,183,172],[438,740,207,196],[664,724,222,212],[897,717,242,218],[35,1014,156,113],[216,990,190,141],[437,967,212,161],[670,958,222,173],[913,942,226,186],[36,1179,163,162],[230,1158,181,185],[447,1152,191,193],[664,1139,219,208],[907,1131,229,217]],"notes":[],"rowNames":["idle","play","sleep","hungry","thirsty","sad"]},"rabbit":{"width":1145,"height":1374,"rows":5,"cols":5,"rects":[[43,146,142,168],[257,96,170,226],[478,65,171,261],[698,35,197,296],[927,5,209,328],[50,381,144,190],[260,363,176,219],[486,352,172,233],[708,343,196,252],[942,339,197,261],[32,624,181,146],[250,635,197,148],[470,635,195,156],[690,627,210,177],[921,617,213,189],[26,888,162,137],[240,875,187,152],[458,851,192,182],[688,850,205,181],[921,823,213,199],[38,1142,168,170],[257,1124,175,190],[477,1103,188,214],[704,1103,204,215],[925,1071,214,250]],"notes":[],"rowNames":["idle","play","sleep","hungry_thirsty","sad"]},"dirty":{"width":1402,"height":1122,"rows":4,"cols":5,"rects":[[54,135,208,191],[286,87,235,238],[540,62,261,264],[818,35,276,293],[1092,11,300,318],[74,465,193,171],[288,412,229,222],[548,382,254,252],[831,358,248,277],[1094,329,302,307],[87,704,160,172],[330,667,184,209],[583,654,204,223],[859,649,209,227],[1141,641,225,234],[115,937,164,171],[323,909,189,199],[571,882,208,227],[827,878,220,233],[1095,850,254,264]],"notes":[],"rowNames":["dog","cat","ham","rabbit"]},"props":{"width":1536,"height":1024,"rows":4,"cols":4,"rects":[[67,28,281,197],[441,31,282,194],[821,30,288,196],[1204,31,278,193],[19,235,369,235],[416,261,336,209],[786,250,347,211],[1165,251,348,216],[40,475,340,258],[422,475,340,259],[831,457,259,277],[1188,507,308,213],[27,740,357,249],[408,753,369,233],[847,720,295,279],[1213,754,281,234]],"notes":[],"rowNames":["food_water","hay_litter","hamster","care_tools"],"cellNames":["food_full","food_empty","water_full","water_empty","hay_full","hay_empty","litter_clean","litter_dirty","ham_hide_clean","ham_hide_dirty","ham_wheel","ham_sand","pellet_tray","dog_pad_dirty","cat_scratcher","brush"]},"rabbitHungry":{"width":2172,"height":724,"rects":[[89,330,253,353],[448,227,421,456],[870,144,433,539],[1303,53,311,632],[1747,12,376,680]]}};
+const PET_KINDS=['dog','cat','ham','rabbit'];
+const hasArt=()=>!!S&&PET_KINDS.includes(S.kind);
+const SITTER_FLOOR=60,PROTECT_FLOOR=30,PROTECT_H=72;
+const TITLES=[['관찰의 달인',s=>s.journal.filter(j=>j.note).length>=10],['쾌적한 보금자리 지킴이',s=>s.stat.cleanOk>=20],['믿음직한 돌봄 친구',s=>s.stat.mealOk>=40],['작은 변화를 알아보는 친구',s=>s.stat.vet>=1||s.found.length>=4],['함께 자란 친구',()=>true]];
+const sp=()=>SP[S.kind];
+/* ====================== 상태 ====================== */
+function newPet(kind,name,trial){const t=Date.now(),n={};for(const k in SP[kind].needs)n[k]=80;return{v:2,kind,name,trial:!!trial,adoptedAt:t,lastCalc:t,lastSave:t,offset:0,n,aff:5,found:[],lastMeal:{},lastWalk:t-17*H,lastBath:t,lastBrush:t,lastChange:t,lastMess:t,mess:false,heater:true,lightUntil:0,sitter:null,careTask:null,sitterUses:[],restUntil:0,protect:false,sick:false,scene:'room',park:{day:0,finds:[],friendDay:0,friendStep:0},journal:[],stat:{mealOk:0,mealOver:0,cleanOk:0,walk:0,bath:0,vet:0,sitterH:0},done:false,step:0};}
+/* 지난 시간을 한 번에 반영. lastCalc를 올려 같은 구간을 두 번 계산하지 않는다. */
+/* [from,to] 구간에서 수면 시간(h). 시간 경계 단위로 합산 (최대 45일 → 1,080구간). 초 단위 루프 아님. */
+function sleepHours(from,to,sl){let sh=0,a=from;while(a<to){const d=new Date(a),nextH=new Date(d.getFullYear(),d.getMonth(),d.getDate(),d.getHours()+1).getTime(),b=Math.min(nextH,to);if(sl(d.getHours()))sh+=(b-a)/H;a=b;}return sh;}
+/* 휴식: 잠/깸 구간을 시간 경계 순서대로 밟으며 구간마다 clamp. 접속 중 매분 계산한 결과와 오프라인 한 번 계산이 같아진다(구간 안에서는 부호가 일정하므로). */
+function restAfter(v,from,to,r,sl){let a=from;while(a<to){const d=new Date(a),nextH=new Date(d.getFullYear(),d.getMonth(),d.getDate(),d.getHours()+1).getTime(),b=Math.min(nextH,to),seg=(b-a)/H;v=clamp(sl(d.getHours())?v+2*r*seg:v-r*seg);a=b;}return v;}
+function isResting(t=now()){return t>=(S.awakeUntil||0)&&(sp().sleep(new Date(t).getHours())||t<(S.restUntil||0));}
+function petState(){if(!S)return 'idle';if(S.n.water<35)return 'thirsty';if(S.n.food<35)return 'hungry';if(S.mess||(S.n.clean??S.n.litter??S.n.bed??100)<35)return 'dirty';if((S.n.coat??100)<35)return 'unkempt';if(isResting())return 'sleep';if((S.n.play??S.n.explore??100)<35)return 'lonely';return 'idle';}
+function weekStart(t){const d=new Date(t);d.setHours(0,0,0,0);d.setDate(d.getDate()-(d.getDay()+6)%7);return d.getTime();}
+function sitterRemaining(t=now()){return Math.max(0,5-(S.sitterUses||[]).filter(x=>x>=weekStart(t)&&x<=t).length);}
+function startSitter(hours){advance();if(S.trial||S.sitter||S.careTask||!Number.isFinite(hours)||hours<1||hours>24||sitterRemaining()===0)return false;const t=now(),before=JSON.parse(JSON.stringify(S));S.sitterUses=(S.sitterUses||[]).filter(x=>x>=weekStart(t));S.sitterUses.push(t);S.sitter={start:t,end:t+hours*H};S.restUntil=0;log(`${hours}시간 이웃에게 돌봄을 맡겼어요`);if(!save()){Object.assign(S,before);return false;}return true;}
+function endSitter(){advance();if(!S.sitter)return;S.sitter=null;log('다시 직접 돌보기 시작');save();}
+// Children's overnight protection is a game accommodation, not an animal feeding rule.
+function careSlowHours(from,to,sl){return sleepHours(from,to,h=>h>=22||h<7||sl(h));}
+function advance(){
+ const t=now(),wall=Date.now();
+ if(S.trial){S.lastCalc=t;if(S.careTask&&wall>=S.careTask.end)completeCareTask(wall,t);return;}
+ if(t<=S.lastCalc){if(S.careTask&&wall>=S.careTask.end)completeCareTask(wall,S.lastCalc);return;}
+ const from=Math.max(S.lastCalc,t-45*DAY),sp_=sp(),task=S.careTask,shift=S.offset||0;
+ const careStart=task?task.start+shift:Infinity,careEnd=task?task.end+shift:Infinity;
+ if(task&&wall>=task.end&&careEnd<=from){if(!completeCareTask(wall,from))return;}
+ const points=[...new Set([from,t,...[S.sitter?.start,S.sitter?.end,S.restUntil,S.awakeUntil,careStart,careEnd].filter(x=>Number.isFinite(x)&&x>from&&x<t)])].sort((a,b)=>a-b);
+ for(let i=1;i<points.length;i++){
+  const a=points[i-1],b=points[i],h=(b-a)/H,careCovered=S.careTask&&a>=careStart&&a<careEnd,covered=S.sitter&&a>=S.sitter.start&&a<S.sitter.end;
+  if(careCovered){S.lastMess=b;/* Game accommodation: staff maintain needs during treatment. */}
+  else if(covered){S.stat.sitterH+=h;for(const k in S.n)S.n[k]=Math.max(SITTER_FLOOR,S.n[k]-sp_.needs[k][1]*h*.3);S.mess=false;S.lastMess=b;}
+  else {const sl=a<(S.awakeUntil||0)?()=>false:a<(S.restUntil||0)?()=>true:sp_.sleep;for(const k in S.n){let r=sp_.needs[k][1];if(k==='temp'&&S.heater)r=0;if(k==='rest'){S.n[k]=restAfter(S.n[k],a,b,r,sl);continue;}const hours=(k==='food'||k==='water')&&S.kind!=='fish'?h-.75*careSlowHours(a,b,sl):h;S.n[k]=clamp(S.n[k]-r*hours);}
+   if(sp_.messEvery&&b-S.lastMess>sp_.messEvery*H&&S.n.food>20)S.mess=true;
+   if(S.protect||h>=PROTECT_H){S.protect=true;for(const k in S.n)S.n[k]=Math.max(PROTECT_FLOOR,S.n[k]);S.mess=false;}
+  }
+  // Persist each processed boundary so a failed completion save cannot replay elapsed decay.
+  S.lastCalc=b;
+  if(S.careTask&&b>=careEnd&&wall>=S.careTask.end){if(!completeCareTask(wall,b))return;}
+ }
+ if(S.sitter&&t>=S.sitter.end)S.sitter=null;if(S.restUntil&&t>=S.restUntil)S.restUntil=0;
+ const low=Object.entries(S.n).filter(([k,v])=>k!=='coat'&&v<15).length;if(!S.careTask&&low>=2&&!S.sick)S.sick=true;S.lastCalc=t;
+}
+
+/* ====================== 행동 ====================== */
+const ACTS={
+ quiet:{i:'🌙',n:'쉬게 하기',f(){if(isResting())return say('이미 편하게 쉬고 있어요. 깨우지 않고 기다려요.');if(S.n.rest>85)return say('지금은 충분히 쉬었어요. 억지로 재우지 않아요.');S.scene='room';S.awakeUntil=0;S.restUntil=now()+H;S.lastRest=now();act('sleep',3);say(S.kind==='ham'?'은신처를 조용하게 해요. 스스로 쉬도록 한 시간 기다려요.':'포근한 자리를 조용하게 해요. 한 시간 동안 편히 쉬어요.');log('조용한 휴식 자리를 마련했어요');}},
+ groom:{i:'🪮',n:'털 손질',f(){if(isResting())return say('쉬고 있어요. 털 손질은 깨어난 뒤에.');if(S.n.coat>85)return say('털이 보송보송해요. 지금은 손질하지 않아도 돼요.');S.n.coat=100;S.lastBrush=now();S.stat.groom=(S.stat.groom||0)+1;aff(2);act('greet',3);say(S.kind==='ham'?'먼지 없는 햄스터용 모래를 준비해 스스로 손질하게 해요. 물목욕은 하지 않아요.':S.kind==='rabbit'?'바닥에서 편하게 있을 때 털을 살살 정돈해요. 억지로 안거나 물로 씻지 않아요.':'편안해하는 만큼 부드럽게 빗어요. 싫어하면 멈춰요.');log(S.kind==='ham'?'스스로 털을 손질할 환경을 준비했어요':'털을 부드럽게 손질했어요');}},
+ gentle:{i:'🤍',n:'곁에 앉기',f(){act('greet',3);say('바닥에 앉아 조용히 기다려요. 다가오면 살며시 인사해요.');if(now()-(S.lastPet||0)>=H){S.lastPet=now();aff(2);}log('곁에서 조용히 기다렸어요');}},
+ feed:{i:'🍚',n:'먹이',f(actionAt=null){if(S.kind==='rabbit'){if(S.n.food>90)return say('건초가 충분해요. 언제든 먹을 수 있게 두세요.');S.n.food=100;S.stat.mealOk++;aff(2);if(!isResting())act('eat',3);log('신선한 건초를 채웠어요');say('건초를 넉넉히 채웠어요. 언제든 먹을 수 있어요.');return;}const actionTime=actionAt??now(),hh=new Date(actionTime).getHours(),win=sp().meals.find(([a,b])=>hh>=a&&hh<b);const key=win?new Date(actionTime).toLocaleDateString('en-CA')+'-'+win[0]:null;
+  if(!win){if(S.n.food>=40)return say(S.kind==='ham'?'햄스터 먹이는 저녁 5~11시에 하루 한 번.':`게임 밥때가 아니에요. ${sp().meals.map(([a,b])=>`${a}~${b}시`).join(' · ')}. 실제 급여 횟수는 나이와 안내에 따라요.`);
+   S.n.food=clamp(S.n.food+30);S.stat.mealOk++;aff(1);if(!isResting())act('eat',3);say('밥때는 아니지만 배가 고파서 조금만 줬어요. 다음엔 제때!');log('배가 고파 간식을 조금 주었어요');return;}
+  if(S.lastMeal[key])return say('이번 끼니는 벌써 먹었어요. 정해진 양만!');
+  if(S.n.food>85){S.stat.mealOver++;if(S.kind==='fish'){S.n.water=clamp(S.n.water-10);return say('남은 먹이가 물을 더럽혀요. 1~2분 안에 먹을 만큼만.');}return say('배불러요. 더 주면 탈이 나요.');}
+  S.lastMeal[key]=1;S.n.food=clamp(S.n.food+(S.kind==='ham'?60:45));S.stat.mealOk++;aff(3);if(!isResting())act('eat',3);say({dog:'냠냠. 전용 사료를 정해진 양만큼.',cat:'사료를 정해진 양만큼. 오독오독.',ham:'앞발로 쥐고 오물오물. 저녁 한 끼.',fish:'1~2분 안에 먹을 만큼만 살살 뿌려요.'}[S.kind]);log('먹이를 주었어요');}},
+ water:{i:'💧',n:'물 갈기',f(){if(S.n.water>90)return say('물그릇이 아직 깨끗하고 가득해요.');S.n.water=100;aff(1);if(!isResting())act('drink',3);say('깨끗한 물로 갈았어요.');log('물을 갈았어요');}},
+ clean:{i:'🧹',n:{dog:'치우기',cat:'화장실',ham:'깔짚'}[S?.kind]||'치우기',f(){const k={dog:'clean',cat:'litter',ham:'bed',rabbit:'clean'}[S.kind];
+  if(S.mess){S.mess=false;S.lastMess=now();S.n[k]=clamp(S.n[k]+25);S.stat.cleanOk++;aff(2);say({dog:'배설물은 바로바로. 깨끗해졌어요.',cat:'모래를 떠내고 고르게 폈어요.',ham:'젖은 깔짚만 걷어 냈어요.',rabbit:'화장실의 젖은 부분과 배설물을 치웠어요.'}[S.kind]);log(sp().messName+'을 치웠어요');return;}
+  if(S.n[k]>85)return say('지금은 충분히 깨끗해요.');S.n[k]=clamp(S.n[k]+30);S.stat.cleanOk++;say({dog:'방석과 담요를 털고 정리했어요.',cat:'화장실 모래를 새로 보충했어요.',ham:'깔짚을 일부 갈고 숨숨집을 닦았어요.',rabbit:'화장실과 보금자리를 정리했어요.'}[S.kind]);log('보금자리를 정리했어요');}},
+ play:{i:'🎾',n:S?.kind==='cat'?'놀아 주기':'공놀이',f(actionAt=null){if(S.n.rest<20)return say('너무 피곤해해요. 좀 쉬게 해 주세요.');if(isResting(actionAt??now()))return say('자고 있어요. 깨우지 말아요.');S.n.play=clamp(S.n.play+30);S.n.rest=clamp(S.n.rest-10);aff(S.n.play>95?0:4);act('play',4);say(S.kind==='rabbit'?'안전한 공간에서 폴짝폴짝 뛰어요.':S.kind==='cat'?'깃털을 휙휙. 사냥 놀이에 푹 빠졌어요.':S.aff>=40?'공을 물어 왔어요!':'공을 쫓아가요!');log('놀아 주었어요');}},
+ walk:{i:'🐾',n:'산책',f(){if(now()-S.lastWalk<16*H)return say('오늘 산책은 다녀왔어요. 내일 또!');if(hour()<6||hour()>=22)return say('밤이 깊었어요. 산책은 낮에.');if(isResting())return say('자고 있어요. 깨우지 말아요.');
+  S.lastWalk=now();S.n.play=clamp(S.n.play+30);S.n.rest=clamp(S.n.rest-10);S.stat.walk++;aff(3);S.scene='park';S.park={day:careDay(),finds:[],friendDay:S.park?.friendDay||0,friendStep:0};D.x=null;$('acts').dataset.k='';act('pidle',1);say('공원에 왔어요. 뭘 할까요?');log('산책을 나갔어요');}},
+ pwalk:{i:'🚶',n:'걷기',f(){act('pwalk',6);find('walk');}},
+ sniff:{i:'👃',n:'냄새 맡기',f(){act('sniff',5);find('sniff');}},
+ rest:{i:'🌳',n:'쉬기',f(){const gap=now()-(S.lastRest||0);if(gap<30*60e3)return say('조금 전에 쉬었어요. 더 걷거나 집으로 가요.');S.lastRest=now();S.n.rest=clamp(S.n.rest+Math.min(8,gap/H*4));act('rest',6);find('rest');}},
+ friend:{i:'🐕',n:'친구 만나기',f(){friendStep();}},
+ home:{i:'🏠',n:'집으로',f(){S.scene='room';S.park.friendStep=0;$('npc').hidden=true;D.x=null;$('acts').dataset.k='';act('idle',0);say('집에 왔어요. 산책 끝!');log('산책을 다녀왔어요');}},
+ bath:{i:'🛁',n:'목욕',f(){startCareTask('bath');}},
+ brush:{i:'🪮',n:'빗질',f(){ACTS.groom.f();}},
+ explore:{i:'🔦',n:'탐색 시간',f(){if(isResting())return say('낮잠 중이에요. 저녁에 깨어나요.');S.n.explore=clamp(S.n.explore+35);S.n.rest=clamp(S.n.rest-10);aff(3);act('walk',4);say('쳇바퀴를 달리고 구석구석 냄새를 맡아요.');log('탐색 시간을 주었어요');}},
+ hand:{i:'🤲',n:'손 위에',f(){if(isResting())return say('자고 있어요. 깨우지 말아요.');if(S.aff<25)return say('아직 낯설어요. 손 냄새부터 천천히.');S.n.explore=clamp(S.n.explore+10);aff(2);act('greet',3);say('손바닥 위에서 코를 벌름거려요. 낮게. 살살.');log('손에 올려 보았어요');}},
+ change:{i:'🪣',n:'물갈이',f(){const d=(now()-S.lastChange)/DAY;if(d<7)return say(`물갈이는 일주일에 한 번 3분의 1만. ${Math.ceil(7-d)}일 뒤에.`);S.lastChange=now();S.n.water=clamp(S.n.water+40);S.stat.cleanOk++;aff(2);say('하루 받아 둔 물로 3분의 1만 갈았어요.');log('물을 3분의 1 갈았어요');}},
+ heater:{i:'🌡️',n:'수온 확인',f(){if(S.n.temp>70&&S.heater)return say(`온도계 ${(24+S.n.temp/50).toFixed(1)}℃. 24~26℃ 안이에요.`);S.heater=true;S.n.temp=100;S.stat.cleanOk++;aff(1);say('히터를 확인하고 25℃로 맞췄어요.');log('수온을 확인했어요');}},
+ lamp:{i:'💡',n:'조명 8시간',f(){if(now()<S.lightUntil)return say(`조명이 켜져 있어요. ${Math.ceil((S.lightUntil-now())/H)}시간 뒤 자동으로 꺼져요.`);if(S.n.light>60)return say('오늘은 충분히 밝았어요. 너무 오래 켜면 이끼가 끼어요.');S.lightUntil=now()+8*H;S.n.light=100;aff(1);say('조명 타이머 8시간. 직사광선은 피해요.');log('조명을 8시간 켰어요');}},
+ watch:{i:'👀',n:'관찰',f(){S.n.rest=clamp(S.n.rest+5);aff(2);act('greet',3);say(['지느러미를 활짝 펴고 헤엄쳐요.','수초 사이를 들락날락해요.','먹이 자리를 기억하는지 위로 올라와요.'][day(S)%3]);log('어항을 가만히 관찰했어요');}},
+ vet:{i:'🏥',n:'병원',f(){startCareTask('vet');}}};
+function aff(v){const owner=S,b=S.aff;S.aff=clamp(S.aff+v);sp().behav.forEach((t,i)=>{const th=[10,25,40,60,80][i];if(b<th&&S.aff>=th&&!S.found.includes(t)){S.found.push(t);setTimeout(()=>{if(S===owner)say('✨ 새로운 모습: '+t,4000);},1500);log('발견: '+t);}});}
+function log(t){const d=day(S),j=S.journal.find(x=>x.day===d);if(j){if(!j.acts.includes(t))j.acts.push(t);}else S.journal.push({day:d,date:new Date(now()).toLocaleDateString('ko-KR'),acts:[t],note:''});}
+function act(p,sec){pose=hasArt()&&p==='walk'?'play':p;poseT=sec;drawPet();}
+let sayT;function say(t,ms=2800){const b=document.createElement('div');b.className='bubble';b.textContent=t;if(hasArt()&&D.x!==null){b.style.left=Math.max(W*.3,Math.min(W*.7,D.x))+'px';b.style.bottom='auto';b.style.top=Math.max(70,D.y-dogW(D.fy)*1.05)+'px';}$('stage').querySelectorAll('.bubble').forEach(x=>x.remove());$('stage').append(b);clearTimeout(sayT);sayT=setTimeout(()=>b.remove(),ms);}
+/* ====================== 공원 (산책·친구) ====================== */
+const FINDS={walk:['길가에 떨어진 솔방울을 한참 쳐다봤어요','돌 사이로 개미 행렬을 따라갔어요','바람에 흔들리는 풀을 쫓아 뛰었어요','물 마시는 분수대 소리에 귀를 쫑긋했어요'],sniff:['벚꽃 떨어진 자리를 오래 킁킁거렸어요','다른 강아지가 다녀간 냄새를 알아챘어요','수국 잎 뒤의 달팽이를 찾아냈어요','흙냄새를 맡다가 재채기를 했어요'],rest:['잔디에 배를 깔고 햇볕을 쬐었어요','벤치 그늘에서 혀를 내밀고 쉬었어요','새소리를 들으며 눈을 가늘게 떴어요','옆에 앉으니 다리에 턱을 올렸어요']};
+function find(kind){const owner=S;if(S.park.finds.includes(kind))return;S.park.finds.push(kind);const t=FINDS[kind][(day(S)+kind.length)%4];aff(1);setTimeout(()=>{if(S!==owner||S.scene!=='park')return;say('🔍 '+t,4000);log('산책 발견: '+t);save();},2200);}
+const NPC={name:'몽실이',react:()=>['꼬리를 흔들며 천천히 다가와요','멈춰 서서 조심스럽게 냄새를 맡아요','멀리서 짖고 가까이 오지 않아요'][(day(S)+S.adoptedAt%7)%3]};
+function friendStep(){const owner=S,st=S.park.friendStep,ri=(day(S)+S.adoptedAt%7)%3;
+ if(st===0){S.park.friendStep=1;$('npc').hidden=false;N.x=null;N.t=0;N.pose='in';say(`${NPC.name}가 산책 나왔어요. 인사해 볼까요?`);$('acts').dataset.k='';render();return;}
+ if(st===1){S.park.friendStep=2;act('greet',2);setTimeout(()=>{if(S===owner&&S.scene==='park')say(`${NPC.name}: ${NPC.react()}`,3500);},800);$('acts').dataset.k='';render();return;}
+ if(st===2){sheet(`<h2>${NPC.name}의 반응</h2><p>${NPC.react()}.</p><p style="color:var(--dim)">${ri===2?'무서워하는 친구에게 다가가면 더 놀라요. 거리를 두는 게 배려예요.':'친구가 편안해 보이면 같이 놀 수 있어요. 싫어하는 기색이면 멈춰요.'}</p><div class="more">${ri<2?'<button class="btn go" id="fp">함께 놀기</button>':''}<button class="btn" id="fd">거리 두기</button></div>`);
+  const done=(playd)=>{if(S!==owner||S.scene!=='park'||S.careTask||S.sitter||S.protect||isResting())return say('지금은 함께 놀 수 없어요.');$('sheet').hidden=true;S.park.friendStep=3;if(S.park.friendDay!==careDay()){S.park.friendDay=careDay();aff(3);}if(playd){act('play',4);N.pose='play';say('둘이 빙글빙글 뛰어다녀요!');log(`${NPC.name}와 함께 놀았어요`);}else{N.pose='leave';say('오늘은 여기까지. 멀리서 인사만 했어요.');log(`${NPC.name}에게 거리를 두어 배려했어요`);}save();$('acts').dataset.k='';render();};
+  if($('fp'))$('fp').onclick=()=>done(true);$('fd').onclick=()=>done(false);return;}
+ say('오늘은 친구를 만났어요. 내일 또 만나요.');}
+/* ====================== 강아지 스프라이트 엔진 (프레임 교체. 늘리기 없음. 발이 바닥 기준점) ====================== */
+const ANCH={room:{bowl:[.2,.615],bed:[.2,.46],rug:[.42,.7],rug2:[.34,.75],toy:[.46,.66],mess:[.29,.79]},park:{path:[.5,.67],path2:[.38,.74],flowers:[.37,.4],grass:[.41,.52],rest:[.6,.86],friend:[.6,.65],in:[.85,.62]}};
+const stageH=()=>Math.max(200,Hh-($('panel').hidden?0:$('panel').offsetHeight));
+/* 패널을 뺀 실제 무대 높이에 맞춰 배경을 놓는다. 이미지의 fy≈0.88(러그 아래)이 패널 위에 오도록 세로 정렬. */
+function bgRect(){const[iw,ih]=ASSET.BG,SH=stageH();let s=Math.max(W/iw,SH/ih);if(W<Hh)s=Math.max(s,W*1.6/iw);const fx=S.scene==='park'?.5:(W<Hh?.3:.4);let x=W/2-fx*iw*s;x=Math.min(0,Math.max(W-iw*s,x));let y=Math.min(0,SH-.88*ih*s);y=Math.max(y,SH-ih*s);return{x,y,s};}
+const A=(k)=>{if(S.scene==='room'&&['bowl','water','bed','rug','rug2','toy','companion'].includes(k)){const pt={bowl:[.17,.72],water:[.33,.77],bed:[.63,.62],rug:[.55,.81],rug2:[.53,.84],toy:[.60,.77],companion:[.45,.90]}[k];return{x:W*pt[0]+(['bowl','water'].includes(k)?dogW(.7)*.42:0),y:stageH()*(pt[1]+.045),fy:.7};}const r=bgRect(),[fx,fy]=ANCH[S.scene][k]||ANCH[S.scene].rug||ANCH[S.scene].path;return{x:r.x+fx*ASSET.BG[0]*r.s,y:r.y+fy*ASSET.BG[1]*r.s,fy};};
+const D={x:null,y:0,tx:0,ty:0,fy:.7,dir:1,fr:4,t:0,blink:0,then:null},N={x:null,y:0,fr:4,t:0,pose:'in'};
+const dogW=(fy,grow=true)=>Math.min(W,Hh)*.42*(.78+.4*clamp((fy-.35)/.5,0,1))*(grow&&hasArt()?GROWTH[dogGrowth()].scale:1);
+// Keep the original camera and contact points; atmosphere never changes care state.
+function petMotion(kind,t,moving,row,reduced){
+ if(reduced)return {y:0,angle:0};
+ if(moving){const step=Math.sin(t*(kind==='ham'?16:10));return {y:-Math.abs(step)*(kind==='rabbit'?5:kind==='ham'?1.2:2.2),angle:step*(kind==='rabbit'?.7:1.1)};}
+ return {y:row===1?Math.sin(t*7)*1.2:row===3?Math.sin(t*2)*.7:Math.sin(t*1.8)*.45,angle:0};
+}
+function drawRoomAtmosphere(night){
+ if(S.scene!=='room')return;
+ const reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const t=reduced?0:performance.now()/1000,r=bgRect(),ww=ASSET.BG[0]*r.s,hh=ASSET.BG[1]*r.s;
+ ctx.save();
+ if(!night){
+  const light=ctx.createRadialGradient(r.x+ww*.10,r.y+hh*.13,0,r.x+ww*.1,r.y+hh*.13,ww*.62);
+  light.addColorStop(0,'rgba(255,241,190,.16)');light.addColorStop(1,'rgba(255,241,190,0)');ctx.fillStyle=light;ctx.fillRect(0,0,W,stageH());
+  if(!reduced&&!isResting())for(let i=0;i<9;i++){
+   const u=(i*.137+t*.004)%1,x=r.x+ww*(.08+u*.48),y=r.y+hh*(.25+(i*.097+t*.003)% .38);
+   ell(x,y,1.1,1.1,'rgba(255,250,224,.42)');
+  }
+ }
+ const edge=ctx.createLinearGradient(0,0,W,0);edge.addColorStop(0,'rgba(65,44,31,.07)');edge.addColorStop(.25,'rgba(65,44,31,0)');edge.addColorStop(.8,'rgba(65,44,31,0)');edge.addColorStop(1,'rgba(65,44,31,.10)');ctx.fillStyle=edge;ctx.fillRect(0,0,W,stageH());ctx.restore();
+}
+function placeSprite(el,sh,x,y,fy,fr,flip,lift){const player=el===$('pet'),w=dogW(fy,player),h=player?w:w*ASSET.FH/ASSET.FW;el.style.width=w+'px';el.style.height=h+'px';el.style.left=(x-w/2)+'px';el.style.top=(y-h*(player?.9:ASSET.BASE/ASSET.FH)-(lift||0))+'px';el.classList.toggle('flip',!!flip);const im=el.firstChild;if(player&&im){const row=fr>=10?3:fr>=8||fr<4?2:fr>=6?1:0;const state=visiblePetState(row),key=S.kind+':'+dogGrowth()+':'+state;if(im.dataset.art!==key){im.innerHTML=detailArt(S.kind,dogGrowth(),state);im.dataset.art=key;}const motion=petMotion(S.kind,D.t,Math.hypot(D.tx-D.x,D.ty-D.y)>4,row,typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches);im.style.transformOrigin='50% 90%';im.style.transform=`${flip?'scaleX(-1) ':''}translateY(${motion.y}px) rotate(${motion.angle}deg)`;}else if(im&&im.dataset.f!==String(fr)){im.src=ASSET.frames[fr];im.dataset.f=fr;}
+ if(sh){sh.hidden=false;const sw=w*(lift?.45:.62);sh.style.width=sw+'px';sh.style.height=w*.11+'px';sh.style.left=(x-sw/2)+'px';sh.style.top=(y-w*.055)+'px';}}
+function dogGoal(){const sc=S.scene;if(sc==='park'){if(pose==='pwalk')return (Math.floor(D.t/3)%2?'path2':'path');if(pose==='sniff')return'flowers';if(pose==='rest')return'rest';if(pose==='greet'||pose==='play'&&S.park.friendStep>=3)return'grass';if(pose==='play')return'path';return D.goal||'path';}
+ if(pose==='drink')return'water';if(pose==='eat')return'bowl';if(pose==='sleep'||pose==='sick')return'bed';if(pose==='rest')return D.goal||'bed';if(pose==='play')return'ball';if(pose==='sad')return'rug2';return D.goal||'rug';}
+let ballPx=null;
+function dogTick(dt){if(!hasArt()||!$('intro').hidden)return;const el=$('pet');if(!el.classList.contains('spr')){el.className='spr';el.innerHTML='<div class="pet-atlas" aria-hidden="true"></div>';lastDraw='';}
+ const g=dogGoal();let t;if(g==='ball'){if(!ballPx){const a=A(Math.random()<.5?'rug2':'toy');ballPx={x:a.x,y:a.y,fy:a.fy};}t=ballPx;}else t=A(g);
+ if(D.x===null){D.x=t.x;D.y=t.y;D.fy=t.fy;}
+ D.tx=t.x;D.ty=t.y;const dx=t.x-D.x,dy=t.y-D.y,dist=Math.hypot(dx,dy),w=dogW(D.fy),moving=dist>4;
+ if(!moving&&poseT>0)poseT=Math.max(0,poseT-dt);
+ D.t+=dt;
+ if(moving){const sp=w*.75*dt,k=Math.min(1,sp/dist);D.x+=dx*k;D.y+=dy*k;D.fy+=(t.fy-D.fy)*k;if(Math.abs(dx)>2)D.dir=dx>0?1:-1;D.fr=Math.floor(D.t*8)%4;}
+ else{const alt=(ms)=>Math.floor(D.t*1000/ms)%2;
+  if(pose==='eat'||pose==='drink'||pose==='sniff'){D.fr=6+alt(380);if(pose==='eat'||pose==='drink')D.dir=-1;}
+  else if(pose==='play'||pose==='greet'){D.fr=8+alt(460);}
+  else if(pose==='sleep'||pose==='rest'){D.fr=10+alt(1800);}
+  else if(pose==='sick'){D.fr=10;}else if(pose==='sad'){D.fr=6;}
+  else{D.blink-=dt;if(D.blink<-0.15){D.blink=2.5+Math.random()*3;}D.fr=D.blink<0?5:4;}}
+ const reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;if(reduced)D.fr=pose==='sleep'||pose==='rest'?10:pose==='eat'||pose==='sniff'?6:4;const lift=(D.fr===9)?w*.04:0;placeSprite(el,$('shadow'),D.x,D.y,D.fy,D.fr,D.dir>0,lift);el.style.zIndex=Math.round(D.y);
+ const b=$('ball');if(pose==='play'&&S.scene==='room'&&ballPx){b.hidden=false;b.style.left=(ballPx.x+w*.35)+'px';b.style.top=(ballPx.y-14)+'px';b.style.bottom='auto';b.style.width=b.style.height=Math.round(w*.14)+'px';}else if(bondLife.owner===S&&bondLife.until>Date.now()&&bondLife.level===40&&S.kind==='dog'){b.hidden=false;b.style.left=(D.x+w*.17)+'px';b.style.top=(D.y-w*.43)+'px';b.style.bottom='auto';b.style.width=b.style.height=Math.max(12,w*.13)+'px';}else{b.hidden=true;ballPx=null;}
+ const m=$('mess');if(!m.hidden&&S.scene==='room'){const a=A('mess');m.style.left=a.x+'px';m.style.top=(a.y-20)+'px';m.style.bottom='auto';}
+ // NPC 친구
+ const n=$('npc');if(S.scene==='park'&&S.park.friendStep>0&&N.pose!=='gone'){n.hidden=false;if(!n.firstChild)n.innerHTML='<img alt="">';const tgt=N.pose==='leave'?A('in'):A('friend');if(N.x===null){const a=A('in');N.x=a.x;N.y=a.y;N.fy=a.fy;}N.t+=dt;const ndx=tgt.x-N.x,ndy=tgt.y-N.y,nd=Math.hypot(ndx,ndy);
+  if(nd>4){const sp=dogW(N.fy,false)*.6*dt,k=Math.min(1,sp/nd);N.x+=ndx*k;N.y+=ndy*k;N.fy+=(tgt.fy-N.fy)*k;N.fr=Math.floor(N.t*8)%4;N.dir=ndx>0?1:-1;if(N.pose==='leave'&&nd<8){N.pose='gone';n.hidden=true;}}
+  else{N.fr=N.pose==='play'?8+Math.floor(N.t*1000/460)%2:(Math.floor(N.t/4)%5===0?5:4);N.dir=-1;if(N.pose==='play'&&N.t>6)N.pose='stay';}
+  placeSprite(n,null,N.x,N.y,N.fy,N.fr,N.dir>0,N.fr===9?dogW(N.fy,false)*.1:0);n.style.zIndex=Math.round(N.y);}else n.hidden=true;}
+let rafLast=performance.now();(function raf(t){const dt=Math.min(.1,(t-rafLast)/1000);rafLast=t;try{dogTick(dt);}catch(e){}requestAnimationFrame(raf);})(rafLast);
+/* ====================== 화면 ====================== */
+function needsText(){const n=S.n,k=S.kind,h=hour(),need=[];if(n.food<40)need.push('배가 고파요');
+ if(k==='fish'){if(n.water<40)need.push('물이 탁해요');if(n.temp<50)need.push('수온을 확인해요');if(n.light<30&&h>=8&&h<20)need.push('조명을 켤 시간');}
+ else{if(n.water<40)need.push('물이 필요해요');if(S.mess)need.push(sp().messName+'을 치워요');else if((n.clean??n.litter??n.bed)<40)need.push('보금자리를 정리해요');if((n.play??n.explore)<35&&!isResting())need.push(k==='ham'?'탐색하고 싶어 해요':'놀고 싶어 해요');}
+ if((n.coat??100)<35)need.push(k==='ham'?'털 손질 환경을 살펴요':'털을 살살 빗어요');if(k==='dog'&&!isResting()&&now()-S.lastWalk>20*H&&h>=6&&h<22)need.push('산책 갈 시간');return need;}
+function mood(){if(S.kind==='dog'&&S.scene==='park')return[S.park.friendStep===1?`${NPC.name}가 다가와요. 인사해 볼까요?`:'공원이에요. 코를 킁킁. 꼬리가 바빠요.','걷기·냄새 맡기·쉬기 중에 골라요. 언제든 집으로 갈 수 있어요'];if(S.protect)return['오랜만이에요. 그동안 이웃이 대신 돌봐 줬어요. 다시 함께해요.','지금 필요한 돌봄: 먹이와 물 그리고 인사'];
+ if(S.sitter)return['이웃이 돌봐 주고 있어요. 편안히 지내는 중.',`남은 ${Math.max(1,Math.ceil((S.sitter.end-now())/60000))}분 · 이번 주 ${sitterRemaining()}/5회 남음`];
+ if(S.careTask)return[`${S.careTask.kind==='vet'?'동물병원에서 진료':'목욕과 말리기'} 중이에요.`,`실제 시간 ${Math.ceil(Math.max(0,S.careTask.end-Date.now())/60000)}분 남았어요. 위의 진행 버튼으로 만나러 가요.`];if(S.sick)return[S.kind==='fish'?'지느러미를 접고 바닥에 가만히 있어요.':'기운이 없어요. 먹이도 잘 안 먹네요.','상태 보기에서 도움을 요청해요'];
+ const need=needsText(),asleep=isResting();
+ const m=asleep?{dog:now()<(S.restUntil||0)?'조용한 자리에서 편안히 쉬어요.':'쿨쿨. 밤에는 푹 자요.',cat:'동그랗게 말고 낮잠 중. 깨우지 말아요.',ham:now()<(S.restUntil||0)?'조용한 숨숨집에서 편안히 쉬고 있어요.':'낮에는 숨숨집에서 자요. 저녁에 깨어나요.',rabbit:'조용히 쉬고 있어요. 깨우지 말아요.',fish:'불을 끄면 거피도 쉬어요.'}[S.kind]:need.length?'음... 뭔가 아쉬운 표정이에요.':S.aff>=60?{dog:'보호자님 옆이 제일 좋대요. 꼬리가 쉬지 않아요.',cat:'무릎 옆에 와서 골골거려요.',ham:'손이 보이면 쪼르르 달려와요.',rabbit:'옆에 편안히 누워요. 이제 익숙한 친구예요.',fish:'어항 앞에 서면 쪼르르 모여요.'}[S.kind]:S.aff>=25?'오늘은 기분이 좋아요.':'아직 조금 낯설어해요. 천천히 친해져요.';
+ return[m,need.length?'지금 필요한 돌봄: '+need.join(' · '):'지금은 필요한 게 없어요. 같이 쉬어요.'];}
+function render(){if(!S)return;$('bCamera').hidden=!hasArt();$('bDiscover').hidden=!hasArt();advance();if(!S.trial&&day(S)>=30&&!S.done&&now()-S.adoptedAt>=30*DAY){S.done=true;save();album();}
+ const[m,nd]=mood();$('pname').textContent=S.name;$('pday').textContent=(S.trial?'수업 체험':`함께한 지 ${day(S)}일째`)+(hasArt()?` · ${dogGrowth()+1}/5 ${GROWTH[dogGrowth()].name}`:'');$('mood').textContent=m;$('need').textContent=nd;
+ $('dayChip').innerHTML=`${S.trial?'체험':day(S)+'/30일'}<b>${sp().e} ${esc(S.name)}</b>`;const d=new Date(now());$('clock').innerHTML=`${d.getMonth()+1}월 ${d.getDate()}일<b>${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</b>`;
+ const h=hour(),night=isNight();syncNight();$('mess').hidden=hasArt()||!S.mess;$('mess').textContent=sp().messIcon||'';
+ const a=$('acts'),parkMode=S.kind==='dog'&&S.scene==='park',actList=parkMode?(S.park.friendStep===1?['friend','home']:S.park.friendStep===2?['friend','home']:['pwalk','sniff','rest','friend','home']):sp().acts;if(a.dataset.k!==S.kind+':'+S.scene+':'+(parkMode?S.park.friendStep:'')){a.style.gridTemplateColumns=`repeat(${actList.length},1fr)`;a.innerHTML=actList.map(k=>`<button id="a_${k}"><i>${ACTS[k].i}</i>${typeof ACTS[k].n==='string'?ACTS[k].n:ACTS[k].n}</button>`).join('');a.dataset.k=S.kind+':'+S.scene+':'+(parkMode?S.park.friendStep:'');
+  const names={clean:{dog:'치우기',cat:'화장실',ham:'깔짚',rabbit:'화장실'},play:{cat:'놀아 주기',rabbit:'뛰어놀기'},feed:{rabbit:'건초 채우기',ham:'전용 먹이'}};for(const k of actList){const b=$('a_'+k);if(names[k]?.[S.kind])b.lastChild.textContent=names[k][S.kind];if(k==='feed'&&S.kind==='rabbit')b.firstChild.textContent='🌾';if(k==='friend'&&S.park.friendStep===1)b.lastChild.textContent='인사하기';if(k==='friend'&&S.park.friendStep===2)b.lastChild.textContent='반응 보기';b.onclick=()=>requestCare(k);}}
+ const need=needsText();for(const k of actList){const b=$('a_'+k),hot={feed:!!inWin(sp().meals)&&S.n.food<60,water:S.n.water<40,clean:S.mess,walk:need.includes('산책 갈 시간'),lamp:need.includes('조명을 켤 시간'),heater:S.n.temp<50,change:S.n.water<40}[k];b.classList.toggle('hot',!!hot);}
+ $('bSit').textContent=S.sitter?'직접 돌보기':'돌봄 맡기기';$('bSit').hidden=!!S.trial;drawCareProps();
+ if(poseT<=0){pose=S.sick?'sick':isResting()?'sleep':(S.kind==='dog'&&S.scene==='park')?'pidle':['hungry','thirsty','dirty','lonely','unkempt'].includes(petState())?'sad':'idle';}if(!hasArt())drawPet();drawRoom(night);updateCareHud();updateEnrichment();updateBondLife();}
+/* ====================== 방 ====================== */
+const cv=$('room'),ctx=cv.getContext('2d');let W,Hh;function size(){const r=Math.min(2,devicePixelRatio||1);W=innerWidth;Hh=innerHeight;cv.width=W*r;cv.height=Hh*r;ctx.setTransform(r,0,0,r,0,0);}addEventListener('resize',()=>{size();if(hasArt()){D.x=null;N.x=null;ballPx=null;}render();});size();
+const ell=(x,y,rx,ry,c)=>{ctx.fillStyle=c;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,7);ctx.fill();};
+function drawRoom(night){const fy=Hh*.6;
+ if(hasArt()){const im=S.scene==='park'?IMG.park:IMG.room,r=bgRect();ctx.fillStyle='#e9d6bd';ctx.fillRect(0,0,W,Hh);if(im.complete&&im.naturalWidth)ctx.drawImage(im,r.x,r.y,ASSET.BG[0]*r.s,ASSET.BG[1]*r.s);else{ctx.fillStyle='#8f8273';ctx.font='14px Gowun Dodum';ctx.textAlign='center';ctx.fillText('그림을 불러오는 중…',W/2,Hh*.4);}
+  drawRoomAtmosphere(night);drawRoomDirt();if(night||isResting()){ctx.fillStyle=night?'rgba(30,36,80,.45)':'rgba(70,67,99,.14)';ctx.fillRect(0,0,W,Hh);}return;}
+ if(S.kind==='fish'){const on=now()<S.lightUntil;ctx.fillStyle=night?'#3a3f63':'#efe4d2';ctx.fillRect(0,0,W,Hh);ctx.fillStyle='#6b5a46';ctx.fillRect(W*.06,Hh*.1,W*.88,Hh*.68);const g=ctx.createLinearGradient(0,Hh*.12,0,Hh*.76);g.addColorStop(0,on?'#bfe9f8':'#8fb8cc');g.addColorStop(1,on?'#5fb0dc':'#3f7b9a');ctx.fillStyle=g;ctx.fillRect(W*.08,Hh*.12,W*.84,Hh*.64);
+  if(S.n.water<40){ctx.fillStyle='rgba(120,140,60,.25)';ctx.fillRect(W*.08,Hh*.12,W*.84,Hh*.64);}
+  ctx.fillStyle='#d9c59a';ctx.fillRect(W*.08,Hh*.7,W*.84,Hh*.06);for(let i=0;i<30;i++)ell(W*.1+(i*37)%(W*.8),Hh*.72+(i*13)%12,4,3,i%2?'#bfa77a':'#e8d7ae');
+  for(const[x,h]of[[.18,.28],[.3,.18],[.72,.3],[.84,.2]]){ctx.strokeStyle='#3f8f4f';ctx.lineWidth=6;ctx.lineCap='round';for(let k=-1;k<=1;k++){ctx.beginPath();ctx.moveTo(W*x,Hh*.72);ctx.quadraticCurveTo(W*x+k*22,Hh*(.72-h/2),W*x+k*14,Hh*(.72-h));ctx.stroke();}}
+  ctx.fillStyle='#8a8f99';ctx.fillRect(W*.86,Hh*.14,14,Hh*.5);ctx.fillStyle=S.heater?'#ff7a5a':'#999';ctx.fillRect(W*.86,Hh*.56,14,Hh*.08);ctx.fillStyle='#fff';ctx.font='12px Gowun Dodum';ctx.textAlign='center';ctx.fillText((24+S.n.temp/50).toFixed(1)+'℃',W*.86+7,Hh*.13);
+  ctx.fillStyle=on?'#fff6c2':'#777';ctx.fillRect(W*.06,Hh*.08,W*.88,Hh*.03);if(on){ctx.fillStyle='rgba(255,250,200,.18)';ctx.fillRect(W*.08,Hh*.12,W*.84,Hh*.3);}
+  for(let i=0;i<6;i++){const t=(performance.now()/1200+i)%1;ell(W*(.2+i*.12),Hh*(.7-t*.55),3,3,'rgba(255,255,255,.5)');}return;}
+ ctx.fillStyle=night?'#4a4f73':'#f6e7d2';ctx.fillRect(0,0,W,fy);ctx.fillStyle=night?'#6b6080':'#d9b48a';ctx.fillRect(0,fy,W,Hh-fy);ctx.fillStyle=night?'#5a5f85':'#e9d6bd';ctx.fillRect(0,fy-14,W,14);
+ for(let i=0;i<W;i+=70){ctx.fillStyle=night?'rgba(0,0,0,.08)':'rgba(120,80,40,.08)';ctx.fillRect(i,fy,2,Hh-fy);}
+ const wx=W*.62,wy=Hh*.14,ww=Math.min(170,W*.36),wh=ww*.8;ctx.fillStyle='#fff';ctx.fillRect(wx-6,wy-6,ww+12,wh+12);const g=ctx.createLinearGradient(0,wy,0,wy+wh);if(night){g.addColorStop(0,'#1d2240');g.addColorStop(1,'#3b4477');}else{g.addColorStop(0,'#8fd0f0');g.addColorStop(1,'#d8f0fb');}ctx.fillStyle=g;ctx.fillRect(wx,wy,ww,wh);
+ if(night){ell(wx+ww*.7,wy+wh*.3,14,14,'#fff6c8');ctx.fillStyle='#fff';for(let i=0;i<8;i++)ctx.fillRect(wx+(i*37%ww),wy+(i*53%wh),2,2);}else{ell(wx+ww*.75,wy+wh*.28,16,16,'#ffd27a');ell(wx+ww*.3,wy+wh*.55,30,12,'rgba(255,255,255,.8)');}
+ ctx.fillStyle='#fff';ctx.fillRect(wx+ww/2-3,wy,6,wh);ctx.fillRect(wx,wy+wh/2-3,ww,6);
+ if(!night){ctx.fillStyle='rgba(255,230,160,.35)';ctx.beginPath();ctx.moveTo(wx,wy+wh);ctx.lineTo(wx+ww,wy+wh);ctx.lineTo(wx+ww+60,Hh*.85);ctx.lineTo(wx-40,Hh*.85);ctx.closePath();ctx.fill();}
+ ell(W*.3,Hh*.78,Math.min(150,W*.3),34,night?'#8a6a7a':'#f2a7a0');ell(W*.3,Hh*.78,Math.min(120,W*.24),22,night?'#a08090':'#f7c6c0');
+ const bx=W*.2,by=fy+40;
+ if(S.kind==='ham'){ctx.fillStyle='#c9a06a';ctx.fillRect(bx-50,by-30,100,60);ctx.fillStyle='#7a5a3a';ctx.beginPath();ctx.moveTo(bx-56,by-30);ctx.lineTo(bx,by-62);ctx.lineTo(bx+56,by-30);ctx.closePath();ctx.fill();ell(bx,by+6,16,20,'#4a3a2a');
+  ctx.strokeStyle='#8a8f99';ctx.lineWidth=6;ctx.beginPath();ctx.arc(W*.78,fy+30,34,0,7);ctx.stroke();for(let i=0;i<6;i++){ctx.beginPath();ctx.moveTo(W*.78,fy+30);ctx.lineTo(W*.78+34*Math.cos(i),fy+30+34*Math.sin(i));ctx.stroke();}
+  ctx.fillStyle='#e8d7ae';ctx.fillRect(0,fy+10,W,Hh-fy);for(let i=0;i<40;i++)ell((i*53)%W,fy+20+(i*29)%(Hh-fy-30),5,2,'#d8c49a');}
+ else if(S.kind==='cat'){ctx.fillStyle='#9aa7b8';ctx.fillRect(bx-46,by,92,30);ell(bx,by,46,14,'#c9d4e0');ell(bx,by+2,36,9,'#e4e0d2');ctx.fillStyle='#b58a5a';ctx.fillRect(W*.86,fy-120,14,180);ell(W*.86+7,fy-124,22,8,'#d9b48a');}
+ else{ell(bx,by+28,46,16,'#6f8fb8');ctx.fillStyle='#5a7aa6';ctx.fillRect(bx-46,by,92,28);ell(bx,by,46,16,'#8fb0d8');ell(bx,by+2,36,10,'#f6e7d2');}
+ ell(W*.78,fy+70,26,11,'#c89a6a');ell(W*.78,fy+68,20,7,S.n.food>30?'#a9743f':'#c89a6a');ell(W*.88,fy+70,22,10,'#c89a6a');ell(W*.88,fy+68,16,6,S.n.water>20?'#8fd0f0':'#c89a6a');}
+/* ====================== 동물 그림 (부위만 움직임. 몸을 늘리지 않음) ====================== */
+function eyes(p,k,lx,rx,y){return p==='sleep'?`<path d="M${lx-6} ${y}q6 4 12 0M${rx-6} ${y}q6 4 12 0" stroke="${k}" stroke-width="3" fill="none" stroke-linecap="round"/>`:p==='sad'||p==='sick'?`<circle cx="${lx}" cy="${y+2}" r="4" fill="${k}"/><circle cx="${rx}" cy="${y+2}" r="4" fill="${k}"/><path d="M${lx-8} ${y-6}l12 4M${rx+8} ${y-6}l-12 4" stroke="${k}" stroke-width="3" stroke-linecap="round"/>`:`<circle cx="${lx}" cy="${y}" r="4.5" fill="${k}"/><circle cx="${rx}" cy="${y}" r="4.5" fill="${k}"/><circle cx="${lx+1.5}" cy="${y-1.5}" r="1.5" fill="#fff"/><circle cx="${rx+1.5}" cy="${y-1.5}" r="1.5" fill="#fff"/>`;}
+const Z=(p,c)=>p==='sleep'?`<text x="118" y="30" font-size="18" fill="${c}" class="zz">z z</text>`:p==='sick'?`<text x="112" y="34" font-size="20">💤</text>`:'';
+function dogSVG(p){const c='#e8c48a',d='#c99a5c',k='#3a2e26',ly=p==='sleep'||p==='sick';
+ const mouth=p==='eat'?`<ellipse cx="77" cy="80" rx="7" ry="5" fill="#8a4a4a"/>`:p==='sad'||p==='sick'?`<path d="M70 82q7 -4 14 0" stroke="${k}" stroke-width="3" fill="none" stroke-linecap="round"/>`:p==='greet'||p==='play'?`<path d="M68 78q9 10 18 0" stroke="${k}" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cx="77" cy="84" rx="4" ry="5" fill="#e88"/>`:`<path d="M70 78q7 5 14 0" stroke="${k}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+ const legs=ly?`<ellipse cx="50" cy="128" rx="14" ry="7" fill="${c}"/><ellipse cx="104" cy="128" rx="14" ry="7" fill="${c}"/>`:`<g class="leg l1"><rect x="44" y="110" width="14" height="24" rx="7" fill="${c}"/></g><g class="leg l2"><rect x="62" y="110" width="14" height="24" rx="7" fill="${d}"/></g><g class="leg l3"><rect x="84" y="110" width="14" height="24" rx="7" fill="${d}"/></g><g class="leg l4"><rect x="102" y="110" width="14" height="24" rx="7" fill="${c}"/></g>`;
+ const body=ly?`<ellipse cx="78" cy="118" rx="44" ry="20" fill="${c}"/>`:`<ellipse cx="80" cy="104" rx="42" ry="26" fill="${c}"/><ellipse cx="84" cy="112" rx="26" ry="14" fill="#f5e2c2"/>`;
+ return`<svg viewBox="0 0 160 150" class="p-${p}"><ellipse cx="80" cy="138" rx="46" ry="8" fill="rgba(60,40,20,.18)"/><g class="tail"><path d="M118 100q22 -14 16 -34" stroke="${d}" stroke-width="10" fill="none" stroke-linecap="round"/></g>${legs}${body}
+ <g class="head" style="transform:translateY(${p==='eat'?22:ly?30:0}px)"><ellipse class="ear e1" cx="48" cy="54" rx="13" ry="24" fill="${d}"/><ellipse class="ear e2" cx="106" cy="54" rx="13" ry="24" fill="${d}"/><ellipse cx="77" cy="64" rx="34" ry="30" fill="${c}"/><ellipse cx="77" cy="76" rx="18" ry="13" fill="#f5e2c2"/>${eyes(p,k,63,91,62)}<ellipse cx="77" cy="72" rx="6" ry="4.5" fill="${k}"/>${mouth}${Z(p,'#6b6080')}</g></svg>`;}
+function catSVG(p){const c='#9a9aa8',d='#7a7a8a',k='#2e2a30',ly=p==='sleep'||p==='sick';
+ const mouth=p==='eat'?`<ellipse cx="77" cy="80" rx="5" ry="4" fill="#8a4a4a"/>`:p==='sad'||p==='sick'?`<path d="M72 82q5 -3 10 0" stroke="${k}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`:`<path d="M71 76q3 4 6 0q3 4 6 0" stroke="${k}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+ const legs=ly?`<ellipse cx="52" cy="128" rx="13" ry="6" fill="${c}"/><ellipse cx="102" cy="128" rx="13" ry="6" fill="${c}"/>`:`<g class="leg l1"><rect x="46" y="112" width="12" height="22" rx="6" fill="${c}"/></g><g class="leg l2"><rect x="62" y="112" width="12" height="22" rx="6" fill="${d}"/></g><g class="leg l3"><rect x="86" y="112" width="12" height="22" rx="6" fill="${d}"/></g><g class="leg l4"><rect x="102" y="112" width="12" height="22" rx="6" fill="${c}"/></g>`;
+ const body=ly?`<ellipse cx="80" cy="118" rx="44" ry="20" fill="${c}"/>`:`<ellipse cx="80" cy="106" rx="40" ry="24" fill="${c}"/><ellipse cx="84" cy="114" rx="22" ry="11" fill="#e9e6ee"/>`;
+ return`<svg viewBox="0 0 160 150" class="p-${p}"><ellipse cx="80" cy="138" rx="46" ry="8" fill="rgba(60,40,20,.18)"/><g class="tail"><path d="M118 104q30 -6 26 -40" stroke="${d}" stroke-width="9" fill="none" stroke-linecap="round"/></g>${legs}${body}
+ <g class="head" style="transform:translateY(${p==='eat'?22:ly?30:0}px)"><path class="ear e1" d="M48 56l2 -30l22 18z" fill="${c}"/><path d="M52 52l1 -18l13 11z" fill="#f2a7a0"/><path class="ear e2" d="M106 56l-2 -30l-22 18z" fill="${c}"/><path d="M102 52l-1 -18l-13 11z" fill="#f2a7a0"/><ellipse cx="77" cy="66" rx="32" ry="27" fill="${c}"/>${eyes(p,'#3f8f4f',63,91,62)}<path d="M74 72l3 3l3 -3z" fill="#f2a7a0"/>${mouth}<path d="M40 70h22M40 76h22M98 70h22M98 76h22" stroke="#fff" stroke-width="1.5" opacity=".8"/>${Z(p,'#6b6080')}</g></svg>`;}
+function hamSVG(p){const c='#f0c98a',d='#d9a860',k='#2e2a30',ly=p==='sleep'||p==='sick';
+ const mouth=p==='eat'?`<ellipse cx="77" cy="86" rx="5" ry="3.5" fill="#8a4a4a"/><ellipse cx="60" cy="86" rx="12" ry="10" fill="${c}"/><ellipse cx="94" cy="86" rx="12" ry="10" fill="${c}"/>`:p==='sad'||p==='sick'?`<path d="M73 88q4 -3 8 0" stroke="${k}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`:`<path d="M72 84q2.5 4 5 0q2.5 4 5 0" stroke="${k}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+ const feet=ly?'':`<g class="leg l1"><ellipse cx="58" cy="130" rx="10" ry="5" fill="#f5b8a0"/></g><g class="leg l3"><ellipse cx="100" cy="130" rx="10" ry="5" fill="#f5b8a0"/></g>`;
+ return`<svg viewBox="0 0 160 150" class="p-${p}"><ellipse cx="80" cy="138" rx="42" ry="7" fill="rgba(60,40,20,.18)"/>${feet}<ellipse cx="80" cy="${ly?118:104}" rx="${ly?44:38}" ry="${ly?20:30}" fill="${c}"/><ellipse cx="80" cy="${ly?120:112}" rx="24" ry="${ly?10:16}" fill="#fbe8c8"/><ellipse cx="46" cy="100" rx="9" ry="7" fill="${d}"/><ellipse cx="114" cy="100" rx="9" ry="7" fill="${d}"/>
+ <g class="head" style="transform:translateY(${p==='eat'?14:ly?26:0}px)"><ellipse class="ear e1" cx="52" cy="48" rx="12" ry="12" fill="${d}"/><ellipse cx="52" cy="48" rx="7" ry="7" fill="#f5b8a0"/><ellipse class="ear e2" cx="104" cy="48" rx="12" ry="12" fill="${d}"/><ellipse cx="104" cy="48" rx="7" ry="7" fill="#f5b8a0"/><ellipse cx="78" cy="68" rx="34" ry="28" fill="${c}"/><ellipse cx="78" cy="80" rx="16" ry="11" fill="#fbe8c8"/>${eyes(p,k,64,92,64)}<ellipse cx="78" cy="78" rx="3.5" ry="2.5" fill="#d98a8a"/>${mouth}<path d="M44 76h18M44 80h18M94 76h18M94 80h18" stroke="#fff" stroke-width="1.2" opacity=".8"/>${Z(p,'#6b6080')}</g></svg>`;}
+function fishSVG(p){const c=p==='sad'||p==='sick'?'#8fa0b0':'#ff9a5a',t=p==='sad'||p==='sick'?'#b0b8c0':'#5fb0dc',k='#2e2a30';
+ return`<svg viewBox="0 0 160 150" class="p-${p} fish"><g class="fishbody"><g class="tail"><path d="M104 75q30 -30 44 -22q-8 22 0 44q-14 8 -44 -22z" fill="${t}" opacity=".9"/><path d="M110 75q22 -20 30 -14M110 75q22 20 30 14" stroke="#fff" stroke-width="2" fill="none" opacity=".6"/></g>
+ <path d="M70 40q14 -16 20 10" fill="${t}" opacity=".85"/><path d="M80 108q10 14 20 -4" fill="${t}" opacity=".85"/><ellipse cx="72" cy="75" rx="38" ry="24" fill="${c}"/><ellipse cx="60" cy="82" rx="18" ry="9" fill="#ffd6a8"/><circle cx="76" cy="70" r="4" fill="${t}"/><circle cx="90" cy="76" r="3" fill="${t}"/>
+ ${p==='sleep'?`<path d="M44 70q5 4 10 0" stroke="${k}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`:`<circle cx="48" cy="70" r="5" fill="#fff"/><circle cx="47" cy="70" r="3" fill="${k}"/>`}<path d="M36 80q3 2 6 0" stroke="${k}" stroke-width="1.5" fill="none"/>
+ ${p==='eat'?`<circle cx="30" cy="56" r="2" fill="#a0734a"/><circle cx="22" cy="48" r="2" fill="#a0734a"/>`:''}</g>${p==='sick'?'<text x="110" y="34" font-size="20">💤</text>':''}</svg>`;}
+// Real raster art is clipped at its alpha bounds; no stretching of body parts.
+function detailSprite(meta,index,path,den){const [x,y,w,h]=meta.rects[index];den=den||Math.max(w,h)/.88;return `<svg viewBox="0 0 ${den} ${den}" width="100%" height="100%" aria-hidden="true"><svg x="${(den-w)/2}" y="${den*.93-h}" width="${w}" height="${h}" viewBox="${x} ${y} ${w} ${h}" overflow="hidden"><image href="${path}" width="${meta.width}" height="${meta.height}"/></svg></svg>`;}
+function detailArt(kind,stage,state){if(kind==='rabbit'&&state==='hungry')return detailSprite(DETAIL.rabbitHungry,stage,'assets/detail/rabbit-hungry.png');let meta=DETAIL[kind],index=stage,path=`assets/detail/${kind}.png`;if(state==='dirty'||state==='unkempt'){meta=DETAIL.dirty;index=PET_KINDS.indexOf(kind)*5+stage;path='assets/detail/dirty.png';}else{const rows=kind==='rabbit'?{idle:0,play:1,sleep:2,hungry:3,thirsty:3,lonely:4,eat:3}:{idle:0,play:1,sleep:2,hungry:3,thirsty:4,lonely:5,eat:4};index=(rows[state]||0)*5+stage;}const ref=DETAIL[kind].rects[stage];return detailSprite(meta,index,path,Math.max(ref[2],ref[3])/.84);}
+function visiblePetState(row){if(pose==='sleep'||pose==='rest'||isResting())return 'sleep';if(poseT>0&&Math.hypot(D.tx-D.x,D.ty-D.y)>4)return 'idle';if(poseT>0)return pose==='eat'||pose==='drink'?'eat':row===2?'play':'idle';return petState();}
+function drawCareProps(){const holder=$('careProps');holder.hidden=!hasArt()||S.scene!=='room';if(holder.hidden)return;const dirty=S.mess||(S.n.clean??S.n.litter??S.n.bed??100)<35,food=S.n.food>=35,water=S.n.water>=35;
+ const configs=[['food',S.kind==='rabbit'?(food?4:5):(food?0:1),S.kind==='rabbit'?'건초':'먹이',food?'준비됨':'채워 주세요','feed',.17,.72,.18],['water',water?2:3,'물',water?'준비됨':'빈 그릇','water',.33,.77,.14],['clean',S.kind==='ham'?(dirty?9:8):S.kind==='rabbit'?(dirty?7:6):S.kind==='cat'?(dirty?7:6):(dirty?13:6),S.kind==='ham'?'깔짚':S.kind==='dog'?'배변 자리':'화장실',dirty?'청소 필요':'깨끗해요','clean',.79,.76,.20],['toy',S.kind==='ham'?(lastCare==='groom'&&poseT>0?11:10):S.kind==='cat'?14:S.kind==='rabbit'?8:15,S.kind==='ham'?(lastCare==='groom'&&poseT>0?'손질 모래':'쳇바퀴'):S.kind==='cat'?'스크래처':S.kind==='rabbit'?'숨을 집':'털 손질','',S.kind==='ham'?'explore':S.kind==='dog'?'groom':S.kind==='rabbit'?'gentle':'play',.81,.48,.18]];
+ for(const [id,index,label,status,action,fx,fy,sz] of configs){let b=$('prop-'+id);if(!holder.querySelector('#prop-'+id)){b=document.createElement('button');b.id='prop-'+id;b.className='care-prop';holder.append(b);}const w=Math.max(74,Math.min(W*.2,stageH()*sz*2));const x=Math.max(w/2+8,Math.min(W-w/2-8,W*fx)),y=stageH()*fy;b.style.cssText=`width:${w}px;height:${w}px;left:${x-w/2}px;top:${y-w*.72}px`;b.ariaLabel=label+' '+status;const key=index+':'+label+':'+status;if(b.dataset.key!==key){b.innerHTML=(id==='clean'&&S.kind==='dog'&&!dirty?'<svg viewBox="0 0 160 130" aria-hidden="true"><path d="M12 68L92 40L151 72L72 107Z" fill="#a7b7a2" stroke="#758d76" stroke-width="4"/><path d="M22 68L92 48L140 73L71 98Z" fill="#fff9ec" stroke="#d6d9c9" stroke-width="3"/></svg>':detailSprite(DETAIL.props,index,'assets/detail/props.png'))+`<span>${label}${status?' · '+status:''}</span>`;b.dataset.key=key;}b.classList.toggle('needs-care',status==='청소 필요'||status==='빈 그릇'||status==='채워 주세요');b.onclick=()=>requestCare(action);}
+ $('bQuiet').hidden=!hasArt();$('bGroom').hidden=!hasArt();$('bGroom').textContent=S.kind==='ham'?'모래 손질':'살살 빗질';$('bQuiet').textContent=isResting()?'휴식 · '+restRemainingText():'쉬게 하기';
+}
+function drawRoomDirt(){if(!S||S.scene!=='room')return;const dirty=S.mess||(S.n.clean??S.n.litter??S.n.bed??100)<35;if(!dirty)return;for(let i=0;i<14;i++){const x=W*(.12+(i*37%75)/100),y=stageH()*(.55+(i*13%32)/100);ell(x,y,5+i%3,2,'rgba(92,70,45,.25)');}if((S.n.clean??S.n.litter??S.n.bed??100)<20){ctx.fillStyle='rgba(119,103,62,.10)';ctx.fillRect(0,stageH()*.4,W,stageH()*.6);}}
+
+function artSVG(kind,stage,row){return detailArt(kind,stage,({0:'idle',1:'eat',2:'play',3:'sleep'})[row]||'idle');}
+function portrait(kind,stage=0,row=0,size=200){return `<span class="portrait" role="img" aria-label="${SP[kind].n} ${stage+1}단계" style="width:${size}px;height:${size}px">${artSVG(kind,stage,row)}</span>`;}
+const DRAW={...Object.fromEntries(PET_KINDS.map(k=>[k,p=>portrait(k,S?.kind===k?dogGrowth():0,{greet:2,play:2,eat:1,sleep:3}[p]||0)])),fish:fishSVG};
+document.head.append(Object.assign(document.createElement('style'),{textContent:`
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes wag{0%,100%{transform:rotate(-12deg)}50%{transform:rotate(14deg)}}
+@keyframes wagfast{0%,100%{transform:rotate(-24deg)}50%{transform:rotate(24deg)}}
+@keyframes step1{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(14deg)}}
+@keyframes step2{0%,100%{transform:rotate(14deg)}50%{transform:rotate(-14deg)}}
+@keyframes hop{0%,100%{transform:translateY(0)}40%{transform:translateY(-22px)}}
+@keyframes chew{0%,100%{transform:translateY(22px)}50%{transform:translateY(26px)}}
+@keyframes flop{0%,100%{transform:rotate(0)}50%{transform:rotate(-8deg)}}
+@keyframes breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.03)}}
+@keyframes zz{0%,100%{opacity:.3}50%{opacity:1}}
+@keyframes swim{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
+@keyframes fin{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(10deg)}}
+@keyframes dart{0%{transform:translateX(0)}40%{transform:translateX(-30px) scaleX(1)}50%{transform:translateX(-30px) scaleX(-1)}90%{transform:translateX(20px) scaleX(-1)}100%{transform:translateX(0) scaleX(1)}}
+#pet svg .tail{transform-origin:118px 100px;animation:wag 1.4s infinite ease-in-out}
+#pet svg .leg{transform-origin:center 112px}#pet svg .ear{transform-origin:center 32px}
+#pet svg.p-idle{animation:bob 2.4s infinite ease-in-out}#pet svg.p-idle .e1,#pet svg.p-sad .e1{animation:flop 3s infinite ease-in-out}
+#pet svg.p-walk .l1,#pet svg.p-walk .l3{animation:step1 .5s infinite ease-in-out}#pet svg.p-walk .l2,#pet svg.p-walk .l4{animation:step2 .5s infinite ease-in-out}
+#pet svg.p-play{animation:hop .7s infinite ease-in-out}#pet svg.p-play .tail,#pet svg.p-greet .tail{animation:wagfast .3s infinite ease-in-out}
+#pet svg.p-greet{animation:hop 1s infinite ease-in-out}#pet svg.p-eat .head{animation:chew .6s infinite ease-in-out}
+#pet svg.p-sleep{transform-origin:80px 138px;animation:breathe 3s infinite ease-in-out}#pet svg.p-sleep .tail{animation:none;transform:rotate(30deg)}#pet svg .zz{animation:zz 2s infinite}
+#pet svg.p-sad .tail,#pet svg.p-sick .tail{animation:none;transform:rotate(-30deg)}
+#pet svg.fish .tail{transform-origin:104px 75px;animation:fin .6s infinite ease-in-out}#pet svg.fish .fishbody{transform-origin:80px 75px;animation:swim 2.4s infinite ease-in-out}
+#pet svg.fish.p-play .fishbody,#pet svg.fish.p-walk .fishbody,#pet svg.fish.p-greet .fishbody{animation:dart 2.2s infinite ease-in-out}#pet svg.fish.p-sleep .fishbody,#pet svg.fish.p-sleep .tail{animation:none}#pet svg.fish.p-sick .fishbody{animation:none;transform:translateY(30px) rotate(10deg)}`}));
+let lastDraw='';function drawPet(){if(hasArt())return;$('pet').className='';$('shadow').hidden=true;const key=S.kind+pose;if(key!==lastDraw){$('pet').innerHTML=DRAW[S.kind](pose);lastDraw=key;}$('ball').hidden=!(pose==='play'&&S.kind!=='fish');const st=$('pet').style;
+ if(S.kind==='fish'){st.bottom=pose==='sick'?'26%':pose==='eat'?'60%':'44%';st.left=pose==='walk'||pose==='play'?'20%':'40%';return;}
+ st.bottom='34%';if(pose==='walk'){st.left=(parseFloat(st.left||40)>50?'15%':'65%');}else if(pose==='sleep'){st.left=S.kind==='ham'?'8%':'22%';}else if(pose==='eat'){st.left=(innerWidth<500?'52%':'62%');}else if(pose==='play'){$('ball').style.left=Math.random()>.5?'70%':'20%';}}
+function petHello(e){e.preventDefault();if(!S)return;resetBondLife();advance();if(S.careTask)return openLongCare();if(S.sitter)return say('지금은 이웃이 돌보고 있어요.');if(S.protect)return say('오랜만이에요. 먼저 먹이와 물부터 챙겨 주세요.');if(isResting())return say('쉿. 자고 있어요.');
+ act('greet',2);say(sp().touch(S));if(now()-(S.lastPet||0)>=H){S.lastPet=now();aff(1);}save();}
+$('pet').addEventListener('pointerdown',petHello);$('pet').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')petHello(e);});
+/* 모든 행동의 공통 진입점. 맡김·보호 돌봄 중 허용 범위와 수면·피로 제한을 한곳에서 */
+function doAct(k,actionAt=null){if(!S||!ACTS[k])return;resetBondLife();advance();if(S.careTask)return say('진료나 목욕이 끝날 때까지 기다려 주세요.');const before=JSON.stringify(S);if(S.sitter&&k!=='home')return say('지금은 이웃이 돌보고 있어요. 돌아오면 「직접 돌보기」.');
+ if(k==='feed'&&isResting(actionAt??now()))return say('지금은 자고 있어요. 깨어난 뒤 먹어요. 휴식 버튼에서 남은 시간을 볼 수 있어요.');
+ const home=['feed','water','clean','home','vet','heater','change','lamp'];if(S.protect&&!home.includes(k))return say('오랜만이에요. 먼저 먹이와 물과 보금자리부터 살펴 주세요.');
+ if(['walk','pwalk','sniff','friend','play','explore','hand','gentle','groom','brush','bath'].includes(k)){if(isResting(actionAt??now()))return say('자고 있어요. 깨우지 말아요.');if(S.n.rest<20)return say('너무 피곤해해요. 좀 쉬게 해 주세요.');}
+ ACTS[k].f(actionAt);if(home.includes(k)&&k!=='home'&&S.n.food>=40&&S.n.water>=40)S.protect=false;const old=JSON.parse(before),changed=before!==JSON.stringify(S),success=k==='feed'?S.n.food>old.n.food:changed;if(success){lastCare=k;if(['feed','water','clean','groom','quiet'].includes(k))onEnrichmentCare(k);}if(!save()){restoreCareSnapshot(old);pose='idle';poseT=0;render();return false;}render();if(success&&!S.careTask)trialCheck(k);return success;}
+$('mess').onclick=()=>requestCare('clean');$('bQuiet').onclick=showRest;$('bGroom').onclick=()=>doAct('groom');
+/* ====================== 시트 ====================== */
+function sheet(html){$('sheet').hidden=false;$('sheet').innerHTML=html+'<div class="more"><button class="btn" id="close">닫기</button></div>';$('close').onclick=()=>$('sheet').hidden=true;}
+$('bStat').onclick=()=>{sheet(`<h2>${esc(S.name)}의 상태</h2>${Object.entries(S.n).map(([k,v])=>`<div class="bar ${v<35?'low':''}"><span>${sp().needs[k][0]}</span><i><b style="width:${Math.round(v)}%"></b></i><span>${k==='temp'?(24+v/50).toFixed(1)+'℃':Math.round(v)}</span></div>`).join('')}
+ <div class="bar"><span>친밀도</span><i><b style="width:${S.aff}%;background:var(--sun)"></b></i><span>${Math.round(S.aff)}</span></div>
+ <h3>발견한 모습 ${S.found.length}/5</h3>${S.found.map(f=>`<div class="log">✨ ${esc(f)}</div>`).join('')||'<p style="color:var(--dim)">아직 없어요. 돌보다 보면 보여 줘요.</p>'}
+ <h3>건강 상태 · ${S.sick?'진료 필요':'관찰 중'}</h3><p>${healthEvidence()}</p><p>낮은 생활 수치가 겹치면 게임에서 건강이 악화돼요. 실제 동물이 아파 보이면 보호자와 수의사에게 도움을 요청하세요.</p>${S.kind==='dog'?`<h3>목욕이 필요할까?</h3><p>${bathEvidence()}</p>`:''}<h3>돌봄 기록</h3><p style="font-size:14px;color:var(--dim)">알맞은 끼니 ${S.stat.mealOk}회 · 정리 ${S.stat.cleanOk}회${S.kind==='dog'?` · 산책 ${S.stat.walk}회 · 목욕 ${S.stat.bath}회`:''}${hasArt()?` · 털 손질 ${S.stat.groom||0}회`:''} · 도움 요청 ${S.stat.vet}회${S.stat.sitterH?` · 맡긴 시간 ${Math.round(S.stat.sitterH)}시간`:''}</p>
+ <div class="more">${sp().extra.map(k=>`<button class="btn ${k==='vet'&&S.sick?'go':''}" data-x="${k}">${ACTS[k].i} ${ACTS[k].n}</button>`).join('')}</div>`);
+ document.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>requestCare(b.dataset.x));};
+$('bLog').onclick=()=>{const d=day(S),j=S.journal.find(x=>x.day===d);sheet(`<h2>관찰 일지</h2><h3>오늘 발견한 점 한 문장</h3><input id="note" maxlength="60" value="${esc(j?.note||'')}" placeholder="예: 먹이 자리를 기억하고 먼저 와서 기다렸다.">
+ <div class="more"><button class="btn go" id="saveNote">남기기</button></div>${[...S.journal].reverse().map(x=>`<div class="log"><b>${x.day}일째 · ${esc(x.date)}</b>${esc(x.acts.join(' · '))}${x.note?`<br>📝 ${esc(x.note)}`:''}</div>`).join('')}`);
+ $('saveNote').onclick=()=>{const v=$('note').value.trim();if(!v)return say('오늘 발견한 점을 한 문장 적어 주세요.');log('일지를 썼어요');S.journal.find(x=>x.day===d).note=v.slice(0,60);save();say('일지에 남겼어요.');$('bLog').onclick();trialCheck('note');};};
+$('bSit').onclick=()=>{advance();if(S.sitter){const end=new Date(S.sitter.end).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});sheet(`<h2>이웃이 돌보는 중</h2><p>${end}까지 돌봐요. 일찍 돌아와도 사용 횟수는 돌려받지 않아요.</p><button class="btn go" id="endSit">지금 직접 돌보기</button>`);$('endSit').onclick=()=>{endSitter();$('sheet').hidden=true;render();say('돌아왔어요! 직접 돌보기 시작해요.');};return;}
+ const left=sitterRemaining();sheet(`<h2>돌봄 맡기기</h2><p>이번 주 ${left}/5회 남았어요. 기기 현지 시간 월요일 0시부터 일요일까지 계산해요.</p><p>이웃이 먹이·물·정리를 챙겨요. 종료 뒤에는 직접 돌봄으로 돌아와요. 감점은 없고, 놀이 기록은 대신 쌓이지 않아요.</p><label for="sitHours">몇 시간 맡길까요?</label><select id="sitHours" class="btn">${[1,2,4,8,12,24].map(h=>`<option value="${h}">${h}시간</option>`).join('')}</select><div class="more"><button class="btn go" id="ok" ${left?'':'disabled'}>부탁할게요</button></div><p>시작하면 1회가 사용돼요. 중간에 취소해도 횟수는 반환되지 않아요.</p>`);
+ $('ok').onclick=()=>{if(!startSitter(Number($('sitHours').value)))return say('저장 공간·시간·남은 횟수를 확인해 주세요. 맡기기는 시작되지 않았어요.');render();$('sheet').hidden=true;say('약속한 시간까지 이웃이 돌봐 줄 거예요.');};};
+$('bSet').onclick=()=>{sheet(`<h2>설정</h2><div class="more"><button class="btn" id="exp">기록 내보내기</button><button class="btn" id="imp">기록 불러오기</button><button class="btn" id="alb">앨범 보기</button><button class="btn" id="prev">직전 기록 복구</button>${S.trial?'<button class="btn" id="quit">체험 끝내기</button>':'<button class="btn" id="newPet">처음 화면 (새 입양)</button>'}</div><div id="io"></div>
+ <p style="font-size:13px;color:var(--dim)">기록은 이 기기의 브라우저에만 저장돼요. 다른 기기로 옮기기 전 기록을 내보내 보관하세요. 학급 온라인 저장은 아직 연결 전입니다.</p>
+ ${TEST?`<h3>검수용 시간 이동</h3><div class="more"><button class="btn sm" data-h="1">+1시간</button><button class="btn sm" data-h="12">+12시간</button><button class="btn sm" data-h="72">+3일</button><button class="btn sm" data-h="720">+30일</button></div>`:''}`);
+ $('exp').onclick=()=>{if(life().photos.length&&!artifactViewer()){$('io').innerHTML='<p>사진이 포함되어 있어 파일로 보관해요.</p><button class="btn go" id="savePetFile">사진과 돌봄 기록 파일 저장</button>';$('savePetFile').onclick=downloadPetRecord;return;}const code=btoa(unescape(encodeURIComponent(JSON.stringify(S))));$('io').innerHTML=`${artifactViewer()?'<p>이 뷰어는 파일 다운로드를 제한해요. 사진을 포함한 아래 코드를 복사해 보관하세요.</p>':''}<textarea id="ta" readonly>${code}</textarea><button class="btn" id="selectRecord">코드 전체 선택</button>`;$('selectRecord').onclick=()=>$('ta').select();navigator.clipboard?.writeText(code).then(()=>say('복사했어요.')).catch(()=>$('ta').select());};
+ $('imp').onclick=()=>{$('io').innerHTML=`<textarea id="ta" placeholder="기록 코드 붙여 넣기"></textarea><div class="more"><button class="btn go" id="do">불러오기</button></div>`;addRecordFileInput();$('do').onclick=()=>{try{const txt=$('ta').value.trim();if(txt.length>2400000)throw 0;const o=validate(JSON.parse(decodeURIComponent(escape(atob(txt)))));if(!o)throw 0;replaceRecord(o);$('sheet').hidden=true;$('acts').dataset.k='';if(S.trial){$('mission').hidden=false;trialSetup();}else $('mission').hidden=true;render();say(S.trial?'체험 기록을 불러왔어요. 실제 입양 기록은 그대로예요.':'불러왔어요. 이전 기록은 백업했어요.');}catch(e){say('코드를 읽거나 저장할 수 없어요. 코드와 저장 공간을 확인해 주세요. 기존 기록은 그대로예요.');}};};
+ $('prev').onclick=()=>{try{const key=S.trial?TKEY:KEY,o=validate(JSON.parse(localStorage.getItem(key+'-previous')));if(!o)return say('복구할 직전 기록이 없어요.');sheet(`<h2>직전 기록 복구</h2><p>${esc(o.name)}의 기록을 복구할까요? 현재 기록과 서로 바뀌며, 다시 복구할 수 있어요.</p><button class="btn go" id="restorePrev">복구하기</button>`);$('restorePrev').onclick=()=>{try{replaceRecord(o);$('sheet').hidden=true;enter();say('직전 기록을 복구했어요.');}catch(e){say('저장 공간이 부족해 복구하지 못했어요. 현재 기록은 유지됩니다.');}};}catch(e){say('이전 기록을 읽을 수 없어요.');}};
+ $('alb').onclick=album;if($('newPet'))$('newPet').onclick=()=>{save();$('sheet').hidden=true;for(const id of['stage','top','panel'])$(id).hidden=true;$('intro').hidden=false;step0();};if($('quit'))$('quit').onclick=()=>{localStorage.removeItem(TKEY);S=null;location.reload();};
+ document.querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{S.offset+=+b.dataset.h*H;save();render();$('sheet').hidden=true;say(`시간을 ${b.dataset.h}시간 옮겼어요.`);});};
+function album(){const t=TITLES.find(([n,f])=>f(S))[0],sc=[['알맞은 생활 환경',Math.min(5,Math.round(S.stat.cleanOk/4))],['먹이와 물',Math.min(5,Math.round(S.stat.mealOk/8))],['청결과 건강',Math.min(5,Math.round((S.stat.cleanOk+S.stat.bath*3+S.stat.vet*3)/6))],['활동과 휴식',Math.min(5,Math.round((S.stat.walk+S.journal.length/3)/5))],['책임과 도움 요청',Math.min(5,Math.round(S.journal.length/6)+(S.stat.sitterH||S.stat.vet?1:0))]];
+ sheet(`<h2>${S.trial?'체험 돌아보기':S.done?'30일 앨범':'앨범 (진행 중)'}</h2><div style="text-align:center"><div class="photo ${S.kind==='fish'?'tank':''}">${DRAW[S.kind]('greet')}<p>${esc(S.name)} · ${new Date(S.adoptedAt).toLocaleDateString('ko-KR')} 입양</p></div></div>
+ ${hasArt()?`<h3>함께 자라는 30일 · ${dogGrowth()+1}/5단계</h3><div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px">${GROWTH.map((g,i)=>`<div style="text-align:center;opacity:${i<=dogGrowth()?1:.45};border-bottom:3px solid ${i===dogGrowth()?'#6fb08a':'transparent'}"><div style="height:90px;display:flex;align-items:flex-end;justify-content:center">${portrait(S.kind,i,0,Math.round(g.scale*90))}</div><b>${i*6+1}~${i*6+6}일</b><div style="font-size:12px">${g.name}</div></div>`).join('')}</div><p style="font-size:12px;color:var(--dim)">6일마다 얼굴·귀·털과 몸의 비율이 달라져요. 실제 동물의 생장 속도와는 다른 게임 연출이에요.</p>`:''}<h3>나의 돌봄 칭호</h3><p style="font:22px var(--f-head);margin:0">${t}</p><h3>돌봄 돌아보기 (교과서 평가 항목)</h3>${(S.trial?sc.map(([n],i)=>[n,S.step>=[3,2,5,4,6][i]?5:0]):sc).map(([n,v])=>`<div class="bar"><span style="width:9em">${n}</span><span>${'●'.repeat(v)}${'○'.repeat(5-v)}</span></div>`).join('')}
+ <h3>발견한 모습</h3>${S.found.map(f=>`<div class="log">✨ ${esc(f)}</div>`).join('')||'<p style="color:var(--dim)">—</p>'}<h3>관찰 기록 ${S.journal.length}일</h3>${S.journal.filter(j=>j.note).map(j=>`<div class="log"><b>${j.day}일째</b>${esc(j.note)}</div>`).join('')}
+ ${S.done?`<p>30일을 함께했어요. ${esc(S.name)}는 계속 여기 있어요. 앞으로도 같이 지내요.</p>`:''}${S.trial?`<div class="more"><button class="btn go" id="toReal">진짜 30일 입양 시작하기</button></div>`:''}<p style="font-size:12px;color:var(--dim)">기록 저장은 설정의 「기록 코드 복사」로.</p>`);
+ const memoriesButton=document.createElement('button');memoriesButton.className='btn';memoriesButton.textContent='우리의 추억 사진 펼치기';memoriesButton.onclick=showMemoryAlbum;$('sheet').append(memoriesButton);if($('toReal'))$('toReal').onclick=()=>{localStorage.removeItem(TKEY);S=null;location.reload();};}
+/* ====================== 수업 체험 (한 차시. 상황을 차례로 겪음. 실제 30일 기록과 분리) ====================== */
+const TRIAL=[['먹이 주기. 아침 밥때예요.','feed',8],['물을 갈아 주세요.','water',8],[null,'clean',null],['놀아 주거나 활동 시간을 주세요.',null,19],['기운이 없어 보여요. 상태 보기에서 도움을 요청하세요.','vet',null],['관찰 일지에 오늘 발견한 점을 한 문장 남겨요.','note',null],['수고했어요. 설정 → 앨범 보기에서 돌아보기를 확인하세요.',null,null]];
+/* 체험의 시각 이동은 시나리오 설정이지 실제 경과가 아니다. 시계를 옮긴 뒤 lastCalc를 맞추고 단계별 상태를 직접 준비한다. */
+function jumpTo(h){S.offset+=((h-hour()+24)%24)*H;S.lastCalc=now();S.lastMess=now();S.lastWalk=now()-17*H;}
+function trialSetup(defer=false){const prepared=S.trialReady===S.step,previous=prepared?JSON.parse(JSON.stringify(S)):null;try{const st=TRIAL[S.step];if(!st)return;$('mission').hidden=false;const setN=(o)=>{for(const k in S.n)S.n[k]=o[k]??70;};S.sick=false;S.protect=false;S.mess=false;S.lastMess=now();
+ if(S.step===0){jumpTo(8);setN({food:35});}
+ if(S.step===1){setN({food:80,water:30});}
+ if(S.step===2){setN({food:80,water:95});S.mess=S.kind!=='fish';if(S.kind==='fish'){S.n.water=30;$('mission').textContent=`${S.step+1}/6 물이 탁해졌어요. 물갈이를 해 주세요.`;S.lastChange=now()-8*DAY;}else $('mission').textContent=`${S.step+1}/6 ${sp().messName}이 생겼어요. 치워 주세요.`;return;}
+ if(S.step===3){jumpTo({dog:10,cat:19,ham:20,rabbit:9,fish:9}[S.kind]);setN({food:80,water:95,rest:85});S.n[S.kind==='ham'?'explore':S.kind==='fish'?'light':'play']=20;$('mission').textContent=`${S.step+1}/6 `+({dog:'공놀이를 해 주세요.',cat:'놀아 주세요. 낮잠 시간은 피했어요.',ham:'저녁이에요. 탐색 시간을 주세요.',rabbit:'안전한 공간에서 뛰어놀게 해 주세요.',fish:'조명을 8시간 켜 주세요.'}[S.kind]);return;}
+ if(S.step===4){setN({food:12,water:12,rest:60});S.sick=true;}
+ if(S.step>=5){setN({food:80,water:95,rest:80});}
+ $('mission').textContent=(S.step<6?`${S.step+1}/6 `:'')+st[0];}finally{if(previous)Object.assign(S,previous);else{S.trialReady=S.step;if(!defer)save();}}}
+function trialCheck(k,defer=false){if(!S?.trial)return;const st=TRIAL[S.step];if(!st)return;const want=S.step===2?(S.kind==='fish'?'change':'clean'):S.step===3?(S.kind==='ham'?'explore':S.kind==='fish'?'lamp':'play'):st[1];
+ if(k!==want)return;S.step++;trialSetup(defer);if(!defer){save();render();}if(S.step===6&&!defer){const owner=S;setTimeout(()=>{if(S===owner)album();},1200);}}
+/* ====================== 저장 ====================== */
+const KEY='pet-v2',TKEY='pet-trial-v2';
+function save(){if(!S)return false;S.lastSave=now();try{localStorage.setItem(S.trial?TKEY:KEY,JSON.stringify(S));return true;}catch(e){say('저장이 안 됐어요. 설정에서 기록 코드를 보관해 주세요.',5000);return false;}}
+function replaceRecord(o){const key=o.trial?TKEY:KEY,old=localStorage.getItem(key);if(old)localStorage.setItem(key+'-previous',old);localStorage.setItem(key,JSON.stringify(o));S=o;}
+/* 저장 기록 검증·보정. 통과하지 못하면 null. S나 localStorage는 건드리지 않는다. */
+function validate(raw){try{if(!raw||typeof raw!=='object'||raw.v!==2||!SP[raw.kind])return null;const o=JSON.parse(JSON.stringify(raw)),sp_=SP[o.kind],fin=(v,a,b)=>typeof v==='number'&&Number.isFinite(v)&&v>=a&&v<=b;
+ const T0=new Date(2020,0,1).getTime(),T1=Date.now()+2*DAY+(typeof o.offset==='number'&&Number.isFinite(o.offset)?Math.max(0,Math.min(400*DAY,o.offset)):0);if(!fin(o.adoptedAt,T0,T1))return null;
+ const tm=v=>fin(v,0,T1)?v:o.adoptedAt;o.lastCalc=tm(o.lastCalc);o.lastSave=tm(o.lastSave);o.lastBath=tm(o.lastBath);o.lastBrush=tm(o.lastBrush);o.lastChange=tm(o.lastChange);o.lastMess=tm(o.lastMess);o.lastWalk=fin(o.lastWalk,0,T1)?o.lastWalk:0;o.lastRest=fin(o.lastRest,0,T1)?o.lastRest:0;o.awakeUntil=fin(o.awakeUntil,0,T1+H)?o.awakeUntil:0;o.restUntil=fin(o.restUntil,0,T1+H)?o.restUntil:0;o.lastPet=fin(o.lastPet,0,T1)?o.lastPet:0;o.lightUntil=fin(o.lightUntil,0,T1+DAY)?o.lightUntil:0;
+ o.offset=fin(o.offset,-400*DAY,400*DAY)?o.offset:0;if(o.lastCalc<o.adoptedAt)o.lastCalc=o.adoptedAt;
+ if(typeof o.name!=='string'||!o.name.trim())return null;o.name=o.name.trim().slice(0,8);
+ if(!o.n||typeof o.n!=='object')return null;const n={};for(const k in sp_.needs){if(k==='coat'&&o.n[k]===undefined){n[k]=80;continue;}if(!fin(o.n[k],0,100))return null;n[k]=o.n[k];}o.n=n;
+ o.aff=fin(o.aff,0,100)?o.aff:0;o.found=Array.isArray(o.found)?o.found.filter(f=>typeof f==='string').map(f=>f.slice(0,60)).slice(0,10):[];
+ o.lastMeal=o.lastMeal&&typeof o.lastMeal==='object'&&!Array.isArray(o.lastMeal)?o.lastMeal:{};for(const k of['mess','heater','protect','sick','done','trial'])o[k]=!!o[k];
+ const legacy=fin(o.sitter,0,T1)?o.sitter:null,si=o.sitter; o.sitter=si&&typeof si==='object'&&fin(si.start,0,T1)&&fin(si.end,si.start+H,si.start+24*H)?{start:si.start,end:si.end}:legacy?{start:legacy,end:legacy+24*H}:null;
+ o.sitterUses=Array.isArray(o.sitterUses)?o.sitterUses.filter(x=>fin(x,0,T1)).slice(-100):legacy?[legacy]:[];if(o.sitter&&!o.sitterUses.includes(o.sitter.start))o.sitterUses.push(o.sitter.start);const ct=validateCareTask(o.careTask,o.kind,Date.now(),o.trial);if(ct===undefined||ct&&o.sitter)return null;o.careTask=ct;o.scene=o.kind==='dog'&&o.scene==='park'?'park':'room';
+ const pk=o.park&&typeof o.park==='object'?o.park:{};o.park={day:fin(pk.day,0,1e6)?pk.day:0,friendDay:fin(pk.friendDay,0,1e6)?pk.friendDay:0,friendStep:fin(pk.friendStep,0,3)?Math.floor(pk.friendStep):0,finds:Array.isArray(pk.finds)?pk.finds.filter(f=>['walk','sniff','rest'].includes(f)):[]};
+ const st={mealOk:0,mealOver:0,cleanOk:0,walk:0,bath:0,vet:0,sitterH:0,groom:0};for(const k in st)st[k]=fin(o.stat?.[k],0,1e6)?o.stat[k]:0;o.stat=st;
+ o.journal=(Array.isArray(o.journal)?o.journal:[]).filter(j=>j&&typeof j==='object'&&fin(j.day,1,30)).map(j=>({day:Math.floor(j.day),date:typeof j.date==='string'?j.date.slice(0,20):'',acts:(Array.isArray(j.acts)?j.acts:[]).filter(a=>typeof a==='string').map(a=>a.slice(0,60)).slice(0,30),note:typeof j.note==='string'?j.note.slice(0,60):''})).slice(0,40);
+ o.step=fin(o.step,0,7)?Math.floor(o.step):0;o.trialReady=fin(o.trialReady,0,7)?Math.floor(o.trialReady):o.trial?o.step:null;o.enrich=validateEnrichment(o.enrich);o.life=validateLife(o.life);return o;}catch(e){return null;}}
+function load(k){try{return validate(JSON.parse(localStorage.getItem(k)));}catch(e){return null;}}
+/* ====================== 입양 흐름 ====================== */
+const intro=$('intro').querySelector('.in');let pick=null,trial=false;
+function step0(){trial=false;syncNight();const real=load(KEY);intro.innerHTML=`<h1>나만의 펫 키우기</h1><p>진짜 시간이 흐르는 작은 방에서 30일 동안 친구가 돼요.</p>${real?`<div class="more" style="justify-content:center"><button class="btn go" id="cont">${SP[real.kind].e} ${esc(real.name)} 만나러 가기 (${Math.min(30,Math.floor((Date.now()-real.adoptedAt)/DAY)+1)}일째)</button></div><p style="font-size:13px">새 입양 전에는 기록 코드를 보관해 주세요. 직전 친구 기록은 자동 백업됩니다.</p>`:''}
+ <div class="pets">${PET_KINDS.map(k=>[k,SP[k]]).map(([k,v])=>`<button class="pet" data-k="${k}">${DRAW[k]('idle')}<b>${v.n}</b><small>${v.lead}</small></button>`).join('')}</div>
+ <div class="more" style="justify-content:center"><button class="btn sm" id="trialBtn">수업 체험 (한 차시로 돌봄 상황 겪어 보기)</button></div>
+ <p style="font-size:12px">초등 실과 「동물 기르기」 단원을 바탕으로 만든 학습용 게임이에요. 돌봄 수치와 주기는 학습용으로 단순화했어요.</p>`;
+ if($('cont'))$('cont').onclick=()=>{S=real;enter();};intro.querySelectorAll('.pet').forEach(b=>b.onclick=()=>{pick=b.dataset.k;step1();});$('trialBtn').onclick=()=>{trial=!trial;$('trialBtn').textContent=trial?'✔ 수업 체험 모드. 동물을 고르세요':'수업 체험 (한 차시로 돌봄 상황 겪어 보기)';$('trialBtn').classList.toggle('go',trial);};}
+function step1(){const v=SP[pick];intro.innerHTML=`<h1>${v.n}는요</h1><div style="width:200px;margin:0 auto">${DRAW[pick]('idle')}</div><p>${v.intro}</p><p style="font-size:12px">게임에서는 밤 10시~아침 7시 먹이·물 감소가 느려져요. 밤에 접속하지 않아도 돼요. 실제 동물의 물과 필요한 먹이는 늘 챙겨 주세요.</p><p>우리 집에서 기르기 알맞을까요? 끝까지 돌볼 수 있을까요?</p><div class="more" style="justify-content:center"><button class="btn go" id="n">네. 준비해 볼게요</button><button class="btn" id="b">다른 동물 보기</button></div>`;$('n').onclick=step2;$('b').onclick=step0;}
+function step2(){const on=new Set(),it=shuffleItems(SP[pick].items);intro.innerHTML=`<h1>보금자리 준비</h1><p>${SP[pick].n}에게 필요한 물건 3가지를 골라 놓아 주세요.</p><div class="items">${it.map((x,i)=>`<button class="item" data-i="${i}"><i>${x[0]}</i><b>${x[1]}</b><small id="h${i}"></small></button>`).join('')}</div><div class="more" style="justify-content:center"><button class="btn go" id="n" disabled>다 놓았어요</button></div>`;
+ intro.querySelectorAll('.item').forEach(b=>b.onclick=()=>{const i=+b.dataset.i,x=it[i];if(!x[3]){$('h'+i).textContent=x[2];b.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:300});return;}if(on.has(i))on.delete(i);else on.add(i);b.classList.toggle('on',on.has(i));$('h'+i).textContent=on.has(i)?x[2]:'';$('n').disabled=on.size<3;});$('n').onclick=step3;}
+function step3(){intro.innerHTML=`<h1>이름 짓기</h1><div style="width:200px;margin:0 auto">${DRAW[pick]('greet')}</div><p>안녕! 만나서 반가워.</p><input id="nm" maxlength="8" placeholder="이름 (8자까지)" style="max-width:16em"><p>이 친구에게 필요한 보금자리와 돌봄을 함께 준비할까요?</p><div class="more" style="justify-content:center"><button class="btn go" id="n">입양할게요</button></div>`;
+ $('nm').focus();$('n').onclick=()=>{const nm=$('nm').value.trim().slice(0,8);if(!nm)return $('nm').focus();try{replaceRecord(newPet(pick,nm,trial));}catch(e){return say('입양 기록을 저장할 수 없어요. 저장 공간을 확인해 주세요.',5000);}S.n.food=45;if(trial){S.offset=((8-hour()+24)%24)*H;S.lastCalc=now();}save();step4();};}
+function step4(){intro.innerHTML=`<h1>첫 돌봄</h1><p>새 친구 ${esc(S.name)}! 집에 온 걸 환영해요. ${sp().firstCare}</p><div style="width:200px;margin:0 auto">${DRAW[S.kind]('idle')}</div><div class="more" style="justify-content:center"><button class="btn go" id="n">${sp().firstBtn}</button></div>`;
+ $('n').onclick=()=>{sp().firstDo(S);log('입양한 날. 첫 돌봄을 해 주었어요');save();step5();};}
+function step5(){intro.innerHTML=`<h1>입양 사진</h1><div class="photo ${S.kind==='fish'?'tank':''}">${DRAW[S.kind]('greet')}<p>${esc(S.name)} · ${new Date(S.adoptedAt).toLocaleDateString('ko-KR')} 입양</p></div><p>${S.trial?'수업 체험이에요. 화면 위 안내를 따라 돌봄 상황을 차례로 겪어 봐요.':'오늘부터 30일. '+sp().tips}</p><div class="more" style="justify-content:center"><button class="btn go" id="n">${esc(S.name)} 만나러 가기</button></div>`;$('n').onclick=enter;}
+function enter(){pose='idle';poseT=0;N.pose='in';N.x=null;$('mission').hidden=!S.trial;$('intro').hidden=true;D.x=null;$('pet').className='';$('pet').innerHTML='';for(const id of['stage','top','panel'])$(id).hidden=false;$('acts').dataset.k='';lastDraw='';if(S.trial)trialSetup();render();const gap=now()-S.lastSave;if(gap>H&&!S.trial)setTimeout(()=>say(gap>DAY?`${Math.floor(gap/DAY)}일 만이에요! 그동안 잘 지냈어요.`:'다시 왔네요! 반가워요.',4000),600);}
+/* Inline after existing helpers. Real deadlines use Date.now(), never the game's test offset. */
+const CARE_DURATION={vet:H,bath:H/2};
+function validateCareTask(task,kind,wall=Date.now(),trial=false){
+ if(task==null)return null;
+ if(!task||typeof task!=='object'||!Object.hasOwn(CARE_DURATION,task.kind)||task.kind==='bath'&&kind!=='dog')return undefined;
+ if(!Number.isFinite(task.start)||!Number.isFinite(task.end)||task.start<new Date(2020,0,1).getTime()||task.start>wall+2*DAY||task.end-task.start!==(trial?20000:CARE_DURATION[task.kind]))return undefined;
+ return {kind:task.kind,start:task.start,end:task.end};
+}
+function restoreCareSnapshot(before){for(const key of Object.keys(S))if(!Object.hasOwn(before,key))delete S[key];Object.assign(S,before);}
+function startCareTask(kind){
+ advance();
+ if(!Object.hasOwn(CARE_DURATION,kind)||S.careTask)return false;
+ if(S.sitter||isResting()){say('돌봄을 맡겼거나 쉬고 있어요. 깨어난 뒤에 시작해 주세요.');return false;}
+ if(kind==='vet'&&!S.sick){say('지금은 건강해 보여요. 아플 때 진료를 부탁해요.');return false;}
+ if(kind==='bath'&&(S.kind!=='dog'||now()-S.lastBath<14*DAY||!((S.n.coat??100)<50))){say('강아지 목욕은 게임에서 2주가 지났고 몸이 더러울 때 시작해요. 실제 주기는 전문가 안내를 따라요.');return false;}
+ const before=JSON.parse(JSON.stringify(S)),wall=Date.now();
+ S.careTask={kind,start:wall,end:wall+(S.trial?20000:CARE_DURATION[kind])};S.restUntil=0;S.scene='room';
+ log(S.trial?'수업 체험: 20초 돌봄을 시작했어요':kind==='vet'?'1시간 진료를 시작했어요':'30분 목욕과 말리기를 시작했어요');
+ if(!save()){restoreCareSnapshot(before);return false;}
+ say(S.trial?'수업 체험은 20초로 줄여 경험해요. 실제 입양 모드는 진료 1시간·목욕 30분이에요.':kind==='vet'?'실제 시간으로 1시간 동안 진료받아요. 접속을 꺼도 시간이 흘러요.':'실제 시간으로 30분 동안 씻고 말려요. 접속을 꺼도 시간이 흘러요.');return true;
+}
+/* Called at the simulation deadline before normal post-treatment decay. Return false on save failure. */
+function completeCareTask(wall=Date.now(),simEnd=now()){
+ const task=S.careTask;if(!task||wall<task.end)return false;
+ const before=JSON.parse(JSON.stringify(S));S.careTask=null;
+ if(task.kind==='vet'){S.sick=false;S.stat.vet++;for(const k in S.n)S.n[k]=Math.max(50,S.n[k]);log('진료를 마치고 돌아왔어요');aff(3);}
+ else {S.lastBath=task.end+(S.offset||0);S.n.coat=100;S.stat.bath++;log('목욕과 말리기를 마쳤어요');aff(2);}
+ // House dirt is not removed by washing the animal. The coat, not its toilet, becomes clean.
+ S.lastCalc=simEnd;
+ trialCheck(task.kind,true);
+ if(!save()){restoreCareSnapshot(before);return false;}
+ return true;
+}
+
+function careTaskReason(k){if(S.sitter)return '이웃 돌봄을 마친 뒤에 시작해 주세요.';if(isResting())return '지금은 쉬고 있어요. 깨어난 뒤에 시작해 주세요.';if(k==='vet'&&!S.sick)return '현재 진료가 필요한 상태는 아니에요.';if(k==='bath'&&(S.kind!=='dog'||now()-S.lastBath<14*DAY||!((S.n.coat??100)<50)))return bathEvidence();return ''; }
+function propArt(i){return detailSprite(DETAIL.props,i,'assets/detail/props.png');}
+/* Care scenes reuse the same pet atlas; short activities commit only on completion. */
+const CARE_SECONDS={feed:20,water:15,clean:12,play:20};
+let careSession=null;
+function healthEvidence(){const labels=Object.entries(S.n).filter(([k,v])=>k!=='coat'&&v<35).map(([k])=>sp().needs[k][0]);return S.sick?`기운이 없고 생활 상태가 나빠졌어요.${labels.length?' 살펴볼 부분: '+labels.join(' · '):' 진료 후 회복을 도와주세요.'}`:labels.length?`${labels.join(' · ')} 상태를 먼저 돌봐 주세요. 아직 병원 치료가 필요한 단계는 아니에요.`:'지금은 건강하게 지내고 있어요.';}
+function bathEvidence(){if(S.kind!=='dog')return '이 동물에게 강아지 목욕을 적용하지 않아요. 필요한 털 손질과 보금자리 청소를 해 주세요.';const days=Math.max(0,Math.floor((now()-S.lastBath)/DAY));return `마지막 목욕 후 ${days}일 · 털 상태 ${Math.round(S.n.coat)}. `+(days<14?'게임에서는 목욕 간격 14일을 지켜요. 먼저 빗질과 집 청소를 해 주세요.':S.n.coat<50?'털 상태가 나빠져 목욕을 고려할 때예요. 집이 더러운 것과는 별개예요.':'아직 깨끗해요. 날짜가 됐다고 억지로 씻기지 않아요.');}
+const BOND_STEPS=[[0,'처음 만난 사이','냄새와 목소리에 익숙해지는 중이에요.'],[10,'익숙한 목소리','이름을 부르면 고개를 들어요.'],[25,'편안한 친구','곁에서 긴장을 풀고 인사해요.'],[40,'기다리는 친구','돌봄과 놀이 시간을 알아봐요.'],[60,'믿음직한 보호자','곁에서 편안히 쉬는 모습이 늘어요.'],[80,'서로 믿는 단짝','자기 방식으로 반가움과 편안함을 표현해요.']];
+function bondStage(){return BOND_STEPS.filter(x=>S.aff>=x[0]).at(-1);}
+function showBond(){resetBondLife();const b=bondStage(),next=BOND_STEPS.find(x=>x[0]>S.aff);sheet(`<h2>${esc(S.name)}와 ${b[1]}</h2><p>${b[2]}</p><p>알맞은 먹이와 물, 필요한 청소, 편안한 놀이가 조금씩 믿음을 쌓아요. 쉬거나 싫어할 때 기다려 주는 것도 돌봄이에요.</p><div class="bond-path">${BOND_STEPS.map(x=>`<div class="${S.aff>=x[0]?'reached':''}"><b>${x[1]}</b><small>${x[2]}</small></div>`).join('')}</div><p>${next?'다음 모습: '+next[1]:'지금처럼 꾸준히 함께해요.'}</p><h3>우리만의 실제 발견</h3>${S.found.map(x=>`<p>♡ ${esc(x)}</p>`).join('')||'<p>아직 낯설어요. 작은 돌봄부터 시작해요.</p>'}<small>친밀도는 게임 속 표현이에요. 실제 동물의 애착 속도와 반응은 각자 달라요.</small>`);}
+function requestCare(k){if(!S)return;resetBondLife();advance();if(S.careTask)return openLongCare();if(careSession)return;
+ if(k==='feed'&&isResting())return showRest();
+ if(!hasArt()||!['feed','water','clean','play','vet','bath'].includes(k))return doAct(k);
+ if(S.sitter)return say('이웃이 돌보는 중이에요. 먼저 직접 돌보기로 돌아와 주세요.');
+ if(k==='vet'||k==='bath'){const reason=careTaskReason(k);if(reason)return sheet(`<h2>${k==='vet'?'건강 확인':'목욕 판단'}</h2><p>${esc(reason)}</p><p>${k==='vet'?healthEvidence():bathEvidence()}</p>`);return confirmCare(k);}
+ if(k==='play'&&(isResting()||S.n.rest<20||S.protect))return doAct(k);
+ if(k==='feed'){const win=inWin(sp().meals),key=win?new Date(now()).toLocaleDateString('en-CA')+'-'+win[0]:null;if(S.kind==='rabbit'?S.n.food>90:!win?S.n.food>=40:S.lastMeal[key]||S.n.food>85)return doAct(k);}
+ if(k==='water'&&S.n.water>90)return doAct(k);
+ if(k==='clean'&&!S.mess&&(S.n.clean??S.n.litter??S.n.bed)>85)return doAct(k);
+ if(k==='play'&&(S.n.play??100)>90)return say('충분히 놀았어요. 잠깐 쉬었다가 다시 놀아요.');
+ startShortCare(k);
+}
+function confirmCare(k){const isVet=k==='vet';sheet(`<h2>${isVet?'동물병원에 갈까요?':'따뜻하게 목욕할까요?'}</h2><p>${isVet?healthEvidence():bathEvidence()}</p><p><b>${S.trial?'수업 체험은 20초':isVet?'실제 1시간':'실제 30분'}이 걸립니다. 실행하겠어요?</b></p><p>${S.trial?'수업에서는 짧게 체험해요. 실제 입양 모드는 진료 1시간·목욕 30분이에요.':'창을 닫아도 시간이 흘러요.'} ${isVet?'진료와 휴식을 마친 뒤 건강이 회복돼요.':'씻기·헹구기·말리기를 마친 뒤 털과 몸이 깨끗해져요.'} 이 시간은 게임 연출이며 실제 진료·목욕 시간의 기준은 아니에요.</p><button class="btn go" id="careConfirm">${isVet?'진료 시작':'목욕 시작'}</button>`);$('careConfirm').onclick=()=>{if(!startCareTask(k))return say('시작하지 못했어요. 상태와 저장 공간을 확인해 주세요.');$('sheet').hidden=true;openLongCare();render();};}
+function playActionLabel(){return S.kind==='cat'?'깃털 장난감 움직이기':S.kind==='rabbit'?'놀이 자리 가리키기':'공 던지기';}
+function shortInstruction(k){return {feed:S.kind==='rabbit'?'신선한 건초를 천천히 먹는 모습을 지켜봐요.':'서두르지 않고 오물오물 먹는 모습을 지켜봐요.',water:'물그릇을 눌러 비우기 → 헹구기 → 새 물 채우기.',clean:'표시된 더러운 곳을 손가락으로 문지르거나 눌러 치워 주세요.',play:S.kind==='cat'?'바닥 가까이 깃털 장난감을 움직여요. 따라잡으면 잠깐 쉬어요.':S.kind==='rabbit'?'안전한 바닥의 놀이 자리를 가리켜요. 스스로 다가오도록 기다려요.':'바닥을 눌러 공을 던져요. 친구가 따라간 뒤 다시 던져 주세요.'}[k];}
+function startShortCare(k){careSession={kind:k,owner:S,simStart:now(),start:Date.now(),end:Date.now()+CARE_SECONDS[k]*1000,steps:0,busyUntil:0,cleaned:[],startAff:S.aff};$('sheet').hidden=true;openCareScene(k);}
+function scenePet(state='idle'){return detailArt(S.kind,dogGrowth(),state);}
+function openCareScene(k){const long=k==='vet'||k==='bath',o=$('careScene');o.hidden=false;o.dataset.kind=k;o.innerHTML=`<div class="care-view ${long?'care-special':''}" id="careView" aria-label="${k==='clean'?'직접 닦는 공간':k==='play'?'함께 노는 공간':'돌봄 공간'}"><div class="care-pet" id="carePet">${scenePet(long?'sleep':k==='feed'&&!isResting()?'eat':isResting()?'sleep':'idle')}</div>${k==='feed'||k==='water'?`<div class="care-bowl" id="careBowl">${propArt(k==='water'?3:S.kind==='rabbit'?4:0)}</div>`:''}${k==='clean'?[0,1,2,3].map((n)=>`<button class="dirty-spot" data-spot="${n}" style="left:${[25,65,38,73][n]}%;top:${[58,65,79,46][n]}%" aria-label="더러운 곳 ${n+1} 닦기"><span>${S.kind==='cat'||S.kind==='rabbit'?'젖은 모래':S.kind==='ham'?'젖은 깔짚':'얼룩'}</span></button>`).join(''):''}${k==='play'?'<button id="careBall" aria-label="공 던지기" class="care-ball"></button>':''}<div class="care-foam" id="careFoam" hidden></div></div><div class="care-caption"><span class="care-eyebrow">${esc(S.name)}와 함께하는 시간</span><h2>${{feed:'천천히, 맛있게',water:'맑은 물 한 그릇',clean:'보송보송 우리 집',play:S.kind==='cat'?'살금살금, 깃털을 따라':S.kind==='rabbit'?'스스로 폴짝, 안전한 놀이터':'내가 던지면, 네가 따라와',vet:'포근한 동물병원',bath:'따뜻한 목욕과 말리기'}[k]}</h2><p id="careInstruction">${long?'':shortInstruction(k)}</p><progress id="careProgress" max="100" value="0" aria-label="돌봄 진행"></progress><p id="careTime" role="status" aria-live="polite"></p><div class="more">${k==='water'?'<button class="btn go" id="waterStep">묵은 물 비우기</button>':''}${k==='play'?'<button class="btn go" id="throwBall">공 던지기</button>':''}<button class="btn" id="careLeave">${long?'방으로 돌아가 기다리기':'이번 돌봄 취소'}</button></div><small>${long?'접속하지 않아도 종료 시각까지 진행됩니다.':'돌봄을 마쳐야 상태와 기록에 반영돼요.'}</small></div>`;
+ $('careLeave').onclick=()=>{careSession=null;o.hidden=true;render();};
+ if(k==='water'){$('waterStep').onclick=waterStep;const bowl=$('careBowl');bowl.style.pointerEvents='auto';bowl.style.cursor='pointer';bowl.setAttribute('role','button');bowl.setAttribute('tabindex','0');bowl.setAttribute('aria-label','물그릇 비우고 헹구고 채우기');bowl.onclick=waterStep;bowl.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();waterStep();}};}
+ if(k==='clean')o.querySelectorAll('[data-spot]').forEach(b=>{const wipe=()=>{if(!careSession||careSession.cleaned.includes(b.dataset.spot))return;careSession.cleaned.push(b.dataset.spot);careSession.steps++;b.disabled=true;b.classList.add('cleaned');$('careInstruction').textContent=`${careSession.steps}/4곳을 깨끗하게 닦았어요.`;};b.onpointerdown=e=>{b.setPointerCapture?.(e.pointerId);wipe();};b.onpointermove=e=>{if(e.buttons)wipe();};b.onclick=wipe;});
+ if(k==='play'){o.dataset.pet=S.kind;$('throwBall').textContent=playActionLabel();$('careBall').setAttribute('aria-label',playActionLabel());$('careBall').innerHTML=playToyArt(S.kind==='cat'?'feather':S.kind==='rabbit'?'willow':'ball');$('careView').onpointerdown=e=>{if(e.target.closest('.dirty-spot'))return;const r=$('careView').getBoundingClientRect();throwCareBall(clamp((e.clientX-r.left)/r.width*100,15,85),clamp((e.clientY-r.top)/r.height*100,45,80));};$('throwBall').onclick=()=>throwCareBall([25,75,40,65][(careSession?.steps||0)%4],65);$('careBall').onclick=e=>{if(e.detail===0)throwCareBall(70,60);};}
+ if(k==='play'&&['cat','rabbit'].includes(S.kind))setupSpeciesPlay();
+ if(k==='feed')setupFeeding();
+ updateCareScene();}
+function waterStep(){const c=careSession;if(!c||c.kind!=='water'||Date.now()<c.busyUntil||c.steps>=4)return;c.steps++;c.busyUntil=Date.now()+(c.steps===3?8000:2000);const resting=isResting(c.simStart);$('waterStep').textContent=['','깨끗하게 헹구기','새 물 채우기',resting?'조용히 놓은 물그릇 확인':'마시는 모습 살펴보기','돌봄을 마치는 중'][c.steps];$('careBowl').innerHTML=propArt(c.steps>=3?2:3);$('careInstruction').textContent=['','묵은 물을 비웠어요. 그릇 바닥을 깨끗하게 헹궈요.','그릇을 헹궜어요. 새 물을 채워 주세요.',resting?'자고 있어요. 물은 곁에 두고 깨우지 않아요. 물그릇이 안정적으로 놓였는지 확인해요.':'코를 가까이 대더니 물을 조금씩 마셔요. 서두르지 않고 마실 공간을 지켜 주세요.',resting?'물은 준비됐어요. 잠든 친구를 깨우거나 마시게 하지 않았어요.':'깨끗한 물이 남아 있어요. 물그릇을 안정적인 자리에 두었어요.'][c.steps];if(c.steps===3){c.end=Math.max(c.end,Date.now()+8000);$('carePet').innerHTML=scenePet(resting?'sleep':'eat');}}
+
+function throwCareBall(x,y){const c=careSession;if(!c||c.kind!=='play'||Date.now()<c.busyUntil)return;c.busyUntil=Date.now()+2800;c.steps++;const b=$('careBall'),p=$('carePet');b.style.left=x+'%';b.style.top=y+'%';p.style.left=x+'%';p.style.top=(y-5)+'%';p.innerHTML=scenePet('play');$('careInstruction').textContent=`${c.steps}번 함께 놀았어요. ${S.kind==='cat'?'깃털을 따라 살금살금!':S.kind==='rabbit'?'가고 싶은 곳으로 폴짝!':'공을 따라가는 중이에요!'}`;}
+function finishShortCare(){const c=careSession;if(!c||S!==c.owner){careSession=null;return;}careSession=null;$('careScene').hidden=true;const ok=doAct(c.kind,c.simStart);pose='idle';poseT=0;render();if(ok)say(`함께 돌본 시간이 쌓였어요. ${bondStage()[1]}!`,3500);}
+function openLongCare(){if(!S?.careTask)return;openCareScene(S.careTask.kind);}
+function updateCareScene(){if(!S||$('careScene').hidden)return;const task=S.careTask,c=careSession;if(!task&&!c){$('careScene').hidden=true;return;}const k=task?.kind||c.kind,t=Date.now(),start=task?.start||c.start,end=task?.end||c.end;const progress=clamp((t-start)/(end-start)*100);$('careProgress').value=task?progress:Math.min(progress,(c.steps||0)/(k==='play'?3:4)*100);if(c&&t-c.start>5*60000){careSession=null;$('careScene').hidden=true;say('오랫동안 멈춰 있어 돌봄을 잠시 접었어요. 준비되면 다시 함께해요.');return;}
+ if(task){const left=Math.max(0,Math.ceil((end-t)/1000));$('careTime').textContent=`남은 시간 ${Math.floor(left/60)}분 ${left%60}초 · 창을 닫아도 계속돼요`;$('careInstruction').textContent=k==='vet'?(progress<25?'수의사가 상태를 살펴보고 있어요.':progress<70?'필요한 진료를 받고 있어요.':'편안한 자리에서 회복을 기다려요.'):(progress<30?'미지근한 물로 조심스럽게 씻어요.':progress<65?'거품을 깨끗하게 헹궈요.':'수건으로 닦고 털을 충분히 말려요.');$('careFoam').hidden=k!=='bath'||progress>65;return;}
+ const ready=k==='feed'?c.steps>=4:k==='water'?c.steps>=4:k==='clean'?c.steps>=4:k==='play'?c.steps>=3:true;$('careTime').textContent=ready?`함께하는 시간 ${Math.max(0,Math.ceil((end-t)/1000))}초`:`${k==='clean'?'닦은 곳':k==='play'?playActionLabel():'물갈이'} ${c.steps}/${k==='clean'?4:3} · 천천히 마쳐 주세요`;
+ if(k==='play'&&c.game)updateSpeciesPlay();
+ if(k==='feed')$('careTime').textContent=`먹이 돌봄 ${c.steps}/4 · 준비하고, 먹는 모습을 살펴요`;
+ if(k==='water')$('careTime').textContent=`물그릇 돌봄 ${c.steps}/4 · 비우기 → 헹구기 → 채우기 → 확인`;
+ if(k==='feed')updateFeeding();if(k==='water')$('waterStep').disabled=t<c.busyUntil||c.steps>=4;
+ if(t>=end&&ready&&t>=c.busyUntil)finishShortCare();}
+function updateCareHud(){if(!S)return;const chip=$('bondChip');chip.textContent='♡ '+bondStage()[1];chip.setAttribute('aria-label',`${S.name}와 애착 과정 보기`);$('taskChip').hidden=!S.careTask;if(S.careTask)$('taskChip').textContent=`${S.careTask.kind==='vet'?'진료':'목욕'} 중 · ${Math.ceil(Math.max(0,S.careTask.end-Date.now())/60000)}분 남음`;updateCareScene();}
+$('bondChip').onclick=showBond;$('taskChip').onclick=openLongCare;
+
+
+/* BEGIN ENRICHMENT */
+/* Shared experiences reuse the current pet art, clock and transactional save. */
+const ENRICH={
+ dog:{toys:['통통 공','부드러운 천 장난감'],places:['나무 그늘','잔디 언덕'],routes:['조용한 나무길','친구가 있는 잔디밭'],skills:['앉아','잠깐 기다려','공 가져오기'],decor:['햇살 방석','낮은 놀이 터널','포근한 숨숨집']},
+ cat:{toys:['낚싯대 깃털','또르르 장난감'],places:['햇살 창가','조용한 상자'],routes:['창가 탐색','상자 놀이터'],skills:['표적 따라가기','잠깐 기다리기'],decor:['창가 방석','종이 놀이 터널','포근한 숨숨집']},
+ ham:{toys:['종이 터널','냄새 탐색 상자'],places:['깔짚 구석','어두운 숨숨집'],routes:['터널 탐험','깔짚 탐색'],skills:['터널 찾아가기','탐색 표적 발견'],decor:['종이 은신처','넓은 놀이 터널','작은 숨숨집']},
+ rabbit:{toys:['굴리는 풀 공','종이 터널'],places:['조용한 매트','숨을 집 옆'],routes:['매트 탐험','안전한 터널길'],skills:['표적 따라가기','터널 찾아가기'],decor:['편안한 매트','넓은 놀이 터널','낮은 숨숨집']}
+};
+const MEMORY_LABELS={welcome:'우리의 첫 장',care:'함께 돌본 순간',preference:'우리 아이의 취향',adventure:'함께 탐색한 날',friend:'친구와 편안한 거리',decor:'새로운 쉼터',training:'함께 익힌 작은 놀이',growth:'조금 더 자랐어요',bond:'먼저 다가온 순간'};
+let enrichSession=null;
+function validateEnrichment(raw){
+ const o=raw&&typeof raw==='object'&&!Array.isArray(raw)?raw:{},n=(x,max=100000)=>Number.isInteger(x)&&x>=0&&x<=max?x:0;
+ const e={care:n(o.care),lastDay:n(o.lastDay),uses:{adventure:0,training:0,preference:0},discovered:[],decor:n(o.decor,2),skills:{},memories:[],growth:n(o.growth,4),bond:n(o.bond,5)};
+ for(const k in e.uses)e.uses[k]=n(o.uses?.[k],2);
+ e.discovered=Array.isArray(o.discovered)?[...new Set(o.discovered.filter(x=>x==='toy'||x==='place'))]:[];
+ for(let i=0;i<3;i++)e.skills[i]=n(o.skills?.[i],6);
+ e.memories=(Array.isArray(o.memories)?o.memories:[]).filter(m=>m&&Object.hasOwn(MEMORY_LABELS,m.type)&&Object.hasOwn(ENRICH,m.kind)&&Number.isInteger(m.day)&&m.day>=1&&m.day<=100000&&Number.isInteger(m.growth)&&m.growth>=0&&m.growth<=4&&['idle','play','sleep','eat'].includes(m.pose)&&typeof m.date==='string'&&typeof m.text==='string').slice(-32).map(m=>({type:m.type,kind:m.kind,day:m.day,growth:m.growth,pose:m.pose,id:typeof m.id==='string'?m.id.slice(0,90):'',date:m.date.slice(0,30),text:m.text.slice(0,130)}));
+ return e;
+}
+function enrichment(){if(!S.enrich)S.enrich=validateEnrichment(null);return S.enrich;}
+function enrichmentDay(){return Math.max(1,Math.floor((now()-S.adoptedAt)/DAY)+1);}
+function enrichDaily(e=enrichment(),d=enrichmentDay()){if(d>e.lastDay){e.lastDay=d;e.uses={adventure:0,training:0,preference:0};}return e;}
+function petPreference(){let h=Math.floor(S.adoptedAt/1000);for(const c of S.kind+S.name)h=(h*31+c.charCodeAt(0))>>>0;return{toy:h%2,place:(h>>>3)%2};}
+function addMemory(type,text,pose='idle',unique=false,id=''){
+ const e=enrichment(),g=dogGrowth();
+ id=id|| (type==='care'?'care-'+g:type==='training'?'training-'+text.split(' · ')[0]:type==='growth'?'growth-'+g:type+'-'+text);
+ id=id.slice(0,90);if(unique&&e.memories.some(m=>m.id===id))return;
+ const m={id,type,kind:S.kind,day:enrichmentDay(),growth:g,pose,date:new Date(now()).toLocaleDateString('ko-KR'),text};
+ const old=e.memories.findIndex(x=>x.id===id);if(old>=0)e.memories[old]=m;else e.memories.push(m);
+ if(e.memories.length>32){const i=e.memories.findIndex(x=>!['welcome','growth','bond'].includes(x.type));e.memories.splice(i<0?0:i,1);}
+}
+function recordEnrichmentMemory(id,title,state='idle'){addMemory('bond',String(title).slice(0,130),['idle','play','sleep','eat'].includes(state)?state:'idle',true,'bond-'+String(id).slice(0,70));}
+function enrichTransaction(fn){const before=JSON.parse(JSON.stringify(S));fn();if(!save()){restoreCareSnapshot(before);return false;}return true;}
+function onEnrichmentCare(k){if(!ENRICH[S.kind])return;const e=enrichment();e.care=Math.min(100000,e.care+1);if(!e.memories.length)addMemory('welcome','같은 방에서 천천히 서로를 알아가기 시작했어요.');if(!e.memories.some(m=>m.type==='care'&&m.day===enrichmentDay()))addMemory('care',`${S.name}에게 필요한 돌봄을 직접 해 주었어요.`,k==='feed'?'eat':'idle');const g=dogGrowth();if(g>e.growth){e.growth=g;addMemory('growth',GROWTH[g].name+'의 모습을 사진으로 남겼어요.');}}
+function enrichmentGuard(startedAt=null){if(!S||!ENRICH[S.kind])return false;advance();let msg=S.careTask?'진료나 목욕을 마친 뒤 만나요.':S.sitter?'지금은 이웃이 돌보고 있어요.':S.sick?'몸이 불편해요. 상태를 살펴보고 진료부터 도와주세요.':S.protect||S.n.food<35||S.n.water<35?'먼저 먹이와 깨끗한 물을 챙겨 주세요.':isResting(startedAt??now())?'편안히 자고 있어요. 깨우지 말고 앨범을 살펴볼까요?':S.n.rest<25?'조금 피곤해요. 충분히 쉰 뒤 함께해요.':typeof careSession!=='undefined'&&careSession?'지금 하고 있는 돌봄부터 마쳐 주세요.':'';if(msg){say(msg,3500);return false;}return true;}
+function enrichSheet(html){enrichSession=null;sheet(`<div class="together-sheet">${html}<div class="more"><button class="btn" id="togetherBack">함께하는 시간으로</button></div></div>`);$('togetherBack').onclick=showTogether;}
+function showTogether(){if(!S||!ENRICH[S.kind])return;enrichSession=null;const e=enrichment();sheet(`<div class="together-sheet"><small class="enrich-eyebrow">하루의 작은 발견</small><h2>${esc(S.name)}와 함께하는 시간</h2><p>서두르지 않아도 괜찮아요. 함께한 경험이 쌓이면 새로운 모습이 열려요.</p><div class="together-grid">${[['pref','좋아하는 것','아직 모르는 취향을 관찰해요'],['album','추억 앨범',e.memories.length+'장의 작은 순간'],['adventure',S.kind==='dog'?'산책과 친구':'안전한 탐색',ENRICH[S.kind].routes.join(' · ')],['decor','우리 아이의 자리','소품을 놓고 사용하는 모습을 봐요'],['train',S.kind==='dog'?'함께 배우는 놀이':'천천히 익히는 놀이','강요 없이 짧게, 즐겁게']].map(([id,title,sub])=>`<button class="together-card" data-together="${id}"><b>${esc(title)}</b><small>${esc(sub)}</small></button>`).join('')}</div><p class="enrich-note">놀이·탐색은 하루 2번까지 성장에 반영돼요. 쉬는 동안에도 앨범과 꾸미기를 볼 수 있어요. 놓친 날짜에 대한 벌점은 없어요.</p></div>`);$('sheet').querySelectorAll('[data-together]').forEach(b=>b.onclick=()=>({pref:showPetPreferences,album:showMemoryAlbum,adventure:showPetAdventure,decor:showPetDecor,train:showPetTraining})[b.dataset.together]());}
+function enrichPet(pose='idle'){return `<div class="enrich-animal" id="enrichAnimal">${detailArt(S.kind,dogGrowth(),pose)}</div>`;}
+function enrichStage(content='',mode='room'){return `<div class="enrich-stage ${mode}" id="enrichStage">${content}${enrichPet()}</div>`;}
+function showPetPreferences(){const e=enrichment(),p=petPreference(),c=ENRICH[S.kind];enrichSheet(`<h2>${esc(S.name)}는 무엇을 좋아할까?</h2><div class="together-grid"><div class="together-card"><b>좋아하는 놀이</b><p>${e.discovered.includes('toy')?esc(c.toys[p.toy]):'함께 관찰하면 알 수 있어요.'}</p></div><div class="together-card"><b>편안한 자리</b><p>${e.discovered.includes('place')?esc(c.places[p.place]):'탐색을 마치면 조금씩 알게 돼요.'}</p></div></div><p>두 장난감을 하나씩 보여 주세요. 좋아하는 것에는 조금 더 가까이 다가와요.</p>${enrichStage('<span class="enrich-target pref-prop left">'+preferenceToyArt(0)+'<small>'+esc(c.toys[0])+'</small></span><span class="enrich-target pref-prop right">'+preferenceToyArt(1)+'<small>'+esc(c.toys[1])+'</small></span>')}<div class="more">${c.toys.map((x,i)=>`<button class="btn" data-pref="${i}">${esc(x)} 보여 주기</button>`).join('')}</div><p id="enrichResponse" role="status">싫어하면 억지로 가까이 가져가지 않아요. 오늘 기록을 마쳐도 반응은 계속 볼 수 있어요.</p><button class="btn go" id="enrichFinish" hidden>관찰을 기록할게요</button>`);$('sheet').querySelectorAll('[data-pref]').forEach(b=>b.onclick=()=>{if(!enrichmentGuard())return;const e=enrichDaily();if(enrichSession)return;enrichSession={owner:S,type:'preference',startDay:enrichmentDay(),startedAt:now(),end:Date.now()+6000,pick:+b.dataset.pref};$('sheet').querySelectorAll('[data-pref]').forEach(x=>x.disabled=true);const yes=+b.dataset.pref===p.toy;$('enrichAnimal').style.left=yes?(+b.dataset.pref?'74%':'26%'):'48%';$('enrichResponse').textContent=yes?'코를 가까이 대고 살펴보다가, 장난감 옆에 머물러요.':'잠깐 살펴본 뒤 한 걸음 물러났어요. 다른 취향일 수 있어요.';});$('enrichFinish').onclick=finishEnrichment;}
+function showMemoryAlbumOriginal(){const e=enrichment();enrichSheet(`<h2>우리의 성장 앨범</h2><p>첫 만남과 성장, 함께한 놀이를 보관해요. 최대 32장까지 그날의 모습으로 남겨요.</p><div class="memory-grid">${e.memories.map(m=>`<article class="memory-card"><div class="memory-picture">${detailArt(m.kind,m.growth,m.pose)}</div><small>${esc(m.date)} · ${m.day}일째</small><h3>${esc(MEMORY_LABELS[m.type])}</h3><p>${esc(m.text)}</p></article>`).join('')||'<p>첫 돌봄을 마치면 첫 장이 생겨요.</p>'}</div><small>사진은 실제 화면 캡처가 아니라 그 순간의 성장 단계와 자세로 보관한 게임 속 기념 그림이에요. 설정의 기록 코드에도 함께 저장됩니다.</small>`);}
+function showPetAdventure(){if(!enrichmentGuard())return;const c=ENRICH[S.kind],e=enrichDaily();enrichSheet(`<h2>${S.kind==='dog'?'어느 길로 걸어갈까요?':'어느 쪽을 살펴볼까요?'}</h2><p>${S.kind==='dog'?'보호자와 함께, 목줄을 하고 천천히 걸어요.':'안전한 실내 공간에서 스스로 탐색하게 기다려요.'}</p>${enrichStage('',S.kind==='dog'?'park':'room')}<div class="more">${c.routes.map((x,i)=>`<button class="btn go" data-route="${i}" ${routeOpen(i)?'':'disabled'}>${esc(x)}${routeOpen(i)?'':' · '+routeRequirement(i)}</button>`).join('')}</div><small>두 번의 작은 발견 · 약 30초. 하루 두 번 이후에는 보상 없이 즐겨요. 중간에 닫으면 기록과 보상이 생기지 않아요.</small>`);$('sheet').querySelectorAll('[data-route]').forEach(b=>b.onclick=()=>{if(!routeOpen(+b.dataset.route))return;enrichSession={owner:S,type:'adventure',startDay:enrichmentDay(),startedAt:now(),route:+b.dataset.route,step:0,end:0,choice:null};adventureStep();});}
+const PET_ADVENTURES={
+ dog:[[
+  {intro:'길가의 마른 낙엽이 바스락거려요. 코를 낮추며 궁금해해요.',object:'leaves',choices:[['낙엽 곁에서 냄새 맡게 기다리기','낙엽 가까이 코를 대고 킁킁. 냄새를 충분히 맡은 뒤 고개를 들어요.','idle',65,'still'],['낙엽을 피해 넓은 길로 걷기','보호자 옆으로 돌아와 넓은 길을 천천히 걸어요. 낯선 것은 피할 수도 있어요.','play',35,'still']]},
+  {intro:'조금 걸었더니 시원한 나무 그늘이 보여요. 이제 잠깐 쉬어 갈까요?',object:'shade',choices:[['그늘에 앉아 쉬기','그늘 아래에 자리를 잡고 몸의 힘을 풀어요. 바람을 느끼며 쉬었어요.','sleep',64,'still'],['나무 아래를 천천히 둘러보기','그늘 가장자리의 냄새를 살핀 뒤 보호자를 돌아봐요. 서두르지 않는 산책이에요.','idle',59,'still']]}
+ ],[
+  {intro:'잔디밭에 다른 강아지가 보여요. 바로 다가가기보다 편안한 거리에서 살펴요.',object:'grass',choices:[['멀리서 함께 바라보기','잠깐 귀를 기울여 친구를 바라봐요. 목줄이 느슨한 거리에서 차분히 기다렸어요.','idle',49,'still'],['조용한 쪽으로 한 걸음 물러나기','보호자 쪽으로 돌아와 긴장을 풀어요. 인사를 서두르지 않아도 괜찮아요.','idle',31,'still']]},
+  {intro:'친구도 차분하게 바라보고 있어요. 서로 편안한지 한 번 더 살펴요.',object:'grass',choices:[['편안한 거리를 지키며 인사하기','조금 가까워진 자리에서 서로 코를 움직이며 살펴요. 짧게 인사하고 거리를 다시 두어요.','idle',61,'still'],['오늘은 나란히 멀리서 쉬기','각자의 보호자 곁에 머물며 함께 쉬어요. 만나기만 해도 익숙해지는 시간이 돼요.','sleep',42,'still']]}
+ ]],
+ cat:[[
+  {intro:'닫힌 창문 앞 커튼의 그림자가 바닥에서 살랑거려요. 귀가 쫑긋 섰어요.',object:'curtain',choices:[['그림자를 스스로 살펴보게 기다리기','그림자 가까이 다가가 앞발을 가만히 내밀어요. 커튼을 잡아당기지 않고 바닥에서 놀았어요.','play',64,'sway'],['커튼을 정리해 움직임 줄이기','그림자가 조용해지자 창가를 천천히 살펴요. 자극을 줄여 편안하게 해 주었어요.','idle',57,'still']]},
+  {intro:'닫힌 창문 밖에서 작은 새 소리가 들려요. 안전한 실내에서 귀를 기울여요.',object:'window',choices:[['창가에서 함께 조용히 바라보기','창문 앞에 앉아 바깥을 바라봐요. 문은 닫아 둔 채 소리와 풍경을 관찰했어요.','idle',65,'still'],['창가에서 물러나 방석에서 쉬기','방석 쪽으로 돌아와 눈을 천천히 감아요. 바깥 구경을 마치고 편안하게 쉬어요.','sleep',38,'still']]}
+ ],[
+  {intro:'안전하게 펼쳐 둔 종이상자에 작은 입구가 있어요. 안에는 무엇이 있을까요?',object:'box',choices:[['입구를 살펴보게 기다리기','상자 앞에서 냄새를 맡고 얼굴을 살짝 들이밀어요. 스스로 들어갈지 정하게 두었어요.','idle',65,'still'],['상자를 조금 멀리 놓기','상자가 멀어지자 한결 편안하게 바라봐요. 낯설면 넉넉한 거리가 도움이 돼요.','idle',43,'far']]},
+  {intro:'상자 옆의 큰 종이가 사각사각 소리를 내요. 작은 조각이나 끈은 치워 두었어요.',object:'paper',choices:[['종이를 한 번만 살짝 움직이기','사각 소리에 앞발을 뻗어 큰 종이를 툭 건드려요. 짧게 놀고 움직임을 멈췄어요.','play',65,'sway'],['종이를 치우고 상자 곁에서 쉬기','소리가 사라지자 상자 곁에 편안하게 앉아요. 싫어하는 자극은 줄여 주었어요.','idle',48,'remove']]}
+ ]],
+ ham:[[
+  {intro:'넓은 종이 터널 앞에서 코를 움직여요. 두 입구 중 어디로 갈지 살펴봐요.',object:'tunnel',choices:[['입구를 스스로 찾게 기다리기','입구의 냄새를 맡고 짧은 터널 안으로 쏙. 억지로 밀어 넣지 않았어요.','play',64,'tunnel'],['터널 옆에 넓은 돌아갈 길 열기','터널 바깥을 따라 걸으며 안전한 길을 찾아요. 들어가지 않는 선택도 존중해요.','idle',39,'still']]},
+  {intro:'터널 반대쪽에 환한 출구가 보여요. 집으로 돌아갈 길도 열려 있어요.',object:'tunnel',choices:[['출구 앞에서 조용히 기다리기','출구에서 얼굴을 빼꼼 내밀더니 스스로 나와요. 손으로 꺼내지 않고 기다렸어요.','idle',73,'tunnel'],['숨숨집으로 돌아갈 길 남겨 두기','익숙한 숨숨집 방향으로 돌아가 쉬어요. 탐험을 마칠 때도 스스로 움직였어요.','idle',32,'still']]}
+ ],[
+  {intro:'깨끗한 깔짚 위에 작은 발자국이 보여요. 코를 벌름거리며 익숙한 냄새를 찾아요.',object:'bedding',choices:[['깔짚 냄새를 살펴보게 기다리기','앞발로 깔짚을 조금 헤치며 냄새를 찾아요. 익숙한 깔짚을 모두 버리지 않았어요.','play',64,'still'],['젖은 곳이 없는지 곁에서 관찰하기','주변을 살피는 동안 마른 깔짚 위를 천천히 걸어요. 젖은 부분이 있는지 확인했어요.','idle',47,'still']]},
+  {intro:'깔짚 옆 숨숨집 입구에서 얼굴만 빼꼼 보여요. 조금 쉬고 싶은가 봐요.',object:'hide',choices:[['입구를 막지 않고 조용히 기다리기','잠깐 얼굴을 내밀었다가 안쪽으로 들어가 쉬어요. 숨을 공간을 지켜 주었어요.','sleep',65,'still'],['조용히 물러나 혼자 쉴 시간 주기','주변이 조용해지자 숨숨집 안에서 몸을 편안히 해요. 낮잠을 깨우지 않았어요.','sleep',65,'still']]}
+ ]],
+ rabbit:[[
+  {intro:'미끄럽지 않은 매트 위에 풀 공이 놓여 있어요. 코를 쫑긋하며 다가와요.',object:'grassball',choices:[['공을 가까운 쪽으로 살짝 굴리기','천천히 구르는 공을 따라가 코로 톡 밀어요. 세게 던지거나 쫓아가지 않았어요.','play',65,'roll'],['가만히 놓고 스스로 탐색하게 두기','공 둘레를 돌아보며 냄새를 맡아요. 움직이지 않는 물건도 충분히 흥미로워요.','idle',60,'still']]},
+  {intro:'탐색을 마치고 매트 가장자리에서 멈췄어요. 이제 편안히 곁에 있어 볼까요?',object:'mat',choices:[['바닥에 앉아 조용히 기다리기','조금씩 가까이 와 매트 위에 몸을 내려놓아요. 억지로 안지 않고 함께 쉬었어요.','sleep',50,'still'],['혼자 쉴 수 있게 조금 물러나기','넉넉한 자리에서 앞발을 편안히 뻗어요. 다가오지 않아도 재촉하지 않았어요.','sleep',66,'still']]}
+ ],[
+  {intro:'몸보다 넉넉한 종이 터널 입구가 보여요. 귀를 세우고 안쪽을 살펴요.',object:'tunnel',choices:[['입구를 스스로 살펴보게 기다리기','코로 입구를 살펴보다가 천천히 들어가요. 뒤에서 밀거나 붙잡지 않았어요.','play',63,'tunnel'],['입구 주변을 넓게 비워 주기','터널 주변을 한 바퀴 돌며 익숙해져요. 언제든 물러날 길을 남겨 두었어요.','idle',40,'still']]},
+  {intro:'반대쪽 입구에서 코가 빼꼼 보여요. 나올 때까지 기다려 주세요.',object:'tunnel',choices:[['출구에서 조금 떨어져 기다리기','주변을 살핀 뒤 스스로 폴짝 나와요. 출구를 막지 않아서 안심했어요.','play',75,'tunnel'],['출구 옆 조용한 쉼터 비워 두기','터널을 나와 옆의 조용한 자리에서 쉬어요. 놀이를 끝낼 시간도 스스로 골랐어요.','sleep',74,'still']]}
+ ]]
+};
+function adventureStory(){return PET_ADVENTURES[S.kind][enrichSession.route][enrichSession.step];}
+function adventureChoices(){return adventureStory().choices.map(x=>x[0]);}
+function adventureObjectArt(kind){
+ if(kind==='tunnel')return decorArt(1);if(kind==='hide')return decorArt(2);if(kind==='mat')return decorArt(0);if(kind==='bedding')return propArt(8);
+ const parts={
+  shade:'<path d="M91 43H110L117 108H84Z" fill="#9a8061"/><ellipse cx="100" cy="39" rx="65" ry="31" fill="#829b68"/><ellipse cx="71" cy="27" rx="35" ry="23" fill="#a6b880"/><ellipse cx="123" cy="24" rx="32" ry="22" fill="#91aa75"/>',
+  leaves:'<path d="M23 78Q25 27 86 24Q84 78 23 78Z" fill="#c79b56"/><path d="M78 95Q100 40 160 61Q144 107 78 95Z" fill="#b77d4b"/><path d="M21 90L77 35M82 97L146 66" stroke="#8e6e44" stroke-width="4"/>',
+  grass:'<path d="M15 100L35 58L38 100L68 38L65 100L95 57L100 100L134 37L127 100L165 54L155 100Z" fill="#8ca96d"/><circle cx="74" cy="78" r="8" fill="#eccb8e"/>',
+  curtain:'<path d="M24 12H174V104H24Z" fill="#b9d4cd"/><path d="M28 14H82L66 103H24Z" fill="#efdfbd"/><path d="M122 14H174V103H137Z" fill="#efdfbd"/><path d="M102 16V100M70 57H134" stroke="#fff6e1" stroke-width="5"/><path d="M42 20L36 89M61 20L50 88M139 20L153 89" stroke="#d7c39f" stroke-width="3"/>',
+  window:'<rect x="35" y="8" width="130" height="98" rx="7" fill="#e9ddc0"/><rect x="43" y="16" width="114" height="81" fill="#b5d5d5"/><path d="M100 18V99M45 56H155" stroke="#fff4dc" stroke-width="5"/><path d="M58 35Q66 29 73 35Q80 28 87 35" fill="none" stroke="#72918b" stroke-width="3"/>',
+  box:'<path d="M34 43L112 22L170 46L98 72Z" fill="#ac8b60"/><path d="M34 43L98 72V111L34 81Z" fill="#c4a474"/><path d="M98 72L170 46V91L98 111Z" fill="#e0c296"/><path d="M53 59L76 69V92L53 81Z" fill="#6e5b44"/><path d="M34 43L18 24L89 8L112 22M112 22L145 10L186 29L170 46" fill="#ead0a5"/>',
+  paper:'<path d="M29 48L82 18L101 35L156 27L178 85L120 101L86 88L38 108Z" fill="#f7ecd6" stroke="#d7c5a4" stroke-width="3"/><path d="M82 20L85 88M102 36L120 99M44 62L72 53" stroke="#dbcbae" stroke-width="2"/>',
+  ball:'<circle cx="100" cy="65" r="39" fill="#d49680"/><path d="M66 47Q100 66 133 47M80 30Q105 65 80 100" fill="none" stroke="#f5d8b6" stroke-width="6"/><ellipse cx="86" cy="43" rx="11" ry="6" fill="#f7e9d4" opacity=".6"/>',
+  grassball:'<circle cx="100" cy="65" r="39" fill="#b8ad70"/><path d="M67 47L128 89M76 34L138 72M62 67L117 99M128 36L70 86M138 55L89 102" stroke="#ded0a0" stroke-width="5"/>',
+  cloth:'<path d="M26 65Q50 35 78 43L109 32Q141 42 173 75L149 103L112 87L83 108Q48 101 26 65Z" fill="#b4c5bd"/><path d="M46 64L81 83L112 54L146 80" fill="none" stroke="#e8e5cb" stroke-width="5"/>',
+  feather:'<path d="M31 102Q66 79 97 40" fill="none" stroke="#907557" stroke-width="5"/><path d="M91 51Q68 13 123 11Q147 44 91 51Z" fill="#c6a3ba"/><path d="M88 61Q112 28 150 56Q134 87 88 61Z" fill="#dbbc8d"/><path d="M87 60L121 20M92 61L140 59" stroke="#f4e4d4" stroke-width="3"/>'
+ };
+ return '<svg viewBox="0 0 200 120" aria-hidden="true"><ellipse cx="100" cy="108" rx="77" ry="8" fill="#51483315"/>'+(parts[kind]||parts.paper)+'</svg>';
+}
+function preferenceToyArt(i){return adventureObjectArt(({dog:['ball','cloth'],cat:['feather','ball'],ham:['tunnel','box'],rabbit:['grassball','tunnel']})[S.kind][i]);}
+function adventureStep(){
+ const a=enrichSession;if(!a||a.owner!==S)return;
+ const story=adventureStory(),choices=adventureChoices(),familiar=enrichment().memories.some(m=>m.type==='friend');
+ const intro=story.intro+(S.kind==='dog'&&a.route===1&&familiar?' 지난번 만난 친구라 조금 더 편안해 보여요.':'');
+ sheet(`<div class="together-sheet"><small class="enrich-eyebrow">작은 발견 ${a.step+1}/2</small><h2>${esc(ENRICH[S.kind].routes[a.route])}</h2>${enrichStage(`<span id="adventureObject" class="enrich-adventure-object" style="position:absolute;left:61%;top:44%;width:125px;z-index:2;transition:transform 2s,opacity 2s">${adventureObjectArt(story.object)}</span>${S.kind==='dog'&&a.route?'<span class="enrich-friend" style="right:'+(familiar?'10%':'3%')+'">'+detailArt('dog',Math.min(4,dogGrowth()+1),'idle')+'</span>':''}`,S.kind==='dog'?'park':'room')}<p id="enrichResponse" role="status">${esc(intro)}</p><div class="more">${choices.map((x,i)=>`<button class="btn" data-event="${i}">${esc(x)}</button>`).join('')}</div><button class="btn go" id="enrichFinish" hidden>${a.step===0?'다음 발견으로':'오늘의 추억 남기기'}</button><p class="enrich-note">동물이 다가오지 않아도 괜찮아요. 기다려 주는 것도 함께하는 방법이에요.</p></div>`);
+ $('sheet').querySelectorAll('[data-event]').forEach(b=>b.onclick=()=>{
+  if(a.end)return;a.choice=+b.dataset.event;a.end=Date.now()+8000;
+  const result=story.choices[a.choice],pet=$('enrichAnimal'),object=$('adventureObject');
+  $('sheet').querySelectorAll('[data-event]').forEach(x=>x.disabled=true);pet.style.left=result[3]+'%';pet.innerHTML=detailArt(S.kind,dogGrowth(),result[2]);$('enrichResponse').textContent=result[1];
+  if(result[4]==='remove')object.style.opacity='0';
+  else if(result[4]==='far')object.style.transform='translateX(35px)';
+  else if(result[4]==='roll')object.style.transform='translateX(25px) rotate(110deg)';
+  else if(result[4]==='tunnel')pet.classList.add('use-decor-1');
+  else if(result[4]==='sway')object.animate?.([{transform:'translateX(0) rotate(0)'},{transform:'translateX(10px) rotate(5deg)'},{transform:'translateX(0) rotate(0)'}],{duration:2200,iterations:2});
+ });
+ $('enrichFinish').onclick=()=>{if(!a.end||Date.now()<a.end)return;if(a.step===0){a.step=1;a.end=0;adventureStep();}else finishEnrichment();};
+}
+function decorArt(i){return `<svg viewBox="0 0 200 120" aria-hidden="true"><ellipse cx="100" cy="104" rx="82" ry="12" fill="#2c45351b"/>${i===0?'<ellipse cx="100" cy="83" rx="78" ry="29" fill="#bf927d"/><ellipse cx="100" cy="74" rx="78" ry="29" fill="#edcabb"/><ellipse cx="100" cy="72" rx="62" ry="20" fill="#f8e5d2"/><path d="M47 71Q100 48 153 71" fill="none" stroke="#d9bda4" stroke-width="3"/>':i===1?'<path d="M27 91V55Q34 8 82 31L162 55V102Z" fill="#b79670"/><ellipse cx="157" cy="78" rx="32" ry="31" fill="#dcc29a"/><ellipse cx="157" cy="80" rx="23" ry="24" fill="#695943"/><path d="M43 43L122 67M40 58L121 82" stroke="#9b7a59" stroke-width="3"/>':'<path d="M29 55L96 17L169 52V104H29Z" fill="#dec7a4"/><path d="M20 57L95 10L180 54L166 65L96 29L33 67Z" fill="#9dab80"/><path d="M77 104V79Q99 47 122 79V104" fill="#75624f"/><path d="M38 75H66M133 75H159" stroke="#b49a78" stroke-width="3"/>'}</svg>`;}
+function showPetDecor(){const e=enrichment(),c=ENRICH[S.kind];enrichSheet(`<h2>편안한 우리 아이의 자리</h2><p>돌봄을 쌓아 새 자리를 열어요. 기존 물건은 사라지지 않고 언제든 바꿀 수 있어요.</p><div class="together-grid">${c.decor.map((name,i)=>`<button class="together-card decor-choice" data-decor="${i}" ${e.care<[0,4,10][i]?'disabled':''}>${decorArt(i)}<b>${esc(name)}</b><small>${e.care<[0,4,10][i]?`돌봄 ${[0,4,10][i]}번 함께하면 열려요 (${e.care}번)`:(e.decor===i?'지금 사용하는 자리':'이 자리 놓기')}</small></button>`).join('')}</div>${enrichStage(`<div class="enrich-furniture" id="enrichFurniture">${decorArt(e.decor)}</div>`)}<p id="enrichResponse">${esc(S.name)}가 익숙해질 시간을 주어요.</p><button class="btn go" id="enrichUse">스스로 사용하도록 기다리기</button>`);$('sheet').querySelectorAll('[data-decor]').forEach(b=>b.onclick=()=>{const i=+b.dataset.decor;if(e.care<[0,4,10][i])return;if(enrichTransaction(()=>{enrichment().decor=i;addMemory('decor',c.decor[i]+'에서 편안하게 쉴 자리를 준비했어요.','idle',true);})){showPetDecor();}});$('enrichUse').onclick=()=>{if(!enrichmentGuard())return;$('enrichUse').disabled=true;$('enrichAnimal').classList.add('use-decor-'+enrichment().decor);$('enrichAnimal').innerHTML=detailArt(S.kind,dogGrowth(),enrichment().decor===0?'sleep':'idle');$('enrichResponse').textContent=enrichment().decor===0?'자리를 한 번 살펴보고 몸을 편안하게 내려놓아요.':enrichment().decor===1?'입구에서 냄새를 맡더니, 스스로 터널을 통과해요.':'입구를 살펴본 뒤 안쪽으로 들어가 얼굴을 빼꼼 내밀어요.';};}
+function showPetTraining(){if(!enrichmentGuard())return;const e=enrichDaily(),c=ENRICH[S.kind];enrichSheet(`<h2>조금씩 함께 익혀요</h2><p>${S.kind==='dog'?'한 번에 완벽하지 않아도 괜찮아요. 짧게 보여 주고 기다려요.':'스스로 움직일 때까지 기다려요. 억지로 잡거나 움직이지 않아요.'}</p><div class="together-grid">${c.skills.map((x,i)=>`<button class="together-card" data-skill="${i}" ><b>${esc(x)}</b><small>${e.skills[i]>=6?'익숙해졌어요':`함께 익힌 경험 ${e.skills[i]}/6`}</small></button>`).join('')}</div><p>오늘 ${e.uses.training}/2회 · 반복 클릭으로 빨리 자라지 않아요. 며칠에 걸쳐 천천히 친해져요.</p>`);$('sheet').querySelectorAll('[data-skill]').forEach(b=>b.onclick=()=>startPetTraining(+b.dataset.skill));}
+function startPetTraining(skill){if(!enrichmentGuard())return;const e=enrichDaily();enrichSheet(`<h2>${esc(ENRICH[S.kind].skills[skill])}</h2>${enrichStage('<button class="enrich-touch-target" id="trainTarget" aria-label="바닥 표적 보여주기">여기</button>')}<p id="enrichResponse" role="status">${S.kind==='dog'?'부드럽게 한 번 알려 주고 반응할 시간을 주세요.':'바닥의 표적을 눌러 관심을 보여 주세요. 동물이 스스로 다가가요.'}</p><button class="btn go" id="trainCue">${S.kind==='dog'?(skill===0?'앉아, 부드럽게 알려 주기':skill===1?'잠깐 기다려, 알려 주기':'공을 가까이 던지기'):S.kind==='cat'&&skill===1?'표적을 멈추고 기다리기':'바닥 표적 보여 주기'}</button><button class="btn go" id="enrichFinish" hidden>오늘의 연습 마치기</button>`);const cue=()=>{if(enrichSession)return;enrichSession={owner:S,type:'training',skill,startDay:enrichmentDay(),startedAt:now(),end:Date.now()+10000};$('trainCue').disabled=true;$('trainTarget').disabled=true;trainingMotion(skill);$('enrichResponse').textContent=e.skills[skill]<2?'고개를 갸웃하며 표적을 바라봐요. 오늘은 낯설음을 줄인 것만으로 충분해요.':e.skills[skill]<5?'지난번 기억이 났나 봐요. 조금 더 편안하게 반응해요.':'익숙한 놀이를 알아보고 스스로 다가왔어요!';};$('trainCue').onclick=cue;$('trainTarget').onclick=cue;$('enrichFinish').onclick=finishEnrichment;}
+function finishEnrichment(){const a=enrichSession;if(!a||a.owner!==S||!a.end||Date.now()<a.end)return;const type=a.type;if(!enrichmentGuard(a.startedAt))return;const e=enrichDaily(enrichment(),a.startDay),reward=e.lastDay<=a.startDay&&e.uses[type]<(type==='preference'?1:2)&&!(type==='training'&&e.skills[a.skill]>=6)&&!(type==='preference'&&a.pick!==petPreference().toy);if(!reward&&type!=='preference'){enrichSession=null;showTogether();say('편안하게 함께했어요. 오늘 성장 보상은 이미 받았지만 언제든 다시 놀 수 있어요.');return;}const ok=enrichTransaction(()=>{const e=enrichDaily(enrichment(),a.startDay);if(reward)e.uses[type]++;if(type==='preference'){const p=petPreference();if(a.pick===p.toy&&!e.discovered.includes('toy')){e.discovered.push('toy');addMemory('preference',ENRICH[S.kind].toys[p.toy]+'에 더 오래 관심을 보였어요.','play');}else addMemory('preference','관심 없는 장난감은 치우고 천천히 기다려 주었어요.');}if(type==='adventure'){if(!e.discovered.includes('place'))e.discovered.push('place');const p=petPreference();addMemory(S.kind==='dog'&&a.route?'friend':'adventure',ENRICH[S.kind].routes[a.route]+'에서 함께 살펴보고, '+ENRICH[S.kind].places[p.place]+'에서 쉬었어요.','play');S.n[S.kind==='ham'?'explore':'play']=clamp(S.n[S.kind==='ham'?'explore':'play']+10);S.n.rest=clamp(S.n.rest-3);}if(type==='training'){e.skills[a.skill]=Math.min(6,e.skills[a.skill]+1);addMemory('training',ENRICH[S.kind].skills[a.skill]+' · '+e.skills[a.skill]+'/6번 함께 익혔어요.','play');S.n.rest=clamp(S.n.rest-2);}if(reward)aff(1);log('함께하는 시간: '+({preference:'취향 관찰',adventure:'작은 탐색',training:'짧은 놀이'})[type]);});enrichSession=null;if(ok){showMemoryAlbum();say('오늘 함께한 순간을 앨범에 남겼어요.');render();}}
+function updateEnrichment(){updateEnrichmentRoom();const a=enrichSession;if(!a)return;if(a.owner!==S||$('sheet').hidden){enrichSession=null;return;}const b=$('enrichFinish');if(a.type==='training'&&a.returnAt&&Date.now()>=a.returnAt){$('enrichAnimal').style.left='43%';$('enrichAnimal').innerHTML=detailArt(S.kind,dogGrowth(),'idle');$('enrichResponse').textContent='다시 곁으로 돌아왔어요. 부드럽게 칭찬하며 놀이를 마쳐요.';a.returnAt=0;}if(b&&a.end){b.hidden=false;b.disabled=Date.now()<a.end;if(b.disabled)b.textContent='천천히 지켜보는 중 · '+Math.ceil((a.end-Date.now())/1000)+'초';else b.textContent=a.type==='adventure'&&a.step===0?'다음 발견으로':a.type==='training'?'부드럽게 칭찬하고 마치기':'오늘의 추억 남기기';}}
+
+function trainingMotion(skill){
+ const a=enrichSession,p=$('enrichAnimal'),target=$('trainTarget');
+ if(S.kind==='dog'&&skill===0){target.hidden=true;p.style.left='48%';p.innerHTML=detailArt(S.kind,dogGrowth(),'idle');p.classList.add('enrich-settle');}
+ else if((S.kind==='dog'||S.kind==='cat')&&skill===1){target.hidden=true;p.style.left='48%';p.innerHTML=detailArt(S.kind,dogGrowth(),'idle');}
+ else if(S.kind==='ham'||S.kind==='rabbit'&&skill===1){target.hidden=true;$('enrichStage').insertAdjacentHTML('afterbegin','<div class="enrich-furniture">'+decorArt(1)+'</div>');p.classList.add('use-decor-1');}
+ else {target.textContent=S.kind==='dog'?'●':'✦';target.style.left='73%';p.style.left='68%';p.innerHTML=detailArt(S.kind,dogGrowth(),'play');a.returnAt=Date.now()+5500;}
+}
+
+function updateEnrichmentRoom(){
+ let b=$('enrichRoomDecor');
+ const visible=!!S&&!!S.enrich&&!!ENRICH[S.kind]&&S.scene==='room'&&$('intro').hidden;
+ if(!b&&!visible)return;
+ if(!b){b=document.createElement('button');b.id='enrichRoomDecor';b.className='enrich-room-decor';b.onclick=showPetDecor;document.body.appendChild(b);}
+ b.hidden=!visible;if(!visible)return;
+ const i=S.enrich.decor;if(b.dataset.decor!==String(i)||b.dataset.kind!==S.kind){b.dataset.decor=i;b.dataset.kind=S.kind;b.innerHTML=decorArt(i);b.setAttribute('aria-label',ENRICH[S.kind].decor[i]+' 살펴보기');}
+}
+
+// Quiet, non-rewarding invitations; never interrupt a child or a pet's care needs.
+let bondLife={owner:null,next:0,until:0,level:0};
+function resetBondLife(){if($('momentNotice'))$('momentNotice').hidden=true;if($('pet'))$('pet').dataset.cute='';bondLife.until=0;bondLife.next=Date.now()+60000;D.goal=null;}
+
+$('bTogether').onclick=()=>{resetBondLife();showTogether();};
+/* END ENRICHMENT */
+// Game durations are explicit; waking never silently resets the natural sleep schedule.
+function restEnd(t=now()){
+ let end=Math.max(t,S.restUntil||0),d=new Date(t);
+ if(sp().sleep(d.getHours())){d.setMinutes(0,0,0);for(let i=0;i<25;i++){d.setHours(d.getHours()+1);if(!sp().sleep(d.getHours())){end=Math.max(end,d.getTime());break;}}}
+ return end;
+}
+function restRemainingText(){const m=Math.max(1,Math.ceil((restEnd()-now())/60000));return m>=60?`${Math.floor(m/60)}시간${m%60?' '+m%60+'분':''} 남음`:`${m}분 남음`;}
+function wakePet(){
+ advance();if(!isResting()||S.careTask||S.sitter||careSession)return false;
+ const old=JSON.parse(JSON.stringify(S));S.restUntil=0;S.awakeUntil=now()+H/2;S.n.rest=clamp(S.n.rest-10);S.aff=clamp(S.aff-2);log('일찍 깨워 휴식 10, 친밀도 2가 줄었어요');
+ if(!save()){restoreCareSnapshot(old);return false;}
+ pose='idle';poseT=0;resetBondLife();render();say('잠이 덜 깼어요. 30분 뒤에도 원래 잠자는 시간이면 다시 쉬어요.');return true;
+}
+function showRest(){
+ if(!S)return;advance();if(S.careTask)return openLongCare();if(S.sitter)return say('지금은 이웃이 돌보고 있어요.');
+ const sleeping=isResting(),owner=S;
+ sheet(`<h2>${sleeping?'편안히 쉬는 중이에요':'포근하게 쉬게 할까요?'}</h2><p>${sleeping?`예상 휴식: <b>${restRemainingText()}</b>. 깨어날 예정 시각은 ${new Date(restEnd()).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}이에요.`:'쉬게 하기는 <b>게임 속 1시간</b>입니다. 원래 잠자는 시간과 겹치면 그 시간까지 이어져요.'}</p><p>특히 햄스터는 낮잠이 자연스러워요. 깨우기보다 깨어날 시간을 기다려 주세요.</p><p>쉬는 동안에도 물그릇·집 청소, 추억 앨범, 소품 고르기를 할 수 있어요. 먹기와 놀이는 깨어난 뒤에 해요.</p>${sleeping?'<p><b>일찍 깨우면 휴식 −10 · 친밀도 −2</b><br>30분 동안 깨어 있어요. 자연스러운 수면 시간이라면 그 후 다시 쉬어요.</p><button class="btn" id="restConfirm">손해를 알고 조심히 깨우기</button>':'<button class="btn go" id="restConfirm">1시간 쉬게 하기</button>'}<p><small>시간·감점은 학습 게임 규칙이며 실제 동물의 권장 수면 시간은 아니에요.${S.trial?' 수업 체험에서는 게임 시계가 빠르게 흘러요.':''}</small></p>`);
+ $('restConfirm').onclick=()=>{if(S!==owner)return;if(sleeping){if(wakePet())$('sheet').hidden=true;}else{doAct('quiet');$('sheet').hidden=true;}};
+}
+function playToyArt(type){
+ const inner=type==='feather'?'<path d="M18 12Q70 8 81 55" fill="none" stroke="#a77753" stroke-width="5"/><path d="M81 55q-3 27-22 40" fill="none" stroke="#b89772" stroke-width="2"/><path d="M60 62Q22 57 36 95Q62 105 65 70" fill="#82b8b1"/><path d="M65 63Q91 56 86 87Q69 108 62 78" fill="#dcaaa9"/><path d="M60 67L43 91M66 70l13 17" stroke="#fff5dc" stroke-width="2"/>':type==='tunnel'?'<path d="M12 45Q20 19 46 28L94 48v41H17Z" fill="#c79767"/><ellipse cx="28" cy="69" rx="20" ry="24" fill="#775337"/><ellipse cx="28" cy="69" rx="14" ry="18" fill="#443c31"/><path d="M48 32v52M64 38v48M80 44v44" stroke="#e0bb89" stroke-width="4"/>':type==='mat'?'<ellipse cx="60" cy="78" rx="48" ry="22" fill="#c5b283"/><path d="M22 69l13 22 7-31 12 35 10-35 12 32 8-26 10 18" fill="none" stroke="#87986d" stroke-width="10"/><path d="M26 79l20-12m20 14 19-10" stroke="#e5d6a9" stroke-width="4"/>':type==='willow'?'<circle cx="60" cy="65" r="35" fill="#b98b57"/><g fill="none" stroke="#ebc58e" stroke-width="4"><ellipse cx="60" cy="65" rx="18" ry="34"/><ellipse cx="60" cy="65" rx="32" ry="12"/><path d="M34 42l50 46M29 62l44 34M48 32l43 39M34 88l48-48M27 72l42-40"/></g>':'<circle cx="60" cy="63" r="35" fill="#5fa99c"/><path d="M32 42q22 28 59 30M40 90q28-25 22-60" stroke="#fae4ac" stroke-width="9" fill="none"/><ellipse cx="47" cy="43" rx="10" ry="6" fill="#ffffff" opacity=".55"/>';
+ return `<svg viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="61" cy="104" rx="35" ry="6" fill="#66523d" opacity=".16"/>${inner}</svg>`;
+}
+function setupSpeciesPlay(){
+ const c=careSession;c.game=S.kind;c.phase='choose';c.end=Date.now()+30000;c.visited=[];
+ $('careView').onpointerdown=null;$('careBall').onclick=null;$('careBall').style.background='transparent';
+ if(S.kind==='cat'){
+  $('careInstruction').textContent='바닥을 눌러 깃털을 숨겨요. 고양이가 살금살금 다가오면 잡게 해 주세요!';$('throwBall').textContent='깃털 숨기기';
+  $('careView').onpointerdown=e=>{const r=$('careView').getBoundingClientRect();catLure(clamp((e.clientX-r.left)/r.width*100,18,82));};
+  $('throwBall').onclick=()=>c.phase==='ready'?catCatch():catLure([25,75,45][c.steps%3]);
+ }else{
+  $('careInstruction').textContent='서로 다른 세 놀이를 골라요. 토끼가 스스로 탐색하는 동안 기다려 주세요.';$('careBall').hidden=true;
+  $('throwBall').outerHTML='<div class="rabbit-stations">'+['터널 탐험','냄새 매트 찾기','버드나무 공 굴리기'].map((n,i)=>`<button class="btn" id="rabbitPlay${i}">${playToyArt(['tunnel','mat','willow'][i])}<span>${n}</span></button>`).join('')+'</div>';
+  for(let i=0;i<3;i++)$('rabbitPlay'+i).onclick=()=>rabbitExplore(i);
+ }
+}
+function catLure(x){const c=careSession;if(!c||c.game!=='cat'||c.phase!=='choose'||Date.now()<c.busyUntil)return;c.phase='stalk';c.busyUntil=Date.now()+1500;c.target=x;const p=$('carePet'),b=$('careBall');b.style.left=x+'%';b.style.top='70%';b.style.opacity='.35';p.style.left=(x<50?x+15:x-15)+'%';p.style.top='62%';p.innerHTML=scenePet('idle');$('throwBall').disabled=true;$('careInstruction').textContent='쉿, 깃털 뒤를 살금살금… 기다리면 잡을 준비를 해요.';}
+function catCatch(){const c=careSession;if(!c||c.game!=='cat'||c.phase!=='ready')return;c.steps++;c.phase='caught';c.busyUntil=Date.now()+2200;$('carePet').style.left=c.target+'%';$('carePet').innerHTML=scenePet('play');$('careBall').style.opacity='1';$('throwBall').disabled=true;$('careInstruction').textContent=`톡! 앞발로 잡았어요. ${c.steps}/3번 성공 · 잡은 장난감을 잠깐 즐겨요.`;}
+function rabbitExplore(i){const c=careSession;if(!c||c.game!=='rabbit'||c.visited.includes(i)||Date.now()<c.busyUntil)return;c.visited.push(i);c.steps++;c.busyUntil=Date.now()+3500;const b=$('careBall'),p=$('carePet');b.hidden=false;b.innerHTML=playToyArt(['tunnel','mat','willow'][i]);b.style.left=[69,32,68][i]+'%';b.style.top='69%';b.style.setProperty('width',i===0?'230px':i===1?'170px':'90px','important');b.style.setProperty('height',i===0?'210px':i===1?'140px':'90px','important');b.style.transform='translate(-50%,-50%)';if(i===2)b.animate?.([{transform:'translate(-50%,-50%) rotate(0)'},{transform:'translate(-30%,-50%) rotate(80deg)'}],{duration:2200,fill:'forwards'});p.style.left=[69,32,60][i]+'%';p.style.top='62%';p.innerHTML=scenePet(i===1?'idle':'play');p.classList.remove('rabbit-tunnel','rabbit-sniff','rabbit-hop');p.classList.add(['rabbit-tunnel','rabbit-sniff','rabbit-hop'][i]);$('careInstruction').textContent=['코를 쫑긋, 터널 안으로 쏙! 반대편에서 빼꼼 나와요.','킁킁! 매트 사이의 냄새를 천천히 찾아요.','앞코로 톡! 엮은 공을 살짝 밀고 폴짝 따라가요.'][i];}
+function updateSpeciesPlay(){const c=careSession;if(!c)return;const ready=Date.now()>=c.busyUntil;if(c.game==='cat'){if(c.phase==='stalk'&&ready){c.phase='ready';$('throwBall').disabled=false;$('throwBall').textContent='지금! 깃털 잡게 해 주기';$('careInstruction').textContent='엉덩이를 살짝 낮췄어요. 준비 완료! 아래 버튼을 눌러 잡게 해 주세요.';}else if(c.phase==='caught'&&ready){c.phase='choose';$('throwBall').disabled=false;$('throwBall').textContent='다른 곳에 깃털 숨기기';}}else if(c.game==='rabbit'){for(let i=0;i<3;i++)$('rabbitPlay'+i).disabled=!ready||c.visited.includes(i);}}
+
+function shuffleItems(items){const a=items.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function setupFeeding(){const c=careSession;c.steps=0;c.eatStart=0;$('carePet').innerHTML=scenePet('idle');$('careBowl').innerHTML=propArt(S.kind==='rabbit'?5:1);$('careInstruction').textContent=S.kind==='rabbit'?'건초를 준비하고 먼지나 젖은 부분이 없는지 살펴요.':'전용 먹이를 준비해요. 먹이를 많이 주는 것보다 알맞게 주는 것이 좋아요.';const b=document.createElement('button');b.id='feedStep';b.className='btn go';b.textContent=S.kind==='rabbit'?'신선한 건초 고르기':'알맞은 먹이 준비하기';$('careLeave').before(b);b.onclick=feedStep;}
+function feedStep(){const c=careSession;if(!c||c.kind!=='feed'||Date.now()<c.busyUntil||c.steps>=4)return;c.steps++;c.busyUntil=Date.now()+1500;
+ if(c.steps===1){$('careBowl').innerHTML=propArt(S.kind==='rabbit'?4:0);$('feedStep').textContent='편안한 자리에 그릇 놓기';$('careInstruction').textContent='준비됐어요. 얼굴 앞에 억지로 들이밀지 않고 편안한 자리에 놓아요.';}
+ if(c.steps===2){c.eatStart=Date.now();c.busyUntil=Date.now()+5000;c.end=Date.now()+20000;$('carePet').innerHTML=scenePet('eat');$('carePet').classList.add('care-nibble');$('feedStep').textContent='먹는 모습 조용히 살펴보기';$('careInstruction').textContent=({dog:'냄새를 맡고 한 입씩 오물오물 먹어요.',cat:'수염을 살짝 움직이며 조금씩 먹어요.',ham:'앞발로 먹이를 잡았어요. 볼 가까이 가져가 오물오물!',rabbit:'건초 줄기를 입으로 가져가 천천히 씹어요.'})[S.kind];}
+ if(c.steps===3){c.busyUntil=Math.max(Date.now()+2000,c.eatStart+14000);$('feedStep').textContent='먹은 뒤 그릇 주변 살펴보기';$('careInstruction').textContent='잘 먹고 있네요. 옆에서 서두르지 않고 기다려 줘요. 먹는 동안 그릇을 빼앗지 않아요.';}
+ if(c.steps===4){$('feedStep').disabled=true;$('careInstruction').textContent='잘 먹었어요. 그릇 주변도 살피고 편히 쉬도록 한 걸음 물러나요.';}}
+function updateFeeding(){const c=careSession;if(c?.kind==='feed')$('feedStep').disabled=Date.now()<c.busyUntil||c.steps>=4;}
+function validateLife(raw){const o=raw&&typeof raw==='object'?raw:{};return {seen:Array.isArray(o.seen)?[...new Set(o.seen.filter(x=>typeof x==='string'&&/^(dog|cat|ham|rabbit)-[0-7]$/.test(x)))].slice(0,32):[],photos:(Array.isArray(o.photos)?o.photos:[]).filter(p=>p&&typeof p.jpg==='string'&&p.jpg.length<120000&&/^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/.test(p.jpg)&&PET_KINDS.includes(p.kind)&&Number.isInteger(p.growth)&&p.growth>=0&&p.growth<5&&Number.isFinite(p.at)).slice(0,12).filter((p,i,a)=>a.slice(0,i+1).reduce((n,x)=>n+x.jpg.length,0)<=600000).map(p=>({jpg:p.jpg,kind:p.kind,growth:p.growth,at:p.at,day:Math.max(1,Math.min(100000,Math.floor(Number(p.day)||1))),caption:String(p.caption||'함께한 순간').slice(0,100)}))};}
+function life(){if(!S.life)S.life=validateLife(null);return S.life;}
+const CUTE={
+ dog:[['고개 갸웃',10,'익숙한 목소리에 고개를 갸웃해요.','greet','tilt'],['기지개 쭉',10,'앞발을 쭉 뻗고 기지개를 켜요.','greet','stretch'],['살금살금 마중',25,'먼저 다가와 곁에 앉았어요.','greet','approach'],['꼬리 살랑',25,'눈이 마주치자 몸을 살랑거려요.','greet','wiggle'],['공을 가져왔어요',40,'좋아하는 공을 가져왔어요. 함께 놀던 시간을 기억하나 봐요.','play','toy'],['곁에서 꾸벅',60,'곁에 몸을 내려놓고 편안히 눈을 감아요.','rest','rest'],['기다렸던 자리',80,'늘 함께하던 자리에 먼저 와서 기다려요. 처음의 낯설던 모습은 이제 추억이에요.','rest','heart'],['나란히 쉬는 오후',80,'서두르지 않아도 괜찮아요. 이 친구에게는 지금 곁에 있는 것이 가장 편안한가 봐요.','rest','heart']],
+ cat:[['느린 눈인사',10,'눈을 가늘게 뜨고 천천히 깜빡여요.','rest','blink'],['앞발 손질',10,'앞발을 핥고 얼굴을 살짝 문질러요.','greet','groom'],['상자에서 빼꼼',25,'상자 뒤에 숨었다가 얼굴을 빼꼼 내밀어요.','greet','peek'],['살금살금 곁으로',25,'조심스럽게 다가와 옆에 앉아요.','greet','approach'],['깃털 앞 엉덩이 씰룩',40,'장난감을 보며 자세를 낮추고 살짝 씰룩거려요.','play','wiggle'],['폭신한 자리 꾹꾹',60,'함께 있던 방석을 앞발로 꾹꾹 눌러요.','greet','knead'],['곁에 동그랗게',80,'멀찍이 숨어 있던 친구가 이제 바로 곁에서 몸을 동그랗게 말아요.','rest','heart'],['말없는 눈인사',80,'가만히 이쪽을 보고 눈을 천천히 감아요. 오늘도 함께 있어 줘서 고마운 것 같아요.','rest','heart']],
+ ham:[['코 벌름',10,'작은 코를 벌름거리며 주위를 살펴요.','greet','sniff'],['작은 세수',10,'두 앞발로 얼굴을 부지런히 쓱쓱 닦아요.','greet','groom'],['숨숨집에서 빼꼼',25,'익숙한 기척에 숨숨집에서 얼굴을 내밀어요.','greet','peek'],['깔짚 속 보물 찾기',25,'깔짚을 살짝 헤치며 냄새를 찾아요.','greet','sniff'],['터널 왕복',40,'터널을 통과했다가 다시 쪼르르 돌아와요.','play','tunnel'],['보송한 둥지',60,'익숙한 자리를 정리하고 몸을 편안히 낮춰요.','rest','rest'],['먼저 내민 작은 코',80,'처음엔 숨기 바빴는데, 이제 익숙한 기척에 먼저 다가와 냄새를 맡아요.','greet','heart'],['편안한 저녁',80,'조용히 지켜보는 앞에서 털을 손질해요. 자기 모습을 편안히 보여 주는 사이가 되었어요.','greet','heart']],
+ rabbit:[['귀 쫑긋',10,'귀를 세우고 익숙한 소리를 살펴요.','greet','tilt'],['코 오물오물',10,'코를 빠르게 움직이며 공기를 살펴요.','greet','sniff'],['조심스러운 한 걸음',25,'억지로 안지 않고 기다리자 스스로 다가와요.','greet','approach'],['앞발 세수',25,'앉아서 두 앞발로 얼굴을 쓱쓱 닦아요.','greet','groom'],['가벼운 폴짝',40,'안전한 자리에서 기분 좋게 가볍게 폴짝 뛰어요.','play','hop'],['다리 쭉 편 쉼',60,'몸의 힘을 풀고 편안하게 쉬어요.','rest','stretch'],['곁에 털썩',80,'조심스럽던 친구가 이제 곁에서 몸을 편안하게 내려놓아요. 기다려 준 시간이 쌓였어요.','rest','heart'],['함께 있는 고요',80,'말없이 나란히 쉬어요. 먼저 다가온 작은 발걸음이 오래 기억될 것 같아요.','rest','heart']]
+};
+function updateBondLife(){
+ if(!S||!hasArt())return;const t=Date.now();if(bondLife.owner!==S){bondLife={owner:S,next:t+14000,until:0,level:0};D.goal=null;}
+ const blocked=S.scene!=='room'||S.sick||S.protect||S.sitter||S.careTask||careSession||isResting()||!$('sheet').hidden||!$('careScene').hidden||Object.values(S.n).some(n=>n<40)||S.mess;
+ if(blocked){if(bondLife.until)resetBondLife();return;}
+ if(bondLife.until){if(t>=bondLife.until){const old=JSON.parse(JSON.stringify(S)),id=S.kind+'-'+bondLife.variant;if(!life().seen.includes(id))life().seen.push(id);recordEnrichmentMemory('cute-'+id,bondLife.caption,bondLife.level>=60?'sleep':'play');if(!save())restoreCareSnapshot(old);resetBondLife();$('pet').dataset.cute='';}return;}
+ if(t<bondLife.next||poseT>0||S.aff<10)return;
+ const choices=CUTE[S.kind].map((x,i)=>({x,i})).filter(({x})=>S.aff>=x[1]);const fresh=choices.filter(({i})=>!life().seen.includes(S.kind+'-'+i));const pool=fresh.length?fresh:choices;const chosen=pool[Math.floor(t/60000)%pool.length],v=chosen.x;
+ bondLife.variant=chosen.i;bondLife.level=v[1];bondLife.caption=v[2];bondLife.until=t+12000;D.goal=v[4]==='toy'?'toy':v[1]>=25?'companion':'rug';$('pet').dataset.cute=v[4];act(v[3],12);say(v[2],9000);
+ if(v[1]>=80){$('momentNotice').hidden=false;$('momentText').textContent=v[2];}else $('momentNotice').hidden=true;
+}
+function routeRequirement(i){return i===2?'3일째 · 돌봄 6번 · 친밀도 15':i===3?'7일째 · 돌봄 15번 · 친밀도 35':'';}
+function routeOpen(i){return i<2||(i===2?enrichmentDay()>=3&&enrichment().care>=6&&S.aff>=15:enrichmentDay()>=7&&enrichment().care>=15&&S.aff>=35);}
+const NEW_PLACES={dog:['꽃길 쉼터','작은 숲 전망대'],cat:['안전한 창가 놀이터','햇살 캣타워'],ham:['넓은 탐색 울타리','구불구불 터널 마당'],rabbit:['실내 잔디 매트','넓은 터널 놀이터']};
+for(const kind of PET_KINDS){ENRICH[kind].routes.push(...NEW_PLACES[kind]);for(let i=0;i<2;i++){const object=kind==='dog'?(i?'shade':'grass'):kind==='cat'?(i?'box':'window'):kind==='ham'?(i?'tunnel':'bedding'):(i?'tunnel':'mat');PET_ADVENTURES[kind].push([{intro:`함께 돌보며 익숙해져 ${NEW_PLACES[kind][i]}까지 활동 범위가 넓어졌어요. 처음 오는 곳은 천천히 살펴요.`,object,choices:[['입구에서 냄새부터 살피기',NEW_PLACES[kind][i]+' · 낯선 자리를 천천히 살피고, 보호자 쪽을 한 번 돌아봐요.','idle',54,'still'],['조금 뒤에서 기다려 주기',NEW_PLACES[kind][i]+' · 서두르지 않고 기다리자 스스로 한 걸음 더 나아갔어요.','play',64,'tunnel']]},{intro:NEW_PLACES[kind][i]+'에서 어느새 편안하게 움직여요. 오늘의 작은 용기를 어떻게 기억할까요?',object,choices:[['편안한 자리에서 함께 쉬기',NEW_PLACES[kind][i]+' · 새로운 곳에서도 함께 편히 쉴 수 있게 됐어요. 오늘의 모험을 기억해요.','sleep',50,'still'],['주변을 한 번 더 천천히 살피기',NEW_PLACES[kind][i]+' · 익숙해진 냄새와 풍경을 살피며 돌아올 길도 기억해요.','idle',68,'sway']]}]);}}
+function showDiscoveries(){if(!hasArt())return;const next=CUTE[S.kind].find(x=>x[1]>S.aff),g=dogGrowth(),l=life();enrichSheet(`<h2>기다릴수록 달라지는 우리</h2><p>${g<4?`다음 성장 모습은 ${g*6+7}일째 · 지금 ${enrichmentDay()}일째예요. 얼굴·귀·털과 몸의 비율이 달라져요.`:'다섯 번째 성장 모습까지 함께했어요. 계속 함께 돌보고 추억을 남길 수 있어요.'}</p><p>발견한 행동 ${l.seen.filter(x=>x.startsWith(S.kind+'-')).length}/8 · ${next?`친밀도 ${next[1]}부터 새로운 행동을 볼 수 있어요.`:'서로 믿는 단짝의 특별한 순간도 기다려 보세요.'}</p><div class="together-grid">${CUTE[S.kind].map((x,i)=>`<div class="together-card"><b>${l.seen.includes(S.kind+'-'+i)?esc(x[0]):S.aff>=x[1]?'아직 발견하지 못한 행동':'친밀도 '+x[1]+'에 열려요'}</b><small>${l.seen.includes(S.kind+'-'+i)?esc(x[2]):'편안하고 건강할 때 조용히 지켜보세요. 못 봐도 손해는 없어요.'}</small></div>`).join('')}</div><h3>넓어지는 활동 범위</h3>${ENRICH[S.kind].routes.map((x,i)=>`<p>${routeOpen(i)?'✓':'🔒'} ${esc(x)} ${routeOpen(i)?'· 함께 탐험할 수 있어요':routeRequirement(i)}</p>`).join('')}<button class="btn go" id="discoverAlbum">찍어 둔 사진 보기 (${l.photos.length})</button>`);$('discoverAlbum').onclick=showPhotoAlbum;}
+function storePhoto(p){if(life().photos.length>=12||life().photos.reduce((n,x)=>n+x.jpg.length,0)+p.jpg.length>600000){say('사진 저장 공간이 가득 찼어요. 사진을 내려받은 뒤 정리해 주세요.',5000);return false;}return enrichTransaction(()=>life().photos.push(p));}
+async function photoLayer(svg){const clone=svg.cloneNode(true);clone.setAttribute('xmlns','http://www.w3.org/2000/svg');clone.setAttribute('width','400');clone.setAttribute('height','400');for(const image of clone.querySelectorAll('image')){const response=await fetch(image.getAttribute('href'));if(!response.ok)throw Error('image');const blob=await response.blob(),data=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsDataURL(blob);});image.setAttribute('href',data);}const uri=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(clone)],{type:'image/svg+xml'}));try{const im=new Image();await new Promise((resolve,reject)=>{im.onload=resolve;im.onerror=reject;im.src=uri;});return im;}finally{URL.revokeObjectURL(uri);}}
+let takingPhoto=false;
+async function takePetPhoto(){if(!S||!hasArt()||takingPhoto)return;if(life().photos.length>=12)return sheet('<h2>사진첩이 가득 찼어요</h2><p>12장을 안전하게 보관하고 있어요. 사진첩에서 내려받은 뒤 원하는 사진을 지우면 새 사진을 찍을 수 있어요.</p><button class="btn" id="openPhotos">사진첩 열기</button>'),$('openPhotos').onclick=showPhotoAlbum;
+ if(!$('careScene').hidden)return say('돌봄을 마친 뒤 방에서 사진을 찍어요.');const owner=S,at=now(),growth=dogGrowth(),caption=bondLife.until>Date.now()?bondLife.caption:isResting()?'포근하게 쉬는 모습':'함께한 평범하고 소중한 순간';takingPhoto=true;try{const h=stageH(),canvas=document.createElement('canvas');canvas.width=800;canvas.height=Math.round(800*h/W);const c=canvas.getContext('2d');c.drawImage($('room'),0,0,$('room').width,$('room').height*(h/Hh),0,0,800,canvas.height);const layers=[...document.querySelectorAll('#careProps button > svg,#pet .pet-atlas > svg,#enrichRoomDecor > svg')].filter(x=>x.parentElement.closest('[hidden]')===null&&x.parentElement.tagName.toLowerCase()!=='svg');const snapshots=layers.map(svg=>({svg:svg.cloneNode(true),r:svg.getBoundingClientRect(),flip:svg.closest('#pet')?.classList.contains('flip')}));const nightTone=isNight(at);for(const {svg,r,flip} of snapshots){const im=await photoLayer(svg);c.save();if(nightTone)c.filter='brightness(.68) saturate(.85)';if(flip){c.translate((r.left+r.width)*800/W,r.top*800/W);c.scale(-1,1);c.drawImage(im,0,0,r.width*800/W,r.height*800/W);}else c.drawImage(im,r.left*800/W,r.top*800/W,r.width*800/W,r.height*800/W);c.restore();}c.fillStyle='#fff8e8e8';c.fillRect(0,canvas.height-35,800,35);c.fillStyle='#425147';c.font='16px sans-serif';c.fillText(owner.name+' · '+new Date(at).toLocaleDateString('ko-KR')+' · '+(growth+1)+'/5 성장',18,canvas.height-12);let jpg=canvas.toDataURL('image/jpeg',.72);if(jpg.length>=120000)jpg=canvas.toDataURL('image/jpeg',.45);if(S!==owner)return;if(jpg.length>=120000)throw Error('size');if(storePhoto({jpg,kind:owner.kind,growth,at,day:day(owner),caption})){say('찰칵! 지금의 모습을 사진첩에 보관했어요.');showPhotoAlbum();}}catch(e){say('사진을 저장하지 못했어요. 기존 사진과 돌봄 기록은 그대로예요.',5000);}finally{takingPhoto=false;}}
+function showPhotoAlbum(){const photos=life().photos;enrichSheet(`<h2>우리의 사진첩 · ${photos.length}/12</h2><p>촬영한 날의 실제 게임 화면이에요. 날짜·성장 모습과 함께 기록 코드에도 보관돼요.</p><div class="memory-grid">${photos.map((p,i)=>`<article class="memory-card"><img src="${p.jpg}" alt="${esc(p.caption)}" style="width:100%;border-radius:12px"><small>${new Date(p.at).toLocaleDateString('ko-KR')} · ${p.day}일째 · 성장 ${p.growth+1}/5</small><p>${esc(p.caption)}</p>${artifactViewer()?`<button class="btn sm" data-viewphoto="${i}">사진 크게 보기</button>`:`<a class="btn sm" href="${p.jpg}" download="pet-${i+1}.jpg">사진 내려받기</a>`}<button class="btn sm" data-removephoto="${i}">이 사진 지우기</button></article>`).join('')||'<p>방의 사진 찍기 버튼으로 첫 순간을 남겨 보세요. 잠든 모습도 찍을 수 있어요.</p>'}</div>`);$('sheet').querySelectorAll('[data-viewphoto]').forEach(b=>b.onclick=()=>{const p=photos[+b.dataset.viewphoto];sheet(`<h2>그날의 우리</h2><img src="${p.jpg}" alt="${esc(p.caption)}" style="max-width:100%;border-radius:16px"><p>${esc(p.caption)}</p><p>이 뷰어는 파일 다운로드를 제한해요. 사진은 게임 사진첩과 기록 코드에 보관됩니다.</p><button class="btn" id="photoBack">사진첩으로</button>`);$('photoBack').onclick=showPhotoAlbum;});$('sheet').querySelectorAll('[data-removephoto]').forEach(b=>b.onclick=()=>{const i=+b.dataset.removephoto,owner=S;sheet('<h2>이 사진을 지울까요?</h2><p>내려받은 사진 파일은 남지만 게임 사진첩에서는 삭제돼요.</p><button class="btn" id="removePhotoYes">이 사진만 지우기</button>');$('removePhotoYes').onclick=()=>{if(S===owner&&enrichTransaction(()=>life().photos.splice(i,1)))showPhotoAlbum();};});}
+function showMemoryAlbum(){showMemoryAlbumOriginal();const b=document.createElement('button');b.className='btn go';b.textContent=`직접 찍은 사진첩 (${life().photos.length})`;b.onclick=showPhotoAlbum;$('togetherBack').before(b);}
+$('bCamera').onclick=takePetPhoto;$('bDiscover').onclick=showDiscoveries;
+$('momentCamera').onclick=takePetPhoto;$('momentClose').onclick=()=>$('momentNotice').hidden=true;
+$('ball').innerHTML=playToyArt('ball');
+
+
+function artifactViewer(){return String(location.hostname||'').endsWith('claudeusercontent.com');}
+function downloadPetRecord(){const url=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='pet-record.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+function addRecordFileInput(){const label=document.createElement('label');label.className='btn';label.textContent='사진과 기록 파일 불러오기 ';const input=document.createElement('input');input.type='file';input.accept='.json,application/json';label.append(input);$('io').append(label);input.onchange=async()=>{const file=input.files?.[0];if(!file)return;try{if(file.size>2400000)throw Error('size');const next=validate(JSON.parse(await file.text()));if(!next)throw Error('invalid');sheet('<h2>이 기록으로 바꿀까요?</h2><p>현재 친구는 직전 기록으로 백업돼요. 불러올 친구: '+esc(next.name)+'</p><button class="btn go" id="confirmFileRecord">이 기록 불러오기</button>');$('confirmFileRecord').onclick=()=>{try{replaceRecord(next);$('sheet').hidden=true;enter();say('사진과 돌봄 기록을 불러왔어요.');}catch(e){say('저장 공간이 부족해 불러오지 못했어요. 기존 친구는 그대로예요.');}};}catch(e){say('기록 파일을 읽을 수 없어요. 기존 친구는 그대로예요.');}};}
+
+/* ====================== 시작 ====================== */
+(()=>{syncNight();const t=load(TKEY);if(t&&t.step<7){S=t;enter();}else{const r=load(KEY);if(r){S=r;enter();}else step0();}})();
+setInterval(()=>{if(!S||!$('intro').hidden){syncNight();return;}if(!hasArt())poseT=Math.max(0,poseT-1);render();},1000);
+setInterval(()=>save(),60000);
+document.addEventListener('visibilitychange',()=>{if(!S)return;if(document.hidden)save();else render();});
+addEventListener('pagehide',()=>save());
+</script>
+
+
+
+
+
