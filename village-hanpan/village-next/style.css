@@ -109,3 +109,30 @@ body:has(#placePanel.open) #dpad,body:has(.sheet.open) #dpad{display:none}
 @media(max-width:600px){#dpad{left:10px;bottom:118px}body.first-build #dpad{bottom:80px}}
 @media(max-height:480px){#dpad{left:12px;bottom:82px;gap:2px}#dpad #moveStick{width:96px;height:96px;min-height:96px}#stickKnob{left:26px;top:26px}.stick-cross{line-height:92px}#moveHint{display:none}#dpad #followPlayer{height:44px;min-height:44px}}
 @media(max-width:600px) and (min-height:481px){#need{width:calc(100vw - 90px)}#need p,body.first-build #need p{display:none}#need .row{height:26px}#need h1{font-size:15px;line-height:1.35;margin:4px 0 8px}body.first-build #need h1{font-size:18px}#need #openPromises{min-height:30px;padding:0;margin-top:4px}#dpad{gap:3px}#dpad #moveStick{width:96px;height:96px;min-height:96px}#stickKnob{left:26px;top:26px}.stick-cross{line-height:92px}#moveHint{font-size:11px}}
+
+.phone-only{display:none}.phone-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.phone-actions button{min-height:48px;font-size:14px}#phoneSummary{font-size:14px}
+/* Phone play keeps the centre clear; details open only on request. */
+@media(max-width:600px),(max-height:480px) and (max-width:1000px){
+ .phone-only{display:block}header{top:max(6px,env(safe-area-inset-top));left:8px;right:8px;max-width:none;gap:6px;flex-wrap:nowrap;align-items:stretch}
+ .clock,body.first-build .clock{flex:1;min-width:0;width:auto;flex-wrap:nowrap;gap:4px;padding:4px 8px;border-radius:15px}.clock b{font-size:12px;white-space:nowrap}.clock small{font-size:11px}.clock .bar{display:none}.clock button{width:48px;padding:4px;font-size:11px;min-height:44px}
+ .stats,body.first-build .stats{flex:0 0 76px;margin:0;padding:4px;border-radius:15px;align-items:center}.stats div,body.first-build .stats div{padding:0;min-width:0}.stats div:not(:first-child),header .score{display:none}.stats small,body.first-build .stats small{font-size:10px}.stats b,body.first-build .stats b{font-size:15px}
+ #phoneGoal{position:fixed;top:calc(max(6px,env(safe-area-inset-top)) + 60px);left:8px;right:8px;z-index:2;min-height:44px;padding:8px 12px;text-align:left;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#fffbedeb;border-radius:12px}
+ .view,.season-note,.village-sign{display:none}
+ #need,body.first-build #need{display:none;top:auto;left:8px;right:8px;bottom:calc(78px + env(safe-area-inset-bottom));width:auto;max-height:calc(100dvh - 200px);overflow:auto;padding:14px}
+ body.phone-need #need{display:block}#need p,body.first-build #need p{display:block;font-size:14px}#need h1,body.first-build #need h1{font-size:18px}body.first-build #closeNeed{display:block}#need .row{height:44px}#need #openPromises{min-height:44px}
+ footer,body.first-build footer{left:84px;right:8px;bottom:calc(10px + env(safe-area-inset-bottom));width:auto;max-width:none;transform:none}footer nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;padding:4px;border-radius:17px;border-bottom-width:3px}nav button{min-width:0;min-height:48px;padding:6px 2px;font-size:12px}#navStatus,#navDeco,#navHarvest{display:none}footer .hint{display:none}
+ #dpad,body.first-build #dpad{left:8px;bottom:calc(15px + env(safe-area-inset-bottom));width:68px;gap:0}#dpad #moveStick,#moveHint{display:none}#dpad #followPlayer{width:68px;height:48px;min-height:48px;font-size:12px}
+ body.phone-stick #dpad #moveStick{display:block;position:fixed;left:12px;bottom:calc(82px + env(safe-area-inset-bottom));width:88px;height:88px;min-height:88px;background:#fffdf180}#stickKnob{left:22px;top:22px}.stick-cross{line-height:84px}
+ .sheet,.sheet.open,#placePanel,body.first-build #placePanel{left:8px;right:8px;top:auto;bottom:calc(78px + env(safe-area-inset-bottom));width:auto;max-width:none;max-height:calc(100dvh - 200px);transform:none;padding:14px}
+ #placePanel,body.first-build #placePanel{max-height:48dvh}#phoneMenu{max-height:calc(100dvh - 150px)}#toast{bottom:84px;font-size:13px;padding:10px 14px}
+ body:has(.sheet.open) #phoneGoal,body.phone-need #phoneGoal{visibility:hidden}
+ body.phone-need #dpad{display:none}
+ body:has(#introDialog[open]) .phone-only{visibility:hidden}
+ #toast{width:min(340px,calc(100vw - 32px));max-width:none;top:122px;bottom:auto}
+}
+@media(max-height:480px) and (max-width:1000px){
+ header{right:auto;width:46vw}#phoneGoal{right:auto;width:calc(46vw - 8px)}
+ footer,body.first-build footer{left:auto;right:8px;width:320px}
+ .sheet,.sheet.open,#placePanel,body.first-build #placePanel,#need,body.first-build #need{left:auto;right:8px;width:46vw;max-height:calc(100dvh - 95px);bottom:78px}
+ #phoneMenu{max-height:calc(100dvh - 95px)}#toast{left:23vw;width:calc(46vw - 20px)}
+}
