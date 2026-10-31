@@ -82,3 +82,18 @@ body:has(#introDialog[open]) header,body:has(#introDialog[open]) #need,body:has(
 @media(max-height:480px) and (orientation:landscape){.view{top:120px;grid-template-columns:repeat(3,44px);gap:4px;border-radius:16px}.view button{width:44px;height:44px;min-height:44px}.sheet{max-height:48dvh;bottom:80px}}
 
 .year-record summary{min-height:44px;padding:8px 0;font-size:12px;cursor:pointer}.year-record details .dim{font-size:12px;line-height:1.6}
+
+/* The first shop has one clear action; the full village menus return after it opens. */
+#introDialog .first-steps{list-style:none;padding:0;display:grid;gap:8px;counter-reset:step}
+.first-steps li{counter-increment:step;display:grid;grid-template-columns:28px 1fr;column-gap:10px;align-items:center}
+.first-steps li::before{content:counter(step);grid-row:span 2;background:#365f4e;color:#fffdf1;border-radius:50%;width:28px;height:28px;text-align:center;line-height:28px;font-weight:700}
+.first-steps span{font-size:13px;color:#526951}#introSub{font-size:13px}#skipIntro,#skipLesson{width:100%;font-size:13px;text-decoration:underline}#introDialog details{margin-top:10px}#introDialog summary{min-height:44px}
+#recommendSpot{width:100%;margin:8px 0;background:#f5e6b9;border:2px solid #a88335;color:#4e3c18}#otherSpots summary{min-height:44px}#otherSpots label{font-size:13px}#placePanel #confirm{position:sticky;bottom:0;box-shadow:0 3px 0 #244b3b}
+body.first-build .score,body.first-build #dpad,body.first-build #openPromises,body.first-build #closeNeed,body.first-build .view,body.first-build #navDeco,body.first-build #navHarvest,body.first-build .season-note{display:none}
+body.first-build #need{width:300px;top:108px}body.first-build #need h1{font-size:22px}body.first-build #need p{display:block;font-size:15px}body.first-build #needLabel{color:#73551d;font-size:14px;font-weight:700}
+body:has(#placePanel.open) #need{visibility:hidden}#placePanel{max-height:55dvh;width:min(520px,94vw)}#placePanel #placeImpact{font-size:13px}body.first-build #placePanel #placeImpact{display:none}
+body.first-build .stats{flex:0 1 auto;margin-left:auto}body.first-build header{justify-content:space-between}body.first-build footer .hint{display:none}body.first-build footer{bottom:12px}body.first-build #placePanel{bottom:85px}
+@media(min-width:821px) and (min-height:481px){#placePanel,body.first-build #placePanel{left:14px;top:110px;bottom:auto;transform:none;width:320px;max-height:calc(100dvh - 205px)}}
+@media(max-width:820px){body.first-build .stats{flex:1;margin-left:0}body.first-build #need{top:150px;width:min(300px,calc(100vw - 28px))}body.first-build .clock{flex:1 1 100%}}
+@media(max-width:500px){body.first-build #need{top:148px;left:12px;right:12px;width:auto}body.first-build #need h1{font-size:20px}#placePanel{bottom:120px;max-height:50dvh}body.first-build #placePanel{bottom:78px}body.first-build .stats div{min-width:0}body.first-build .stats small{font-size:12px}body.first-build .stats b{font-size:17px}}
+@media(max-height:480px) and (orientation:landscape){body.first-build #need{top:85px;max-height:calc(100dvh - 165px);overflow:auto}#placePanel,body.first-build #placePanel{left:auto;right:12px;bottom:74px;transform:none;width:min(390px,54vw);max-height:calc(100dvh - 90px)}body.first-build #need p{font-size:13px}}
