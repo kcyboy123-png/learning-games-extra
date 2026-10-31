@@ -4,7 +4,7 @@ import * as T from '../lib/three.module.min.js';
 import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=animals8';
 import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=animals8';
 import {naturalFeature,growthStage} from './landscape.mjs?v=animals8';
-import {advancePersonRoute} from './residents.mjs?v=npc7';
+import {advancePersonRoute} from './residents.mjs?v=move1';
 import {townscapeSites} from './townscape.mjs?v=visual1';
 import {surfaceOptions} from './surfaces.mjs?v=quality1';
 import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?v=quality1';
@@ -476,9 +476,9 @@ export class World{
  person(color,id){const p=personRig(this.scene,color,id);p.scarf.visible=this.se===0;if(id==='player')p.g.rotation.y=1.3;addRabbitArt(p);this.people.push(p);return p;}
  removePerson(p){dispose(p.g);this.people=this.people.filter(q=>q!==p);}
  place(p,gx,gy){const w=toWorld(gx,gy);p.g.position.set(w.x,GROUND_Y,w.z);p.route=[];}
- focus(gx,gy){const w=toWorld(gx,gy);this.center.set(w.x,0,w.z);}
+ focus(gx,gy){this.followPlayer=false;const w=toWorld(gx,gy);this.center.set(w.x,0,w.z);}
  // 화면 픽셀 → 지면 이동. 세로는 카메라 앙각(약 41°) 때문에 1.5배.
- pan(dx,dy){const right=new T.Vector3(Math.cos(this.angle),0,-Math.sin(this.angle)),fwd=new T.Vector3(-Math.sin(this.angle),0,-Math.cos(this.angle));this.center.addScaledVector(right,-dx*this.unit).addScaledVector(fwd,-dy*this.unit*1.5);
+ pan(dx,dy){this.followPlayer=false;const right=new T.Vector3(Math.cos(this.angle),0,-Math.sin(this.angle)),fwd=new T.Vector3(-Math.sin(this.angle),0,-Math.cos(this.angle));this.center.addScaledVector(right,-dx*this.unit).addScaledVector(fwd,dy*this.unit*1.5);
   const lim=SIZE*CELL/2+2;this.center.x=Math.max(-lim,Math.min(lim,this.center.x));this.center.z=Math.max(-lim,Math.min(lim,this.center.z));}
  resize(){const w=innerWidth,h=innerHeight;this.renderer.setSize(w,h,false);this.sunlight?.resize();this.aspect=w/h;}
  point(px,py){this.ray.setFromCamera(new T.Vector2(px/innerWidth*2-1,1-py/innerHeight*2),this.camera);const p=new T.Vector3();return this.ray.ray.intersectPlane(this.plane,p)?p:null;}
@@ -489,7 +489,7 @@ export class World{
    for(const child of ride.children){if(child.userData.cabin)child.rotation.z=-ride.rotation.z;if(Number.isInteger(child.userData.pony))child.position.y=.68+Math.sin(ride.rotation.y*3+child.userData.pony*Math.PI/3)*.09;}
   }
  }
- frame(dt,time,reduced){if(this.scene&&this.treeAngle!==this.angle){treeArtView(this.scene,this.angle);this.treeAngle=this.angle;}if(!this.treeArtSettled&&this.scene)this.treeArtSettled=treeArtReady(this.scene);this.zoom+=(this.targetZoom-this.zoom)*Math.min(1,dt*7);const span=this.span=(this.aspect<1?13:8.5)/this.zoom;this.unit=span*2/innerHeight;
+ frame(dt,time,reduced){if(this.followPlayer&&!this.paused&&this.player&&(this.player.route.length||this.player.moving>.01)){const p=this.player.g.position,k=reduced?1:1-Math.exp(-dt*5);this.center.x+=(p.x-this.center.x)*k;this.center.z+=(p.z-this.center.z)*k;}if(this.scene&&this.treeAngle!==this.angle){treeArtView(this.scene,this.angle);this.treeAngle=this.angle;}if(!this.treeArtSettled&&this.scene)this.treeArtSettled=treeArtReady(this.scene);this.zoom+=(this.targetZoom-this.zoom)*Math.min(1,dt*7);const span=this.span=(this.aspect<1?13:8.5)/this.zoom;this.unit=span*2/innerHeight;
   this.camera.left=-span*this.aspect;this.camera.right=span*this.aspect;this.camera.top=span;this.camera.bottom=-span;this.camera.near=.1;this.camera.far=120;
   this.camera.position.set(this.center.x+Math.sin(this.angle)*30,26,this.center.z+Math.cos(this.angle)*30);this.camera.lookAt(this.center.x,.2,this.center.z);this.camera.updateProjectionMatrix();
   this.sun.position.set(this.center.x-13,8,this.center.z+6);this.sun.target.position.copy(this.center);

@@ -1,11 +1,11 @@
 import {gradeNote,tierRules,developmentSummary,shortageNote} from './grading-ui.mjs?v=tier2';
-import {tickResidents,syncResidents} from './residents.mjs?v=npc7';
+import {tickResidents,syncResidents} from './residents.mjs?v=move1';
 // village-next B단계 입력·안내·저장·루프. 경제는 core, 좌표는 grid, 표현은 world에만 맡긴다.
-import {World} from './world.mjs?v=npc7';
+import {World} from './world.mjs?v=move1';
 import {villagePromises,promisePreview} from './promises.mjs?v=late1';
 import {assessTier,economy,upkeepOf,annualReviews,YEAR,createState,build,demolish,relocate,canRelocate,relocateLeft,advance,metrics,tier,month,duration,calendarMonth,monthLabel,serialize,parseSave,continueFree,buildCost,canBuild,at,cells,network,connected,TYPES,OPTIONS,MONTH,RULE,SCOPE,unlocked,unlockMonth,toggleClosed,harvest,upgrade,clearLandscape,HARVEST,HARVEST_SECONDS,DEMAND_MONTH} from './core.mjs?v=tier2';
 import {toCell,toWorld,spots,placeInfo,facing,entrance,path,walkable,inside,CELL,perimeter,foot,roadSet} from './grid.mjs?v=animals8';
-import {groundVector,inputVector,step} from './move.mjs?v=animals8';
+import {groundVector,inputVector,step,stickVector,PLAYER_SPEED} from './move.mjs?v=move1';
 import {naturalFeature,growthStage,isGarden} from './landscape.mjs?v=animals8';
 import {PLAY_SPEED,realSeconds,season,SEASONS,TABS,TIERS} from './data.mjs?v=80min1';
 import {KEY,BACKUP,OWNER,A_KEY} from './app-keys.mjs?v=animals8';
@@ -111,7 +111,7 @@ function openBuild(t){closePanels();if(typeof t==='string')tab=t;$('buildPanel')
  $('locked').innerHTML=locked.length?`<summary>다음에 열려요 (${locked.length})</summary><ul>${locked.map(t=>`<li>${monthLabel(state,unlockMonth(t))} — ${TYPES[t].name}: ${TYPES[t].desc}</li>`).join('')}</ul>`:'';
  $('buildList').querySelectorAll('button').forEach(b=>b.onclick=()=>startPlace(b.dataset.type));}
 function closePanels(){for(const id of['buildPanel','statusPanel','infoPanel','placePanel','naturePanel','promisesPanel'])$(id).classList.remove('open');}
-function focusPlace(gx,gy){world.focus(gx,gy);if(innerWidth<=820&&innerHeight>480)world.pan(0,innerHeight*.1);else if(innerHeight<=480)world.pan(-innerWidth*.15,0);else if(innerWidth>820)world.pan(innerWidth*.1,0);}
+function focusPlace(gx,gy){world.focus(gx,gy);if(innerWidth<=820&&innerHeight>480)world.pan(0,-innerHeight*.1);else if(innerHeight<=480)world.pan(-innerWidth*.15,0);else if(innerWidth>820)world.pan(innerWidth*.1,0);}
 function startPlace(type,moving=null){if(state.paused||state.ended){toast('시간을 재개한 뒤 지을 수 있어요.');return;}closePanels();infoId=null;natSel=null;mode={type,moving};sel=null;const list=spots(state,type,324);world.showSpots(list.slice(0,3),type);$('placeSpot').innerHTML='<option value="">자리를 선택하세요</option>'+list.map((p,i)=>`<option value="${p.gx},${p.gy}">${i<3?'추천 '+(i+1)+' · ':''}(${p.gx}, ${p.gy})</option>`).join('');$('placePanel').classList.add('open');$('placeTitle').textContent=moving?`${TYPES[type].name} 옮기기`:`${TYPES[type].name} 자리 고르기`;
  $('placeHint').textContent=list.length?(type==='bridge'?'개울 위 반짝이는 자리를 누르세요. 길 끝에 이어져야 해요.':type==='workshop'?'오래된 창고(14,7) 자리에서만 고칠 수 있어요. 건너편 길과 이어 주세요.':`반짝이는 추천 자리를 누르거나 다른 빈 땅을 눌러 보세요.${foot(type)>1?' 2×2칸을 차지해요(누른 칸이 왼쪽 위).':''} 길에 붙어야 이용할 수 있어요.`):type==='bridge'?'개울에 닿는 길이 없어요. 산책길을 개울 옆까지 이어 주세요.':type==='workshop'?'창고 자리에 이미 건물이 있거나 길이 없어요.':'길에 붙은 빈 땅이 없어요. 산책길을 먼저 이어 주세요.';$('confirm').hidden=true;$('placeCost').textContent='';$('placeImpact').textContent='';recommendedSpot=list[0]||null;$('recommendSpot').hidden=!recommendedSpot;$('otherSpots').open=!recommendedSpot;$('placeTitle').textContent=(lesson?'1 / 3 · ':'')+(moving?TYPES[type].name+' 옮기기':TYPES[type].name+' 자리 보기');if(recommendedSpot){$('placeHint').textContent='아래 ‘추천 자리 보기’를 누르세요. 지도에서 반짝이는 땅을 직접 눌러도 돼요.';focusPlace(recommendedSpot.gx,recommendedSpot.gy);$('recommendSpot').focus();}else $('placeSpot').focus();}
 $('recommendSpot').onclick=()=>{if(!mode||!recommendedSpot)return;const{gx,gy}=recommendedSpot;pick(gx,gy);focusPlace(gx,gy);$('placeSpot').value=`${gx},${gy}`;$('confirm').focus();};
@@ -159,7 +159,7 @@ $('closeNeed').onclick=()=>{$('need').classList.add('hide');};
   $('navNeed').onclick=()=>{closePanels();$('need').classList.toggle('hide');};
 $('navStatus').onclick=()=>{const open=$('statusPanel').classList.contains('open');closePanels();if(!open){$('statusPanel').classList.add('open');status(metrics(state));}};
 $('navDeco').onclick=()=>openBuild('조경');
-function doHarvest(){const r=harvest(state);if(r.error){toast(r.error);return;}closePanels();const g=toCell(world.player.g.position.x,world.player.g.position.z);world.player.route=path(state,g,{gx:6,gy:10})||[];save('텃밭');toast(`텃밭을 돌보는 중이에요. ${realSeconds(HARVEST_SECONDS)}초 뒤 기금 +${HARVEST}.`);ui();}
+function doHarvest(){const r=harvest(state);if(r.error){toast(r.error);return;}closePanels();const g=toCell(world.player.g.position.x,world.player.g.position.z);world.player.route=path(state,g,{gx:6,gy:10})||[];world.followPlayer=true;save('텃밭');toast(`텃밭을 돌보는 중이에요. ${realSeconds(HARVEST_SECONDS)}초 뒤 기금 +${HARVEST}.`);ui();}
 $('navHarvest').onclick=doHarvest;
 $('closeStatus').onclick=$('closeBuild').onclick=$('closeInfo').onclick=()=>{closePanels();infoId=null;};
 $('rotate').onclick=()=>world.angle+=Math.PI/2;$('zoomIn').onclick=()=>world.targetZoom=Math.min(1.8,world.targetZoom+.2);$('zoomOut').onclick=()=>world.targetZoom=Math.max(.45,world.targetZoom-.2);
@@ -175,28 +175,37 @@ $('export').onclick=download;$('import').onclick=()=>$('file').click();
 $('freeMode').onclick=()=>{$('resultDialog').close();if(continueFree(state)){save('자유 꾸미기');showPause();toast('자유 꾸미기 모드예요. 확정된 결과는 바뀌지 않아요.');}};
 // ---- 터치/마우스: 탭=선택·걷기, 드래그=카메라, 핀치=확대. 손가락을 뗄 때 건설되지 않는다. ----
 const canvas=$('world');let drag=null,pinch=null;const touches=new Map();
-canvas.addEventListener('pointerdown',e=>{document.activeElement?.blur();try{canvas.setPointerCapture(e.pointerId);}catch{return;}touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===2){const[a,b]=[...touches.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:world.targetZoom};if(drag)drag.moved=true;}if(drag)return;drag={id:e.pointerId,x:e.clientX,y:e.clientY,lx:e.clientX,ly:e.clientY,moved:false};});
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('pointerdown',e=>{document.activeElement?.blur();try{canvas.setPointerCapture(e.pointerId);}catch{return;}touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===2){const[a,b]=[...touches.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:world.targetZoom};if(drag)drag.moved=true;}if(drag)return;drag={id:e.pointerId,x:e.clientX,y:e.clientY,lx:e.clientX,ly:e.clientY,started:e.timeStamp,moved:false};});
 canvas.addEventListener('pointermove',e=>{if(touches.has(e.pointerId))touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pinch&&touches.size===2){const[a,b]=[...touches.values()];world.targetZoom=Math.max(.45,Math.min(1.8,pinch.z*Math.hypot(a.x-b.x,a.y-b.y)/Math.max(1,pinch.d)));return;}if(!drag||e.pointerId!==drag.id)return;if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>8)drag.moved=true;if(drag.moved)world.pan(e.clientX-drag.lx,e.clientY-drag.ly);drag.lx=e.clientX;drag.ly=e.clientY;});
-canvas.addEventListener('pointerup',e=>{touches.delete(e.pointerId);pinch=null;if(!drag||drag.id!==e.pointerId)return;const tap=!drag.moved;drag=null;if(!tap)return;const p=world.point(e.clientX,e.clientY);if(!p)return;const{gx,gy}=toCell(p.x,p.z);if(!inside(gx,gy))return;
+canvas.addEventListener('pointerup',e=>{touches.delete(e.pointerId);pinch=null;if(!drag||drag.id!==e.pointerId)return;const tap=!drag.moved,held=e.timeStamp-drag.started>=550;drag=null;if(!tap)return;const p=world.point(e.clientX,e.clientY);if(!p)return;const{gx,gy}=toCell(p.x,p.z);if(!inside(gx,gy))return;
  if(mode){pick(gx,gy);return;}
  const neighbor=npcs.find(n=>{if(!n.p.g.visible)return false;const pos=n.p.g.position.clone();pos.y+=.7;const q=world.screen(pos);return Math.hypot(q.x-e.clientX,q.y-e.clientY)<32;});
  if(neighbor&&!state.paused){const v=metrics(state),promise=villagePromises(state).find(p=>!p.done);const lines=[v.food===1?'덕분에 따뜻한 한 끼를 먹을 수 있어요!':'동네에 맛있는 가게가 생기면 좋겠어요.',promise?promise.title+'! 우리 함께 만들어 볼까요?':'약속을 모두 지켰네요. 이 마을에 살아서 좋아요.',['눈 오는 날엔 따뜻한 집이 참 고마워요.','벚꽃이 폈어요! 같이 이 길을 걸어요.','나무 그늘에 앉아 바람을 느껴 봐요.','단풍이 예뻐요. 우리 마을도 많이 자랐네요.'][season(calendarMonth(state))]];neighbor.helloCount=(neighbor.helloCount||0)+1;bubble={p:neighbor.p,text:lines[(neighbor.helloCount-1)%lines.length],end:time+5};toast('이웃을 톡 누르면 마을 이야기를 들을 수 있어요.');return;}
- const b=at(state,gx,gy);if(b&&b.type!=='road'){closePanels();infoId=b.id;$('infoPanel').classList.add('open');info();return;}if(!b&&naturalFeature(gx,gy)&&!state.landscape.cleared.includes(`${gx},${gy}`)){natureInfo(gx,gy);return;}
- const route=path(state,toCell(world.player.g.position.x,world.player.g.position.z),{gx,gy});if(!route.length){toast('길이나 빈 잔디를 눌러 주세요. 개울은 다리가 있어야 건너요.');return;}world.player.route=route;const end=route.at(-1);world.marker.position.set(end.x,world.marker.position.y,end.z);world.marker.visible=true;});
+ const b=at(state,gx,gy);if(b&&b.type!=='road'){closePanels();infoId=b.id;$('infoPanel').classList.add('open');info();return;}if(held&&!b&&naturalFeature(gx,gy)&&!state.landscape.cleared.includes(`${gx},${gy}`)){natureInfo(gx,gy);return;}
+ if(state.paused||state.ended)return;const from=toCell(world.player.g.position.x,world.player.g.position.z),route=path(state,from,{gx,gy});if(!route.length){if(from.gx===gx&&from.gy===gy)return;toast('갈 수 있는 빈 땅이나 길을 눌러 주세요. 개울은 다리로 건너요.');return;}closePanels();infoId=null;world.followPlayer=true;world.player.route=route;const end=route.at(-1);world.marker.position.set(end.x,world.marker.position.y,end.z);world.marker.visible=true;});
 canvas.addEventListener('pointercancel',()=>{drag=null;pinch=null;touches.clear();});canvas.addEventListener('lostpointercapture',()=>{drag=null;pinch=null;touches.clear();});
 canvas.addEventListener('wheel',e=>{e.preventDefault();world.targetZoom=Math.max(.45,Math.min(1.8,world.targetZoom-e.deltaY*.001));},{passive:false});
 canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();if(!state.ended)state.paused=true;endPlace();showPause();ui();save('화면 중단');$('error').hidden=false;$('error').textContent='입체 화면이 잠시 중단됐어요. 진행은 저장되어 있어요. 새로고침해 주세요.';});
 addEventListener('keydown',e=>{if(e.key==='Escape'){if(mode)endPlace();else closePanels();}});
 // ---- 화면 기준 이동(4번): 방향키·WASD·십자버튼 → 현재 카메라 각도의 화면 위/오른쪽을 지면 XZ에 투영한 연속 벡터로 이동(축 스냅 없음). 수동 입력은 탭 경로를 취소한다.
 const keys=new Set(),KEYMAP={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right'};
-addEventListener('keydown',e=>{const k=KEYMAP[e.code];if(!k||e.target.closest?.('input,select,textarea,button,[contenteditable="true"]'))return;e.preventDefault();keys.add(k);});addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k)keys.delete(k);});
+addEventListener('keydown',e=>{const k=KEYMAP[e.code];if(!k||e.target.closest?.('input,select,textarea,[contenteditable="true"]'))return;e.preventDefault();keys.add(k);});addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k)keys.delete(k);});
 addEventListener('blur',()=>keys.clear());document.addEventListener('visibilitychange',()=>keys.clear());
 addEventListener('focusin',()=>keys.clear());
-for(const b of document.querySelectorAll('#dpad button')){const k=b.dataset.dir;const on=e=>{e.preventDefault();keys.add(k);b.setPointerCapture?.(e.pointerId);},off=()=>keys.delete(k);b.addEventListener('pointerdown',on);for(const t of['pointerup','pointercancel','lostpointercapture','pointerleave'])b.addEventListener(t,off);}
-function manualMove(dt){const{ix,iy}=inputVector(keys);if(!ix&&!iy)return;if(mode||state.paused||document.querySelector('dialog[open]')){keys.clear();return;}const v=groundVector(world.angle,ix,iy);if(!v)return;world.player.route=[];world.marker.visible=false;const roads=roadSet(state);
- const p=world.player.g.position,n=step({x:p.x,z:p.z},v,dt*2.2,(gx,gy)=>walkable(state,gx,gy,roads),CELL,toCell),travel=Math.hypot(n.x-p.x,n.z-p.z);p.x=n.x;p.z=n.z;const target=Math.atan2(v.x,v.z),diff=Math.atan2(Math.sin(target-world.player.g.rotation.y),Math.cos(target-world.player.g.rotation.y));world.player.g.rotation.y+=diff*Math.min(1,dt*14);world.player.distance+=travel;world.player.moving=travel>.0001?1:0;}
+let stick={ix:0,iy:0,power:0},stickPointer=null;
+const moveStick=$('moveStick');
+function stopStick(){stick={ix:0,iy:0,power:0};stickPointer=null;$('stickKnob').style.transform='translate(0,0)';}
+function dragStick(e){const r=moveStick.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2;stick=stickVector(dx,dy);const d=Math.hypot(dx,dy)||1,k=Math.min(40,d)/d;$('stickKnob').style.transform=`translate(${dx*k}px,${dy*k}px)`;}
+moveStick.addEventListener('pointerdown',e=>{e.preventDefault();if(mode||state.paused||state.ended||document.querySelector('dialog[open]')||stickPointer!==null)return;try{moveStick.setPointerCapture(e.pointerId);}catch{return;}stickPointer=e.pointerId;closePanels();infoId=null;dragStick(e);});
+moveStick.addEventListener('pointermove',e=>{if(e.pointerId===stickPointer)dragStick(e);});
+for(const name of ['pointerup','pointercancel','lostpointercapture'])moveStick.addEventListener(name,e=>{if(e.pointerId===stickPointer)stopStick();});
+addEventListener('blur',stopStick);document.addEventListener('visibilitychange',stopStick);
+$('followPlayer').onclick=()=>{const p=world.player.g.position;world.center.set(p.x,0,p.z);world.followPlayer=true;};
+function manualMove(dt){const keyboard=inputVector(keys),usingKeys=keyboard.ix||keyboard.iy,{ix,iy}=usingKeys?keyboard:stick,power=usingKeys?1:stick.power;if(!ix&&!iy)return;if(mode||state.paused||state.ended||document.querySelector('dialog[open]')){keys.clear();stopStick();return;}const v=groundVector(world.angle,ix,iy);if(!v)return;world.player.route=[];world.marker.visible=false;world.followPlayer=true;const roads=roadSet(state);
+ const p=world.player.g.position,n=step({x:p.x,z:p.z},v,dt*PLAYER_SPEED*power,(gx,gy)=>walkable(state,gx,gy,roads),CELL,toCell),travel=Math.hypot(n.x-p.x,n.z-p.z);p.x=n.x;p.z=n.z;const target=Math.atan2(v.x,v.z),diff=Math.atan2(Math.sin(target-world.player.g.rotation.y),Math.cos(target-world.player.g.rotation.y));world.player.g.rotation.y+=diff*Math.min(1,dt*14);world.player.distance+=travel;world.player.moving=travel>.0001?1:0;}
 // 4. 새 마을·불러오기·이어받기 때 입력 모드·선택·정보창·플레이어 경로·말풍선·주민을 모두 초기화한다.
-function resetSession(){lesson=lessonEligible(state);for(const n of npcs)world.removePerson(n.p);npcs=[];endPlace();closePanels();infoId=null;sel=null;mode=null;bubble=null;world.marker.visible=false;world.sync(state,false);world.place(world.player,5,6.5);resetView();reviewShown=Math.max(0,Math.floor(state.t/YEAR)-(state.t>0&&state.t%YEAR===0?1:0));npcHomes();lastMonth=month(state);}
+function resetSession(){stopStick();keys.clear();lesson=lessonEligible(state);for(const n of npcs)world.removePerson(n.p);npcs=[];endPlace();closePanels();infoId=null;sel=null;mode=null;bubble=null;world.marker.visible=false;world.sync(state,false);world.place(world.player,5,6.5);resetView();reviewShown=Math.max(0,Math.floor(state.t/YEAR)-(state.t>0&&state.t%YEAR===0?1:0));npcHomes();lastMonth=month(state);}
 // ---- 시각 주민: 집에서 나와 가장 최근 완공한 가게로 길을 따라 걷고 돌아온다. 돈·만족을 바꾸지 않는다. ----
 function npcHomes(){syncResidents(state,npcs,world);}
 function npcTick(dt){npcHomes();const next=tickResidents(state,npcs,dt,time,world);if(next&&(!bubble||time>=bubble.end))bubble=next;}

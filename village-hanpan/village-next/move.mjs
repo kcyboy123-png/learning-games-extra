@@ -7,3 +7,6 @@ export const inputVector=keys=>({ix:(keys.has('right')?1:0)-(keys.has('left')?1:
 export function step(pos,v,dist,walk,cell,toCell,r=.3){const p={x:pos.x,z:pos.z};const n=Math.max(1,Math.ceil(dist/.1)),d=dist/n;
  const ok=(x,z)=>[[x-r,z-r],[x+r,z-r],[x-r,z+r],[x+r,z+r]].every(([cx,cz])=>{const c=toCell(cx,cz);return walk(c.gx,c.gy);});
  for(let i=0;i<n;i++){const nx=p.x+v.x*d;if(v.x&&ok(nx,p.z))p.x=nx;const nz=p.z+v.z*d;if(v.z&&ok(p.x,nz))p.z=nz;}return p;}
+
+export const PLAYER_SPEED=3.2;
+export function stickVector(dx,dy,radius=40){const d=Math.hypot(dx,dy);if(d<8)return{ix:0,iy:0,power:0};return{ix:dx/d,iy:-dy/d,power:Math.min(1,(d-8)/(radius-8))};}

@@ -1,3 +1,4 @@
+import {PLAYER_SPEED} from './move.mjs?v=move1';
 import {TYPES,connected,network} from './core.mjs?v=animals8';
 import {origin,facing,entrance,toWorld,toCell,path} from './grid.mjs?v=animals8';
 import {growthStage} from './landscape.mjs?v=animals8';
@@ -28,7 +29,7 @@ export function roadRoute(s,from,to){const points=path(s,from,to,true),start=toW
 // Keep opposite directions in separate lanes and yield only when closing the gap.
 export function advancePersonRoute(p,dt,people=[]){
  if(dt<=0)return 0;p.passTime=Math.max(0,(p.passTime||0)-dt);if(!p.route.length||(p.seatBlend||0)>=.08)return 0;
- const q=p.route[0],dx=q.x-p.g.position.x,dz=q.z-p.g.position.z,d=Math.hypot(dx,dz),step=Math.min(d,dt*1.6);
+ const q=p.route[0],dx=q.x-p.g.position.x,dz=q.z-p.g.position.z,d=Math.hypot(dx,dz),step=Math.min(d,dt*(p.id==='player'?PLAYER_SPEED:1.6));
  if(d<.025){p.g.position.x=q.x;p.g.position.z=q.z;p.route.shift();return 0;}
  const x=p.g.position.x+dx/d*step,z=p.g.position.z+dz/d*step;
  const blocker=!p.passTime&&p.id!=='player'&&people.find(o=>o!==p&&o.id!=='player'&&o.g.visible&&!o.sitting&&Math.hypot(x-o.g.position.x,z-o.g.position.z)<.44&&Math.hypot(x-o.g.position.x,z-o.g.position.z)<Math.hypot(p.g.position.x-o.g.position.x,p.g.position.z-o.g.position.z)-1e-5);
