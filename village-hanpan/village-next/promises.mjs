@@ -1,4 +1,4 @@
-import {metrics,TYPES,month,RIVER,calendarMonth} from './core.mjs?v=economy3';
+import {metrics,TYPES,month,RIVER,calendarMonth} from './core.mjs?v=growth4';
 import {season} from './data.mjs?v=80min1';
 
 // Optional, live challenges: completing one never changes money, scores or saved records.

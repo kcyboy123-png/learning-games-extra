@@ -14,7 +14,7 @@ export function cells(b){const n=TYPES[b.type].foot||1;return Array.from({length
 export const at=(s,x,y)=>s.buildings.find(b=>cells(b).some(c=>c[0]===x&&c[1]===y));
 export const terrain=(x,y)=>x===RIVER?'water':x===14&&y===7?'warehouse':x<2?'woods':'grass';
 export function createState(mode='run'){
- const s={v:VERSION,rule:RULE,economyV:3,scoringV:2,cashStress:0,mode,runMonths:36,startMonth:2,t:0,carry:0,money:260,pop:8,sat:78,buildings:[],nextId:1,hist:[],paused:false,ended:false,result:null,stage:0,events:[],savedAt:0,landscape:{version:1,cleared:[]},harvested:[],harvestAt:null};
+ const s={v:VERSION,rule:RULE,economyV:4,scoringV:2,cashStress:0,mode,runMonths:36,startMonth:2,t:0,carry:0,money:210,pop:8,sat:78,buildings:[],nextId:1,hist:[],paused:false,ended:false,result:null,stage:0,events:[],savedAt:0,landscape:{version:1,cleared:[]},harvested:[],harvestAt:null};
  const add=(type,x,y,opts=[])=>s.buildings.push({id:s.nextId++,type,x,y,opts,progress:1,starter:true,completedAt:0});
  for(let y=3;y<=13;y++)add('road',5,y);
  add('house',4,5,['ins']);add('house',6,5,['ins']);add('generator',4,7);add('tree',6,9);add('tree',4,10);return s;
@@ -57,14 +57,14 @@ export function metrics(s){const net=network(s),live=s.buildings.filter(b=>b.pro
  let production=0,use=0;for(const b of live){const d=TYPES[b.type];if(d.e>0)production+=d.e*(b.type==='solar'?[.7,1,1.2,.9][se]:1);else{let u=-d.e*(se===0||se===2?1.2:1);if(b.opts.includes('ins')&&(se===0||se===2))u*=.75;if(b.opts.includes('shade')&&se===2)u*=.8;use+=u;}}
  const energy=use?clamp(production/use):1,food=clamp(sum('food')/p),health=clamp(sum('health')/p),education=clamp(sum('education')/p),leisure=clamp(sum('leisure')/p),housing=sum('cap');
  // A규칙: 제공되지 않는 의료·교육·여가·안전 시설은 평가하지 않는다(회복 불가능한 감점 방지). B단계에서 월별 해금 평가로 복원.
- const demands=['food',...(m>=2?['health']:[]),...(m>=3?['education']:[]),...(m>=4?['leisure']:[])];
+ const demands=['food',...Object.keys(DEMAND_MONTH).filter(k=>m>=demandMonth(s,k))];
  const all={food,health,education,leisure};const service=demands.reduce((a,k)=>a+all[k],0)/demands.length;
  const landscaping=landscapeMetrics(s,live);
  const green=clamp((live.filter(b=>isGarden(b)&&b.type!=='bench').length*4+6)/p),homes=live.filter(b=>TYPES[b.type].cap),comfort=homes.length?homes.filter(b=>b.opts.includes('ins')||(se===2&&b.opts.includes('shade'))).length/homes.length:0;
  const fire=live.some(b=>b.type==='fire'),drain=live.some(b=>b.type==='drain'),training=m>=6&&calendarMonth(s)===8&&!fire,rain=m>=4&&calendarMonth(s)===6&&!drain;
  const targetSat=clamp(35+service*40+energy*15+green*5+comfort*5-(housing<s.pop?20:0)-(training?7:0)-(rain?5:0),0,100);
- const foodUsed=Math.min(p,sum('food')),leisureUsed=Math.min(p,sum('leisure'));
- const income=((s.economyV===3?20:80)+s.pop*(8+8*clamp(s.sat/100))+foodUsed*4+leisureUsed)*economy(s).income;
+ const users=s.economyV===4?s.pop:p,foodUsed=Math.min(users,sum('food')),leisureUsed=Math.min(users,sum('leisure'));
+ const income=s.economyV===4?(8+s.pop*(2+2*clamp(s.sat/100))+foodUsed*12+Math.min(s.pop,sum('health'))*2+Math.min(s.pop,sum('education'))*2+leisureUsed*3):((s.economyV===3?20:80)+s.pop*(8+8*clamp(s.sat/100))+foodUsed*4+leisureUsed)*economy(s).income;
  const upkeep=s.buildings.filter(b=>b.progress>=1&&!b.closed).reduce((a,b)=>a+upkeepOf(s,b),0);
  const safety=(m<5||fire ? .6 : .2)+(m<5||drain ? .4 : .1);
  const optionEligible=live.filter(b=>TYPES[b.type].cap||TYPES[b.type].food||TYPES[b.type].education||TYPES[b.type].health||TYPES[b.type].leisure);
@@ -75,7 +75,9 @@ export function metrics(s){const net=network(s),live=s.buildings.filter(b=>b.pro
  const Q=clamp(s.sat/100*.50+service*.30+energy*.15+clamp(housing/p)*.05);
  return{landscaping,net,live,production,use,energy,food,health,education,leisure,housing,service,green,comfort,targetSat,income,upkeep,D,Q,score:Math.round(1000*D*Q),demands,popGoal,fire,drain,optionRate,foodCap:sum('food'),healthCap:sum('health'),educationCap:sum('education'),leisureCap:sum('leisure')};
 }
-export const DEMAND_MONTH={health:2,education:3,leisure:4};export const EVENTS=[[1,'2월: 편의점·의원·태양광·꽃밭·가로수·개울다리가 열렸어요. 3월부터 의료 수요를 평가해요.'],[2,'3월: 봄. 의료 평가 시작. 학교·도서관·식당 대안·빌라가 열렸어요. 4월부터 교육 평가.'],[3,'4월: 교육 평가 시작. 키즈카페·쉼터 벤치가 열렸어요. 5월부터 여가 평가.'],[4,'5월: 여가 평가 시작. 소방서·배수시설이 열렸어요. 7월 장마 전에 배수를 준비하세요.'],[5,'6월: 여름. 전력 수요가 20% 늘어요. 장마 준비를 점검하세요.'],[6,'7월: 장마! 배수시설이 없으면 만족도가 내려가요(복구 가능).'],[7,'8월: 대형마트·작은 놀이동산이 열렸어요. 의무가 아니에요. 자금과 이용률을 비교해 고르세요.'],[8,'9월: 가을 안전훈련. 소방서가 없으면 만족도와 안전 점수가 내려가요.'],[9,'10월: 창고 재생 공간(14,7)이 열렸어요. 연말 예상을 보고 빈틈을 채우세요.'],[10,'11월: 겨울 대비. 단열 옵션과 전력 수요를 점검하세요.'],[11,'12월: 마지막 달. 남은 시간보다 긴 공사는 완공되지 않아요.']];
+export const DEMAND_MONTH={health:2,education:3,leisure:4};
+export const demandMonth=(s,key)=>DEMAND_MONTH[key]+(s.economyV===4?1:0);
+export const EVENTS=[[1,'2월: 편의점·의원·태양광·꽃밭·가로수·개울다리가 열렸어요. 3월부터 의료 수요를 평가해요.'],[2,'3월: 봄. 의료 평가 시작. 학교·도서관·식당 대안·빌라가 열렸어요. 4월부터 교육 평가.'],[3,'4월: 교육 평가 시작. 키즈카페·쉼터 벤치가 열렸어요. 5월부터 여가 평가.'],[4,'5월: 여가 평가 시작. 소방서·배수시설이 열렸어요. 7월 장마 전에 배수를 준비하세요.'],[5,'6월: 여름. 전력 수요가 20% 늘어요. 장마 준비를 점검하세요.'],[6,'7월: 장마! 배수시설이 없으면 만족도가 내려가요(복구 가능).'],[7,'8월: 대형마트·작은 놀이동산이 열렸어요. 의무가 아니에요. 자금과 이용률을 비교해 고르세요.'],[8,'9월: 가을 안전훈련. 소방서가 없으면 만족도와 안전 점수가 내려가요.'],[9,'10월: 창고 재생 공간(14,7)이 열렸어요. 연말 예상을 보고 빈틈을 채우세요.'],[10,'11월: 겨울 대비. 단열 옵션과 전력 수요를 점검하세요.'],[11,'12월: 마지막 달. 남은 시간보다 긴 공사는 완공되지 않아요.']];
 // 결과 문구는 화면에 삽입되므로 저장 파일에서 들어온 값은 실제 칭호 목록만 허용한다.
 export const SPECIALS=['다시 쓰는 건축가','햇살과 바람의 설계자','안전한 마을의 수호자','우리 동네의 개척자'];
 export const tier=score=>TIERS.find(t=>score>=t[0])||TIERS.at(-1);
@@ -120,7 +122,7 @@ export function parseSave(text){if(typeof text!=='string'||text.length>500000)th
  const num=(v,a,b)=>typeof v==='number'&&Number.isFinite(v)&&v>=a&&v<=b;
  const validConditions=h=>h&&Array.isArray(h.reasons)&&h.reasons.length<=Object.keys(TIER_CAPS).length&&new Set(h.reasons).size===h.reasons.length&&h.reasons.every(k=>Object.hasOwn(TIER_CAPS,k)&&TIER_CAPS[k]===h.cap)&&h.cap===(h.reasons.length?TIER_CAPS[h.reasons[0]]:1000);
  if(!s||s.v!==VERSION||s.rule!==RULE||!['run','free'].includes(s.mode)||!num(s.t,0,s.mode==='run'?duration(s):1e8)||!Number.isInteger(s.t)||!num(s.carry,0,1)||!num(s.money,0,1e8)||!Number.isInteger(s.pop)||!num(s.pop,0,10000)||!num(s.sat,0,100)||!Number.isInteger(s.stage)||!num(s.stage,0,3)||typeof s.paused!=='boolean'||typeof s.ended!=='boolean'||!Array.isArray(s.buildings)||s.buildings.length>SIZE*SIZE||!Array.isArray(s.hist)||s.hist.length>(s.runMonths??12))throw Error('저장 내용이 올바르지 않아요.');
- if(s.economyV!==undefined&&![2,3].includes(s.economyV))throw Error('경제 규칙을 확인해 주세요.');
+ if(s.economyV!==undefined&&![2,3,4].includes(s.economyV))throw Error('경제 규칙을 확인해 주세요.');
  if(s.scoringV!==undefined&&s.scoringV!==2||s.scoringV===2&&(!Number.isInteger(s.cashStress)||!num(s.cashStress,0,Math.min(s.t,CASH_STRESS_LIMIT)))||s.scoringV===undefined&&s.cashStress!==undefined)throw Error('평가 규칙과 운영비 부족 기록을 확인해 주세요.');
  if(s.runMonths!==undefined&&s.runMonths!==12&&s.runMonths!==36)throw Error('진행 기간을 확인해 주세요.');
  if(s.startMonth!==undefined&&s.startMonth!==0&&s.startMonth!==2)throw Error('시작 월을 확인해 주세요.');

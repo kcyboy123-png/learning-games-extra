@@ -136,3 +136,10 @@ body:has(#placePanel.open) #dpad,body:has(.sheet.open) #dpad{display:none}
  .sheet,.sheet.open,#placePanel,body.first-build #placePanel,#need,body.first-build #need{left:auto;right:8px;width:46vw;max-height:calc(100dvh - 95px);bottom:78px}
  #phoneMenu{max-height:calc(100dvh - 95px)}#toast{left:23vw;width:calc(46vw - 20px)}
 }
+
+/* Keep income feedback inside the existing money card, so the phone map stays open. */
+#incomeRate{display:block!important;color:#365f4e;font-size:12px!important;margin:0;white-space:nowrap;font-variant-numeric:tabular-nums}.income-preview{font-size:13px;color:#365f4e;border-left:3px solid #9db68c;padding-left:9px}#buildGuide{margin:10px 0}#moreBuildings{min-height:44px}#tabs[hidden]{display:none}
+@media(max-width:600px),(max-height:480px) and (max-width:1000px){.stats,body.first-build .stats{flex-basis:88px}.stats div{line-height:1.2}.stats b{display:block;line-height:1.2}#incomeRate{font-size:11px!important}}
+
+.income-preview{white-space:pre-line}
+#scoreScope{position:static;width:auto;height:auto;clip-path:none;grid-column:1/-1;grid-row:3;font-size:10px}
