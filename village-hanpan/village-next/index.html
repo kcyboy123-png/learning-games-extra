@@ -2,7 +2,7 @@
 <canvas id="world" aria-label="개울마을 입체 지도. 땅을 누르면 걷거나 자리를 고르고, 끌면 시점이 움직입니다."></canvas>
 <header>
  <div class="card clock"><div><b id="calendar">1년 차 · 봄 · 3월</b><small id="left">남은 시간 80:00</small></div><i class="bar"><i id="monthBar"></i></i><button id="pause" aria-label="일시정지">❚❚ 일시정지</button></div>
- <div class="card stats"><div><small>● 마을 기금</small><b id="money">1900</b></div><div><small>⌂ 이웃 / 살 집</small><b id="pop">8명 / 집 8</b></div><div><small>♥ 행복</small><b id="sat">78%</b></div></div>
+ <div class="card stats"><div><small>● 마을 기금</small><b id="money">260</b></div><div><small>⌂ 이웃 / 살 집</small><b id="pop">8명 / 집 8</b></div><div><small>♥ 행복</small><b id="sat">78%</b></div></div>
  <div class="card score"><small>현재 평가점수</small><b id="score">0</b><em id="tierName">새싹</em><button id="reviewYears" class="record-link">성장 기록 · 0/3</button></div>
 </header>
 <button id="phoneGoal" class="phone-only" aria-controls="need" aria-expanded="false">지금 할 일 보기</button>
@@ -27,4 +27,4 @@
 <dialog id="resultDialog" aria-labelledby="resultTitle"><h2 id="resultTitle" tabindex="-1" class="eyebrow">마을 성장 기록</h2><div id="resultBody"></div><p class="dim">결과는 확정됐어요. 자유 꾸미기에서는 점수가 바뀌지 않아요.</p><button id="freeMode" class="primary">자유롭게 꾸미기</button></dialog>
 <dialog id="corruptDialog"><h2>저장 기록을 읽지 못했어요</h2><p>기록이 손상되어 그대로 쓸 수 없어요. 손상된 원본은 덮어쓰지 않고 보존했어요. 파일로 내보내 두거나 백업에 보관하고 새 마을을 시작할 수 있어요.</p><div class="row"><button id="corruptExport">손상 기록 내보내기</button><button id="corruptNew" class="danger">백업에 보관하고 새로 시작</button></div></dialog>
 <div id="error" hidden role="alert"></div>
-<script type="module" src="app.mjs?v=phone1"></script></body></html>
+<script type="module" src="app.mjs?v=economy3"></script></body></html>
