@@ -176,3 +176,16 @@ body.entering> :not(canvas):not(#entranceDialog){visibility:hidden!important}
 #entranceDialog::backdrop{background:transparent;backdrop-filter:none}
 .entrance-caption{position:absolute;bottom:max(28px,env(safe-area-inset-bottom));left:16px;right:16px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;color:#fff;font-weight:700;text-shadow:0 2px 5px #183c31}
 #skipEntrance{width:auto;min-height:44px;padding:10px 18px;border:2px solid #fff4ce;border-radius:20px;background:#fff9e7;color:#36563d;font-weight:700;box-shadow:0 3px 12px #183c3140}
+
+/* The supplied creator logo stays whole; compact credits keep the map clear. */
+.game-brand{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid #c5d4b8;word-break:keep-all}
+.game-brand>b{display:block;font:28px/1.3 Wanted,SUIT,sans-serif;color:#315b42;letter-spacing:-.04em}
+#introDialog .game-brand p,#phoneMenu .game-brand p{margin:5px 0 9px;font-size:13px;line-height:1.5;color:#48634f}
+.creator-credit{display:flex;align-items:center;gap:8px;font-size:13px;color:#345546;text-shadow:none}
+.creator-credit img{width:36px;height:36px;object-fit:contain;background:white;border:1px solid #c9d4c3;border-radius:8px;flex:none}
+.creator-credit strong{font-weight:700}
+.village-sign{padding:10px 13px;background:#fffdf1ed;border:1px solid #c5d4b8;border-radius:16px;text-shadow:none}
+.village-sign>b{font-size:20px}.village-sign>small{display:block;font-size:12px;opacity:1}.village-sign .creator-credit{justify-content:flex-end;margin-top:7px}
+.village-sign .creator-credit span{font-size:13px;letter-spacing:0}
+#introDialog{max-height:calc(100dvh - 24px);overflow-y:auto}
+@media(max-width:600px),(max-height:480px) and (max-width:1000px){.game-brand>b{font-size:25px}.game-brand{padding-bottom:10px;margin-bottom:10px}#introDialog{margin:auto;padding:18px}#introDialog h2{font-size:20px}#introDialog .game-brand p{font-size:12px}.creator-credit img{width:32px;height:32px}}
