@@ -510,6 +510,19 @@ export class World{
  removePerson(p){dispose(p.g);this.people=this.people.filter(q=>q!==p);}
  place(p,gx,gy){const w=toWorld(gx,gy);p.g.position.set(w.x,GROUND_Y,w.z);p.route=[];}
  focus(gx,gy){this.followPlayer=false;const w=toWorld(gx,gy);this.center.set(w.x,0,w.z);}
+ startEntrance(){
+  this.entrance={t:0,to:this.center.clone(),from:this.player.g.position.clone(),zoom:this.targetZoom};
+  this.followPlayer=false;this.updateEntrance(0);
+ }
+ updateEntrance(dt){
+  const e=this.entrance;if(!e)return;
+  e.t=Math.min(1,e.t+dt/2.8);const u=e.t*e.t*(3-2*e.t);
+  this.center.lerpVectors(e.from,e.to,u);this.center.y=0;
+  this.cameraHeight=12+20*u;this.lookHeight=1-.8*u;
+  const close=this.aspect<1?4.9:3.2;
+  this.zoom=this.targetZoom=close+(e.zoom-close)*u;
+  if(e.t===1)this.entrance=null;
+ }
  // 화면 픽셀 → 지면 이동. 세로는 카메라 앙각(약 41°) 때문에 1.5배.
  pan(dx,dy){this.followPlayer=false;const right=new T.Vector3(Math.cos(this.angle),0,-Math.sin(this.angle)),fwd=new T.Vector3(-Math.sin(this.angle),0,-Math.cos(this.angle));this.center.addScaledVector(right,-dx*this.unit).addScaledVector(fwd,dy*this.unit*1.5);
   const lim=SIZE*CELL/2+2;this.center.x=Math.max(-lim,Math.min(lim,this.center.x));this.center.z=Math.max(-lim,Math.min(lim,this.center.z));}
@@ -524,7 +537,7 @@ export class World{
  }
  frame(dt,time,reduced){if(this.followPlayer&&!this.paused&&this.player&&(this.player.route.length||this.player.moving>.01)){const p=this.player.g.position,k=reduced?1:1-Math.exp(-dt*5);this.center.x+=(p.x-this.center.x)*k;this.center.z+=(p.z-this.center.z)*k;}if(this.scene&&this.treeAngle!==this.angle){treeArtView(this.scene,this.angle);this.treeAngle=this.angle;}if(!this.treeArtSettled&&this.scene)this.treeArtSettled=treeArtReady(this.scene);this.zoom+=(this.targetZoom-this.zoom)*Math.min(1,dt*7);const span=this.span=(this.aspect<1?13:8.5)/this.zoom;this.unit=span*2/innerHeight;
   this.camera.left=-span*this.aspect;this.camera.right=span*this.aspect;this.camera.top=span;this.camera.bottom=-span;this.camera.near=.1;this.camera.far=120;
-  this.camera.position.set(this.center.x+Math.sin(this.angle)*30,26,this.center.z+Math.cos(this.angle)*30);this.camera.lookAt(this.center.x,.2,this.center.z);this.camera.updateProjectionMatrix();
+  this.camera.position.set(this.center.x+Math.sin(this.angle)*30,this.cameraHeight??26,this.center.z+Math.cos(this.angle)*30);this.camera.lookAt(this.center.x,this.lookHeight??.2,this.center.z);this.camera.updateProjectionMatrix();
   this.sun.position.set(this.center.x-13,8,this.center.z+6);this.sun.target.position.copy(this.center);
   const motionDt=this.paused?0:dt;
   this.animateRides(motionDt,reduced);

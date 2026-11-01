@@ -3,7 +3,7 @@ import {buildingBenefit,completionMessage,incomeRate,starterChoices,incomePrevie
 import {gradeNote,tierRules,developmentSummary,shortageNote} from './grading-ui.mjs?v=city1';
 import {tickResidents,syncResidents} from './residents.mjs?v=city1';
 // village-next B단계 입력·안내·저장·루프. 경제는 core, 좌표는 grid, 표현은 world에만 맡긴다.
-import {World} from './world.mjs?v=art5final';
+import {World} from './world.mjs?v=entry1';
 import {villagePromises,promisePreview} from './promises.mjs?v=city1';
 import {buildingSpec,assessTier,economy,upkeepOf,annualReviews,YEAR,createState,build,demolish,relocate,canRelocate,relocateLeft,advance,metrics,tier,month,duration,calendarMonth,monthLabel,serialize,parseSave,continueFree,buildCost,clearingCost,canBuild,at,cells,network,connected,TYPES,OPTIONS,MONTH,RULE,SCOPE,unlocked,unlockMonth,toggleClosed,harvest,upgrade,clearLandscape,HARVEST,HARVEST_SECONDS,demandMonth,UPGRADE_TYPES} from './core.mjs?v=city1';
 import {toCell,toWorld,spots,placeInfo,facing,entrance,path,walkable,inside,CELL,perimeter,foot,roadSet} from './grid.mjs?v=city1';
@@ -182,10 +182,24 @@ function doHarvest(){const r=harvest(state);if(r.error){toast(r.error);return;}c
 $('navHarvest').onclick=doHarvest;
 $('closeStatus').onclick=$('closeBuild').onclick=$('closeInfo').onclick=()=>{closePanels();infoId=null;};
 $('rotate').onclick=()=>world.angle+=Math.PI/2;$('zoomIn').onclick=()=>world.targetZoom=Math.min(1.8,world.targetZoom+.2);$('zoomOut').onclick=()=>world.targetZoom=Math.max(.45,world.targetZoom-.2);
-function resetView(){world.angle=.65;world.zoom=world.targetZoom=1.56;world.focus(4.9,5.05);}
+function resetView(){world.entrance=null;world.cameraHeight=32;world.lookHeight=.2;world.angle=.65;world.zoom=world.targetZoom=1.4;world.focus(4.9,5.05);}
 $('homeView').onclick=resetView;$('overview').onclick=()=>{world.angle=.65;world.targetZoom=.5;world.focus(8,8);};
 function welcome(){const first=lesson&&lessonStep(state)==='choose';$('introTitle').innerHTML=first?'첫 번째 할 일은<br>분식집 하나 짓기예요':'우리 마을을 이어서 가꿔요';$('introLead').innerHTML=first?'이웃 8명이 먹을 곳을 기다려요.<br>길 옆에 분식집을 지어 첫 식사를 준비해 주세요.':'‘지금 할 일’에서 필요한 시설을 확인해요.<br>시설을 고르고, 자리를 확인하고, 공사를 시작하면 돼요.';if(first&&state.economyV===4)$('introLead').innerHTML='작은 기금으로 첫 가게부터 시작해요.<br>가게를 열고 이웃을 맞으면 돈이 더 빨리 모여요.';if(first&&state.economyV===3)$('introLead').innerHTML='작은 기금으로 첫 가게부터 시작해요.<br>주민과 가게 이용이 늘면 수입도 자라요.';$('introSub').textContent=`${Math.floor(month(state)/12)+1}년 차 ${monthLabel(state)} · 기금 ${Math.floor(state.money).toLocaleString()}${first?' · 분식집 180부터':''}`;$('startPlaying').textContent=first?'분식집 지으러 가기':'이어서 마을 만들기';$('skipIntro').hidden=!first;}
-function beginPlaying(guided){if(!guided)lesson=false;$('introDialog').dataset.keep='1';$('introDialog').close();if(!state.ended){if(otherOwnerAlive()){state.paused=true;showPause();ui();}else{setPaused(false);if(guided&&lesson&&lessonStep(state)==='choose')startPlace('snack');}}}
+let firstEntrance=true,entranceDone=null;
+function enterVillage(done){
+ if(!firstEntrance||reduced){firstEntrance=false;done();return;}
+ firstEntrance=false;entranceDone=done;state.paused=true;
+ world.startEntrance();document.body.classList.add('entering');$('entranceDialog').showModal();showPause();
+}
+function finishEntrance(){
+ if(!entranceDone)return;
+ world.updateEntrance(3);const done=entranceDone;entranceDone=null;
+ document.body.classList.remove('entering');$('entranceDialog').close();
+ if(!document.hidden)done();else{showPause();ui();}
+}
+$('skipEntrance').onclick=finishEntrance;
+$('entranceDialog').addEventListener('cancel',e=>{e.preventDefault();finishEntrance();});
+function beginPlaying(guided){if(!guided)lesson=false;$('introDialog').dataset.keep='1';$('introDialog').close();if(!state.ended){if(otherOwnerAlive()){state.paused=true;showPause();ui();}else{if(firstEntrance&&guided&&lesson&&lessonStep(state)==='choose'){const p=spots(state,'snack',1)[0];if(p)focusPlace(p.gx,p.gy);}enterVillage(()=>{setPaused(false);if(!state.paused&&guided&&lesson&&lessonStep(state)==='choose')startPlace('snack');});}}}
 $('help').onclick=()=>{welcome();modal($('introDialog'));};$('startPlaying').onclick=()=>beginPlaying(true);$('skipIntro').onclick=()=>beginPlaying(false);
 $('newGame').onclick=()=>{if($('introDialog').open){$('introDialog').dataset.keep='1';$('introDialog').close();}modal($('newDialog'));};$('introNew').onclick=()=>$('newGame').click();$('cancelNew').onclick=()=>$('newDialog').close();
 for(const id of ['corruptDialog','resultDialog'])$(id).addEventListener('cancel',e=>e.preventDefault());
@@ -244,6 +258,7 @@ function loop(now){const real=document.hidden?0:(now-last)/1000,dt=Math.min(.25,
  const m=month(state);if(m!==lastMonth){lastMonth=m;world.sync(state,false);save(monthLabel(state));const opened=Object.values(TYPES).filter(d=>d.unlock===m).map(d=>d.name);const news=state.cityV===1&&m===3?'다음 달부터 도시 미관이 조금씩 중요해져요. 집 가까이에 꽃·나무·쉼터를 놓아 보세요.':opened.length?(starterChoices(state)?'마을이 자라고 있어요. 짓기에서 다음 투자를 골라요.':`${opened.join('·')} 시설이 열렸어요.`):['눈 내리는 마을, 단열과 전력을 챙겨요.','꽃 피는 계절, 정원과 이웃을 돌봐요.','푸른 여름, 전력과 배수 시설을 살펴요.','단풍 드는 계절, 마을의 빈틈을 채워요.'][season(calendarMonth(state))];toast(`${Math.floor(m/12)+1}년 차 · ${monthLabel(state)}. ${news}`);}
  if(state.ended&&!$('resultDialog').open&&state.mode==='run'&&!document.querySelector('dialog[open]')){const r=state.result;$('resultBody').innerHTML=`<b class="big">${r.total}점 · ${r.tier}</b><p>${r.title} — ${r.special}</p>${gradeNote(r)}<p>종료 원점수 ${r.endScore} · 월평균 원점수 ${r.average} · 발전 ${r.D} · 삶의 질 ${r.Q} · 조경 ${r.landscape}</p><p class="dim">잘한 점: ${r.D>=r.Q?'마을 발전이 꾸준했어요.':'주민의 삶을 잘 돌봤어요.'} 다음에 바꿔볼 점: ${r.rawTotal>r.total?'위에 나온 평가 조건을 먼저 보완해요.':r.D<r.Q?'필수 시설과 인구 목표를 더 챙겨요.':'만족도·전력·주거 여유를 더 챙겨요.'}</p><p>${developmentSummary(state)}</p>${recordCards()}`;$('resultDialog').showModal();$('resultTitle').focus();$('resultDialog').scrollTop=0;save('결과');}
  manualMove(dt);npcTick(dt);if(bubble&&bubble.p.g.visible&&time<bubble.end){const p=bubble.p.g.position.clone();p.y=1.5;const s=world.screen(p);$('bubble').textContent=bubble.text;$('bubble').style.cssText=`display:block;left:${s.x}px;top:${s.y}px`;}else $('bubble').style.display='none';
+ if(entranceDone){world.updateEntrance(dt);if(!world.entrance)finishEntrance();}
  if(time>toastEnd)$('toast').classList.remove('show');if(!world.player.route.length)world.marker.visible=false;world.paused=state.paused;world.frame(dt,time,reduced);
  uiTick+=dt;if(uiTick>.25){const growth=state.buildings.filter(b=>b.progress>=1&&isGarden(b)).map(b=>`${b.id}:${growthStage(state,b)}`).join('|');if(growth!==gardenSignature){gardenSignature=growth;world.sync(state,false);}ui();uiTick=0;}if(!reported&&time>3){console.info('village-next render',JSON.stringify(world.renderer.info.render),'memory',JSON.stringify(world.renderer.info.memory));reported=true;}requestAnimationFrame(loop);}
 addEventListener('storage',e=>{if(e.key===OWNER){if(otherOwnerAlive()&&owned){owned=false;if(!state.ended)state.paused=true;endPlace();showPause();toast('다른 탭이 마을을 이어받아 이 탭은 멈췄어요.');ui();}return;}
