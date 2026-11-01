@@ -14,7 +14,7 @@ export function visitPose(s,b){
 export function availableVisit(s,b,net){const d=TYPES[b.type];return b.progress>=1&&!b.closed&&connected(s,b,net)&&(b.type==='bench'||b.type==='tree'&&growthStage(s,b)===2||!b.starter&&(d.food||d.health||d.education||d.leisure));}
 export function syncResidents(s,people,world){
  const net=network(s),homes=s.buildings.filter(b=>TYPES[b.type].cap&&b.progress>=1&&!b.closed&&connected(s,b,net));
- const count=homes.length?Math.min(8,Math.max(4,Math.ceil(s.pop/8))):0;
+ const count=homes.length?4+[12,20,32,48].filter(pop=>s.pop>=pop).length:0;
  while(people.length>count)world.removePerson(people.pop().p);
  for(let i=0;i<count;i++){
   let n=people[i];if(n&&homes.some(h=>h.id===n.home))continue;

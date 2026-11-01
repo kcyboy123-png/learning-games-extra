@@ -181,11 +181,11 @@ body.entering> :not(canvas):not(#entranceDialog){visibility:hidden!important}
 .game-brand{padding-bottom:14px;margin-bottom:14px;border-bottom:1px solid #c5d4b8;word-break:keep-all}
 .game-brand>b{display:block;font:28px/1.3 Wanted,SUIT,sans-serif;color:#315b42;letter-spacing:-.04em}
 #introDialog .game-brand p,#phoneMenu .game-brand p{margin:5px 0 9px;font-size:13px;line-height:1.5;color:#48634f}
-.creator-credit{display:flex;align-items:center;gap:8px;font-size:13px;color:#345546;text-shadow:none}
-.creator-credit img{width:36px;height:36px;object-fit:contain;background:white;border:1px solid #c9d4c3;border-radius:8px;flex:none}
-.creator-credit strong{font-weight:700}
-.village-sign{padding:10px 13px;background:#fffdf1ed;border:1px solid #c5d4b8;border-radius:16px;text-shadow:none}
+.creator-credit{display:flex;align-items:center;gap:6px;margin:12px 0;font-size:12px;color:#546956;text-shadow:none}
+.creator-credit img{width:22px;height:22px;object-fit:contain;opacity:.8;flex:none}
+.creator-credit strong{font-weight:500}
+.village-sign{padding:0;background:none;border:0;text-shadow:0 1px 3px #fff9}
 .village-sign>b{font-size:20px}.village-sign>small{display:block;font-size:12px;opacity:1}.village-sign .creator-credit{justify-content:flex-end;margin-top:7px}
 .village-sign .creator-credit span{font-size:13px;letter-spacing:0}
 #introDialog{max-height:calc(100dvh - 24px);overflow-y:auto}
-@media(max-width:600px),(max-height:480px) and (max-width:1000px){.game-brand>b{font-size:25px}.game-brand{padding-bottom:10px;margin-bottom:10px}#introDialog{margin:auto;padding:18px}#introDialog h2{font-size:20px}#introDialog .game-brand p{font-size:12px}.creator-credit img{width:32px;height:32px}}
+@media(max-width:600px),(max-height:480px) and (max-width:1000px){.game-brand>b{font-size:25px}.game-brand{padding-bottom:10px;margin-bottom:10px}#introDialog{margin:auto;padding:18px}#introDialog h2{font-size:20px}#introDialog .game-brand p{font-size:12px}.creator-credit img{width:22px;height:22px}}

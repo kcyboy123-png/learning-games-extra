@@ -1,9 +1,9 @@
 import {upgradeCards,UPGRADE_LOOKS} from './upgrade-ui.mjs?v=city1';
 import {buildingBenefit,completionMessage,incomeRate,starterChoices,incomePreviewText} from './economy-ui.mjs?v=city1';
 import {gradeNote,tierRules,developmentSummary,shortageNote} from './grading-ui.mjs?v=city1';
-import {tickResidents,syncResidents} from './residents.mjs?v=city1';
+import {tickResidents,syncResidents} from './residents.mjs?v=neighbors1';
 // village-next B단계 입력·안내·저장·루프. 경제는 core, 좌표는 grid, 표현은 world에만 맡긴다.
-import {World} from './world.mjs?v=entry1';
+import {World} from './world.mjs?v=neighbors1';
 import {villagePromises,promisePreview} from './promises.mjs?v=city1';
 import {buildingSpec,assessTier,economy,upkeepOf,annualReviews,YEAR,createState,build,demolish,relocate,canRelocate,relocateLeft,advance,metrics,tier,month,duration,calendarMonth,monthLabel,serialize,parseSave,continueFree,buildCost,clearingCost,canBuild,at,cells,network,connected,TYPES,OPTIONS,MONTH,RULE,SCOPE,unlocked,unlockMonth,toggleClosed,harvest,upgrade,clearLandscape,HARVEST,HARVEST_SECONDS,demandMonth,UPGRADE_TYPES} from './core.mjs?v=city1';
 import {toCell,toWorld,spots,placeInfo,facing,entrance,path,walkable,inside,CELL,perimeter,foot,roadSet} from './grid.mjs?v=city1';
@@ -246,7 +246,7 @@ function manualMove(dt){const keyboard=inputVector(keys),usingKeys=keyboard.ix||
 // 4. 새 마을·불러오기·이어받기 때 입력 모드·선택·정보창·플레이어 경로·말풍선·주민을 모두 초기화한다.
 function resetSession(){fullCatalogue=false;lastIncomeMilestone=Math.floor(state.pop/4);stopStick();keys.clear();lesson=lessonEligible(state);for(const n of npcs)world.removePerson(n.p);npcs=[];endPlace();closePanels();infoId=null;sel=null;mode=null;bubble=null;world.marker.visible=false;world.sync(state,false);world.place(world.player,5,6.5);resetView();reviewShown=Math.max(0,Math.floor(state.t/YEAR)-(state.t>0&&state.t%YEAR===0?1:0));npcHomes();lastMonth=month(state);}
 // ---- 시각 주민: 집에서 나와 가장 최근 완공한 가게로 길을 따라 걷고 돌아온다. 돈·만족을 바꾸지 않는다. ----
-function npcHomes(){syncResidents(state,npcs,world);}
+function npcHomes(){const before=npcs.length;syncResidents(state,npcs,world);if(before>=4&&npcs.length>before&&!state.paused){const names={cat:'고양이',fox:'여우',panda:'판다',deer:'사슴'};toast(`마을이 자라 새 이웃이 왔어요! ${npcs.slice(before).map(n=>names[n.p.species]||'새로운').join('·')} 친구를 찾아보세요.`);}}
 function npcTick(dt){npcHomes();const next=tickResidents(state,npcs,dt,time,world);if(next&&(!bubble||time>=bubble.end))bubble=next;}
 let lastIncomeMilestone=Math.floor(state.pop/4);
 // ---- 루프 ----
