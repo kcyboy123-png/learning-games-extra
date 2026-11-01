@@ -306,6 +306,28 @@ function streetDetails(a,type){
  }
  return g;
 }
+// Visible upgrades share the existing materials and batching; no new animation or textures.
+function ecoDetails(a,b){
+ if(!b.opts.length)return;
+ const [cx,cz,hw,hd]=b.type==='amusement'?[2,2,.8,.6]:b.type==='supermarket'?[0,0,3.2,2.3]:b.type==='hospital'?[0,0,1.6,1.15]:b.type==='house'||b.type==='snack'?[0,-.15,1.45,1.19]:[0,0,1.5,1.1];
+ for(const opt of b.opts){const g=new T.Group();g.name='upgrade-'+opt;a.add(g);
+  if(opt==='ins')for(const side of[-1,1]){
+   const wall=new T.Group();wall.position.set(cx+side*(hw+.055),.68,cz);wall.rotation.y=side*Math.PI/2;g.add(wall);
+   box(wall,'#436d57',0,.34,0,.94,.9,.13);box(wall,'#d8b97d',0,.34,.075,.72,.68,.04);box(wall,'#c3e1d2',0,.34,.105,.57,.54,.025,GLASS);
+   box(wall,'#fff1cd',0,.34,.13,.045,.6,.04);box(wall,'#fff1cd',0,.34,.13,.63,.045,.04);
+  }
+  if(opt==='shade')for(const side of[-1,1]){
+   const hood=new T.Group();hood.position.set(cx+side*(hw+.06),1.56,cz);hood.rotation.y=side*Math.PI/2;g.add(hood);
+   for(let i=0;i<6;i++){const c=i%2?'#f9eac6':'#4c8062',x=-.5+i*.2;const roof=box(hood,c,x,0,.20,.2,.07,.46);roof.rotation.x=.18;box(hood,c,x,-.12,.41,.2,.19,.055);}
+   for(const x of[-.53,.53])box(hood,'#89684b',x,-.22,.12,.045,.42,.045);
+  }
+  if(opt==='reuse'){
+   const x=cx-hw+.25,z=cz+hd+.35;box(g,'#846449',x,.23,z,.65,.32,.38);
+   for(let i=0;i<3;i++)box(g,i%2?'#c0a071':'#a48154',x,.13+i*.1,z+.2,.7,.065,.06);
+   for(const dx of[-.2,0,.2]){shrub(g,x+dx,z,.45);flower(g,x+dx,z,'#f2d58c');}
+  }
+ }
+}
 const MODELS={house:[a=>alignedCottage(a),.6],snack:[a=>alignedCottage(a,'snack'),.6],generator:[a=>alignedCottage(a,'generator'),.6],tree:[gardenModel,.85],road:[roadModel,1],apartment:[apartmentModel,.6],western:[westernModel,.6],japanese:[japaneseModel,.6],chinese:[chineseModel,.6],convenience:[convenienceModel,.6],supermarket:[supermarketModel,.6],clinic:[clinicModel,.6],hospital:[hospitalModel,.6],kids:[kidsModel,.6],amusement:[amusementModel,.6],school:[schoolModel,.6],library:[libraryModel,.6],fire:[fireModel,.6],drain:[drainModel,.6],workshop:[workshopModel,.6],solar:[solarModel,.6],bridge:[bridgeModel,1],flower:[flowerModel,.85],avenue:[avenueModel,.8],bench:[benchModel,.85]};
 function scaffold(a,p,n=1){ // 공사 단계: 터 정비 → 골조 → 외장(모델) → 간판·개장. y스케일 늘이기 없음.
  const w=CELL*n*.86;rounded(a,'#9a7f5d',0,0,0,w,w,.06,.2);for(const[x,z]of[[-1,-1],[1,-1],[1,1],[-1,1]]){box(a,'#c2a579',x*w/2,.5,z*w/2,.09,1,.09);box(a,'#e2c981',x*w/2,.9,z*w/2,.17,.12,.14);}
@@ -428,12 +450,12 @@ export class World{
  // 건물 한 채: 원점 바닥 중앙, 문은 인접한 길 쪽. stage 1·2 터 정비/골조, 3 외장(간판 없음), 4 완공.
  model(parent,b,s,stage){const dir=facing(s,b,this.roads),g=new T.Group(),p=origin(b.type,b.x,b.y),n=foot(b.type);g.position.set(p.x,b.type==='bridge'?ROAD_Y-.03:GROUND_Y-.01,p.z);g.rotation.y=dir*Math.PI/2;parent.add(g);
   if(stage<3&&!['road','bridge'].includes(b.type)){scaffold(g,b.progress,n);return g;}const[make,sc]=MODELS[b.type]||[alignedCottage,.6];const m=new T.Group();m.scale.setScalar(sc);g.add(m);m.userData.palette=(b.x+b.y)%3;const finish=make(m,growthStage(s,b));finish.push(streetDetails(m,b.type),cottageYard(m,b.type));
-  
+  if(stage===4)ecoDetails(m,b);
   if(stage<4){for(const f of finish)f.visible=false;const w=CELL*n*.43;for(const[x,z]of[[-1,-1],[1,-1],[1,1],[-1,1]])box(g,'#c2a579',x*w,.5,z*w,.09,1,.09);for(const z of[-1,1])box(g,'#e7cd7b',0,.95,z*w,w*2,.04,.04);}return g;}
  // 완공 건물은 한 묶음(배칭)으로, 공사 중 건물은 각각. 묶음은 구성·방향·성장단계가 바뀔 때만 다시 만든다.
  sync(s,animate=true){this.treeAngle=null;this.roads=roadSet(s);this.syncTownscape(s);this.syncNature(s);this.seasonAnchors=s.buildings.filter(b=>b.progress>=1&&b.type==='tree').slice(0,6).map(b=>toWorld(b.x,b.y));
   const done=s.buildings.filter(b=>b.progress>=1),pending=s.buildings.filter(b=>b.progress<1);
-  const sig=done.map(b=>`${b.id}:${b.type}:${b.x},${b.y}:${facing(s,b,this.roads)}:${growthStage(s,b)}:${b.closed?1:0}`).join('|');
+  const sig=done.map(b=>`${b.id}:${b.type}:${b.x},${b.y}:${facing(s,b,this.roads)}:${growthStage(s,b)}:${b.closed?1:0}:${b.opts.join(',')}`).join('|');
   if(sig!==this.builtSig){if(this.built)dispose(this.built);const g=this.built=new T.Group();this.dynamic.add(g);for(const b of done)this.model(g,b,s,4);batch(g);this.rides=[];g.traverse(o=>{if(o.userData.ride)this.rides.push(o);});this.animateRides(0,true);
    if(animate&&this.builtIds)for(const b of done)if(!this.builtIds.has(b.id)&&!b.starter)this.sparkle(b.x,b.y);this.builtIds=new Set(done.map(b=>b.id));this.builtSig=sig;}
   const seen=new Set();for(const b of pending){const stage=b.progress>=.6?3:b.progress>=.25?2:1,psig=`${b.type}|${b.x},${b.y}|${facing(s,b,this.roads)}|${stage}`;seen.add(b.id);let e=this.groups.get(b.id);if(e&&e.sig!==psig){dispose(e.g);e=null;}
