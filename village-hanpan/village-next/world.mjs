@@ -1,13 +1,13 @@
 // village-next 표현 계층. pocket/world.mjs의 헬퍼·모델·배칭·주민 리그를 가져와 18×18 격자 위에 올린다.
 // 경제 값은 계산하지 않는다. sync(state)로 건물을 그리고 preview()로 배치 미리보기를 보여준다.
 import * as T from '../lib/three.module.min.js';
-import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=animals8';
-import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=animals8';
-import {naturalFeature,growthStage} from './landscape.mjs?v=animals8';
-import {advancePersonRoute} from './residents.mjs?v=move1';
-import {townscapeSites} from './townscape.mjs?v=visual1';
+import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=city1';
+import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=city1';
+import {naturalFeature,growthStage} from './landscape.mjs?v=city1';
+import {advancePersonRoute} from './residents.mjs?v=city1';
+import {townscapeSites} from './townscape.mjs?v=city1';
 import {surfaceOptions} from './surfaces.mjs?v=quality1';
-import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?v=quality1';
+import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?v=city1';
 import {createSunlight} from './sunlight.mjs?v=quality1';
 import {paintedTree,treeArtSeason,treeArtReady,treeArtView} from './tree-art.mjs?v=quality1';
 import {addRabbitArt,updateRabbitArt} from './rabbit-art.mjs?v=quality1';
