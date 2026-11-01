@@ -3,7 +3,7 @@ import {buildingBenefit,completionMessage,incomeRate,starterChoices,incomePrevie
 import {gradeNote,tierRules,developmentSummary,shortageNote} from './grading-ui.mjs?v=city1';
 import {tickResidents,syncResidents} from './residents.mjs?v=city1';
 // village-next B단계 입력·안내·저장·루프. 경제는 core, 좌표는 grid, 표현은 world에만 맡긴다.
-import {World} from './world.mjs?v=city1';
+import {World} from './world.mjs?v=art5final';
 import {villagePromises,promisePreview} from './promises.mjs?v=city1';
 import {buildingSpec,assessTier,economy,upkeepOf,annualReviews,YEAR,createState,build,demolish,relocate,canRelocate,relocateLeft,advance,metrics,tier,month,duration,calendarMonth,monthLabel,serialize,parseSave,continueFree,buildCost,clearingCost,canBuild,at,cells,network,connected,TYPES,OPTIONS,MONTH,RULE,SCOPE,unlocked,unlockMonth,toggleClosed,harvest,upgrade,clearLandscape,HARVEST,HARVEST_SECONDS,demandMonth,UPGRADE_TYPES} from './core.mjs?v=city1';
 import {toCell,toWorld,spots,placeInfo,facing,entrance,path,walkable,inside,CELL,perimeter,foot,roadSet} from './grid.mjs?v=city1';
@@ -255,6 +255,3 @@ if(!storageOK)toast('저장소를 쓸 수 없어 이번 플레이는 저장되�
 if(corrupt){$('corruptDialog').showModal();}else modal($('introDialog'));
 $('corruptExport').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([corrupt],{type:'application/json'}));a.download=`개울마을-손상기록-${Date.now()}.json`;a.click();toast('손상된 기록을 파일로 내보냈어요.');};
 $('corruptNew').onclick=()=>{if(otherOwnerAlive()){toast('다른 탭에서 마을이 진행 중이에요. 먼저 이 탭에서 이어받아 주세요.');return;}try{localStorage.setItem(BACKUP+'-corrupt',corrupt);}catch{toast('백업에 보관하지 못해 새로 시작하지 않았어요.');return;}corrupt=null;$('corruptDialog').close();save('손상 기록 보관 후 새 마을');modal($('introDialog'));};requestAnimationFrame(loop);
-
-
-

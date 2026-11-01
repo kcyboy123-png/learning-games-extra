@@ -12,11 +12,11 @@ export function meadowSites(s){
   const key=`${x},${y}`;if(x===RIVER||blocked.has(key))continue;
   let seed=((x+1)*73856093^(y+1)*19349663)>>>0;
   const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
-  const p=toWorld(x,y),count=28+Math.floor(random()*8),cx=(random()-.5)*.8,cz=(random()-.5)*.8;
+  const p=toWorld(x,y),count=18+Math.floor(random()*6),cx=(random()-.5)*.8,cz=(random()-.5)*.8;
   for(let i=0;i<count;i++){
    const clustered=i%4<2,r=clustered?.44:.86,dx=(random()-.5)*r*2,dz=(random()-.5)*r*2;
    const size=i<5?.76+random()*.6:.24+random()*.48;
-   out.push({key,x:p.x+dx+(clustered?cx:0),z:p.z+dz+(clustered?cz:0),size,angle:random()*Math.PI*2,flower:i<3&&random()>.12,tone:random()});
+   out.push({key,x:p.x+dx+(clustered?cx:0),z:p.z+dz+(clustered?cz:0),size,angle:random()*Math.PI*2,flower:i<2&&random()>.12,tone:random()});
   }
  }
  return out;

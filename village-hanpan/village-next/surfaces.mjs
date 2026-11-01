@@ -27,7 +27,7 @@ function texture(kind){
  if(kind==='grass'){
   map.repeat.set(.12,.12);
   // Detailed neutral meadow albedo is softly blended so paths and buildings remain legible.
-  const art=new Image();art.onload=()=>{ctx.fillStyle='#fffef5';ctx.fillRect(0,0,1024,1024);ctx.globalAlpha=.74;ctx.drawImage(art,0,0,1024,1024);ctx.globalAlpha=1;map.needsUpdate=true;};
+  const art=new Image();art.onload=()=>{ctx.fillStyle='#fffef5';ctx.fillRect(0,0,1024,1024);ctx.globalAlpha=.44;ctx.drawImage(art,0,0,1024,1024);ctx.globalAlpha=1;map.needsUpdate=true;};
   art.src=new URL('./assets/meadow-soft.png',import.meta.url).href;
  }
  maps.set(kind,map);return map;
