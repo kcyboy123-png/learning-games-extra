@@ -16,7 +16,7 @@ export function cells(b){const n=TYPES[b.type].foot||1;return Array.from({length
 export const at=(s,x,y)=>s.buildings.find(b=>cells(b).some(c=>c[0]===x&&c[1]===y));
 export const terrain=(x,y)=>x===RIVER?'water':x===14&&y===7?'warehouse':x<2?'woods':'grass';
 export function createState(mode='run'){
- const s={v:VERSION,rule:RULE,economyV:4,cityV:1,scoringV:2,cashStress:0,mode,runMonths:36,startMonth:2,t:0,carry:0,money:210,pop:8,sat:78,buildings:[],nextId:1,hist:[],paused:false,ended:false,result:null,stage:0,events:[],savedAt:0,landscape:{version:1,cleared:[]},harvested:[],harvestAt:null};
+ const s={v:VERSION,rule:RULE,economyV:4,cityV:1,scoringV:2,cashStress:0,mode,runMonths:36,startMonth:2,t:0,carry:0,money:240,pop:8,sat:78,buildings:[],nextId:1,hist:[],paused:false,ended:false,result:null,stage:0,events:[],savedAt:0,landscape:{version:1,cleared:[]},harvested:[],harvestAt:null};
  const add=(type,x,y,opts=[])=>s.buildings.push({id:s.nextId++,type,x,y,opts,progress:1,starter:true,completedAt:0});
  for(let y=3;y<=13;y++)add('road',5,y);
  add('house',4,5,['ins']);add('house',6,5,['ins']);add('generator',4,7);add('tree',6,9);add('tree',4,10);return s;

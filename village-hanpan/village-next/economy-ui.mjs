@@ -1,6 +1,8 @@
-import {buildingSpec,metrics,TYPES,MONTH,month,monthLabel,demandMonth,connected,unlocked} from './core.mjs?v=city1';
+import {buildingSpec,metrics,TYPES,MONTH,month,monthLabel,demandMonth,connected,unlocked} from './core.mjs?v=ui3';
 import {PLAY_SPEED} from './data.mjs?v=80min1';
 
+// nextId never decreases, so cancelling or reloading cannot restart completed guidance.
+export const guidedPlacement=s=>s.mode==='run'&&!s.ended&&month(s)<4&&s.nextId-1-s.buildings.filter(b=>b.starter).length<2;
 export const netIncome=v=>v.income-v.upkeep;
 export const incomeRate=v=>`${netIncome(v)<0?'−':'+'}${(Math.abs(netIncome(v))*PLAY_SPEED/MONTH).toFixed(1)}/초`;
 
@@ -47,3 +49,5 @@ export function incomePreviewText(s,type,x,y,moving=null){
  const beauty=s.cityV===1?`\n도시 미관 ${before.landscaping.score} → ${after.landscaping.score}점${['tree','flower','avenue','bench'].includes(type)?' · 자라면 더 좋아져요':''}`:'';
  return line+(filled?` · 모두 입주하면 ${incomeRate(filled)} (행복·식생활·전력도 챙겨요)`:'')+' · 현재 행복·계절 기준 예상'+benefit+extra+beauty;
 }
+
+export const buildBudget=(money,price)=>money<price?`기금 ${Math.ceil(price-money).toLocaleString()} 부족`:`짓고 남는 기금 ${Math.floor(money-price).toLocaleString()}`;
