@@ -426,6 +426,22 @@ function bakeRidePart(group,key){
 function batch(group){group.updateMatrixWorld(true);const lists=new Map();group.traverse(o=>{if(o.isMesh&&!o.userData.keepArtHierarchy&&(!o.material.map||o.material.map.userData.shared)){const k=o.geometry.uuid+o.material.uuid+o.castShadow+o.receiveShadow;if(!lists.has(k))lists.set(k,[]);lists.get(k).push(o);}});const inverse=group.matrixWorld.clone().invert();
  for(const list of lists.values()){if(list.length<3)continue;const b=new T.InstancedMesh(list[0].geometry,list[0].material,list.length);list.forEach((o,i)=>{b.setMatrixAt(i,new T.Matrix4().multiplyMatrices(inverse,o.matrixWorld));o.parent.remove(o);});b.castShadow=list[0].castShadow;b.receiveShadow=list[0].receiveShadow;group.add(b);}}
 function dispose(g){g.traverse(o=>{if(o.geometry?.userData.owned)o.geometry.dispose();if(o.material?.map&&!o.material.map.userData.shared){o.material.map.dispose();o.material.dispose();}if(o.isInstancedMesh)o.dispose();});g.removeFromParent();}
+// Ground overlays remain legible through flowers and snow without changing the building model.
+function siteFrame(parent,n,status){
+ const g=new T.Group(),W=CELL*n,c=status==='blocked'?'#d35b48':status==='selected'?'#f5d780':'#51c6a4';g.name='site-'+status;parent.add(g);
+ const stroke=(name,x,z,w,d,color=c,opacity=1)=>{const key='site:'+color+':'+opacity;if(!materials.has(key))materials.set(key,new T.MeshBasicMaterial({color,transparent:true,opacity,depthTest:false,depthWrite:false,toneMapped:false}));const m=new T.Mesh(geometry('box',()=>new T.BoxGeometry(1,1,1)),materials.get(key));m.name=name;m.position.set(x,.085,z);m.scale.set(w,.012,d);m.renderOrder=30;g.add(m);return m;};
+ if(status!=='selected')stroke('site-fill',0,0,W,W,c,.09);
+ for(const[x,z,w,d]of[[0,-1,W,.08],[0,1,W,.08],[-1,0,.08,W],[1,0,.08,W]]){stroke('site-edge-shadow',x*W/2,z*W/2,w+.06,d+.06,'#244f48',.9);stroke('site-edge',x*W/2,z*W/2,w,d);}
+ for(const x of[-1,1])for(const z of[-1,1]){stroke('site-corner',x*(W/2-.2),z*W/2,.42,.12,'#fff9df');stroke('site-corner',x*W/2,z*(W/2-.2),.12,.42,'#fff9df');}
+ if(n>1&&status!=='selected'){stroke('site-grid',0,0,W,.035,c,.6);stroke('site-grid',0,0,.035,W,c,.6);}
+ if(status!=='selected'){
+  // A check or cross carries the same information as the colour, beside the footprint.
+  const x=-W/2-.38,z=-W/2+.22;
+  const key='site-symbol:'+status;if(!materials.has(key)){const canvas=document.createElement('canvas');canvas.width=canvas.height=96;const ctx=canvas.getContext('2d');ctx.fillStyle='#244f48';ctx.fillRect(0,0,96,96);ctx.fillStyle='#fff9df';ctx.font='700 76px SUIT,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(status==='blocked'?'×':'✓',48,50);const map=new T.CanvasTexture(canvas);map.colorSpace=T.SRGBColorSpace;map.userData.shared=true;materials.set(key,new T.SpriteMaterial({map,depthTest:false,depthWrite:false,toneMapped:false}));}
+  const symbol=new T.Sprite(materials.get(key));symbol.name=status==='blocked'?'site-cross':'site-check';symbol.position.set(x,.2,z);symbol.scale.set(.62,.62,1);symbol.renderOrder=32;g.add(symbol);
+ }
+ return g;
+}
 const hash=(x,y)=>((x*73856093)^(y*19349663))>>>0;
 
 export class World{
@@ -510,8 +526,9 @@ export class World{
  // 배치 미리보기: 반투명 모델 + 바닥 테두리 + 출입구 화살표. ok=false면 붉은 테두리.
  preview(type,gx,gy,dir,ok){this.clearPreview();ghostMode=true;const g=this.ghost=new T.Group(),p=origin(type,gx,gy),W=CELL*foot(type);g.position.set(p.x,GROUND_Y,p.z);g.rotation.y=dir*Math.PI/2;this.scene.add(g);
   const[make,sc]=MODELS[type]||[alignedCottage,.6];const m=new T.Group();m.scale.setScalar(sc);g.add(m);m.userData.palette=(gx+gy)%3;make(m,2);streetDetails(m,type);cottageYard(m,type);ghostMode=false;batch(g);
-  const frame=new T.Group();g.add(frame);const c=ok?'#79d28a':'#e07676';for(const[x,z,w,d]of[[0,-1,W,.12],[0,1,W,.12],[-1,0,.12,W],[1,0,.12,W]]){const b=box(frame,c,x*W/2,.06,z*W/2,w,.05,d,{emissive:c,emissiveIntensity:.5});b.castShadow=false;}
-  if(!['road','bridge'].includes(type)){const ar=cone(frame,c,0,.25,W/2+.35,.28,.45,{emissive:c,emissiveIntensity:.6});ar.rotation.x=Math.PI/2;ar.castShadow=false;}}
+  const frame=siteFrame(g,foot(type),ok?'ready':'blocked');
+  if(!['road','bridge'].includes(type)){const ar=new T.Mesh(geometry('site-entry',()=>{const shape=new T.Shape();shape.moveTo(-.24,0);shape.lineTo(.24,0);shape.lineTo(0,.36);shape.closePath();const geo=new T.ShapeGeometry(shape);geo.rotateX(-Math.PI/2);return geo;}),materials.get('site:#fff9df:1'));ar.name='site-entry';ar.rotation.y=Math.PI;ar.position.set(0,.10,W/2+.12);ar.renderOrder=31;frame.add(ar);}}
+ highlightBuilding(b){const sig=b?`${b.type}:${b.x},${b.y}`:'';if(this.selectionSig===sig)return;this.selectionSig=sig;if(this.selection){dispose(this.selection);this.selection=null;}if(!b)return;const p=origin(b.type,b.x,b.y),g=this.selection=new T.Group();g.position.set(p.x,b.type==='bridge'?ROAD_Y:GROUND_Y,p.z);this.scene.add(g);siteFrame(g,foot(b.type),'selected');return true;}
  clearPreview(){if(this.ghost){dispose(this.ghost);this.ghost=null;}}
  showSpots(list,type='house'){while(this.rings.children.length)dispose(this.rings.children[0]);for(const{gx,gy}of list){const p=origin(type,gx,gy),r=new T.Mesh(geometry('spot',()=>{const g=new T.RingGeometry(.75,.95,32);g.rotateX(-Math.PI/2);return g;}),mat('#fff1a8',{emissive:'#ffe27a',emissiveIntensity:.8,side:T.DoubleSide}));r.position.set(p.x,(type==='bridge'?ROAD_Y:GROUND_Y)+.03,p.z);r.scale.setScalar(foot(type));r.castShadow=r.receiveShadow=false;this.rings.add(r);}}
  // 계절: 조명·하늘·잔디 색만 바꾼다(모델 재사용). 0 겨울 1 봄 2 여름 3 가을
