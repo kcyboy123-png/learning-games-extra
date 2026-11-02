@@ -1,5 +1,6 @@
+import {STRIDE} from './lib/gait.mjs?v=walk5-20261102';
 export class ForestSound {
-  constructor(){this.enabled=true;this.ctx=null;this.lastStep=0;this.nextBird=4;}
+  constructor(){this.enabled=true;this.ctx=null;this.lastStep=null;this.nextBird=4;}
   async start(){
     if(!this.enabled)return;
     if(!this.ctx){
@@ -25,12 +26,13 @@ export class ForestSound {
       o.connect(g);g.connect(this.master);o.start(t);o.stop(t+.15);
     }
   }
-  tick(time,s,moving){
+  tick(time,s,moving,distance=0){
     const c=this.ctx;if(!c||c.state!=='running')return;
     const near=Math.exp(-Math.pow((s-85)/48,2));this.water.gain.setTargetAtTime(.07+near*.55,c.currentTime,.8);
     if(time>this.nextBird){this.chirp();this.nextBird=time+10+Math.random()*14;}
-    if(moving&&time-this.lastStep>.46){
-      this.lastStep=time;const src=c.createBufferSource(),g=c.createGain(),f=c.createBiquadFilter();src.buffer=this.noise;
+    const contact=Math.floor(distance/STRIDE*2);
+    if(moving&&contact!==this.lastStep){
+      this.lastStep=contact;const src=c.createBufferSource(),g=c.createGain(),f=c.createBiquadFilter();src.buffer=this.noise;
       f.type='lowpass';f.frequency.value=s>56&&s<68?800:350;g.gain.setValueAtTime(.09,c.currentTime);g.gain.exponentialRampToValueAtTime(.0001,c.currentTime+.11);
       src.connect(f);f.connect(g);g.connect(this.master);src.start(c.currentTime,Math.random()*2,.13);
     }

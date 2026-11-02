@@ -1,22 +1,14 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#234c3d"><title>우리 반, 숲으로 · 3분 등산</title><link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=layered5"></head>
-<body><canvas id="forest" tabindex="0" aria-label="입체 숲길. 방향키 또는 W A S D로 직접 걷고 E로 주변 자연을 살펴보세요."></canvas>
-<header><div class="brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 3C9 2 2 7 5 15c3 7 15 3 15-12ZM5 21l10-13"/></svg><span>우리 반, 숲으로</span></div><div class="tools"><button id="sound" aria-label="자연 소리 끄기" aria-pressed="true">소리 켜짐</button><button id="pause" aria-label="잠시 멈추기">Ⅱ</button></div></header>
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#234c3d"><title>우리 반, 숲으로 · 3분 등산</title><link rel="icon" href="data:,"><link rel="stylesheet" href="style.css?v=walk5-20261102"></head>
+<body data-mode="intro"><canvas id="forest" tabindex="0" aria-label="입체 숲길. 방향키 또는 W A S D로 직접 걷고 E로 주변 자연을 살펴보세요."></canvas>
+<header><div class="brand"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 3C9 2 2 7 5 15c3 7 15 3 15-12ZM5 21l10-13"/></svg><span>우리 반, 숲으로</span></div><div class="tools"><button id="sound" aria-label="자연 소리 끄기" aria-pressed="true">소리 켜짐</button><button id="pause" disabled aria-label="잠시 멈추기">Ⅱ</button></div></header>
 <section id="intro" class="sheet intro" aria-labelledby="welcome"><span class="eyebrow">바람봉 오르기 · 약 3분</span><h1 id="welcome">오늘은,<br>숲으로.</h1><p>작은 배낭 하나 메고<br>계곡을 지나 정상까지 올라가요.</p><button id="start" class="primary" disabled>숲을 준비하고 있어요</button><p class="hint">방향키 / WASD로 걷기 · E로 살펴보기<br>휴대폰에서는 아래 방향 버튼을 눌러요.</p><small>1인 체험판 · 선생님과 친구들은 안내 캐릭터예요.</small></section>
-<section id="journey" hidden><div class="location"><span id="place">햇살 오르막</span><small id="distance">정상까지 200 m</small><small id="height">↑ 0 m 올라왔어요</small><div class="trail-line"><i id="progress"></i></div></div>
+<section id="journey" hidden><div class="location"><span id="place">햇살 오르막</span><small id="distance">정상까지 200 m</small><small id="height">↑ 0 m 올라왔어요</small><div class="trail-line"><progress id="progress" max="200" value="0" aria-label="정상까지 걸은 거리">0</progress></div></div>
 <div id="note" role="status" aria-live="polite">노란 배낭이 나예요. 위쪽 방향키로 걸어 볼까요?</div>
 <nav id="pad" aria-label="걷기 방향"><button data-dir="up" aria-label="앞으로 걷기">↑</button><button data-dir="left" aria-label="왼쪽으로 걷기">←</button><button data-dir="down" aria-label="뒤로 걷기">↓</button><button data-dir="right" aria-label="오른쪽으로 걷기">→</button></nav>
 <button id="action" class="action" hidden>잠깐 살펴보기 <kbd>E</kbd></button><span class="keyboard-hint">방향키 / WASD · E 살펴보기 · Esc 멈추기</span></section>
 <section id="rest" class="sheet rest" hidden aria-labelledby="rest-title"><span class="eyebrow">잠깐 쉬어 가요</span><h2 id="rest-title">물소리 듣기</h2><p id="rest-text"></p><button id="leave-rest" class="primary">다시 걷기</button></section>
-<section id="paused" class="sheet pause-sheet" hidden aria-labelledby="pause-title"><h2 id="pause-title">잠깐 쉬는 중</h2><p>준비되면 이어서 걸어요.</p><button id="resume" class="primary">계속 걷기</button><button id="restart" class="secondary">처음부터 걷기</button></section>
+<section id="paused" class="sheet pause-sheet" role="dialog" aria-modal="true" hidden aria-labelledby="pause-title"><h2 id="pause-title">잠깐 쉬는 중</h2><p>준비되면 이어서 걸어요.</p><button id="resume" class="primary">계속 걷기</button><button id="restart" class="secondary">처음부터 걷기</button></section>
 <section id="finish" class="sheet finish" hidden aria-labelledby="finish-title"><span class="eyebrow">바람봉 정상</span><h2 id="finish-title">우리 발로, <br>정상에 올랐어요.</h2><p>나무 사이로 걷던 길이 이제 발아래에 있어요.<br>조금 더 머물러도 좋아요.</p><button id="stay" class="primary">풍경 더 보기</button><button id="again" class="secondary">처음부터 걷기</button></section>
 <section id="error" class="sheet" hidden role="alert"><h2>숲을 열지 못했어요</h2><p id="error-text">브라우저의 3D 그래픽 지원을 확인해 주세요.</p><button onclick="location.reload()" class="primary">다시 열기</button></section>
 <noscript>이 체험판은 JavaScript가 필요합니다.</noscript>
-<script type="module">import('./app.mjs?v=layered5').catch(error=>{document.querySelector('#intro').hidden=true;document.querySelector('#error').hidden=false;document.querySelector('#error-text').textContent='숲 데이터를 불러오지 못했어요. 페이지를 다시 열어 주세요.';console.error(error);});</script></body></html>
-
-
-
-
-
-
-
-
+<script type="module">import('./app.mjs?v=walk5-20261102').catch(error=>{document.querySelector('#intro').hidden=true;document.querySelector('#error').hidden=false;document.querySelector('#error-text').textContent='숲 데이터를 불러오지 못했어요. 페이지를 다시 열어 주세요.';console.error(error);});</script></body></html>

@@ -33,3 +33,19 @@ header{left:0;right:0;top:0;padding:0 22px;height:50px;background:#173c35e8;colo
 .keyboard-hint{bottom:9px;font-size:11px}.location{width:164px;padding:10px 12px}.location>span{font-size:15px}.location small{font-size:11px}.location .trail-line{margin-top:7px}
 
 body[data-mode=rest] #note{display:none}
+/* 2026-11: readable trail controls, with the landscape kept visible. */
+header{background:#173c35f0;box-shadow:0 2px 16px #112e2420}.location{background:#f8f6e9ed;border:1px solid #fff9;box-shadow:0 5px 24px #14372b14}.location>span{font-size:16px}.location small{font-size:12px}.location .trail-line{width:100%;height:4px}
+#pad{gap:7px;padding:9px;background:#173c3526;border:1px solid #fff5;border-radius:28px}#pad button{background:#f7f5e8ec;color:#234c3d;box-shadow:0 2px 5px #14372b18}#pad button:hover{background:#fffbea}#pad button.active{background:#e6c46f;box-shadow:inset 0 2px 4px #29443525}
+.action{background:#234c3d;color:#fffbea;border:1px solid #fff8;box-shadow:0 5px 20px #14372b30}.action kbd{border-color:#e4edd5a0}.sheet{background:#faf8eef5;border-radius:24px;box-shadow:0 16px 60px #112e2433}.primary{border-radius:14px}.secondary{border:1px solid #cdd8c9}
+.trail-line{height:5px;background:none}progress{display:block;width:100%;height:5px;appearance:none;border:0;border-radius:5px;overflow:hidden;background:#ced9c8}progress::-webkit-progress-bar{background:#ced9c8}progress::-webkit-progress-value{background:#4e7353;border-radius:5px}progress::-moz-progress-bar{background:#4e7353}
+
+/* The observation action sits above the thumb pad on narrow screens. */
+header{padding-left:max(22px,env(safe-area-inset-left));padding-right:max(22px,env(safe-area-inset-right));padding-top:env(safe-area-inset-top);height:calc(50px + env(safe-area-inset-top))}
+#pad{bottom:max(20px,env(safe-area-inset-bottom));left:max(16px,env(safe-area-inset-left))}.rest,.finish{bottom:max(20px,env(safe-area-inset-bottom))}
+@media(max-width:700px){.location{top:calc(62px + env(safe-area-inset-top));left:16px;width:166px}.tools button{padding-inline:10px;min-width:44px}#note{top:calc(166px + env(safe-area-inset-top));font-size:13px}.action{bottom:148px;right:16px;max-width:calc(100% - 32px);font-size:14px;padding:13px 18px}.rest{grid-template-columns:1fr;gap:8px;padding:18px}.rest .primary{grid-column:1;grid-row:auto;width:100%;min-height:46px}.rest p{line-height:1.6}.finish{max-height:48dvh}.intro{max-height:calc(100dvh - 100px)}}
+@media(max-height:520px) and (min-width:701px){.location{top:64px}.intro{top:calc(50% + 20px);max-height:calc(100dvh - 70px);padding:20px}.intro h1{font-size:36px}.intro p{margin-bottom:12px}.intro .hint{margin:10px 0}.rest,.finish{right:16px;bottom:14px;max-height:calc(100dvh - 78px)}#note{top:65px;max-width:calc(100% - 420px);font-size:12px;padding:10px}#pad{bottom:14px;grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,44px)}}
+
+body[data-mode=rest] .location{opacity:.9}.tools button:disabled{opacity:.35;cursor:default}
+@media(max-width:360px){header{padding-inline:12px}.brand{font-size:13px}.tools button{font-size:11px;padding-inline:8px}.location{width:156px}.rest h2{font-size:18px}.rest{padding:16px}.finish h2{font-size:21px}}
+@media(prefers-reduced-motion:reduce){#pad button.active{transform:none}}
+@media(max-height:520px){.intro h1{font-size:32px;margin:8px 0 12px}.intro h1 br{display:none}.rest{max-height:calc(100dvh - 80px)}}
