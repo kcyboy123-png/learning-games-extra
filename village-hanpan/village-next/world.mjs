@@ -6,10 +6,11 @@ import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mj
 import {naturalFeature,growthStage} from './landscape.mjs?v=city1';
 import {advancePersonRoute} from './residents.mjs?v=neighbors1';
 import {townscapeSites} from './townscape.mjs?v=art5final';
-import {surfaceOptions} from './surfaces.mjs?v=art5';
-import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?v=art5';
-import {createSunlight} from './sunlight.mjs?v=art5';
-import {paintedTree,treeArtSeason,treeArtReady,treeArtView} from './tree-art.mjs?v=quality1';
+import {seasonalSites,createSeasonDetails,disposeSeasonDetails} from './season-details.mjs?v=graphics10';
+import {surfaceOptions,surfaceTime,surfaceWinter} from './surfaces.mjs?v=graphics10';
+import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?v=graphics10';
+import {createSunlight} from './sunlight.mjs?v=graphics10';
+import {paintedTree,treeArtSeason,treeArtReady} from './tree-art.mjs?v=graphics10';
 import {addRabbitArt,updateRabbitArt} from './rabbit-art.mjs?v=quality1';
 
 const materials=new Map(),geometries=new Map();let ghostMode=false;
@@ -143,7 +144,7 @@ function gardenModel(a,stage){
  if(stage===2){bench(a,.4,.65);for(let j=0;j<4;j++)pebble(a,'#d6cbb0',-.6+Math.sin(j*1.57)*.72,.12,-.3+Math.cos(j*1.57)*.72,.13,.07,.12);}
  pebble(a,'#b5ad96',1.1,.12,-.4,.2,.1,.18);tuft(a,1.2,.9,.8);return[];
 }
-function roadModel(a){box(a,'#cbb990',0,.006,0,CELL,.04,CELL);for(let r=0;r<4;r++)for(let c=0;c<4;c++){const x=-.9+c*.6,z=-.9+r*.6;box(a,['#ead7ac','#eedfb9','#e5cf9f'][(r+c*2)%3],x,.033,z,.592,.014,.592);}return[];}
+function roadModel(a){box(a,'#cbb990',0,.006,0,CELL,.04,CELL);for(let r=0;r<4;r++)for(let c=0;c<4;c++){const x=-.9+c*.6,z=-.9+r*.6;softBlock(a,['#ead7ac','#eedfb9','#e5cf9f'][(r+c*2)%3],x,.037,z,.574,.022,.574,.006);}return[];}
 // ---- 공통 부품: 납작 지붕 상가/공공건물, 창 줄, 간판 ----
 function flat(a,w,h,d,wall,trim,base='#b8ac90',pitched=false){
  rounded(a,base,0,0,0,w+.7,d+.6,.12,.15);softBlock(a,'#9e8f78',0,.2,0,w+.08,.22,d+.08,.04);softBlock(a,wall,0,h/2+.2,0,w,h,d,.09);brickSkirt(a,w,d,.38);
@@ -420,10 +421,10 @@ const hash=(x,y)=>((x*73856093)^(y*19349663))>>>0;
 export class World{
  constructor(canvas){
   this.canvas=canvas;this.scene=new T.Scene();this.scene.background=new T.Color('#9ccfc3');this.camera=new T.OrthographicCamera();
-  this.renderer=new T.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.05;this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFShadowMap;this.renderer.info.autoReset=false;this.sunlight=createSunlight(this.renderer);
+  this.renderer=new T.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.05;this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFSoftShadowMap;this.renderer.info.autoReset=false;this.sunlight=createSunlight(this.renderer);
   // A low warm key and cool sky fill keep the late-afternoon colour in the light, not a screen filter.
   this.hemi=new T.HemisphereLight('#dce5ed','#b7ad98',1.10);this.scene.add(this.hemi);const sun=this.sun=new T.DirectionalLight('#ffcb88',3.8);sun.position.set(-13,8,6);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-16,right:16,top:16,bottom:-16,near:1,far:60});sun.shadow.normalBias=.018;sun.shadow.bias=-.0002;sun.shadow.radius=3.5;this.scene.add(sun);this.scene.add(sun.target);
-  const fill=new T.DirectionalLight('#dce4f2',.45);fill.position.set(9,10,7);this.scene.add(fill);
+  const fill=new T.DirectionalLight('#dce4f2',.60);fill.position.set(9,10,7);this.scene.add(fill);
   this.angle=.65;this.zoom=1;this.targetZoom=1;this.center=new T.Vector3(-7.2,0,-4);this.ray=new T.Raycaster();this.plane=new T.Plane(new T.Vector3(0,1,0),-GROUND_Y);
   this.groups=new Map();this.animations=[];this.people=[];this.roads=new Set();this.natural=new Map();this.cleared=new Set();
   const S=this.static=new T.Group();this.scene.add(S);this.terrain(S);batch(S);
@@ -432,7 +433,7 @@ export class World{
   this.marker=new T.Mesh(new T.RingGeometry(.17,.23,24),new T.MeshBasicMaterial({color:'#fff6bc',side:T.DoubleSide}));this.marker.rotation.x=-Math.PI/2;this.marker.position.y=GROUND_Y+.03;this.marker.visible=false;this.scene.add(this.marker);
   this.waterLines=new T.Group();this.scene.add(this.waterLines);const rx=toWorld(RIVER,0).x;for(let i=0;i<70;i++){const m=box(this.waterLines,'#c3e8de',rx+Math.sin(i*4)*.72,-.575,(i*.47)%44-22,.15+i%3*.12,.005,.025);m.castShadow=false;}
   batch(this.waterLines);
-  this.petals=new T.InstancedMesh(geometry('petal',()=>new T.SphereGeometry(1,5,3)),new T.MeshStandardMaterial({color:'#ffe1eb',roughness:1}),48);this.petals.instanceMatrix.setUsage(T.DynamicDrawUsage);this.petals.frustumCulled=false;this.petalPose=new T.Object3D();this.scene.add(this.petals);
+  this.petals=new T.InstancedMesh(geometry('petal',()=>new T.SphereGeometry(1,5,3)),new T.MeshStandardMaterial({color:'#ffe1eb',roughness:1}),96);this.petals.instanceMatrix.setUsage(T.DynamicDrawUsage);this.petals.frustumCulled=false;this.petalPose=new T.Object3D();this.scene.add(this.petals);
   this.player=this.person('#5f8c9a','player');this.resize();new ResizeObserver(()=>this.resize()).observe(canvas);
  }
  terrain(S){const half=(SIZE-1)/2,rx=toWorld(RIVER,0).x,L=SIZE*CELL;
@@ -487,7 +488,7 @@ export class World{
   if(stage===4)ecoDetails(m,b);
   if(stage<4){for(const f of finish)f.visible=false;const w=CELL*n*.43;for(const[x,z]of[[-1,-1],[1,-1],[1,1],[-1,1]])box(g,'#c2a579',x*w,.5,z*w,.09,1,.09);for(const z of[-1,1])box(g,'#e7cd7b',0,.95,z*w,w*2,.04,.04);}return g;}
  // 완공 건물은 한 묶음(배칭)으로, 공사 중 건물은 각각. 묶음은 구성·방향·성장단계가 바뀔 때만 다시 만든다.
- sync(s,animate=true){this.treeAngle=null;this.roads=roadSet(s);this.syncTownscape(s);this.syncNature(s);this.seasonAnchors=s.buildings.filter(b=>b.progress>=1&&b.type==='tree').slice(0,6).map(b=>toWorld(b.x,b.y));
+ sync(s,animate=true){this.seasonDetailSites=seasonalSites(s);this.roads=roadSet(s);this.syncTownscape(s);this.syncNature(s);this.seasonAnchors=s.buildings.filter(b=>b.progress>=1&&b.type==='tree').slice(0,6).map(b=>toWorld(b.x,b.y));
   const done=s.buildings.filter(b=>b.progress>=1),pending=s.buildings.filter(b=>b.progress<1);
   const sig=done.map(b=>`${b.id}:${b.type}:${b.x},${b.y}:${facing(s,b,this.roads)}:${growthStage(s,b)}:${b.closed?1:0}:${b.opts.join(',')}`).join('|');
   if(sig!==this.builtSig){if(this.built)dispose(this.built);const g=this.built=new T.Group();this.dynamic.add(g);for(const b of done)this.model(g,b,s,4);batch(g);this.rides=[];g.traverse(o=>{if(o.userData.ride)this.rides.push(o);});this.animateRides(0,true);
@@ -504,21 +505,19 @@ export class World{
  clearPreview(){if(this.ghost){dispose(this.ghost);this.ghost=null;}}
  showSpots(list,type='house'){while(this.rings.children.length)dispose(this.rings.children[0]);for(const{gx,gy}of list){const p=origin(type,gx,gy),r=new T.Mesh(geometry('spot',()=>{const g=new T.RingGeometry(.75,.95,32);g.rotateX(-Math.PI/2);return g;}),mat('#fff1a8',{emissive:'#ffe27a',emissiveIntensity:.8,side:T.DoubleSide}));r.position.set(p.x,(type==='bridge'?ROAD_Y:GROUND_Y)+.03,p.z);r.scale.setScalar(foot(type));r.castShadow=r.receiveShadow=false;this.rings.add(r);}}
  // 계절: 조명·하늘·잔디 색만 바꾼다(모델 재사용). 0 겨울 1 봄 2 여름 3 가을
- season(se,force=false){if(this.se===se&&!force)return;this.se=se;for(const p of this.people||[])if(p.scarf)p.scarf.visible=se===0;meadowSeason(this.meadow,se);treeArtSeason(this.scene,se);this.sunlight?.season(se);this.gardenDecor?.traverse(o=>{if(o.userData.gardenFlowers)o.visible=se!==0;});this.townscape?.traverse(o=>{if(o.userData.gardenFlowers)o.visible=se!==0;});
+ season(se,force=false){if(this.se===se&&!force)return;this.se=se;surfaceWinter.value=se===0?1:0;const detailSig=se+JSON.stringify(this.seasonDetailSites||[]);if(detailSig!==this.seasonDetailSig){disposeSeasonDetails(this.seasonGround);this.seasonGround=createSeasonDetails(this.seasonDetailSites||[],se);this.scene.add(this.seasonGround);this.seasonDetailSig=detailSig;}for(const p of this.people||[])if(p.scarf)p.scarf.visible=se===0;meadowSeason(this.meadow,se);treeArtSeason(this.scene,se);this.sunlight?.season(se);this.gardenDecor?.traverse(o=>{if(o.userData.gardenFlowers)o.visible=se!==0;});this.townscape?.traverse(o=>{if(o.userData.gardenFlowers)o.visible=se!==0;});
   const palettes={
    '#efb5c7':['#dce4df','#efb5c7','#63a361','#d98c51'],'#f9d6df':['#f5f6ec','#f9d6df','#92bc62','#edbb65'],'#dd9fb5':['#b7c9bf','#dd9fb5','#478457','#b96643'],
    '#81b56c':['#cedbd2','#81b56c','#65a564','#cc914e'],'#a3c77a':['#e4eade','#a3c77a','#9ac873','#e4b966'],'#679f63':['#9db8ab','#679f63','#458458','#ae734c'],
    '#7fa857':['#c8d4bf','#7fa857','#67a65d','#bca05c'],'#fbe4ea':['#fffef4','#fbe4ea','#d4e4a1','#e5ad6a'],
    '#e9adba':['#dce9ed','#e9adba','#a6b9e4','#dc9b65'],'#f0b1bb':['#dce9ed','#f0b1bb','#b6b6e0','#e0b052'],
-   '#9cbd6e':['#e8eee3','#afc77d','#b1ca84','#d5b481'],
+   '#9cbd6e':['#e8eee3','#afc77d','#88b273','#d5b481'],
    '#7cc5be':['#bedde0','#7cc5be','#65bbb9','#8fbfb0'], '#c3e8de':['#f3f5ed','#c3e8de','#d4f1e5','#e1ded0']
   };
-  for(const c of ['#3d4247','#2c3034','#7a3b32','#5a2a24','#7d8b8e','#5c8170','#4d7362','#5f7b6b','#4b6457','#4a6a70','#3a5459','#52745e','#385443','#a77760','#825743','#7b926a','#5c7653'])palettes[c]=['#e7ece3',c,c,c];
-  for(const c of ['#d9d2c0','#7d6b52','#7d7d74','#6fa08a','#4a7fa6'])palettes[c]=['#e7ece3',c,c,c];
   for(const c of ['#99b56c','#a8bd70','#f2d58c'])palettes[c]=['#e4ebdd',c,c,c];
   for(const c of ['#6c934b','#829f53','#8cae62'])palettes[c]=['#b5c7aa',c,c,'#b8a360'];
-  for(const[k,m]of materials){const base=k.split('|')[0];if(palettes[base])m.color.set(palettes[base][se]);if(base==='#9cbd6e'){const map=se===0?null:surfaceOptions(base).map;if(m.map!==map){m.map=map;m.needsUpdate=true;}}}
-  this.scene.background.set(['#d9dfe9','#e6d5b6','#cfdbd3','#e8c7a7'][se]);this.sun.color.set(['#ffdfb5','#ffdfa8','#ffdfb5','#ffd09a'][se]);this.hemi.color.set(['#dbe5f5','#dce5ed','#d5e9ed','#e0deea'][se]);
+  for(const[k,m]of materials){const base=k.split('|')[0];if(palettes[base])m.color.set(palettes[base][se]);if(['#ddc990','#9cab83','#8fd1c7','#c1d9cb'].includes(base)){m.userData.windowGlow??={color:m.emissive.clone(),intensity:m.emissiveIntensity};m.emissive.copy(se===0?new T.Color('#ffbd65'):m.userData.windowGlow.color);m.emissiveIntensity=se===0?.42:m.userData.windowGlow.intensity;}if(base==='#9cbd6e'){const map=se===0?null:surfaceOptions(base).map;if(m.map!==map){m.map=map;m.needsUpdate=true;}}}
+  this.scene.background.set(['#d9dfe9','#e6d5b6','#cfdbd3','#e8c7a7'][se]);this.sun.color.set(['#e7efff','#ffdfa8','#fff0d3','#ffd0a0'][se]);this.sun.intensity=[3.1,3.8,4,3.6][se];this.hemi.color.set(['#dbe5f5','#dce5ed','#d5e9ed','#e0deea'][se]);this.hemi.intensity=se===0?1.28:1.1;
   if(this.seasonDecor)dispose(this.seasonDecor);this.seasonDecor=new T.Group();this.scene.add(this.seasonDecor);
   for(const p of this.seasonAnchors||[]){const g=this.seasonDecor,x=p.x+.65,z=p.z-.6;
    if(se===0){ball(g,'#f6f5eb',x,.35,z,.22,.25,.22);ball(g,'#f6f5eb',x,.65,z,.15,.16,.15);for(const a of[-1,1])dot(g,'#4f554e',x+a*.05,.69,z+.14,.018);const nose=cone(g,'#d99959',x,.64,z+.19,.025,.1);nose.rotation.x=Math.PI/2;cylinder(g,'#b97670',x,.53,z,.14,.045);}
@@ -558,13 +557,13 @@ export class World{
    for(const child of ride.children){if(child.userData.cabin)child.rotation.z=-ride.rotation.z;if(Number.isInteger(child.userData.pony))child.position.y=.68+Math.sin(ride.rotation.y*3+child.userData.pony*Math.PI/3)*.09;}
   }
  }
- frame(dt,time,reduced){if(this.followPlayer&&!this.paused&&this.player&&(this.player.route.length||this.player.moving>.01)){const p=this.player.g.position,k=reduced?1:1-Math.exp(-dt*5);this.center.x+=(p.x-this.center.x)*k;this.center.z+=(p.z-this.center.z)*k;}if(this.scene&&this.treeAngle!==this.angle){treeArtView(this.scene,this.angle);this.treeAngle=this.angle;}if(!this.treeArtSettled&&this.scene)this.treeArtSettled=treeArtReady(this.scene);this.zoom+=(this.targetZoom-this.zoom)*Math.min(1,dt*7);const span=this.span=(this.aspect<1?13:8.5)/this.zoom;this.unit=span*2/innerHeight;
+ frame(dt,time,reduced){if(this.followPlayer&&!this.paused&&this.player&&(this.player.route.length||this.player.moving>.01)){const p=this.player.g.position,k=reduced?1:1-Math.exp(-dt*5);this.center.x+=(p.x-this.center.x)*k;this.center.z+=(p.z-this.center.z)*k;}if(!this.treeArtSettled&&this.scene)this.treeArtSettled=treeArtReady(this.scene);this.zoom+=(this.targetZoom-this.zoom)*Math.min(1,dt*7);const span=this.span=(this.aspect<1?13:8.5)/this.zoom;this.unit=span*2/innerHeight;
   this.camera.left=-span*this.aspect;this.camera.right=span*this.aspect;this.camera.top=span;this.camera.bottom=-span;this.camera.near=.1;this.camera.far=120;
   this.camera.position.set(this.center.x+Math.sin(this.angle)*30,this.cameraHeight??26,this.center.z+Math.cos(this.angle)*30);this.camera.lookAt(this.center.x,this.lookHeight??.2,this.center.z);this.camera.updateProjectionMatrix();
   this.sun.position.set(this.center.x-13,8,this.center.z+6);this.sun.target.position.copy(this.center);
   const motionDt=this.paused?0:dt;
   this.animateRides(motionDt,reduced);
-  this.idleTime=(this.idleTime??0)+motionDt;const idleTime=this.idleTime;
+  this.idleTime=(this.idleTime??0)+motionDt;const idleTime=this.idleTime;surfaceTime.value=reduced?0:idleTime;
   if(this.meadow)this.meadow.userData.wind.value=reduced?0:this.meadow.userData.wind.value+motionDt;
   for(const p of this.people){if(this.paused)continue;const speed=advancePersonRoute(p,motionDt,this.people);
    p.moving+=(speed-p.moving)*Math.min(1,motionDt*12);p.seatBlend=(p.seatBlend||0)+((p.sitting?1:0)-(p.seatBlend||0))*Math.min(1,motionDt*7);const personality=p.id==='player'?0:(p.id.charCodeAt(0)-96)*1.37,localIdle=idleTime+personality,phase=p.distance*(p.species==='bear'||p.species==='panda'?11.5:13);for(let k=0;k<2;k++){const wave=Math.sin(phase+k*Math.PI)*p.moving;p.limbs[k*2].rotation.x=wave*.55;p.limbs[k*2+1].rotation.x=-wave*.45;}
@@ -582,6 +581,6 @@ export class World{
   updateRabbitArt(this.player,this.angle,idleTime,reduced);
   for(let i=this.animations.length-1;i>=0;i--){const a=this.animations[i];a.t+=motionDt;const u=Math.min(1,a.t/.9);a.g.position.y=GROUND_Y+.3+u*1.6;a.g.scale.setScalar(1-u*.8);if(u===1||reduced){dispose(a.g);this.animations.splice(i,1);}}
   this.petals.visible=!reduced;
-  if(this.petals.visible){for(let i=0;i<48;i++){const o=this.petalPose,t=idleTime*.24+i*1.618,summer=this.se===2;o.position.set(this.center.x-9+(i*3.71%18)+Math.sin(t)*.55,summer?.7+Math.sin(t*1.4+i)*.32:.25+(5-((idleTime*(this.se===0?.23:.32)+i*.71)%5)),this.center.z-9+(i*2.37%18)+Math.cos(t*.7)*.6);o.rotation.set(t,i,t*.6);o.scale.set(this.se===0?.032:.05,summer?.012+Math.abs(Math.sin(idleTime*7+i))*.04:.012,this.se===0?.032:summer?.065:.035);o.updateMatrix();this.petals.setMatrixAt(i,o.matrix);}this.petals.instanceMatrix.needsUpdate=true;}
-  if(!reduced)this.waterLines.position.z=(idleTime*.14)%0.47;this.renderer.info?.reset();if(this.sunlight)this.sunlight.render(this.scene,this.camera);else this.renderer.render(this.scene,this.camera);}
+  if(this.petals.visible){this.petals.count=Math.min(this.petals.instanceMatrix.count,[96,64,20,56][this.se??1]);for(let i=0;i<this.petals.count;i++){const o=this.petalPose,t=idleTime*.24+i*1.618,summer=this.se===2;o.position.set(this.center.x-9+(i*3.71%18)+Math.sin(t)*.55,summer?.7+Math.sin(t*1.4+i)*.32:.25+(5-((idleTime*(this.se===0?.23:.32)+i*.71)%5)),this.center.z-9+(i*2.37%18)+Math.cos(t*.7)*.6);o.rotation.set(t,i,t*.6);o.scale.set(this.se===0?.048:this.se===3?.085:.065,summer?.012+Math.abs(Math.sin(idleTime*7+i))*.04:.012,this.se===0?.048:summer?.065:.045);o.updateMatrix();this.petals.setMatrixAt(i,o.matrix);}this.petals.instanceMatrix.needsUpdate=true;}
+  if(!reduced)this.waterLines.position.z=this.se===0?0:(idleTime*.14)%0.47;this.renderer.info?.reset();if(this.sunlight)this.sunlight.render(this.scene,this.camera);else this.renderer.render(this.scene,this.camera);}
 }

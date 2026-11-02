@@ -1,13 +1,14 @@
 import * as T from '../lib/three.module.min.js';
 
 // Small, deterministic, shared material maps: no network assets or per-building textures.
+export const surfaceTime={value:0},surfaceWinter={value:0};
 const maps=new Map();
 const palettes={
  wood:['#8e6b4a','#a9805a','#8e6a4a','#8b6a4a','#956e51','#bd9869','#b28b60','#7a5b41','#6f5139','#c9a97a','#d6bb8d'],
  plaster:['#f7f7f2','#f4f1e8','#ecebe4','#fff2c9','#f1e7d2','#eadfc9','#f1e3c3','#f6e4c0','#e6d4b0','#efdcb6','#e8dcc4','#f5e9d2','#e9e4d4','#d9d2c0'],
- stone:['#b8ac90','#bfb294','#a9a99c','#9e8f78','#a39276','#c8b693','#9d9480','#a09374','#cdc6a6'],
+ stone:['#ead7ac','#eedfb9','#e5cf9f','#b8ac90','#bfb294','#a9a99c','#9e8f78','#a39276','#c8b693','#9d9480','#a09374','#cdc6a6'],
  leaf:['#7fa857','#97ba67','#6a9850','#e9a4b4','#f4c0ca','#d9929f'],
- roof:['#5c8170','#4d7362','#52745e','#385443','#4a6a70','#3a5459','#5f7b6b','#4b6457','#3d4247','#2c3034']
+ roof:['#5c8170','#4d7362','#52745e','#385443','#4a6a70','#3a5459','#5f7b6b','#4b6457','#3d4247','#2c3034','#7a3b32','#5a2a24','#7d8b8e','#a77760','#825743','#7b926a','#5c7653','#7d6b52','#7d7d74','#6fa08a','#4a7fa6']
 };
 function texture(kind){
  if(maps.has(kind))return maps.get(kind);
@@ -33,7 +34,19 @@ function texture(kind){
  maps.set(kind,map);return map;
 }
 export function surfaceOptions(color){
+ if(color==='#7cc5be')return{onBeforeCompile(shader){shader.uniforms.streamTime=surfaceTime;shader.uniforms.streamWinter=surfaceWinter;shader.vertexShader='varying vec2 vStreamUv;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvStreamUv=uv;');shader.fragmentShader='varying vec2 vStreamUv;uniform float streamTime,streamWinter;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nfloat flow=streamTime*(1.-streamWinter);float wave=sin(vStreamUv.y*170.-flow*1.4+sin(vStreamUv.x*22.+flow*.4)*2.);float edge=pow(abs(vStreamUv.x-.5)*2.,3.);diffuseColor.rgb*=.82+edge*.18;diffuseColor.rgb+=vec3(.09,.16,.15)*smoothstep(.86,1.,wave)*(1.-streamWinter);');},customProgramCacheKey:()=> 'village-stream-v1'};
+
  const kind=color==='#9cbd6e'?'grass':Object.keys(palettes).find(k=>palettes[k].includes(color));
- if(!kind)return{};const map=texture(kind);
- return kind==='roof'?{map,bumpMap:map,bumpScale:.025,roughness:.8}:{map,roughness:.92};
+ if(!kind){if(['#ddc990','#9cab83','#8fd1c7','#c1d9cb'].includes(color))return{roughness:.32,onBeforeCompile(shader){shader.vertexShader='varying vec3 vWindowPoint;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvWindowPoint=position;');shader.fragmentShader='varying vec3 vWindowPoint;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nfloat reflection=pow(max(0.,sin((vWindowPoint.x+vWindowPoint.y*.55)*13.)),12.);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.89,.96,.95),reflection*.16);');},customProgramCacheKey:()=> 'village-window-v1'};return{};}const map=texture(kind);
+ const options={map,bumpMap:map,bumpScale:kind==='roof'?.025:kind==='stone'?.018:kind==='wood'?.012:kind==='plaster'?.004:0,roughness:kind==='roof'?.8:.92};
+ if(kind==='roof'||color==='#d9d2c0')Object.assign(options,{
+  onBeforeCompile(shader){
+   shader.uniforms.roofWinter=surfaceWinter;
+   shader.vertexShader='varying float vRoofUp;\n'+shader.vertexShader;
+   shader.vertexShader=shader.vertexShader.replace('#include <defaultnormal_vertex>','#include <defaultnormal_vertex>\nvRoofUp=dot(normalize(transformedNormal),normalize(mat3(viewMatrix)*vec3(0.,1.,0.)));');
+   shader.fragmentShader='varying float vRoofUp;uniform float roofWinter;\n'+shader.fragmentShader;
+   shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nfloat snow=roofWinter*smoothstep(.28,.82,vRoofUp);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.84,.91,.92),snow*.96);');
+  },customProgramCacheKey:()=> 'village-roof-snow-v1'
+ });
+ return options;
 }

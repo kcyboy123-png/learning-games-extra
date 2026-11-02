@@ -7,6 +7,7 @@ export function meadowSites(s){
  const blocked=new Set(s.buildings.flatMap(b=>cells(b).map(c=>c.join(','))));
  for(const key of s.landscape?.cleared||[])blocked.add(key);
  blocked.add('14,7');
+ const roads=new Set(s.buildings.filter(b=>b.type==='road').map(b=>b.x+','+b.y));
  const out=[];
  for(let x=2;x<SIZE;x++)for(let y=0;y<SIZE;y++){
   const key=`${x},${y}`;if(x===RIVER||blocked.has(key))continue;
@@ -15,8 +16,9 @@ export function meadowSites(s){
   const p=toWorld(x,y),count=18+Math.floor(random()*6),cx=(random()-.5)*.8,cz=(random()-.5)*.8;
   for(let i=0;i<count;i++){
    const clustered=i%4<2,r=clustered?.44:.86,dx=(random()-.5)*r*2,dz=(random()-.5)*r*2;
-   const size=i<5?.76+random()*.6:.24+random()*.48;
-   out.push({key,x:p.x+dx+(clustered?cx:0),z:p.z+dz+(clustered?cz:0),size,angle:random()*Math.PI*2,flower:i<2&&random()>.12,tone:random()});
+   const roadside=[[-1,0],[1,0],[0,-1],[0,1]].some(([a,b])=>roads.has(`${x+a},${y+b}`)&&dx*a+dz*b>.45);
+   const size=(i<5?.76+random()*.6:.24+random()*.48)*(roadside?.55:1);
+   out.push({key,x:p.x+dx+(clustered?cx:0),z:p.z+dz+(clustered?cz:0),size,angle:random()*Math.PI*2,flower:i<2&&random()>.12&&!roadside,tone:random()});
   }
  }
  return out;
