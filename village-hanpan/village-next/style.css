@@ -255,3 +255,7 @@ body:has(#infoPanel.open) #need{visibility:hidden}
 .cozy footer{display:flex;align-items:center;gap:8px;bottom:calc(14px + env(safe-area-inset-bottom))}.cozy footer nav{flex:1;min-width:0}
 .zoom-controls{display:flex;gap:8px;flex:none;padding:6px;border:1px solid #fffc;border-radius:20px;background:#fffdf1ee;box-shadow:0 6px 20px #204f4825}.zoom-controls button{width:48px;height:48px;min-width:48px;padding:0;font-size:26px}
 @media(max-width:600px){.cozy footer{bottom:calc(10px + env(safe-area-inset-bottom));gap:6px}.cozy footer nav button{padding:9px 2px}.zoom-controls{gap:8px;padding:4px}.zoom-controls button{width:44px;min-width:44px;height:48px}.cozy footer nav{gap:2px}}
+
+.zoom-controls #rotate{width:76px;display:flex;align-items:center;justify-content:center;gap:4px;font-size:14px}.rotate-icon{font-size:23px;line-height:1}
+@media(max-width:600px){.cozy footer nav{padding:4px 2px}.zoom-controls{padding:4px 2px}.zoom-controls #rotate{width:44px;flex-direction:column;gap:2px;font-size:11px;line-height:1}.rotate-icon{font-size:21px}}
+@media(max-width:360px){.cozy footer{flex-wrap:wrap}.cozy footer nav{flex-basis:100%;order:2}.zoom-controls{margin-left:auto}.cozy .sheet,.cozy #placePanel,.cozy #need{bottom:145px}.cozy .village-sign{bottom:150px}}
