@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.js';
-import {footStep,STRIDE} from './lib/gait.mjs?v=walk5-20261102';
-import {surfaceTexture,foliageGeometry,mossRockGeometry,fernGeometry,grassGeometry,broadleafGeometry,creekFoamGeometry,characterGeometry,forestMaterials,woodlandTree,contactTexture,stoneStepGeometry,cascadeGeometry,squirrelTailGeometry} from './art.mjs?v=walk5-20261102';
-import {pathX,pathSlope,elevation,riverX,terrain,worldAt,clamp} from './trail.mjs?v=walk5-20261102';
+import {footStep,STRIDE} from './lib/gait.mjs?v=walk-memory-20261102';
+import {surfaceTexture,foliageGeometry,mossRockGeometry,fernGeometry,grassGeometry,broadleafGeometry,creekFoamGeometry,characterGeometry,forestMaterials,woodlandTree,contactTexture,stoneStepGeometry,cascadeGeometry,squirrelTailGeometry} from './art.mjs?v=walk-memory-20261102';
+import {pathX,pathSlope,elevation,riverX,terrain,worldAt,clamp} from './trail.mjs?v=walk-memory-20261102';
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.94,envMapIntensity:.22,...extra});
 const cloth=color=>new T.MeshPhysicalMaterial({color,roughness:.95,envMapIntensity:.18,sheen:.16,sheenColor:'#e6d2a1',sheenRoughness:.9});
 // Albedo detail stays subtle beneath the storybook palette, avoiding dark double-tinting.
@@ -394,15 +394,36 @@ export async function createWorld(canvas){
   for(const x of [-.12,.12])part(squirrel,sphere,fur,[x,.065,.12],[.085,.06,.14]);scene.add(squirrel);
   const butterfly=new T.Group(),wings=[];for(const side of [-1,1]){const w=part(butterfly,sphere,mat('#edc85f'),[side*.12,0,0],[.15,.02,.2]);wings.push(w);}scene.add(butterfly);
   const summitLight=new T.Color('#ffd19a'),woodlandFog=new T.Color('#d5e0d7'),summitFog=new T.Color('#e9dfc9');
-  return {renderer,scene,camera,panorama,sun,posts,squirrel,
-    update(time,s,idle,reduced){
+  const observationSignals=[];
+  for(let i=0;i<3;i++){
+    const signal=new T.Mesh(new T.TorusGeometry(.38+i*.21,.018,4,28,Math.PI*1.1),new T.MeshBasicMaterial({color:'#fff5bf',transparent:true,opacity:.8,depthWrite:false,side:T.DoubleSide}));
+    scene.add(signal);observationSignals.push(signal);
+  }
+  const driftingLeaf=part(scene,sphere,mat('#e5bd56'),[0,0,0],[.17,.015,.34]);driftingLeaf.visible=false;
+  return {renderer,scene,camera,panorama,sun,posts,squirrel,songbird,
+    update(time,s,idle,reduced,observation=null){
       seated.pose(0,false,time,true,reduced,0,'sit');watcher.pose(0,false,time,true,reduced,0,'crouch');
       scene.fog.density=.009-clamp((s-148)/45,0,1)*.005;
       waterTime.value=reduced?0:time;windTime.value=reduced?0:time;
       flow.offset.y=reduced?0:-time*.018;flow.offset.x=reduced?0:Math.sin(time*.13)*.018;
       for(const r of ripples){const pulse=reduced?1:1+Math.sin(time*.9+r.userData.phase)*.07;r.position.z=-r.userData.s+(reduced?0:Math.sin(time*.7+r.userData.phase)*.08);if(r.userData.foam)r.scale.set(r.userData.radius*(1+(pulse-1)*.35),1,r.userData.radius*(1+(pulse-1)*.7));else r.scale.setScalar(pulse);}
-      const ambientTime=reduced?0:time,approach=reduced?0:clamp((idle-1)/4,0,1),sp=worldAt(136,3.6-approach*1.75);squirrel.position.set(sp.x,sp.y+(!reduced&&approach>0&&approach<1?Math.abs(Math.sin(time*12))*.035:0),sp.z);squirrel.rotation.y=-Math.PI/2;sqHead.rotation.y=Math.sin(ambientTime*.8)*.16;tail.rotation.x=-.20+Math.sin(ambientTime*2)*.045;
-      songbird.rotation.y=Math.sin(ambientTime*.7)*.2;const b=worldAt(112,2.9);butterfly.position.set(b.x+Math.sin(ambientTime*.7)*.5,b.y+1+Math.sin(ambientTime*1.3)*.25,b.z);wings.forEach((w,i)=>w.rotation.z=reduced?0:Math.sin(time*11)*(i?1:-1)*.8);
+      const ambientTime=reduced?0:time,wild=observation?.spot===136,settled=wild?(reduced?1:clamp(observation.elapsed/observation.duration,0,1)):0,sp=worldAt(136,3.6);
+      squirrel.position.set(sp.x,sp.y,sp.z);squirrel.rotation.y=-Math.PI/2;
+      sqHead.rotation.y=wild?(observation.id==='wait'?.35:-.25):Math.sin(ambientTime*.8)*.16;
+      sqHead.rotation.x=wild?settled*(observation.id==='space'?.3:-.15):0;
+      tail.rotation.x=-.20+(wild&&observation.id==='wait'?settled*.16:Math.sin(ambientTime*2)*.045);
+      const birdWatching=observation?.spot===24,waterWatching=[62,91].includes(observation?.spot),age=reduced?1.5:(observation?.elapsed||0);
+      songbird.position.y=bp.y+1.8+(birdWatching&&observation.id==='watch'&&!reduced?Math.sin(Math.min(age/2.5,1)*Math.PI)*.12:0);
+      for(const [i,signal] of observationSignals.entries()){
+        signal.visible=birdWatching&&observation.id==='listen'||waterWatching&&observation.id!=='leaf';
+        signal.scale.setScalar(reduced?1:.85+Math.sin(age*2+i)*.1);
+        if(birdWatching){signal.position.set(bp.x,bp.y+2,bp.z+.12);signal.rotation.set(0,0,-.2);}
+        else if(waterWatching){const rs=observation.spot===62?70:94;signal.position.set(riverX(rs),elevation(rs)-.69-i*.002,-rs);signal.rotation.set(-Math.PI/2,0,i*.8);signal.scale.multiplyScalar(1.5);}
+      }
+      driftingLeaf.visible=waterWatching&&observation.id==='leaf';
+      if(driftingLeaf.visible){const ls=72-(reduced?1.5:clamp(age/3,0,1)*3);driftingLeaf.position.set(riverX(ls)+.3,elevation(ls)-.68,-ls);driftingLeaf.rotation.y=reduced?.5:age*.3;}
+
+      songbird.rotation.y=birdWatching&&observation.id==='watch'?.65:Math.sin(ambientTime*.7)*.2;const b=worldAt(112,2.9);butterfly.position.set(b.x+Math.sin(ambientTime*.7)*.5,b.y+1+Math.sin(ambientTime*1.3)*.25,b.z);wings.forEach((w,i)=>w.rotation.z=reduced?0:Math.sin(time*11)*(i?1:-1)*.8);
       const sunset=T.MathUtils.smoothstep(s,184,198);sun.color.set('#ffe6bc').lerp(summitLight,sunset);sun.intensity=4.7-.45*sunset;scene.fog.color.copy(woodlandFog).lerp(summitFog,sunset);
       const p=worldAt(s);fill.position.set(p.x+6,p.y+10,p.z+12);fill.target.position.set(p.x,p.y+1,p.z);fill.target.updateMatrixWorld();sun.position.set(p.x-18,p.y+26-sunset*10,p.z-16+sunset*6);sun.target.position.set(p.x,p.y,p.z-7);sun.target.updateMatrixWorld();
     }};

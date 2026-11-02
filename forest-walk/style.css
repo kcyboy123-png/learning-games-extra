@@ -49,3 +49,15 @@ body[data-mode=rest] .location{opacity:.9}.tools button:disabled{opacity:.35;cur
 @media(max-width:360px){header{padding-inline:12px}.brand{font-size:13px}.tools button{font-size:11px;padding-inline:8px}.location{width:156px}.rest h2{font-size:18px}.rest{padding:16px}.finish h2{font-size:21px}}
 @media(prefers-reduced-motion:reduce){#pad button.active{transform:none}}
 @media(max-height:520px){.intro h1{font-size:32px;margin:8px 0 12px}.intro h1 br{display:none}.rest{max-height:calc(100dvh - 80px)}}
+
+/* Observation choices and personal memories share the forest's existing palette. */
+.memory-symbols{position:absolute;width:0;height:0;overflow:hidden}
+.rest{display:flex;flex-direction:column;align-items:stretch;gap:10px;width:min(390px,calc(100% - 32px));max-height:calc(100dvh - 85px);padding:20px}
+.rest h2{font-size:21px}.rest #rest-text{font-size:13px;color:#526451}.rest .primary{width:100%;font-size:14px;min-height:46px}
+#observe-choices{display:flex;gap:8px;flex-wrap:wrap}#observe-choices button{flex:1 1 130px;min-height:46px;padding:10px 12px;border:1px solid #a2b79f;background:#eef1e3;border-radius:12px;color:#234c3d;font-size:14px;font-weight:600}
+#observe-choices button[aria-pressed=true]{background:#234c3d;color:#fffbea;border-color:#234c3d}
+.rest #observe-feedback{font-size:15px;line-height:1.6;padding-left:12px;border-left:3px solid #88a67d;min-height:48px}.rest #observe-saved{font-size:12px;line-height:1.5;color:#526451;min-height:18px}
+.finish{width:min(420px,calc(100% - 32px));max-height:58dvh;gap:10px}.finish h2{margin:0}.finish>p{margin-bottom:0}.memory-page{grid-column:1/-1;border-top:1px solid #cad4bf;border-bottom:1px solid #cad4bf;padding:12px 0;text-align:left}.memory-page h3{font-size:14px;margin:0 0 10px;color:#456647}
+#memories{list-style:none;margin:0;padding:0;display:grid;gap:10px}#memories li{display:flex;gap:12px;align-items:center;font-size:14px;line-height:1.5}#memories svg{width:25px;height:25px;flex:none;fill:none;stroke:#557c57;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}.finish #memory-empty{font-size:13px;margin:0;color:#526451}
+@media(max-width:700px){.rest{left:16px;right:16px;transform:none;width:auto;max-height:47dvh;padding:16px;gap:8px}.rest h2{font-size:19px}.rest #rest-text{display:none}.finish{left:16px;right:16px;width:auto;max-height:55dvh}.rest #observe-feedback{font-size:14px;min-height:44px}}
+@media(max-height:520px) and (min-width:701px){.rest{width:350px;max-height:calc(100dvh - 78px);padding:14px;gap:7px}.rest #rest-text{display:none}.finish{max-height:calc(100dvh - 78px)}}

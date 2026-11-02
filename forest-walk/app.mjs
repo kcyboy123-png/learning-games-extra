@@ -1,13 +1,13 @@
 import * as T from './vendor/three.module.js';
-import {createWorld,createChild} from './world.mjs?v=walk5-20261102';
-import {advance,worldAt,pathSlope,elevation,grade,terrain,riverX,place,nearby,LENGTH,clamp} from './trail.mjs?v=walk5-20261102';
-import {ForestSound} from './sound.mjs?v=walk5-20261102';
+import {createWorld,createChild} from './world.mjs?v=walk-memory-20261102';
+import {advance,worldAt,pathSlope,elevation,grade,terrain,riverX,place,nearby,LENGTH,clamp} from './trail.mjs?v=walk-memory-20261102';
+import {ForestSound} from './sound.mjs?v=walk-memory-20261102';
 const $=id=>document.getElementById(id),canvas=$('forest');
 await document.fonts.load('600 16px SUIT');
 let world;try{world=await createWorld(canvas);}catch(e){$('intro').hidden=true;$('error').hidden=false;throw e;}
 const {scene,renderer,camera,panorama}=world,hero=createChild(scene),guide=createChild(scene,'#bba366',true);
-const friends=[createChild(scene,'#ca8c7c',false,1),createChild(scene,'#82afbd',false,2),createChild(scene,'#ad9fbe',false,3)];
-const friendTravel=friends.map((_,i)=>i*.17),friendPrevious=friends.map(()=>null);
+const memories=new Map();let observation=null;
+import {observations,beginObservation,advanceObservation} from './lib/observations.mjs?v=walk-memory-20261102';
 const sound=new ForestSound(),keys=new Set(),touch=new Set();let state={x:0,y:0},mode='intro',time=0,last=performance.now(),idle=0,traveled=0,reached=false,lastPlace='',noteUntil=8,pulse=null,pauseFrom='playing';
 const motionQuery=matchMedia('(prefers-reduced-motion:reduce)');let reduced=motionQuery.matches;motionQuery.addEventListener('change',e=>reduced=e.matches);
 const camPos=new T.Vector3(),look=new T.Vector3(),desired=new T.Vector3();
@@ -17,15 +17,38 @@ function focusGame(){canvas.focus({preventScroll:true});}
 function announce(text,seconds=6){$('note').textContent=text;noteUntil=time+seconds;}
 async function audioStart(){try{await sound.start();}catch{sound.enabled=false;updateSound();announce('소리를 켜려면 오른쪽 위 소리 버튼을 눌러 주세요.');}}
 function updateSound(){$('sound').textContent=sound.enabled?'소리 켜짐':'소리 꺼짐';$('sound').setAttribute('aria-pressed',String(sound.enabled));$('sound').setAttribute('aria-label',sound.enabled?'자연 소리 끄기':'자연 소리 켜기');}
-function reset(){state={x:0,y:0};idle=0;traveled=0;reached=false;time=0;lastPlace='';sound.nextBird=4;sound.lastStep=null;modeTo('playing');position(true);announce('노란 배낭이 나예요. 위쪽 방향키로 걸어 볼까요?',9);audioStart();focusGame();}
+function reset(){memories.clear();observation=null;renderMemories();state={x:0,y:0};idle=0;traveled=0;reached=false;time=0;lastPlace='';sound.nextBird=4;sound.lastStep=null;modeTo('playing');position(true);announce('노란 배낭이 나예요. 위쪽 방향키로 걸어 볼까요?',9);audioStart();focusGame();}
 $('start').disabled=false;$('start').textContent='산길 오르기';$('start').onclick=reset;
 $('sound').onclick=async()=>{try{await sound.toggle();updateSound();}catch{announce('브라우저에서 소리를 허용한 뒤 다시 눌러 주세요.');}if(mode==='paused')sound.pause();else if(mode==='playing')focusGame();};
 function pause(){if(mode==='intro'||mode==='paused'||mode==='error')return;pauseFrom=mode;modeTo('paused');sound.pause();$('resume').focus();}
 function resume(){modeTo(pauseFrom);last=performance.now();audioStart();if(pauseFrom==='rest')$('leave-rest').focus();else if(pauseFrom==='finished')$('stay').focus();else focusGame();}
 $('pause').onclick=()=>mode==='paused'?resume():pause();$('resume').onclick=resume;$('restart').onclick=reset;$('again').onclick=reset;
 $('stay').onclick=()=>{modeTo('playing');announce('바람을 느끼며 더 머물러도 좋아요.',6);focusGame();};
-function interact(){const spot=nearby(state.y);if(mode!=='playing'||!spot)return;if(state.y>190&&reached){modeTo('finished');$('stay').focus();return;}modeTo('rest');$('rest-title').textContent=spot.name;$('rest-text').textContent=spot.text;if(spot.s===24)sound.chirp();$('leave-rest').focus();}
-$('action').onclick=interact;$('leave-rest').onclick=()=>{modeTo('playing');focusGame();};
+function renderMemories(){
+  $('memories').replaceChildren();
+  for(const entry of memories.values()){
+    const item=document.createElement('li'),icon=document.createElementNS('http://www.w3.org/2000/svg','svg'),use=document.createElementNS('http://www.w3.org/2000/svg','use');
+    icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('aria-hidden','true');use.setAttribute('href','#mark-'+entry.mark);icon.append(use);
+    const text=document.createElement('span');text.textContent=entry.text;item.append(icon,text);$('memories').append(item);
+  }
+  $('memory-title').textContent=memories.size?'오늘 마음에 남은 것':'나만의 속도로 걸었어요';
+  $('memory-empty').hidden=memories.size>0;
+}
+function chooseObservation(spot,id){
+  observation=beginObservation(spot,id);if(!observation)return;
+  for(const b of $('observe-choices').children)b.setAttribute('aria-pressed',String(b.dataset.choice===id));
+  $('observe-feedback').textContent=observation.hint;$('observe-saved').textContent='천천히 바라봐요. 언제든 다시 걸어도 좋아요.';
+  if(spot===24)sound.chirp();
+}
+function interact(){
+  const spot=nearby(state.y);if(mode!=='playing'||!spot)return;
+  if(state.y>190&&reached){renderMemories();modeTo('finished');$('stay').focus();return;}
+  observation=null;modeTo('rest');$('rest-title').textContent=spot.name;$('rest-text').textContent=spot.text;
+  $('observe-feedback').textContent='어떻게 살펴볼까요?';$('observe-saved').textContent='';$('observe-choices').replaceChildren();
+  for(const choice of observations[spot.s].choices){const b=document.createElement('button');b.type='button';b.textContent=choice.label;b.dataset.choice=choice.id;b.setAttribute('aria-pressed','false');b.onclick=()=>chooseObservation(spot.s,choice.id);$('observe-choices').append(b);}
+  $('observe-choices').firstElementChild.focus();
+}
+$('action').onclick=interact;$('leave-rest').onclick=()=>{observation=null;modeTo('playing');focusGame();};
 window.addEventListener('keydown',e=>{
   if(mode==='paused'&&e.code==='Tab'){const first=$('resume'),last=$('restart');if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}return;}
   if(e.code==='Escape'){e.preventDefault();if(mode==='paused')resume();else if(mode==='rest'){$('leave-rest').click();}else pause();return;}
@@ -44,19 +67,6 @@ function position(snap=false,dt=.016,moving=false){
   const dir=input();let yaw=wildlife?angle+Math.atan2(Math.sin(Math.atan2(world.squirrel.position.x-p.x,world.squirrel.position.z-p.z)-angle),Math.cos(Math.atan2(world.squirrel.position.x-p.x,world.squirrel.position.z-p.z)-angle))*.52:waterRest?Math.atan2(riverX(state.y-2)-p.x,2):angle;if(moving){const dx=dir.x+slope*dir.y,dz=-dir.y;yaw=Math.atan2(dx,dz);}
   hero.root.rotation.y+=Math.atan2(Math.sin(yaw-hero.root.rotation.y),Math.cos(yaw-hero.root.rotation.y))*(snap?1:1-Math.exp(-dt*12));hero.pose(traveled,moving,time,mode==='rest',reduced,grade(state.y)*-Math.cos(hero.root.rotation.y),wildlife?'observe':'look');
   const teacherS=state.y<75?74:state.y<101?88:202,g=worldAt(teacherS,state.y<101?-2.15:-2.75);guide.root.position.set(g.x,g.y,g.z);guide.root.rotation.y=Math.PI*.72;guide.pose(0,false,time,true,reduced,0,state.y>=75&&state.y<101?'guide':'look');
-  for(let i=0;i<friends.length;i++){
-    const opening=T.MathUtils.smoothstep(state.y,185,199),fs=Math.min(202+i*.6,state.y+4.5+i*2.3);
-    const offset=(i-1)*.90+Math.sin(fs*.12+i*2)*.18+opening*(i-1)*.45,f=worldAt(fs,offset);
-    const previous=friendPrevious[i],step=previous&&!snap?Math.hypot(f.x-previous.x,f.z-previous.z):0;
-    const walking=moving&&step>1e-5;
-    if(snap)friendTravel[i]=i*.17;else friendTravel[i]+=step;
-    let facing=wildlife&&i===0?Math.PI*.55:Math.atan2(pathSlope(fs),-1)+(opening*(i-1)*.20);
-    if(walking)facing=Math.atan2(f.x-previous.x,f.z-previous.z);
-    const actor=friends[i].root;actor.position.set(f.x,f.y,f.z);
-    actor.rotation.y+=Math.atan2(Math.sin(facing-actor.rotation.y),Math.cos(facing-actor.rotation.y))*(snap?1:1-Math.exp(-dt*10));
-    friends[i].pose(friendTravel[i],walking,time,!walking,reduced,grade(fs)*-Math.cos(actor.rotation.y),wildlife&&i===0?'look':i===0?'bag':'look');
-    friendPrevious[i]=f;
-  }
   const creekView=clamp((state.y-36)/12,0,1)*(1-clamp((state.y-64)/16,0,1));
   const ahead=worldAt(Math.min(207,state.y+5+creekView*2.5),0),back=worldAt(state.y-5.4+creekView*.30,state.x*.2);
   desired.set(back.x+(camera.aspect<1?.25:.55)-creekView*2.3,p.y+2.55-creekView*.15,back.z);
@@ -66,10 +76,19 @@ function position(snap=false,dt=.016,moving=false){
   const shore=[62,91].includes(nearby(state.y)?.s)?Math.sign(riverX(state.y-2)-p.x)||1:1;
   if(mode==='rest'){desired.set(p.x+shore*2,p.y+3.8,p.z+7.5);target.set(p.x+shore*1.4,p.y+.8,p.z-1.5);}
   if(mode==='rest'&&camera.aspect<1){const backWide=worldAt(state.y-10,shore*1.4);desired.set(backWide.x,p.y+5.2,backWide.z);target.set(p.x+shore*2,p.y+1,p.z-1);}
+  if(waterRest){
+    const rs=nearby(state.y).s===62?70:94;
+    target.set(riverX(rs),elevation(rs)+.25,-rs);
+    desired.set(riverX(rs)+(camera.aspect<1?.6:7),elevation(rs)+(camera.aspect<1?6:5.5),-rs+(camera.aspect<1?8:9));
+  }
+  if(mode==='rest'&&nearby(state.y)?.s===24){
+    const bird=world.songbird.position;target.set((p.x+bird.x)/2,p.y+1.25,(p.z+bird.z)/2);
+    desired.set(target.x-2,p.y+(camera.aspect<1?5.5:3.6),Math.max(p.z,bird.z)+(camera.aspect<1?9:6));
+  }
   if(wildlife){
     const animal=world.squirrel.position,gap=Math.hypot(animal.x-p.x,animal.z-p.z);
     target.set((p.x+animal.x)/2,p.y+.65,(p.z+animal.z)/2);
-    desired.set(target.x-.85,p.y+(camera.aspect<1?3.8:2.8),target.z+Math.max(camera.aspect<1?9:5.5,gap+3));
+    desired.set(target.x-.85,p.y+(camera.aspect<1?3.8:2.8),target.z+Math.max(camera.aspect<1?9:5.5,gap+3)+(observation?.id==='space'?1.2:0));
   }
   desired.y=Math.max(desired.y,terrain(desired.x,-desired.z)+1.2);
   if(state.y>188&&mode!=='rest'){const opening=clamp((state.y-188)/10,0,1),summitBack=worldAt(state.y-6.5,state.x*.2),summitAhead=worldAt(state.y+6);desired.lerp(new T.Vector3(summitBack.x,p.y+3.25,summitBack.z),opening);target.lerp(new T.Vector3(summitAhead.x,p.y+.8,summitAhead.z),opening);}
@@ -85,8 +104,9 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/10
     $('progress').value=state.y;
     const spot=nearby(state.y);$('action').hidden=!spot||mode!=='playing';if(spot&&$('action').dataset.spot!==spot.name){$('action').dataset.spot=spot.name;$('action').innerHTML=spot.name+' <kbd>E</kbd>';}
     if(time>noteUntil)$('note').textContent='';
-    if(state.y>199.8&&!reached){reached=true;announce('바람봉 정상이에요. 우리 발로 36m 높이까지 올라왔어요.',12);modeTo('finished');$('stay').focus();}
+    if(mode==='rest'&&advanceObservation(observation,dt,memories)){$('observe-feedback').textContent=observation.memory;$('observe-saved').textContent='이 장면을 산책 기억에 남겼어요.';}
+    if(state.y>199.8&&!reached){renderMemories();reached=true;announce('바람봉 정상이에요. 우리 발로 36m 높이까지 올라왔어요.',12);modeTo('finished');$('stay').focus();}
     sound.tick(time,state.y,moving,traveled);
   }
-  if(mode!=='paused'){world.update(time,state.y,idle,reduced);position(false,dt,moving);}renderer.render(scene,camera);
+  if(mode!=='paused'){world.update(time,state.y,idle,reduced,mode==='rest'?observation:null);position(false,dt,moving);}renderer.render(scene,camera);
 }requestAnimationFrame(frame);
