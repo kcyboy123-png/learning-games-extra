@@ -1,6 +1,6 @@
 // 격자↔월드 좌표, 출입구 방향, 추천 부지, 보행 경로. 경제 상태는 읽기만 한다.
-import {SIZE,RIVER,TYPES,cells,at,network,terrain,unlocked} from './core.mjs?v=city1';
-import {naturalFeature} from './landscape.mjs?v=city1';
+import {SIZE,RIVER,TYPES,cells,at,network,terrain,unlocked} from './core.mjs?v=cozy2';
+import {naturalFeature} from './landscape.mjs?v=cozy2';
 export const CELL=2.4, GROUND_Y=.103, ROAD_Y=.133;
 export const DIRS=[[0,1],[1,0],[0,-1],[-1,0]]; // 0 남(+z) 1 동(+x) 2 북 3 서. 모델의 문은 로컬 +z.
 export const toWorld=(gx,gy)=>({x:(gx-(SIZE-1)/2)*CELL,z:(gy-(SIZE-1)/2)*CELL});

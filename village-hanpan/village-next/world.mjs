@@ -1,17 +1,17 @@
 // village-next 표현 계층. pocket/world.mjs의 헬퍼·모델·배칭·주민 리그를 가져와 18×18 격자 위에 올린다.
 // 경제 값은 계산하지 않는다. sync(state)로 건물을 그리고 preview()로 배치 미리보기를 보여준다.
 import * as T from '../lib/three.module.min.js';
-import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=city1';
-import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=city1';
-import {naturalFeature,growthStage} from './landscape.mjs?v=city1';
-import {advancePersonRoute} from './residents.mjs?v=neighbors1';
-import {townscapeSites} from './townscape.mjs?v=art5final';
-import {seasonalSites,createSeasonDetails,disposeSeasonDetails} from './season-details.mjs?v=graphics10';
-import {surfaceOptions,surfaceTime,surfaceWinter} from './surfaces.mjs?v=pa15-artfinal';
-import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?v=pa15-artfinal';
-import {createSunlight} from './sunlight.mjs?v=pa15-artfinal';
-import {paintedTree,treeArtSeason,treeArtReady} from './tree-art.mjs?v=pa15-artfinal';
-import {addRabbitArt,updateRabbitArt} from './rabbit-art.mjs?v=quality1';
+import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=cozy2';
+import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=cozy2';
+import {naturalFeature,growthStage} from './landscape.mjs?v=cozy2';
+import {advancePersonRoute} from './residents.mjs?v=cozy2';
+import {townscapeSites} from './townscape.mjs?v=cozy2';
+import {seasonalSites,createSeasonDetails,disposeSeasonDetails} from './season-details.mjs?v=cozy2';
+import {surfaceOptions,surfaceTime,surfaceWinter} from './surfaces.mjs?v=cozy2';
+import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?v=cozy2';
+import {createSunlight} from './sunlight.mjs?v=cozy2';
+import {paintedTree,treeArtSeason,treeArtReady} from './tree-art.mjs?v=cozy2';
+import {addRabbitArt,updateRabbitArt} from './rabbit-art.mjs?v=cozy2';
 
 const materials=new Map(),geometries=new Map();let ghostMode=false;
 const GHOST={transparent:true,opacity:.5,depthWrite:false};

@@ -1,7 +1,7 @@
-import {PLAYER_SPEED} from './move.mjs?v=move1';
-import {TYPES,connected,network} from './core.mjs?v=city1';
-import {origin,facing,entrance,toWorld,toCell,path} from './grid.mjs?v=city1';
-import {growthStage} from './landscape.mjs?v=city1';
+import {PLAYER_SPEED} from './move.mjs?v=cozy2';
+import {TYPES,connected,network} from './core.mjs?v=cozy2';
+import {origin,facing,entrance,toWorld,toCell,path} from './grid.mjs?v=cozy2';
+import {growthStage} from './landscape.mjs?v=cozy2';
 
 // Positions match model doors and seat centres, in the model's local coordinates.
 const doors={snack:[.85,1.105],western:[0,1.07],japanese:[.9,1.1],chinese:[0,1.07],convenience:[.9,1.1],supermarket:[2.4,2.32],clinic:[0,1.07],hospital:[0,1.17],kids:[0,1.07],amusement:[2,2.62],school:[0,1.12],library:[0,1.12]};

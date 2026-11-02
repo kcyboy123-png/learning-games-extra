@@ -1,5 +1,5 @@
-import {metrics,TYPES,month,RIVER,calendarMonth} from './core.mjs?v=city1';
-import {season} from './data.mjs?v=80min1';
+import {metrics,TYPES,month,RIVER,calendarMonth} from './core.mjs?v=cozy2';
+import {season} from './data.mjs?v=cozy2';
 
 // Optional, live challenges: completing one never changes money, scores or saved records.
 export function villagePromises(s){

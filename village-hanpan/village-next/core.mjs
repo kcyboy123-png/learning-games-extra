@@ -1,8 +1,8 @@
-import {buildingSpec,cityPhase,premiumIncome} from './city-rules.mjs?v=city1';
-export {buildingSpec} from './city-rules.mjs?v=city1';
+import {buildingSpec,cityPhase,premiumIncome} from './city-rules.mjs?v=cozy2';
+export {buildingSpec} from './city-rules.mjs?v=cozy2';
 // village-next B단계 경제 코어. public/core.mjs(village-40-v3) 기반 + 완공시각·재배치·월별 해금·텃밭·휴업. 렌더/DOM 접근 없음.
-import {naturalFeature,isGarden,landscapeMetrics} from './landscape.mjs?v=city1';
-import {VERSION,RULE,MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,TIERS,season} from './data.mjs?v=animals8';
+import {naturalFeature,isGarden,landscapeMetrics} from './landscape.mjs?v=cozy2';
+import {VERSION,RULE,MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,TIERS,season} from './data.mjs?v=cozy2';
 export {MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,RULE,VERSION};
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 export const SCOPE={label:'B규칙'};
@@ -21,12 +21,19 @@ export function createState(mode='run'){
  for(let y=3;y<=13;y++)add('road',5,y);
  add('house',4,5,['ins']);add('house',6,5,['ins']);add('generator',4,7);add('tree',6,9);add('tree',4,10);return s;
 }
+// Relaxed decorating keeps past results intact and uses a separate current growth score.
+export function enableCozy(s){if(s.cozyV!==1)s.money=Math.max(300,s.money);s.cozyV=1;s.mode='free';s.ended=false;return s;}
+export function cozyGrowth(s){
+ const made=s.buildings.filter(b=>!b.starter&&b.progress>=1&&!b.closed&&!['road','bridge'].includes(b.type));
+ const gardens=made.filter(isGarden).length,buildings=made.length-gardens,variety=new Set(made.map(b=>b.type)).size,details=made.reduce((n,b)=>n+b.opts.length,0);
+ return {gardens,buildings,variety,score:Math.round(100+350*Math.min(1,gardens/20)+200*Math.min(1,variety/10)+250*Math.min(1,buildings/20)+100*Math.min(1,details/10))};
+}
 export function network(s){const roads=new Set(s.buildings.filter(b=>b.progress>=1&&['road','bridge'].includes(b.type)).map(b=>`${b.x},${b.y}`)),seen=new Set(),q=['5,3'];
  while(q.length){const k=q.pop();if(seen.has(k)||!roads.has(k))continue;seen.add(k);const[x,y]=k.split(',').map(Number);for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]])q.push(`${x+dx},${y+dy}`);}return seen;}
 export function connected(s,b,net=network(s)){return cells(b).some(([x,y])=>net.has(`${x},${y}`)||[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>net.has(`${x+dx},${y+dy}`)));}
 export function stage(s){return Math.max(s.stage,month(s)>=7||s.pop>=28?3:month(s)>=2||s.pop>=16?2:month(s)>=1||s.buildings.some(b=>b.type==='snack'&&b.progress>=1)?1:0);}
 // 해금: 정해진 달이 되었거나(9절) 주민 성과로 stage가 앞서면 열린다. 평가 시작은 달을 따르므로 빨리 열어도 벌점이 없다.
-const STAGE_MONTH=[0,1,2,7];export function unlocked(s,type){const d=TYPES[type];return month(s)>=d.unlock||STAGE_MONTH[stage(s)]>=d.unlock;}
+const STAGE_MONTH=[0,1,2,7];export function unlocked(s,type){const d=TYPES[type];return s.cozyV===1||month(s)>=d.unlock||STAGE_MONTH[stage(s)]>=d.unlock;}
 export const unlockMonth=type=>TYPES[type].unlock;
 export function canBuild(s,type,x,y,ignoreId=0){const d=TYPES[type];if(!d)return '알 수 없는 시설이에요.';if(s.paused||s.ended)return '시간을 재개한 뒤 지을 수 있어요.';if(!unlocked(s,type))return `${monthLabel(s,d.unlock)}에 열려요.`;
  if(!Number.isInteger(x)||!Number.isInteger(y))return '땅을 골라 주세요.';
@@ -49,7 +56,7 @@ export function demolish(s,id){const b=s.buildings.find(b=>b.id===id);if(!b||(b.
 export function toggleClosed(s,id){const b=s.buildings.find(b=>b.id===id);if(!b||b.progress<1||b.starter||['road','bridge'].includes(b.type))return{error:'이 시설은 휴업할 수 없어요.'};if(s.paused||s.ended)return{error:'재개한 뒤 바꿀 수 있어요.'};b.closed=!b.closed;if(!b.closed)delete b.closed;return{closed:!!b.closed};}
 // 텃밭 돌보기: 게임시간 15초 활동, 월 1회, +35. 시작은 즉시 기록하고 지급은 advance에서 15초 뒤에 한다(재접속·연타로 중복 불가).
 export function harvest(s){if(s.paused||s.ended)return{error:'재개한 뒤 돌볼 수 있어요.'};const m=month(s);if(s.harvestAt!==null)return{error:'지금 텃밭을 돌보는 중이에요.'};if(s.harvested.includes(m))return{error:'이번 달 텃밭은 이미 돌봤어요. 다음 달에 다시 할 수 있어요.'};s.harvestAt=s.t;return{};}
-export function canRelocate(s,b){if(!b)return '시설을 찾을 수 없어요.';if(s.paused||s.ended)return '재개한 뒤 옮길 수 있어요.';if(b.starter)return '처음부터 있던 시설은 옮기지 않아요.';if(['road','bridge','workshop'].includes(b.type))return '길·다리·창고 재생 공간은 옮길 수 없어요.';if(b.progress<1)return '공사가 끝난 뒤 옮길 수 있어요.';if(b.moved)return '이 건물은 이미 한 번 옮겼어요.';if(b.completedAt===undefined||s.t-b.completedAt>RELOCATE_WINDOW)return '완공 후 이동 가능한 시간이 지났어요.';return '';}
+export function canRelocate(s,b){if(!b)return '시설을 찾을 수 없어요.';if(s.paused||s.ended)return '재개한 뒤 옮길 수 있어요.';if(b.starter)return '처음부터 있던 시설은 옮기지 않아요.';if(['road','bridge','workshop'].includes(b.type))return '길·다리·창고 재생 공간은 옮길 수 없어요.';if(b.progress<1)return '공사가 끝난 뒤 옮길 수 있어요.';if(s.cozyV===1)return '';if(b.moved)return '이 건물은 이미 한 번 옮겼어요.';if(b.completedAt===undefined||s.t-b.completedAt>RELOCATE_WINDOW)return '완공 후 이동 가능한 시간이 지났어요.';return '';}
 export const relocateLeft=(s,b)=>b.completedAt===undefined?0:Math.max(0,RELOCATE_WINDOW-(s.t-b.completedAt));
 // 옮기는 동안 상태를 바꾸지 않고 확정 순간에만 위치·정비비·사용 여부를 한 번에 적용한다.
 export function relocate(s,id,x,y){const b=s.buildings.find(b=>b.id===id);const why=canRelocate(s,b);if(why)return{error:why};if(b.x===x&&b.y===y)return{error:'같은 자리예요.'};const error=canBuild(s,b.type,x,y,b.id);if(error)return{error};const fee=clearingCost(s,b.type,x,y);if(s.money<fee)return{error:`자연 정비비 ${fee}이 필요해요.`};
@@ -67,10 +74,10 @@ export function metrics(s){const net=network(s),live=s.buildings.filter(b=>b.pro
  const green=clamp((live.filter(b=>isGarden(b)&&b.type!=='bench').length*4+6)/p),homes=live.filter(b=>TYPES[b.type].cap),comfort=homes.length?homes.filter(b=>b.opts.includes('ins')||(se===2&&b.opts.includes('shade'))).length/homes.length:0;
  const fire=live.some(b=>b.type==='fire'),drain=live.some(b=>b.type==='drain'),training=m>=6&&calendarMonth(s)===8&&!fire,rain=m>=4&&calendarMonth(s)===6&&!drain;
  const beautyPhase=cityPhase(s),beauty=landscaping.score/100;
- const targetSat=clamp(beautyPhase*beauty*5+35+service*40+energy*15+green*5+comfort*5-(housing<s.pop?20:0)-(training?7:0)-(rain?5:0),0,100);
+ let targetSat=clamp(beautyPhase*beauty*5+35+service*40+energy*15+green*5+comfort*5-(housing<s.pop?20:0)-(training?7:0)-(rain?5:0),0,100);
  const users=s.economyV===4?s.pop:p,foodUsed=Math.min(users,sum('food')),leisureUsed=Math.min(users,sum('leisure'));
  const premium=premiumIncome(s,live);
- const income=premium+(s.economyV===4?(8+s.pop*(2+2*clamp(s.sat/100))+foodUsed*12+Math.min(s.pop,sum('health'))*2+Math.min(s.pop,sum('education'))*2+leisureUsed*3):((s.economyV===3?20:80)+s.pop*(8+8*clamp(s.sat/100))+foodUsed*4+leisureUsed)*economy(s).income);
+ let income=premium+(s.economyV===4?(8+s.pop*(2+2*clamp(s.sat/100))+foodUsed*12+Math.min(s.pop,sum('health'))*2+Math.min(s.pop,sum('education'))*2+leisureUsed*3):((s.economyV===3?20:80)+s.pop*(8+8*clamp(s.sat/100))+foodUsed*4+leisureUsed)*economy(s).income);
  const upkeep=s.buildings.filter(b=>b.progress>=1&&!b.closed).reduce((a,b)=>a+upkeepOf(s,b),0);
  const safety=(m<5||fire ? .6 : .2)+(m<5||drain ? .4 : .1);
  const optionEligible=live.filter(b=>TYPES[b.type].cap||TYPES[b.type].food||TYPES[b.type].education||TYPES[b.type].health||TYPES[b.type].leisure);
@@ -79,7 +86,8 @@ export function metrics(s){const net=network(s),live=s.buildings.filter(b=>b.pro
  const popGoal=Math.min(32+16*Math.min(2,Math.floor(m/12)),12+m*4);
  const D=clamp(clamp(s.pop/popGoal)*(.35-.14*beautyPhase)+service*.30+env*.20+safety*.15+beauty*.14*beautyPhase);
  const Q=clamp(s.sat/100*.50+service*.30+energy*.15+clamp(housing/p)*.05);
- return{landscaping,beautyPhase,premium,net,live,production,use,energy,food,health,education,leisure,housing,service,green,comfort,targetSat,income,upkeep,D,Q,score:Math.round(1000*D*Q),demands,popGoal,fire,drain,optionRate,foodCap:sum('food'),healthCap:sum('health'),educationCap:sum('education'),leisureCap:sum('leisure')};
+ if(s.cozyV===1){const g=cozyGrowth(s);targetSat=Math.min(100,82+g.gardens+g.variety);income=upkeep+80+s.pop*3+Math.min(20,g.gardens)*2+g.buildings*4;}
+ return{landscaping,beautyPhase,premium,net,live,production,use,energy,food,health,education,leisure,housing,service,green,comfort,targetSat,income,upkeep,D,Q,score:s.cozyV===1?cozyGrowth(s).score:Math.round(1000*D*Q),demands,popGoal,fire,drain,optionRate,foodCap:sum('food'),healthCap:sum('health'),educationCap:sum('education'),leisureCap:sum('leisure')};
 }
 export const DEMAND_MONTH={health:2,education:3,leisure:4};
 export const demandMonth=(s,key)=>DEMAND_MONTH[key]+(s.economyV===4?1:0);
@@ -91,7 +99,7 @@ export const CASH_STRESS_LIMIT=3*MONTH;
 export const TIER_REASONS={service80:'다이아 이상은 평가 중인 생활 서비스가 각각 80% 이상 필요해요.',service90:'이모탈 이상은 평가 중인 생활 서비스가 각각 90% 이상 필요해요.',service100:'레디언트는 평가 중인 생활 서비스가 각각 100% 필요해요.',power90:'다이아 이상은 전력 수요를 90% 이상 채워야 해요.',power98:'이모탈 이상은 전력 수요를 98% 이상 채워야 해요.',power100:'레디언트는 전력 수요를 모두 채워야 해요.',safety:'다이아 이상은 소방서와 배수 시설을 완공하고 길에 연결해 운영해야 해요.',budget:'기금 고갈·운영비 부족이 누적 3개월이에요. 월 순수입을 0 이상으로 만들거나 한 달 적자분을 마련해요.'};
 const TIER_CAPS={service80:799,service90:899,service100:949,power90:799,power98:899,power100:949,safety:799,budget:799};
 export function tierConditions(s,v=metrics(s)){
- let cap=1000,reasons=[];if(s.scoringV!==2)return{cap,reasons};
+ let cap=1000,reasons=[];if(s.cozyV===1||s.scoringV!==2)return{cap,reasons};
  const limit=(test,reason)=>{const n=TIER_CAPS[reason];if(test&&n<=cap){if(n<cap)reasons=[];cap=n;reasons.push(reason);}};
  const service=Math.min(...v.demands.map(k=>v[k]))+1e-9,power=v.energy+1e-9;
  limit(service<.8,'service80');limit(service<.9,'service90');limit(service<1,'service100');
@@ -128,6 +136,7 @@ export function parseSave(text){if(typeof text!=='string'||text.length>500000)th
  const num=(v,a,b)=>typeof v==='number'&&Number.isFinite(v)&&v>=a&&v<=b;
  const validConditions=h=>h&&Array.isArray(h.reasons)&&h.reasons.length<=Object.keys(TIER_CAPS).length&&new Set(h.reasons).size===h.reasons.length&&h.reasons.every(k=>Object.hasOwn(TIER_CAPS,k)&&TIER_CAPS[k]===h.cap)&&h.cap===(h.reasons.length?TIER_CAPS[h.reasons[0]]:1000);
  if(!s||s.v!==VERSION||s.rule!==RULE||!['run','free'].includes(s.mode)||!num(s.t,0,s.mode==='run'?duration(s):1e8)||!Number.isInteger(s.t)||!num(s.carry,0,1)||!num(s.money,0,1e8)||!Number.isInteger(s.pop)||!num(s.pop,0,10000)||!num(s.sat,0,100)||!Number.isInteger(s.stage)||!num(s.stage,0,3)||typeof s.paused!=='boolean'||typeof s.ended!=='boolean'||!Array.isArray(s.buildings)||s.buildings.length>SIZE*SIZE||!Array.isArray(s.hist)||s.hist.length>(s.runMonths??12))throw Error('저장 내용이 올바르지 않아요.');
+ if(s.cozyV!==undefined&&(s.cozyV!==1||s.mode!=='free'||s.ended))throw Error('꾸미기 기록을 확인해 주세요.');
  if(s.cityV!==undefined&&(s.cityV!==1||s.economyV!==4||s.scoringV!==2))throw Error('도시 발전 규칙을 확인해 주세요.');
  if(s.economyV!==undefined&&![2,3,4].includes(s.economyV))throw Error('경제 규칙을 확인해 주세요.');
  if(s.scoringV!==undefined&&s.scoringV!==2||s.scoringV===2&&(!Number.isInteger(s.cashStress)||!num(s.cashStress,0,Math.min(s.t,CASH_STRESS_LIMIT)))||s.scoringV===undefined&&s.cashStress!==undefined)throw Error('평가 규칙과 운영비 부족 기록을 확인해 주세요.');
