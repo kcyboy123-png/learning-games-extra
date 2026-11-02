@@ -1,5 +1,5 @@
-import {buildingSpec,metrics,TYPES,MONTH,month,monthLabel,demandMonth,connected,unlocked} from './core.mjs?v=ui3';
-import {PLAY_SPEED} from './data.mjs?v=80min1';
+import {buildingSpec,metrics,TYPES,MONTH,month,monthLabel,demandMonth,connected,unlocked,HARVEST,HARVEST_SECONDS} from './core.mjs?v=ui3';
+import {PLAY_SPEED,realSeconds} from './data.mjs?v=80min1';
 
 // nextId never decreases, so cancelling or reloading cannot restart completed guidance.
 export const guidedPlacement=s=>s.mode==='run'&&!s.ended&&month(s)<4&&s.nextId-1-s.buildings.filter(b=>b.starter).length<2;
@@ -53,3 +53,33 @@ export function incomePreviewText(s,type,x,y,moving=null){
 export const buildBudget=(money,price)=>money<price?`기금 ${Math.ceil(price-money).toLocaleString()} 부족`:`짓고 남는 기금 ${Math.floor(money-price).toLocaleString()}`;
 
 export const catalogueBudget=(money,cost)=>money<cost?`${Math.ceil(cost-money)} 더 모으면 지을 수 있어요`:'자리 고르기';
+
+// Match the two construction crews and whole simulation ticks used by advance().
+export function constructionTime(s,b){
+ const queue=s.buildings.filter(x=>x.progress<1),lanes=[0,0];if(!queue.some(x=>x.id===b.id))queue.push(b);
+ for(let i=0;i<queue.length;i++){const x=queue[i],crew=lanes[0]<=lanes[1]?0:1,start=lanes[crew];lanes[crew]+=Math.ceil((1-x.progress)*TYPES[x.type].time-1e-8);
+  if(x.id===b.id)return {position:i,wait:realSeconds(Math.max(0,start-(s.carry||0))),finish:realSeconds(Math.max(0,lanes[crew]-(s.carry||0)))};
+ }
+}
+export function constructionText(s,b){const t=constructionTime(s,b);return t.position<2?`공사 중 · 완공까지 약 ${t.finish}초`:`대기 ${t.position-1}번째 · 시작까지 약 ${t.wait}초 · 완공까지 약 ${t.finish}초`;}
+
+export function serviceChangeText(s,type,before,after){
+ const d=buildingSpec(s,type),lines=[];
+ for(const [key,name] of [['food','식사'],['health','의료'],['education','교육'],['leisure','여가']])if(d[key]){const a=Math.min(s.pop,before[key+'Cap']),b=Math.min(s.pop,after[key+'Cap']);lines.push(`${name} 충족 ${a} → ${b} / ${s.pop}명${a===b&&a===s.pop?' · 지금 수요는 이미 충족돼요':''}`);}
+ if(d.cap)lines.push(`살 집 ${before.housing} → ${after.housing}명분 · 이웃 ${s.pop}명`);
+ if(d.e){const balance=v=>v.production-v.use;lines.push(`전력 여유 ${balance(before).toFixed(1)} → ${balance(after).toFixed(1)}${balance(after)<0?' · 전력이 부족해져요':''}`);}
+ return lines.join('\n');
+}
+export function placementBenefits(s,type,x,y,moving=null){const {before,after}=incomePreview(s,type,x,y,moving);return serviceChangeText(s,type,before,after);}
+
+export function operatingPreviewText(s,b,before=metrics(s)){
+ const after=metrics({...s,buildings:s.buildings.map(x=>x.id===b.id?{...x,closed:!x.closed}:x)});
+ return `${b.closed?'다시 열면':'휴업하면'} 순수입 ${incomeRate(before)} → ${incomeRate(after)}\n${serviceChangeText(s,b.type,before,after)}\n현재 주민·행복·계절 기준 예상`;
+}
+
+export function fundingAdvice(s,price){
+ if(s.money>=price)return '';
+ const net=netIncome(metrics(s)),wait=net>0?realSeconds((price-s.money)/net*MONTH):null;
+ const harvest=s.harvestAt!==null?`텃밭 돌보는 중 · 약 ${realSeconds(HARVEST_SECONDS-(s.t-s.harvestAt))}초 뒤 +${HARVEST}`:s.harvested.includes(month(s))?'텃밭 도움은 다음 달 다시 받아요.':`텃밭을 돌보면 +${HARVEST}을 보탤 수 있어요.`;
+ return (s.paused?'일시정지 중에는 기금이 늘지 않아요.':wait===null?'기다리기만 해서는 모이지 않아요. 마을 현황에서 수입·유지비를 살펴요.':`현재 순수입이 유지되면 약 ${wait>=60?Math.ceil(wait/60)+'분':wait+'초'} 뒤 지을 수 있어요.`)+'\n'+harvest;
+}

@@ -217,3 +217,5 @@ body.entering> :not(canvas):not(#entranceDialog){visibility:hidden!important}
 body:has(#infoPanel.open) #need{visibility:hidden}
 @media(min-width:821px) and (min-height:481px){#infoPanel{left:16px;right:auto;top:112px;bottom:auto;transform:none;width:320px;max-height:calc(100dvh - 205px)}}
 @media(max-width:820px) and (min-height:481px){#infoPanel{max-height:48dvh}}
+
+.placement-benefits{white-space:pre-line;font-size:14px;line-height:1.6;color:#315a48}.placement-benefits:empty{display:none}

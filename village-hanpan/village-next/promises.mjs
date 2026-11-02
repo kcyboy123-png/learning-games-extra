@@ -28,3 +28,6 @@ export function promisePreview(s,type,x,y,moving=null){
  const current=villagePromises(s),buildings=moving?s.buildings.map(b=>b.id===moving?{...b,x,y}:b):[...s.buildings,{id:s.nextId,type,x,y,progress:1,opts:[],completedAt:s.t}];
  return villagePromises({...s,buildings}).flatMap((p,i)=>p.progress===current[i].progress&&p.done===current[i].done?[]:[{id:p.id,title:p.title,before:current[i].progress,after:p.progress,done:p.done}]);
 }
+
+// Session-only feedback: loading an already-complete goal does not award it again.
+export function newlyKeptPromises(s,seen){const fresh=villagePromises(s).filter(p=>p.done&&!seen.has(p.id));for(const p of fresh)seen.add(p.id);return fresh;}
