@@ -51,3 +51,5 @@ export function incomePreviewText(s,type,x,y,moving=null){
 }
 
 export const buildBudget=(money,price)=>money<price?`기금 ${Math.ceil(price-money).toLocaleString()} 부족`:`짓고 남는 기금 ${Math.floor(money-price).toLocaleString()}`;
+
+export const catalogueBudget=(money,cost)=>money<cost?`${Math.ceil(cost-money)} 더 모으면 지을 수 있어요`:'자리 고르기';

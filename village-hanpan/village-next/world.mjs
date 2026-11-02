@@ -337,16 +337,25 @@ function scaffold(a,p,n=1){ // 공사 단계: 터 정비 → 골조 → 외장(�
  if(p>=.25&&p<.6){for(const[x,z]of[[-.6,-.5],[.6,-.5],[.6,.5],[-.6,.5]])box(a,'#b28b60',x,.6,z,.08,1.1,.08);for(const z of[-.5,.5])box(a,'#c5af89',0,1.15,z,1.3,.07,.07);for(const x of[-.6,.6])box(a,'#c5af89',x,1.15,0,.07,.07,1.1);box(a,'#a08560',0,.1,0,1.4,.08,1.1);}}
 function personRig(scene,color,id){
  const variant=(id.charCodeAt(0)-97)%4,species=id==='player'?'rabbit':({e:'cat',f:'fox',g:'panda',h:'deer'}[id]||(variant%2===0?'otter':'bear'));
- const rabbit=species==='rabbit',otter=species==='otter',cat=species==='cat',fox=species==='fox',panda=species==='panda',deer=species==='deer',fur=rabbit?'#fff1df':({cat:'#c8b6a1',fox:'#d28a4d',panda:'#f1eddf',deer:'#bc8d63'}[species]||(otter?'#ac8767':'#cd9b66')),cream=rabbit?'#fff5e3':'#f2dfba';
- const cloth=rabbit?'#d7838b':({cat:'#7e9cb0',fox:'#a4aa72',panda:'#d1a16d',deer:'#ab8faa'}[species])|| (otter?(variant===0?'#79a586':'#9fa76d'):(variant===1?'#ede8d6':'#b7a4bd'));
- const petBall=(g,c,x,y,z,w,h=w,d=w,o)=>mesh(g,geometry('pet-soft',()=>new T.SphereGeometry(1,20,14)),c,x,y,z,w,h,d,{roughness:.92,emissive:c,emissiveIntensity:c===fur||c===cream?.075:0,...o});
- const g=new T.Group();scene.add(g);g.scale.setScalar(rabbit?1.08:.85);shade(g,0,.003,0,.29);const body=new T.Group();g.add(body);
- petBall(body,fur,0,.68,-.015,.285,.29,.21);petBall(body,cloth,0,.53,0,.29,.22,.22);
- petBall(body,cream,0,.78,.16,.18,.13,.07);box(body,cloth,0,.68,.205,.3,.25,.035);
- for(const side of[-1,1]){const strap=box(body,cloth,side*.14,.79,.17,.055,.3,.04);strap.rotation.z=side*.15;petBall(body,'#d9b16b',side*.14,.77,.213,.027,.027,.012);}
- box(body,'#f3c69d',0,.59,.24,.18,.12,.018);box(body,cloth,0,.60,.254,.145,.075,.012);const leaf=petBall(body,'#719260',.025,.62,.268,.025,.039,.008);leaf.rotation.z=-.45;
+ const rabbit=species==='rabbit',otter=species==='otter',cat=species==='cat',fox=species==='fox',panda=species==='panda',deer=species==='deer',fur=rabbit?'#fff1df':({cat:'#d4c3b0',fox:'#d99d68',panda:'#f7f0e2',deer:'#c9a17d'}[species]||(otter?'#b99a7c':'#d6b083')),cream=rabbit?'#fff5e3':'#f5e6d0';
+ const cloth=rabbit?'#d7838b':({cat:'#8aabba',fox:'#c49b67',panda:'#d5a38f',deer:'#b69ab3'}[species])|| (otter?(variant===0?'#79a586':'#9fa76d'):(variant===1?'#ede8d6':'#b7a4bd'));
+ const petBall=(g,c,x,y,z,w,h=w,d=w,o)=>mesh(g,geometry('pet-soft',()=>new T.SphereGeometry(1,24,18)),c,x,y,z,w,h,d,{roughness:.92,emissive:c,emissiveIntensity:c===fur||c===cream?.075:0,...o});
+ const g=new T.Group();scene.add(g);g.scale.setScalar(rabbit?1.08:.94);const contact=shade(g,0,.008,0,rabbit?.29:.34);contact.scale.z=rabbit?.2465:.25;const body=new T.Group();g.add(body);
+ petBall(body,fur,0,rabbit?.68:.64,-.015,rabbit?.285:.31,.29,.23);petBall(body,cloth,0,rabbit?.53:.49,0,rabbit?.29:.32,.22,.24);
+ petBall(body,cream,0,.78,.16,.18,.13,.07);petBall(body,cloth,0,.65,.205,.18,.19,.055);
+ for(const side of[-1,1]){const strap=petBall(body,cloth,side*.14,.77,.17,.035,.15,.035);strap.rotation.z=side*.15;petBall(body,'#d9b16b',side*.14,.77,.213,.027,.027,.012);}
+ const pocketShape=geometry('soft-pocket',()=>{const q=new T.Shape();q.moveTo(-.4,-.5);q.lineTo(.4,-.5);q.quadraticCurveTo(.5,-.5,.5,-.4);q.lineTo(.5,.4);q.quadraticCurveTo(.5,.5,.4,.5);q.lineTo(-.4,.5);q.quadraticCurveTo(-.5,.5,-.5,.4);q.lineTo(-.5,-.4);q.quadraticCurveTo(-.5,-.5,-.4,-.5);const e=new T.ExtrudeGeometry(q,{depth:1,bevelEnabled:false,curveSegments:3});e.translate(0,0,-.5);return e;});mesh(body,pocketShape,'#e8d4ad',0,.57,.25,.18,.12,.018);mesh(body,pocketShape,cloth,0,.59,.265,.145,.06,.012);const leaf=petBall(body,'#719260',.025,.62,.268,.025,.039,.008);leaf.rotation.z=-.45;
  if(rabbit){for(const side of[-1,1]){const collar=petBall(body,'#fff9ed',side*.075,.86,.19,.095,.05,.025);collar.rotation.z=side*.3;}for(let i=0;i<5;i++){const t=i*Math.PI*2/5;dot(body,'#fff9ed',-.065+Math.cos(t)*.032,.685+Math.sin(t)*.032,.247,.025,.025,.009);}dot(body,'#e7bc61',-.065,.685,.26,.018,.018,.008);}
- const head=new T.Group();head.position.y=1.08;if(rabbit)head.scale.set(1.1,1.06,1.08);body.add(head);mesh(head,rabbit?geometry('rabbitHead',()=>new T.SphereGeometry(1,32,20)):geometry('pet-soft',()=>new T.SphereGeometry(1,20,14)),fur,0,0,-.015,.425,.36,.335,{roughness:.92,emissive:fur,emissiveIntensity:rabbit?.12:.04});
+ if(!rabbit){
+  // Each outfit has one readable silhouette and one small motif, not more identical bags.
+  if(deer){petBall(body,cloth,0,.42,0,.36,.17,.27);for(const side of[-1,1])petBall(body,cream,side*.075,.84,.195,.086,.04,.025);}
+  if(cat)for(const side of[-1,1])petBall(body,'#ece9dd',side*.07,.83,.19,.07,.035,.022);
+  if(fox){for(const side of[-1,1]){const lapel=petBall(body,cream,side*.075,.77,.23,.045,.11,.021);lapel.rotation.z=side*.3;}for(let i=0;i<2;i++)petBall(body,'#805d3c',.065,.63-i*.10,.265,.018,.018,.009);}
+  if(panda){for(const side of[-1,1])petBall(body,'#fcf2dd',side*.08,.83,.20,.084,.04,.025);petBall(body,'#83a994',0,.58,.282,.073,.055,.014);}
+  if(species==='bear'){petBall(body,'#e8dfca',0,.72,.18,.24,.17,.07);for(let i=0;i<3;i++)petBall(body,'#b1885c',0,.77-i*.075,.258,.02,.02,.01);}
+  if(deer||cat)for(let i=0;i<5;i++){const a=i*Math.PI*2/5;petBall(body,'#fff4dc',-.085+Math.cos(a)*.027,.65+Math.sin(a)*.027,.29,.019,.019,.008);}
+ }
+ const head=new T.Group();head.position.y=rabbit?1.08:1.04;head.scale.set(rabbit?1.1:1.12,rabbit?1.06:1.08,1.08);body.add(head);mesh(head,rabbit?geometry('rabbitHead',()=>new T.SphereGeometry(1,32,20)):geometry('pet-soft',()=>new T.SphereGeometry(1,20,14)),fur,0,0,-.015,.425,.36,.335,{roughness:.92,emissive:fur,emissiveIntensity:rabbit?.12:.08,name:rabbit?'rabbitFallback':'neighbourHead'});
  if(otter){petBall(head,'#dfc895',0,.29,-.035,.46,.045,.36);petBall(head,'#b4a96f',0,.36,-.04,.31,.12,.27);petBall(head,'#6e8d62',0,.31,-.04,.32,.035,.28);const sprig=petBall(head,'#89a76c',-.28,.38,.10,.04,.12,.02);sprig.rotation.z=-.45;}
  // Ears remain separate joints so their silhouettes can move without stretching.
  const ears=[];
@@ -354,34 +363,45 @@ function personRig(scene,color,id){
   if(side<0){petBall(ear,fur,0,.22,0,.12,.30,.095);petBall(ear,'#eab6ad',0,.24,.065,.073,.22,.023);}else{
    petBall(ear,fur,0,.13,0,.105,.19,.085);petBall(ear,'#eab6ad',0,.13,.065,.059,.12,.023);const tip=new T.Group();tip.position.y=.24;tip.rotation.z=-1.1;ear.add(tip);petBall(tip,fur,0,.12,0,.105,.2,.085);petBall(tip,'#eab6ad',0,.13,.064,.059,.13,.023);
   }
- }}else if(cat||fox||deer){for(const side of[-1,1]){const ear=new T.Group();ear.position.set(side*.28,.23,-.04);ear.rotation.z=-side*(deer?.55:.12);ear.userData.restZ=ear.rotation.z;head.add(ear);ears.push(ear);if(deer){petBall(ear,fur,0,.12,0,.09,.22,.07);petBall(ear,cream,0,.13,.055,.045,.14,.02);}else{wedge(ear,fur,0,0,0,.25,fox?.37:.29,.13);wedge(ear,fox?cream:'#d9a79c',0,.035,.075,.13,fox?.25:.18,.015);}}}else for(const side of[-1,1]){const ear=new T.Group();ear.position.set(side*(otter?.36:.335),otter?.16:.285,-.04);head.add(ear);ears.push(ear);petBall(ear,panda?'#453d38':fur,0,0,0,otter?.11:.145,otter?.105:.15,.085);petBall(ear,otter?'#d8b18e':'#d9aa8e',0,.006,.065,otter?.049:.07,otter?.052:.078,.025);}
+ }}else if(cat||fox||deer){for(const side of[-1,1]){const ear=new T.Group();ear.position.set(side*.28,.23,-.04);ear.rotation.z=-side*(deer?.55:.12);ear.userData.restZ=ear.rotation.z;head.add(ear);ears.push(ear);if(deer){petBall(ear,fur,0,.12,0,.09,.22,.07);petBall(ear,cream,0,.13,.055,.045,.14,.02);}else{const shape=geometry('soft-pointed-ear',()=>{const q=new T.Shape();q.moveTo(-.48,0);q.quadraticCurveTo(-.42,.58,-.10,.94);q.quadraticCurveTo(0,1.08,.10,.94);q.quadraticCurveTo(.42,.58,.48,0);q.quadraticCurveTo(0,-.10,-.48,0);const e=new T.ExtrudeGeometry(q,{depth:.7,steps:1,bevelEnabled:true,bevelThickness:.08,bevelSize:.04,bevelSegments:2,curveSegments:5});e.translate(0,0,-.35);return e;});mesh(ear,shape,fur,0,0,0,.25,fox?.36:.29,.13);mesh(ear,shape,fox?cream:'#dfb5aa',0,.035,.075,.13,fox?.23:.17,.015);}}}else for(const side of[-1,1]){const ear=new T.Group();ear.position.set(side*(otter?.36:.335),otter?.16:.285,-.04);head.add(ear);ears.push(ear);petBall(ear,panda?'#453d38':fur,0,0,0,otter?.11:.145,otter?.105:.15,.085);petBall(ear,otter?'#d8b18e':'#d9aa8e',0,.006,.065,otter?.049:.07,otter?.052:.078,.025);}
  if(panda)for(const side of[-1,1]){const patch=petBall(head,'#453d38',side*.155,-.005,.276,.115,.145,.032);patch.rotation.z=-side*.25;}
  if(deer)for(const side of[-1,1]){const antler=cylinder(head,'#765f47',side*.16,.55,-.05,.024,.42);antler.rotation.z=-side*.12;const branch=cylinder(head,'#765f47',side*.23,.64,-.05,.019,.19);branch.rotation.z=-side*.7;for(let i=0;i<3;i++)petBall(head,cream,side*(.29+i*.022),.06-i*.06,.23,.022,.025,.015);}
- if(cat){for(let i=-1;i<=1;i++)petBall(head,'#8a7362',i*.08,.23,.24,.023,.067,.018);for(const side of[-1,1])for(let i=0;i<2;i++){const whisker=box(head,'#765e50',side*.27,-.12-i*.045,.32,.14,.009,.009);whisker.rotation.z=side*(.12-i*.24);}}
+ if(cat){for(let i=-1;i<=1;i++)petBall(head,'#8a7362',i*.08,.23,.24,.023,.067,.018);for(const side of[-1,1])for(let i=0;i<2;i++){const whisker=box(head,'#765e50',side*.25,-.12-i*.035,.32,.10,.005,.006);whisker.rotation.z=side*(.12-i*.24);}}
  if(otter){for(const side of[-1,1])petBall(head,cream,side*.105,-.15,.295,.165,.105,.06);petBall(head,cream,0,-.225,.21,.20,.08,.07);}
  else petBall(head,cream,0,-.155,fox?.34:.302,rabbit?.19:fox?.145:.205,.10,fox?.14:.065);
  for(const side of[-1,1]){const brow=petBall(head,cream,side*.15,.125,.288,.05,.018,.012);brow.rotation.z=side*-.16;}
  if(rabbit){for(let i=0;i<3;i++){const curl=petBall(head,fur,-.075+i*.065,.306+(i%2)*.022,.15,.06,.09,.05);curl.rotation.z=-.35+i*.3;}for(let i=0;i<5;i++){const a=i*Math.PI*2/5;petBall(head,'#fff9ed',-.31+Math.cos(a)*.044,.235+Math.sin(a)*.044,.24,.035,.035,.016);}petBall(head,'#f5d78c',-.31,.235,.258,.022,.022,.012);}
  const eyes=new T.Group();eyes.position.y=-.005;head.add(eyes);
- for(const side of[-1,1]){petBall(eyes,'#352d29',side*.155,0,.301,rabbit?.074:.067,rabbit?.088:.094,.025);petBall(eyes,'#6b4936',side*.155,-.025,.322,.044,.051,.012);petBall(eyes,'#ffffff',side*.141,.030,.328,rabbit?.026:.022,rabbit?.028:.025,.009);petBall(eyes,'#f9ecda',side*.177,-.037,.330,.009);
-  petBall(head,rabbit?'#f2ad9e':'#dca48b',side*.265,-.105,.267,rabbit?.09:.083,.045,.018);
+ for(const side of[-1,1]){petBall(eyes,'#352d29',side*.155,0,.301,rabbit?.074:.055,rabbit?.088:.068,rabbit?.025:.018);petBall(eyes,'#6b4936',side*.155,-.025,.322,rabbit?.044:.031,rabbit?.051:.035,.010);petBall(eyes,'#ffffff',side*.141,.030,.328,rabbit?.026:.018,rabbit?.028:.019,.008);petBall(eyes,'#f9ecda',side*.177,-.037,.330,.009);
+  if(rabbit)petBall(head,'#f2ad9e',side*.265,-.105,.267,.09,.045,.018);
   if(otter)for(let i=0;i<3;i++)dot(head,'#78543e',side*(.10+i*.035),-.15+(i%2)*.026,.356,.008,.008,.006);
  }
  petBall(head,rabbit?'#d99188':'#503a30',0,-.115,fox?.466:.373,.034,.025,.018);
- const smile=mesh(head,geometry('animalSmile',()=>new T.TorusGeometry(1,.14,5,12,Math.PI)),'#916257',0,-.185,.365,.047,.025,.012);smile.rotation.z=Math.PI;
+ const smile=mesh(head,geometry('animalSmile',()=>new T.TorusGeometry(1,.14,5,12,Math.PI)),'#956b58',0,-.185,fox?.475:.365,rabbit?.047:.035,.023,.008);smile.rotation.z=Math.PI;
  const limbs=[],knees=[];
- for(const side of[-1,1]){const leg=new T.Group();leg.position.set(side*.12,.43,0);g.add(leg);petBall(leg,cloth,0,-.065,0,.10,.12,.11);const knee=new T.Group();knee.position.y=-.17;leg.add(knee);knees.push(knee);petBall(knee,panda?'#453d38':fur,0,-.065,0,.084,.11,.085);petBall(knee,panda?'#453d38':fur,0,-.185,.055,.115,.075,.165);petBall(knee,rabbit?'#e6b4ab':'#a47b60',0,-.238,.065,.07,.012,.095);limbs.push(leg);
-  const arm=new T.Group();arm.position.set(side*.285,.79,0);body.add(arm);petBall(arm,panda?'#453d38':fur,0,-.115,0,.103,.15,.10);petBall(arm,panda?'#453d38':fur,0,-.265,.02,.113,.10,.105);limbs.push(arm);
+ for(const side of[-1,1]){const leg=new T.Group();leg.position.set(side*.135,rabbit?.43:.37,0);g.add(leg);petBall(leg,cloth,0,-.065,0,.10,.12,.11);const knee=new T.Group();knee.position.y=rabbit?-.17:-.13;leg.add(knee);knees.push(knee);petBall(knee,panda?'#453d38':fur,0,-.055,0,.095,rabbit?.11:.085,.10);petBall(knee,panda?'#453d38':fur,0,rabbit?-.185:-.165,.055,.13,.075,.165);petBall(knee,rabbit?'#e6b4ab':'#a47b60',0,rabbit?-.238:-.218,.065,.085,.012,.105);limbs.push(leg);
+  const arm=new T.Group();arm.position.set(side*.29,rabbit?.79:.75,0);body.add(arm);petBall(arm,panda?'#453d38':fur,0,-.115,0,.103,.15,.10);petBall(arm,panda?'#453d38':fur,0,-.265,.02,.113,.10,.105);limbs.push(arm);
  }
  const tail=new T.Group();tail.position.set(0,.53,-.19);body.add(tail);
  if(fox){const t=petBall(tail,fur,0,.02,-.29,.19,.18,.38);t.rotation.x=.35;petBall(tail,cream,0,.14,-.56,.13,.13,.20);}else if(cat){const t=petBall(tail,fur,0,.04,-.23,.07,.08,.28);t.rotation.x=.6;petBall(tail,'#8a7362',0,.21,-.40,.07,.16,.07);}else if(otter){const t=petBall(tail,fur,0,-.10,-.26,.13,.115,.35);t.rotation.x=-.2;petBall(tail,fur,0,-.045,-.47,.09,.08,.18);}else{petBall(tail,rabbit||deer?cream:fur,0,0,-.08,rabbit?.14:.10);if(rabbit)for(let i=0;i<3;i++)petBall(tail,cream,Math.sin(i*2.1)*.07,.04,Math.cos(i*2.1)*.07-.09,.085);}
  const satchel=new T.Group();body.add(satchel);satchel.position.set(.225,.53,.125);satchel.rotation.z=.12;petBall(satchel,'#bc8958',0,0,0,.14,.13,.065);box(satchel,'#d3a36d',0,.02,.055,.22,.13,.025);petBall(satchel,'#f5d58f',.02,-.02,.076,.02,.018,.008);const shoulder=box(body,'#cf9b65',.035,.72,.247,.035,.48,.022);shoulder.rotation.z=-.68;
+ satchel.visible=rabbit||otter||fox;shoulder.visible=satchel.visible;
  if(rabbit){box(satchel,'#fff2ce',-.04,.115,0,.09,.09,.025);const sprout=petBall(satchel,'#719260',-.045,.135,.017,.015,.026,.008);sprout.rotation.z=-.4;petBall(satchel,'#e7bc61',-.04,.105,.018,.015,.013,.008);}
+ if(!rabbit){
+  if(cat){for(const side of[-1,1])petBall(tail,'#a08a73',0,.02+side*.045,-.25,.079,.025,.085);}
+  if(deer)for(const side of[-1,1])for(let i=0;i<3;i++)petBall(body,cream,side*(.12+(i%2)*.065),.69-i*.075,-.21,.025,.022,.014);
+  if(otter){petBall(satchel,cream,0,.04,.085,.05,.032,.012);const seed=petBall(satchel,'#6d966b',0,.065,.09,.018,.035,.009);seed.rotation.z=-.4;}
+ }
  const carry=new T.Group();limbs[3].add(carry);box(carry,'#d9bd88',0,-.42,.02,.2,.23,.12);const handle=mesh(carry,geometry('bagHandle',()=>new T.TorusGeometry(.055,.012,5,12)),'#8e6b4a',0,-.28,.02);handle.scale.y=.8;carry.visible=false;
  const book=new T.Group();body.add(book);book.position.set(0,.64,.29);book.rotation.x=-.4;box(book,'#557b72',0,0,0,.32,.035,.22);box(book,'#fff2ce',0,.025,0,.28,.02,.19);book.visible=false;
- const scarf=new T.Group();body.add(scarf);petBall(scarf,'#c97870',0,.875,.015,.20,.05,.17);box(scarf,'#c97870',.15,.77,.23,.09,.21,.03);scarf.visible=false;
+ const scarf=new T.Group();body.add(scarf);petBall(scarf,'#c97870',0,rabbit?.875:.84,rabbit?.015:.045,rabbit?.20:.25,.05,rabbit?.17:.25);box(scarf,'#c97870',.15,rabbit?.77:.70,rabbit?.23:.30,.09,.21,.03);scarf.visible=false;
+ if(!rabbit){
+  // A bounded matte shader shares the same material cache and leaves silhouette/rig untouched.
+  g.traverse(o=>{if(!o.isMesh||!o.material.isMeshStandardMaterial)return;o.castShadow=false;const original=o.material,key='soft-neighbour:'+original.uuid;if(materials.has(key)){o.material=materials.get(key);return;}const m=original.clone();materials.set(key,m);o.material=m;m.userData.softNeighbour=true;m.roughness=.96;m.emissiveIntensity=Math.max(m.emissiveIntensity,.08);
+   m.onBeforeCompile=shader=>{shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vNeighbourNormal;').replace('#include <beginnormal_vertex>','#include <beginnormal_vertex>\nvNeighbourNormal=normal;');shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vNeighbourNormal;').replace('#include <color_fragment>','#include <color_fragment>\nfloat grain=fract(sin(dot(floor(vNeighbourNormal*90.0),vec3(12.9898,78.233,31.337)))*43758.5453);diffuseColor.rgb*=0.975+grain*0.05;'+(m.name==='neighbourHead'?'float blush=exp(-pow((abs(vNeighbourNormal.x)-.59)/.19,2.)-pow((vNeighbourNormal.y+.29)/.13,2.))*smoothstep(.1,.6,vNeighbourNormal.z);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.78,.36,.26),blush*.34);':''));};m.customProgramCacheKey=()=>'soft-neighbour-v1:'+m.name;m.needsUpdate=true;});
+ }
  // Batch only static meshes: never flatten animated head, ear, eye or tail joints.
- for(const part of[body,head]){const detail=new T.Group();for(const child of[...part.children])if(child.isMesh)detail.add(child);part.add(detail);batch(detail);}
+ for(const part of[body,head,...ears,eyes,tail,...limbs,...knees,scarf]){const detail=new T.Group();for(const child of[...part.children])if(child.isMesh)detail.add(child);part.add(detail);batch(detail);}
  return{g,body,head,ears,tail,species,limbs,knees,carry,book,eyes,scarf,id,route:[],distance:0,moving:0,wait:0,sitting:false};}
 
 // Moving seats share a single coloured mesh each, keeping detail without dozens of draw calls per joint.
@@ -547,14 +567,15 @@ export class World{
   this.idleTime=(this.idleTime??0)+motionDt;const idleTime=this.idleTime;
   if(this.meadow)this.meadow.userData.wind.value=reduced?0:this.meadow.userData.wind.value+motionDt;
   for(const p of this.people){if(this.paused)continue;const speed=advancePersonRoute(p,motionDt,this.people);
-   p.moving+=(speed-p.moving)*Math.min(1,motionDt*12);p.seatBlend=(p.seatBlend||0)+((p.sitting?1:0)-(p.seatBlend||0))*Math.min(1,motionDt*7);const phase=p.distance*13;for(let k=0;k<2;k++){const wave=Math.sin(phase+k*Math.PI)*p.moving;p.limbs[k*2].rotation.x=wave*.55;p.limbs[k*2+1].rotation.x=-wave*.45;}
+   p.moving+=(speed-p.moving)*Math.min(1,motionDt*12);p.seatBlend=(p.seatBlend||0)+((p.sitting?1:0)-(p.seatBlend||0))*Math.min(1,motionDt*7);const personality=p.id==='player'?0:(p.id.charCodeAt(0)-96)*1.37,localIdle=idleTime+personality,phase=p.distance*(p.species==='bear'||p.species==='panda'?11.5:13);for(let k=0;k<2;k++){const wave=Math.sin(phase+k*Math.PI)*p.moving;p.limbs[k*2].rotation.x=wave*.55;p.limbs[k*2+1].rotation.x=-wave*.45;}
    p.body.position.y=reduced?0:Math.abs(Math.sin(phase))*.022*p.moving;p.body.rotation.z=reduced?0:Math.sin(phase)*.025*p.moving;
-   if(p.head){const sway=reduced?0:Math.sin(phase*.5)*p.moving*.055;p.head.rotation.z=sway+(reduced?0:Math.sin(idleTime*.85)*.035*(1-p.moving));p.head.rotation.x=reduced?0:Math.sin(idleTime*1.2)*.022*(1-p.moving);p.head.rotation.y=reduced?0:Math.sin(idleTime*.7)*.045*(1-p.moving);for(let j=0;j<p.ears.length;j++){p.ears[j].rotation.z=(p.species==='rabbit'?(j===0?-.14:.14):(p.ears[j].userData.restZ||0))+sway*(j===0?1:-.8)+(reduced?0:Math.sin(idleTime*1.5+j)*.024);p.ears[j].rotation.x=reduced||p.species!=='rabbit'?0:Math.sin(phase+idleTime*1.7+j*.6)*(.018+p.moving*.045);}p.tail.rotation.y=p.sitting?.65:reduced?0:Math.sin(phase*.6+idleTime)*.10;}
+   if(p.head){const sway=reduced?0:Math.sin(phase*.5)*p.moving*.055;p.head.rotation.z=sway+(reduced?0:Math.sin(localIdle*.85)*.035*(1-p.moving));p.head.rotation.x=reduced?0:Math.sin(localIdle*1.2)*.022*(1-p.moving);p.head.rotation.y=reduced?0:Math.sin(localIdle*.7)*.045*(1-p.moving);for(let j=0;j<p.ears.length;j++){p.ears[j].rotation.z=(p.species==='rabbit'?(j===0?-.14:.14):(p.ears[j].userData.restZ||0))+sway*(j===0?1:-.8)+(reduced?0:Math.sin(localIdle*1.5+j)*.024);p.ears[j].rotation.x=reduced||p.species!=='rabbit'?0:Math.sin(phase+localIdle*1.7+j*.6)*(.018+p.moving*.045);}p.tail.rotation.y=p.sitting?.65:reduced?0:Math.sin(phase*.6+localIdle)*.10;}
    if(p.scarf)p.scarf.visible=this.se===0;
-   if(p.eyes)p.eyes.scale.y=reduced?1:((idleTime+(p.id==='player'?0:1))%4.7<.12?.12:1);
+   if(p.eyes)p.eyes.scale.y=reduced?1:((localIdle+0)%4.7<.12?.12:1);
    p.book.visible=p.seatBlend>.8&&p.species==='otter';
    if(p.sitting&&Number.isFinite(p.seatAngle)){const diff=Math.atan2(Math.sin(p.seatAngle-p.g.rotation.y),Math.cos(p.seatAngle-p.g.rotation.y));p.g.rotation.y+=diff*Math.min(1,motionDt*7);}
    const sit=p.seatBlend;for(let k=0;k<2;k++){p.knees[k].rotation.x=(1-sit)*Math.max(0,-Math.sin(phase+k*Math.PI))*.25*p.moving+sit*1.35;p.limbs[k*2].rotation.x=p.limbs[k*2].rotation.x*(1-sit)-1.35*sit;p.limbs[k*2+1].rotation.x=p.limbs[k*2+1].rotation.x*(1-sit)-(p.book.visible?.7:.35)*sit;}p.body.rotation.z*=1-sit;p.body.position.y*=1-sit;
+   if(p.id!=='player'){const resting=p.moving<.03&&!sit&&!p.carry.visible,envelope=!reduced&&resting&&localIdle%17>12&&localIdle%17<14?Math.sin((localIdle%17-12)*Math.PI/2):0;p.limbs[3].rotation.z=envelope*(.85+Math.sin(localIdle*6)*.12);if(!reduced&&resting)p.body.position.y+=Math.sin(localIdle*1.8)*.006;}
    if(p.id==='player'&&p.moving<.01&&!sit&&!reduced){const greeting=idleTime%14,envelope=greeting>10&&greeting<12?Math.sin((greeting-10)*Math.PI/2):0;p.limbs[3].rotation.z=envelope*(.9+Math.sin(idleTime*7)*.13);p.body.position.y+=Math.sin(idleTime*2)*.006;}else if(p.id==='player')p.limbs[3].rotation.z=0;
    const gx=Math.round(p.g.position.x/CELL+(SIZE-1)/2),gy=Math.round(p.g.position.z/CELL+(SIZE-1)/2);p.g.position.y=(this.roads.has(`${gx},${gy}`)?ROAD_Y:GROUND_Y)+sit*.08;}
 

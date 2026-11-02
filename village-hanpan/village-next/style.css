@@ -197,3 +197,12 @@ body.entering> :not(canvas):not(#entranceDialog){visibility:hidden!important}
 #placeDetails summary,#otherSpots summary{min-height:44px;color:#355b3b;font-weight:700}#placeDetails summary:focus-visible,#otherSpots summary:focus-visible{outline:3px solid #d09431;outline-offset:2px}#placeDetails summary::before,#otherSpots summary::before{content:"＋";margin-right:8px}#placeDetails[open] summary::before,#otherSpots[open] summary::before{content:"−"}#placePanel p:empty{display:none}#placePanel #placeCost{font-size:13px;line-height:1.5;margin:6px 0}#placePanel #placeHint{line-height:1.5}#placePanel #confirm{margin-top:8px}
 
 @media(max-width:600px),(max-height:480px) and (max-width:1000px){#phoneGoal{display:flex;align-items:center;gap:9px}#phoneGrowth{flex:none;font-size:12px;color:#365b3c;border-right:1px solid #a9bc96;padding-right:9px}#phoneTask{min-width:0;overflow:hidden;text-overflow:ellipsis}}
+
+/* Closed sheets must leave the keyboard and accessibility navigation as well as the map. */
+.sheet{visibility:hidden}.sheet.open{visibility:visible}
+
+.list button .build-action{align-self:stretch;border-top:1px solid #dae2cb;padding-top:8px;font-size:14px;font-weight:700;color:#315e41}.list button.poor .build-action{color:#874d28}
+
+#manageBuilding{margin-top:12px;border-top:1px solid #c8d4bc}#manageBuilding summary{min-height:44px;font-size:14px;font-weight:700;color:#45634b}#manageBuilding .tools{margin:0 0 8px}
+
+#phoneViewOptions{margin:12px 0;border-block:1px solid #c8d4bc}#phoneViewOptions summary{min-height:48px;font-size:14px;color:#365642;font-weight:700}#phoneMenu>.restart-link{width:100%}#phoneMenu .creator-credit{margin-bottom:0}#phoneSummary{line-height:1.6}
