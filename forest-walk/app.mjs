@@ -1,24 +1,30 @@
 import * as T from './vendor/three.module.js';
-import {createWorld,createChild} from './world.mjs?v=walk-memory-20261102';
-import {advance,worldAt,pathSlope,elevation,grade,terrain,riverX,place,nearby,LENGTH,clamp} from './trail.mjs?v=walk-memory-20261102';
-import {ForestSound} from './sound.mjs?v=walk-memory-20261102';
+import {createWorld,createChild} from './world.mjs?v=walk-look-20261102';
+import {advance,worldAt,pathSlope,elevation,grade,terrain,riverX,place,nearby,LENGTH,clamp} from './trail.mjs?v=walk-look-20261102';
+import {ForestSound} from './sound.mjs?v=walk-look-20261102';
+import {turnView,sightTarget} from './lib/look.mjs?v=walk-look-20261102';
 const $=id=>document.getElementById(id),canvas=$('forest');
 await document.fonts.load('600 16px SUIT');
 let world;try{world=await createWorld(canvas);}catch(e){$('intro').hidden=true;$('error').hidden=false;throw e;}
 const {scene,renderer,camera,panorama}=world,hero=createChild(scene),guide=createChild(scene,'#bba366',true);
 const memories=new Map();let observation=null;
-import {observations,beginObservation,advanceObservation} from './lib/observations.mjs?v=walk-memory-20261102';
+import {observations,beginObservation,advanceObservation} from './lib/observations.mjs?v=walk-look-20261102';
 const sound=new ForestSound(),keys=new Set(),touch=new Set();let state={x:0,y:0},mode='intro',time=0,last=performance.now(),idle=0,traveled=0,reached=false,lastPlace='',noteUntil=8,pulse=null,pauseFrom='playing';
 const motionQuery=matchMedia('(prefers-reduced-motion:reduce)');let reduced=motionQuery.matches;motionQuery.addEventListener('change',e=>reduced=e.matches);
 const camPos=new T.Vector3(),look=new T.Vector3(),desired=new T.Vector3();
-function modeTo(next){mode=next;document.body.dataset.mode=next;for(const id of ['intro','paused','rest','finish','error'])$(id).hidden=true;if(next==='intro')$('intro').hidden=false;if(next==='paused')$('paused').hidden=false;if(next==='rest')$('rest').hidden=false;if(next==='finished')$('finish').hidden=false;if(next==='error')$('error').hidden=false;$('journey').hidden=next==='intro'||next==='error';$('journey').inert=next!=='playing';canvas.tabIndex=next==='playing'?0:-1;document.querySelector('header').inert=next==='paused'||next==='error';$('pause').disabled=next==='intro';clearInput();}
-function clearInput(){keys.clear();touch.clear();pulse=null;document.querySelectorAll('#pad button').forEach(b=>b.classList.remove('active'));}
+const view={yaw:0,pitch:0};let lookDrag=null;
+const canLook=()=>['playing','rest','finished'].includes(mode);
+function resetView(){view.yaw=0;view.pitch=0;}
+function endLookDrag(){const pointer=lookDrag?.id;lookDrag=null;canvas.classList.remove('dragging');if(pointer!==undefined&&canvas.hasPointerCapture(pointer))canvas.releasePointerCapture(pointer);}
+function modeTo(next){if(next==='finished'&&mode!=='paused')resetView();mode=next;document.body.dataset.mode=next;for(const id of ['intro','paused','rest','finish','error'])$(id).hidden=true;if(next==='intro')$('intro').hidden=false;if(next==='paused')$('paused').hidden=false;if(next==='rest')$('rest').hidden=false;if(next==='finished')$('finish').hidden=false;if(next==='error')$('error').hidden=false;$('journey').hidden=next==='intro'||next==='error';$('journey').inert=next!=='playing';canvas.tabIndex=canLook()?0:-1;$('reset-view').disabled=!canLook();document.querySelector('header').inert=next==='paused'||next==='error';$('pause').disabled=next==='intro';clearInput();}
+function clearInput(){keys.clear();touch.clear();pulse=null;endLookDrag();document.querySelectorAll('#pad button').forEach(b=>b.classList.remove('active'));}
 function focusGame(){canvas.focus({preventScroll:true});}
 function announce(text,seconds=6){$('note').textContent=text;noteUntil=time+seconds;}
 async function audioStart(){try{await sound.start();}catch{sound.enabled=false;updateSound();announce('소리를 켜려면 오른쪽 위 소리 버튼을 눌러 주세요.');}}
 function updateSound(){$('sound').textContent=sound.enabled?'소리 켜짐':'소리 꺼짐';$('sound').setAttribute('aria-pressed',String(sound.enabled));$('sound').setAttribute('aria-label',sound.enabled?'자연 소리 끄기':'자연 소리 켜기');}
-function reset(){memories.clear();observation=null;renderMemories();state={x:0,y:0};idle=0;traveled=0;reached=false;time=0;lastPlace='';sound.nextBird=4;sound.lastStep=null;modeTo('playing');position(true);announce('노란 배낭이 나예요. 위쪽 방향키로 걸어 볼까요?',9);audioStart();focusGame();}
+function reset(){resetView();memories.clear();observation=null;renderMemories();state={x:0,y:0};idle=0;traveled=0;reached=false;time=0;lastPlace='';sound.nextBird=4;sound.lastStep=null;modeTo('playing');position(true);announce('노란 배낭이 나예요. 위쪽 방향키로 걸어 볼까요?',9);audioStart();focusGame();}
 $('start').disabled=false;$('start').textContent='산길 오르기';$('start').onclick=reset;
+$('reset-view').onclick=()=>{resetView();if(canLook())focusGame();};
 $('sound').onclick=async()=>{try{await sound.toggle();updateSound();}catch{announce('브라우저에서 소리를 허용한 뒤 다시 눌러 주세요.');}if(mode==='paused')sound.pause();else if(mode==='playing')focusGame();};
 function pause(){if(mode==='intro'||mode==='paused'||mode==='error')return;pauseFrom=mode;modeTo('paused');sound.pause();$('resume').focus();}
 function resume(){modeTo(pauseFrom);last=performance.now();audioStart();if(pauseFrom==='rest')$('leave-rest').focus();else if(pauseFrom==='finished')$('stay').focus();else focusGame();}
@@ -43,22 +49,36 @@ function chooseObservation(spot,id){
 function interact(){
   const spot=nearby(state.y);if(mode!=='playing'||!spot)return;
   if(state.y>190&&reached){renderMemories();modeTo('finished');$('stay').focus();return;}
-  observation=null;modeTo('rest');$('rest-title').textContent=spot.name;$('rest-text').textContent=spot.text;
+  observation=null;resetView();modeTo('rest');$('rest-title').textContent=spot.name;$('rest-text').textContent=spot.text;
   $('observe-feedback').textContent='어떻게 살펴볼까요?';$('observe-saved').textContent='';$('observe-choices').replaceChildren();
   for(const choice of observations[spot.s].choices){const b=document.createElement('button');b.type='button';b.textContent=choice.label;b.dataset.choice=choice.id;b.setAttribute('aria-pressed','false');b.onclick=()=>chooseObservation(spot.s,choice.id);$('observe-choices').append(b);}
   $('observe-choices').firstElementChild.focus();
 }
-$('action').onclick=interact;$('leave-rest').onclick=()=>{observation=null;modeTo('playing');focusGame();};
+$('action').onclick=interact;$('leave-rest').onclick=()=>{observation=null;resetView();modeTo('playing');focusGame();};
 window.addEventListener('keydown',e=>{
   if(mode==='paused'&&e.code==='Tab'){const first=$('resume'),last=$('restart');if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}return;}
   if(e.code==='Escape'){e.preventDefault();if(mode==='paused')resume();else if(mode==='rest'){$('leave-rest').click();}else pause();return;}
+  if(canLook()&&!e.target.matches('input,textarea,[contenteditable=true]')&&['KeyI','KeyJ','KeyK','KeyL','KeyR'].includes(e.code)){
+    e.preventDefault();if(e.code==='KeyR')resetView();else keys.add(e.code);return;
+  }
   if(mode!=='playing'||e.target.matches('input,textarea'))return;
   if(e.target.closest('button')&&(e.code==='Space'||e.code==='Enter'))return;
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD','KeyE','Space'].includes(e.code)){e.preventDefault();if((e.code==='KeyE'||e.code==='Space')&&!e.repeat)interact();else keys.add(e.code);}
 });window.addEventListener('keyup',e=>keys.delete(e.code));
 window.addEventListener('blur',()=>{clearInput();if(mode!=='intro'&&mode!=='paused')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();pause();sound.pause();}});
 for(const b of document.querySelectorAll('#pad button')){b.onpointerdown=e=>{if(mode!=='playing')return;e.preventDefault();b.setPointerCapture(e.pointerId);touch.add(b.dataset.dir);b.classList.add('active');};const release=()=>{touch.delete(b.dataset.dir);b.classList.remove('active');};b.onpointerup=release;b.onpointercancel=release;b.onlostpointercapture=release;b.onclick=e=>{if(e.detail===0&&mode==='playing')pulse={dir:b.dataset.dir,until:time+.22};};}
-canvas.addEventListener('pointerdown',()=>{if(mode==='playing')focusGame();});canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();modeTo('error');sound.pause();$('error-text').textContent='3D 화면 연결이 끊어졌어요. 다시 열면 처음부터 시작해요.';$('error').querySelector('button').focus();});
+canvas.addEventListener('pointerdown',e=>{
+  if(!canLook()||lookDrag||e.button!==0)return;e.preventDefault();focusGame();
+  lookDrag={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);canvas.classList.add('dragging');
+});
+canvas.addEventListener('pointermove',e=>{
+  if(!lookDrag||e.pointerId!==lookDrag.id)return;
+  const sensitivity=1.8/Math.min(innerWidth,innerHeight);
+  turnView(view,(e.clientX-lookDrag.x)*sensitivity,(lookDrag.y-e.clientY)*sensitivity);
+  lookDrag.x=e.clientX;lookDrag.y=e.clientY;
+});
+for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,e=>{if(e.pointerId===lookDrag?.id)endLookDrag();});
+canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();modeTo('error');sound.pause();$('error-text').textContent='3D 화면 연결이 끊어졌어요. 다시 열면 처음부터 시작해요.';$('error').querySelector('button').focus();});
 function input(){const has=(dir,...codes)=>touch.has(dir)||(pulse?.dir===dir&&time<pulse.until)||codes.some(c=>keys.has(c));return {x:Number(has('right','ArrowRight','KeyD'))-Number(has('left','ArrowLeft','KeyA')),y:Number(has('up','ArrowUp','KeyW'))-Number(has('down','ArrowDown','KeyS'))};}
 function position(snap=false,dt=.016,moving=false){
   const p=worldAt(state.y,state.x),slope=pathSlope(state.y),angle=Math.atan2(slope,-1);hero.root.position.set(p.x,p.y,p.z);
@@ -92,6 +112,10 @@ function position(snap=false,dt=.016,moving=false){
   }
   desired.y=Math.max(desired.y,terrain(desired.x,-desired.z)+1.2);
   if(state.y>188&&mode!=='rest'){const opening=clamp((state.y-188)/10,0,1),summitBack=worldAt(state.y-6.5,state.x*.2),summitAhead=worldAt(state.y+6);desired.lerp(new T.Vector3(summitBack.x,p.y+3.25,summitBack.z),opening);target.lerp(new T.Vector3(summitAhead.x,p.y+.8,summitAhead.z),opening);}
+  if(canLook()){
+    turnView(view,(Number(keys.has('KeyL'))-Number(keys.has('KeyJ')))*dt*1.2,(Number(keys.has('KeyI'))-Number(keys.has('KeyK')))*dt*.9);
+    target.copy(sightTarget(desired,target,view));
+  }
   const blend=snap||reduced?1:1-Math.exp(-dt*4);camPos.lerp(desired,blend);look.lerp(target,blend);camera.position.copy(camPos);camera.lookAt(look);
 }
 function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w<h?65:45;camera.updateProjectionMatrix();const ratio=(panorama.image.width/panorama.image.height)/camera.aspect;panorama.repeat.set(Math.min(1,1/ratio),Math.min(1,ratio));panorama.offset.set((1-panorama.repeat.x)/2,(1-panorama.repeat.y)/2);}window.addEventListener('resize',resize);resize();position(true);
