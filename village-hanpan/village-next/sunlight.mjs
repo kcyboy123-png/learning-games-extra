@@ -30,7 +30,7 @@ export function createSunlight(renderer){
   float contactShade(){
    vec3 p=positionAt(vUv),normal=normalize(cross(dFdx(p),dFdy(p)));float shade=0.;
    for(int i=0;i<8;i++){float a=(float(i)+.5)*.78539816;vec3 delta=positionAt(clamp(vUv+vec2(cos(a),sin(a))*contactStep,vec2(.001),vec2(.999)))-p;float d=length(delta);shade+=max(dot(normal,delta)/(d+.001)-.12,0.)*(1.-smoothstep(.10,.60,d));}
-   return 1.-min(.30,shade*.22);
+   return 1.-min(.24,shade*.18);
   }
   void main(){vec3 c=texture2D(source,vUv).rgb;
    c*=contactShade();

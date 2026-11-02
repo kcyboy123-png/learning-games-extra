@@ -13,7 +13,7 @@ export function meadowSites(s){
   const key=`${x},${y}`;if(x===RIVER||blocked.has(key))continue;
   let seed=((x+1)*73856093^(y+1)*19349663)>>>0;
   const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
-  const p=toWorld(x,y),count=18+Math.floor(random()*6),cx=(random()-.5)*.8,cz=(random()-.5)*.8;
+  const p=toWorld(x,y),count=14+Math.floor(random()*6),cx=(random()-.5)*.8,cz=(random()-.5)*.8;
   for(let i=0;i<count;i++){
    const clustered=i%4<2,r=clustered?.44:.86,dx=(random()-.5)*r*2,dz=(random()-.5)*r*2;
    const roadside=[[-1,0],[1,0],[0,-1],[0,1]].some(([a,b])=>roads.has(`${x+a},${y+b}`)&&dx*a+dz*b>.45);
@@ -81,7 +81,7 @@ export function createMeadow(s){
   group.add(m);return m;
  };
  make(blades,sites,'grass');make(blossom,flowers,'flowers');
- make(clover,sites.filter(p=>p.tone>.24).map(p=>{
+ make(clover,sites.filter(p=>p.tone>.48).map(p=>{
   const [gx,gy]=p.key.split(',').map(Number),center=toWorld(gx,gy),size=.85+p.size*.35,edge=CELL/2-.45*size;
   return {...p,size,x:Math.max(center.x-edge,Math.min(center.x+edge,p.x)),z:Math.max(center.z-edge,Math.min(center.z+edge,p.z))};
  }),'clover');

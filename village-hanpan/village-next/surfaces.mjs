@@ -23,9 +23,9 @@ function paintArchitecture(kind,ctx,map){
 const palettes={
  wood:['#8e6b4a','#a9805a','#8e6a4a','#8b6a4a','#956e51','#bd9869','#b28b60','#7a5b41','#6f5139','#c9a97a','#d6bb8d'],
  plaster:['#f7f7f2','#f4f1e8','#ecebe4','#fff2c9','#f1e7d2','#eadfc9','#f1e3c3','#f6e4c0','#e6d4b0','#efdcb6','#e8dcc4','#f5e9d2','#e9e4d4','#d9d2c0'],
- stone:['#ead7ac','#eedfb9','#e5cf9f','#b8ac90','#bfb294','#a9a99c','#9e8f78','#a39276','#c8b693','#9d9480','#a09374','#cdc6a6'],
+ stone:['#eadbb9','#eedfc0','#e5d6b5','#edddba','#e8d7b3','#ead7ac','#eedfb9','#e5cf9f','#b8ac90','#bfb294','#a9a99c','#9e8f78','#a39276','#c8b693','#9d9480','#a09374','#cdc6a6'],
  leaf:['#7fa857','#97ba67','#6a9850','#e9a4b4','#f4c0ca','#d9929f'],
- roof:['#5c8170','#4d7362','#52745e','#385443','#4a6a70','#3a5459','#5f7b6b','#4b6457','#3d4247','#2c3034','#7a3b32','#5a2a24','#7d8b8e','#a77760','#825743','#7b926a','#5c7653','#7d6b52','#7d7d74','#6fa08a','#4a7fa6']
+ roof:['#719784','#618b79','#5c8170','#4d7362','#52745e','#385443','#4a6a70','#3a5459','#5f7b6b','#4b6457','#3d4247','#2c3034','#7a3b32','#5a2a24','#7d8b8e','#a77760','#825743','#7b926a','#5c7653','#7d6b52','#7d7d74','#6fa08a','#4a7fa6']
 };
 function texture(kind){
  if(maps.has(kind))return maps.get(kind);
@@ -45,7 +45,7 @@ function texture(kind){
  if(kind==='grass'){
   map.repeat.set(.12,.12);
   // Detailed neutral meadow albedo is softly blended so paths and buildings remain legible.
-  const art=new Image();art.onload=()=>{ctx.fillStyle='#fffef5';ctx.fillRect(0,0,1024,1024);ctx.globalAlpha=.44;ctx.drawImage(art,0,0,1024,1024);ctx.globalAlpha=1;map.needsUpdate=true;};
+  const art=new Image();art.onload=()=>{ctx.fillStyle='#fffef5';ctx.fillRect(0,0,1024,1024);ctx.globalAlpha=.28;ctx.drawImage(art,0,0,1024,1024);ctx.globalAlpha=1;map.needsUpdate=true;};
   art.src=new URL('./assets/meadow-soft.png',import.meta.url).href;
  }
  paintArchitecture(kind,ctx,map);maps.set(kind,map);return map;
