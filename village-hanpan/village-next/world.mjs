@@ -7,7 +7,7 @@ import {naturalFeature,growthStage} from './landscape.mjs?v=city1';
 import {advancePersonRoute} from './residents.mjs?v=neighbors1';
 import {townscapeSites} from './townscape.mjs?v=art5final';
 import {seasonalSites,createSeasonDetails,disposeSeasonDetails} from './season-details.mjs?v=graphics10';
-import {surfaceOptions,surfaceTime,surfaceWinter} from './surfaces.mjs?v=graphics10';
+import {surfaceOptions,surfaceTime,surfaceWinter} from './surfaces.mjs?v=graphics10-architecture-20261102';
 import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?v=graphics10';
 import {createSunlight} from './sunlight.mjs?v=graphics10';
 import {paintedTree,treeArtSeason,treeArtReady} from './tree-art.mjs?v=graphics10';
@@ -111,13 +111,21 @@ function alignedCottage(a,type='house'){
  for(const z of[-1.36,1.06])softBlock(a,'#bd9869',0,h+.25,z,2.94,.12,.12,.025);
  const roofGroup=cottageRoof(a,h+.28,power?3.18:3.42,power?2.82:2.92,power);if(power)roofGroup.scale.y=.78;
  const decor=new T.Group();a.add(decor);finish.push(decor);
+ // Recessed timber and stone edges remain real geometry when the camera turns.
+ for(const side of[-1,1]){
+  softBlock(decor,'#8e6b4a',side*1.43,h+.17,-.15,.10,.10,2.43,.02);
+  for(const z of[-.96,.66])softBlock(decor,'#bd9869',side*1.46,.43,z,.10,.20,.17,.02);
+ }
  if(power){
   softBlock(a,'#6f7f82',0,.86,1.07,1.75,1.15,.13,.04);for(const x of[-.45,.45]){softBlock(a,'#96a39c',x,.9,1.16,.7,.91,.12,.035);for(let i=0;i<5;i++)box(a,'#5c6b6e',x,.59+i*.12,1.23,.52,.025,.02);ball(a,'#e5c36a',x+.2,.81,1.25,.03);}
   label(decor,'마을 전력소',0,1.6,1.12,1.35,.22,'#547668','#fff3d6',55);
+  for(const x of[-.45,.45]){softBlock(decor,'#c9a97a',x,.40,1.20,.77,.08,.17,.02);box(decor,'#344b4c',x,.99,1.235,.20,.13,.012);box(decor,'#bdd1af',x,.99,1.245,.14,.07,.008);}
  }else if(shop){
   cottageWindow(a,-.59,.64,1.06,1.12,1.03);door(a,.85,.82,1.105,.62,1.22);
   softBlock(decor,'#a85f4a',0,1.7,1.16,2.72,.34,.13,.035);label(decor,'개울 분식',0,1.7,1.24,2.35,.25,'#a85f4a','#fff1c9',65);
   for(let i=0;i<12;i++){const c=i%2?'#f6e7c3':'#d9846d',x=-1.32+i*.24;const m=softBlock(decor,c,x,1.45,1.49,.235,.055,.67,.018);m.rotation.x=.17;ball(decor,c,x,1.36,1.81,.117,.065,.035);}
+  softBlock(decor,'#bd9869',-.59,.62,1.38,1.32,.10,.43,.035);
+  for(const x of[-1.12,-.08]){const bracket=softBlock(decor,'#8e6b4a',x,.48,1.24,.065,.31,.07,.015);bracket.rotation.x=-.48;}
   // A projecting sign remains recognisable when the neighbouring cottage masks the main sign.
   const sign=new T.Group();sign.position.set(-1.53,1.73,1.34);sign.rotation.y=-Math.PI/2;decor.add(sign);
   softBlock(sign,'#8e6b4a',0,0,0,.57,.53,.07,.045);label(sign,'분식',0,0,.046,.48,.43,'#bf735d','#fff4d4',56);label(sign,'분식',0,0,-.046,.48,.43,'#bf735d','#fff4d4',56).rotation.y=Math.PI;
@@ -125,6 +133,8 @@ function alignedCottage(a,type='house'){
  }else{
   archedPanel(a,'#8e6b4a',.35,.28,1.065,.77,1.29,.08);archedPanel(a,'#bd9869',.35,.32,1.15,.64,1.2,.025);archedPanel(a,'#dbe1bf',.35,.91,1.185,.39,.5,.014);ball(a,'#e5c36a',.59,.83,1.22,.038);
   cottageWindow(a,-.79,.72,1.07,.78,.94);label(decor,'12',.99,1.61,1.09,.2,.15,'#547668','#fff3d6',50);
+  for(const side of[-1,1]){const x=-.79+side*.51;softBlock(decor,'#547668',x,1.18,1.095,.18,.78,.06,.02);for(let i=0;i<5;i++)box(decor,'#8eaa8e',x,.90+i*.13,1.13,.145,.025,.025);}
+  for(const x of[.18,.35,.52])box(decor,'#8e6b4a',x,.59,1.182,.012,.45,.012);
  }
  // Side and rear facades remain detailed when the road puts the entrance away from the camera.
  for(const side of[-1,1]){const wall=new T.Group();wall.position.set(side*1.45,0,-.15);wall.rotation.y=side*Math.PI/2;decor.add(wall);cottageWindow(wall,0,.63,0,1.03,1.04);}

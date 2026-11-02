@@ -3,6 +3,23 @@ import * as T from '../lib/three.module.min.js';
 // Small, deterministic, shared material maps: no network assets or per-building textures.
 export const surfaceTime={value:0},surfaceWinter={value:0};
 const maps=new Map();
+let architectureArt;
+function paintArchitecture(kind,ctx,map){
+ const quadrant={plaster:[0,0],wood:[1,0],roof:[0,1],stone:[1,1]}[kind];
+ if(!quadrant||typeof Image==='undefined')return;
+ architectureArt??=new Promise(resolve=>{
+  const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>resolve(null);
+  image.src=new URL('./assets/architecture-study-20261102.png',import.meta.url).href;
+ });
+ architectureArt.then(image=>{
+  if(!image)return;
+  const w=image.naturalWidth/2,h=image.naturalHeight/2;
+  // Preserve the existing palette and seasonal shaders beneath the shared painted grain.
+  ctx.globalAlpha=kind==='plaster'?.28:.48;
+  ctx.drawImage(image,quadrant[0]*w,quadrant[1]*h,w,h,0,0,256,256);
+  ctx.globalAlpha=1;map.needsUpdate=true;
+ });
+}
 const palettes={
  wood:['#8e6b4a','#a9805a','#8e6a4a','#8b6a4a','#956e51','#bd9869','#b28b60','#7a5b41','#6f5139','#c9a97a','#d6bb8d'],
  plaster:['#f7f7f2','#f4f1e8','#ecebe4','#fff2c9','#f1e7d2','#eadfc9','#f1e3c3','#f6e4c0','#e6d4b0','#efdcb6','#e8dcc4','#f5e9d2','#e9e4d4','#d9d2c0'],
@@ -31,7 +48,7 @@ function texture(kind){
   const art=new Image();art.onload=()=>{ctx.fillStyle='#fffef5';ctx.fillRect(0,0,1024,1024);ctx.globalAlpha=.44;ctx.drawImage(art,0,0,1024,1024);ctx.globalAlpha=1;map.needsUpdate=true;};
   art.src=new URL('./assets/meadow-soft.png',import.meta.url).href;
  }
- maps.set(kind,map);return map;
+ paintArchitecture(kind,ctx,map);maps.set(kind,map);return map;
 }
 export function surfaceOptions(color){
  if(color==='#7cc5be')return{onBeforeCompile(shader){shader.uniforms.streamTime=surfaceTime;shader.uniforms.streamWinter=surfaceWinter;shader.vertexShader='varying vec2 vStreamUv;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvStreamUv=uv;');shader.fragmentShader='varying vec2 vStreamUv;uniform float streamTime,streamWinter;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nfloat flow=streamTime*(1.-streamWinter);float wave=sin(vStreamUv.y*170.-flow*1.4+sin(vStreamUv.x*22.+flow*.4)*2.);float edge=pow(abs(vStreamUv.x-.5)*2.,3.);diffuseColor.rgb*=.82+edge*.18;diffuseColor.rgb+=vec3(.09,.16,.15)*smoothstep(.86,1.,wave)*(1.-streamWinter);');},customProgramCacheKey:()=> 'village-stream-v1'};
