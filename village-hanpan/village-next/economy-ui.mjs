@@ -1,9 +1,13 @@
-import {buildingSpec,metrics,TYPES,MONTH,month,monthLabel,demandMonth,connected,unlocked,HARVEST,HARVEST_SECONDS} from './core.mjs?v=cozy2';
+import {buildingSpec,metrics,TYPES,MONTH,month,monthLabel,calendarMonth,demandMonth,connected,unlocked,HARVEST,HARVEST_SECONDS} from './core.mjs?v=cozy2';
 import {PLAY_SPEED,realSeconds} from './data.mjs?v=cozy2';
 
 // nextId never decreases, so cancelling or reloading cannot restart completed guidance.
 export const guidedPlacement=s=>s.mode==='run'&&!s.ended&&month(s)<4&&s.nextId-1-s.buildings.filter(b=>b.starter).length<2;
 export const netIncome=v=>v.income-v.upkeep;
+export const incomePerMinute=v=>netIncome(v)*PLAY_SPEED/MONTH*60;
+export const calendarDay=s=>1+Math.floor((s.t%MONTH)/MONTH*[31,28,31,30,31,30,31,31,30,31,30,31][calendarMonth(s)]);
+// This order matches the 5×5 atlas rendered from the game's models.
+export const cataloguePictures=['road','house','snack','apartment','western','japanese','chinese','convenience','supermarket','clinic','hospital','kids','amusement','school','library','fire','drain','workshop','solar','generator','bridge','flower','avenue','tree','bench'];
 export const incomeRate=v=>`${netIncome(v)<0?'−':'+'}${(Math.abs(netIncome(v))*PLAY_SPEED/MONTH).toFixed(1)}/초`;
 
 export function buildingBenefit(s,type){

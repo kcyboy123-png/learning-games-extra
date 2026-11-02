@@ -572,16 +572,18 @@ export class World{
  place(p,gx,gy){const w=toWorld(gx,gy);p.g.position.set(w.x,GROUND_Y,w.z);p.route=[];}
  focus(gx,gy){this.followPlayer=false;const w=toWorld(gx,gy);this.center.set(w.x,0,w.z);}
  startEntrance(){
-  this.entrance={t:0,to:this.center.clone(),from:this.player.g.position.clone(),zoom:this.targetZoom};
+  this.entrance={t:0,to:this.center.clone(),from:this.player.g.position.clone(),zoom:this.targetZoom,angle:this.angle,height:this.cameraHeight??26};
   this.followPlayer=false;this.updateEntrance(0);
  }
  updateEntrance(dt){
   const e=this.entrance;if(!e)return;
-  e.t=Math.min(1,e.t+dt/2.8);const u=e.t*e.t*(3-2*e.t);
-  this.center.lerpVectors(e.from,e.to,u);this.center.y=0;
-  this.cameraHeight=12+20*u;this.lookHeight=1-.8*u;
-  const close=this.aspect<1?4.9:3.2;
-  this.zoom=this.targetZoom=close+(e.zoom-close)*u;
+  e.t=Math.min(1,e.t+dt/7.6);
+  const smooth=x=>x*x*(3-2*x),pull=smooth(Math.min(1,e.t/.78)),settle=smooth(Math.max(0,(e.t-.78)/.22));
+  this.center.lerpVectors(e.from,e.to,pull);this.center.y=0;
+  this.cameraHeight=7+(e.height+4-7)*pull-4*settle;this.lookHeight=1.15-.95*pull;
+  this.angle=e.angle-.32*(1-pull)+.10*Math.sin(pull*Math.PI);
+  const close=this.aspect<1?4.9:3.2,wide=e.zoom*.78;
+  this.zoom=this.targetZoom=close+(wide-close)*pull+(e.zoom-wide)*settle;
   if(e.t===1)this.entrance=null;
  }
  // 화면 픽셀 → 지면 이동. 세로는 카메라 앙각(약 41°) 때문에 1.5배.
