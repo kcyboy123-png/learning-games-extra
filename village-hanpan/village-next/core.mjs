@@ -22,7 +22,7 @@ export function createState(mode='run'){
  add('house',4,5,['ins']);add('house',6,5,['ins']);add('generator',4,7);add('tree',6,9);add('tree',4,10);return s;
 }
 // Relaxed decorating keeps past results intact and uses a separate current growth score.
-export function enableCozy(s){if(s.cozyV!==1)s.money=Math.max(300,s.money);s.cozyV=1;s.mode='free';s.ended=false;return s;}
+export function enableCozy(s){if(s.cozyV!==1)s.money=Math.max(300,s.money);s.placementHintsShown??=Math.min(2,s.buildings.filter(b=>!b.starter).length);s.cozyV=1;s.mode='free';s.ended=false;return s;}
 export function cozyGrowth(s){
  const made=s.buildings.filter(b=>!b.starter&&b.progress>=1&&!b.closed&&!['road','bridge'].includes(b.type));
  const gardens=made.filter(isGarden).length,buildings=made.length-gardens,variety=new Set(made.map(b=>b.type)).size,details=made.reduce((n,b)=>n+b.opts.length,0);
@@ -136,6 +136,7 @@ export function parseSave(text){if(typeof text!=='string'||text.length>500000)th
  const num=(v,a,b)=>typeof v==='number'&&Number.isFinite(v)&&v>=a&&v<=b;
  const validConditions=h=>h&&Array.isArray(h.reasons)&&h.reasons.length<=Object.keys(TIER_CAPS).length&&new Set(h.reasons).size===h.reasons.length&&h.reasons.every(k=>Object.hasOwn(TIER_CAPS,k)&&TIER_CAPS[k]===h.cap)&&h.cap===(h.reasons.length?TIER_CAPS[h.reasons[0]]:1000);
  if(!s||s.v!==VERSION||s.rule!==RULE||!['run','free'].includes(s.mode)||!num(s.t,0,s.mode==='run'?duration(s):1e8)||!Number.isInteger(s.t)||!num(s.carry,0,1)||!num(s.money,0,1e8)||!Number.isInteger(s.pop)||!num(s.pop,0,10000)||!num(s.sat,0,100)||!Number.isInteger(s.stage)||!num(s.stage,0,3)||typeof s.paused!=='boolean'||typeof s.ended!=='boolean'||!Array.isArray(s.buildings)||s.buildings.length>SIZE*SIZE||!Array.isArray(s.hist)||s.hist.length>(s.runMonths??12))throw Error('저장 내용이 올바르지 않아요.');
+ if(s.placementHintsShown!==undefined&&(!Number.isInteger(s.placementHintsShown)||!num(s.placementHintsShown,0,2)))throw Error('자리 안내 기록을 확인해 주세요.');
  if(s.cozyV!==undefined&&(s.cozyV!==1||s.mode!=='free'||s.ended))throw Error('꾸미기 기록을 확인해 주세요.');
  if(s.cityV!==undefined&&(s.cityV!==1||s.economyV!==4||s.scoringV!==2))throw Error('도시 발전 규칙을 확인해 주세요.');
  if(s.economyV!==undefined&&![2,3,4].includes(s.economyV))throw Error('경제 규칙을 확인해 주세요.');

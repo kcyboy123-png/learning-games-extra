@@ -250,3 +250,8 @@ body:has(#infoPanel.open) #need{visibility:hidden}
 #entranceDialog [hidden]{display:none!important}.entrance-caption{bottom:max(28px,env(safe-area-inset-bottom));padding:12px;border-radius:18px;background:#183d2ab0;width:max-content;max-width:calc(100% - 32px);margin:auto;font-size:15px}.entrance-caption button{min-height:44px;text-shadow:none}
 @media(max-width:600px){.cozy .clock{flex:1;max-width:240px;flex-wrap:wrap}.cozy .clock b{font-size:12px}.cozy .stats{padding:7px 9px}.cozy #incomeRate{font-size:11px!important}.build-thumb{width:66px;height:66px}.cozy .list button{gap:10px}.build-copy .build-head b{font-size:16px}.entrance-caption{font-size:13px;gap:8px}}
 .cozy #buildPanel{max-height:min(60dvh,calc(100dvh - 200px))}.cozy .list{grid-template-columns:1fr}.cozy .list button.poor{opacity:1}.cozy .list button .build-price{white-space:nowrap}.cozy .list button .build-value{font-size:14px}.cozy .list button .build-action{padding-top:5px}
+
+/* Keep zoom within thumb reach without adding another menu. */
+.cozy footer{display:flex;align-items:center;gap:8px;bottom:calc(14px + env(safe-area-inset-bottom))}.cozy footer nav{flex:1;min-width:0}
+.zoom-controls{display:flex;gap:8px;flex:none;padding:6px;border:1px solid #fffc;border-radius:20px;background:#fffdf1ee;box-shadow:0 6px 20px #204f4825}.zoom-controls button{width:48px;height:48px;min-width:48px;padding:0;font-size:26px}
+@media(max-width:600px){.cozy footer{bottom:calc(10px + env(safe-area-inset-bottom));gap:6px}.cozy footer nav button{padding:9px 2px}.zoom-controls{gap:8px;padding:4px}.zoom-controls button{width:44px;min-width:44px;height:48px}.cozy footer nav{gap:2px}}
