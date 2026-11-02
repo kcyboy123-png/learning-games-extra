@@ -1,14 +1,14 @@
 import * as T from './vendor/three.module.js';
-import {createWorld,createChild} from './world.mjs?v=walk-look-20261102';
-import {advance,worldAt,pathSlope,elevation,grade,terrain,riverX,place,nearby,LENGTH,clamp} from './trail.mjs?v=walk-look-20261102';
-import {ForestSound} from './sound.mjs?v=walk-look-20261102';
-import {turnView,sightTarget} from './lib/look.mjs?v=walk-look-20261102';
+import {createWorld,createChild} from './world.mjs?v=forest-art-20261102';
+import {advance,worldAt,pathSlope,elevation,grade,terrain,riverX,place,nearby,LENGTH,clamp} from './trail.mjs?v=forest-art-20261102';
+import {ForestSound} from './sound.mjs?v=forest-art-20261102';
+import {turnView,sightTarget} from './lib/look.mjs?v=forest-art-20261102';
 const $=id=>document.getElementById(id),canvas=$('forest');
 await document.fonts.load('600 16px SUIT');
 let world;try{world=await createWorld(canvas);}catch(e){$('intro').hidden=true;$('error').hidden=false;throw e;}
 const {scene,renderer,camera,panorama}=world,hero=createChild(scene),guide=createChild(scene,'#bba366',true);
 const memories=new Map();let observation=null;
-import {observations,beginObservation,advanceObservation} from './lib/observations.mjs?v=walk-look-20261102';
+import {observations,beginObservation,advanceObservation} from './lib/observations.mjs?v=forest-art-20261102';
 const sound=new ForestSound(),keys=new Set(),touch=new Set();let state={x:0,y:0},mode='intro',time=0,last=performance.now(),idle=0,traveled=0,reached=false,lastPlace='',noteUntil=8,pulse=null,pauseFrom='playing';
 const motionQuery=matchMedia('(prefers-reduced-motion:reduce)');let reduced=motionQuery.matches;motionQuery.addEventListener('change',e=>reduced=e.matches);
 const camPos=new T.Vector3(),look=new T.Vector3(),desired=new T.Vector3();

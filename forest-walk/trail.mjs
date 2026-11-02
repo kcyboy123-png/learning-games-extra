@@ -20,7 +20,9 @@ export const halfWidth=s=>s>56&&s<68?1.12:2.35;
 export function terrain(x,s){
   const base=elevation(s), d=Math.abs(x-pathX(s)), river=Math.abs(x-riverX(s));
   const side=x-pathX(s),rise=clamp((s-98)/45,0,1),outside=Math.max(0,d-4);
-  const hills=outside*.035+Math.sin(x*.19+s*.045)*.27*Math.min(1,Math.max(0,d-3)/3);
+  const shoulder=clamp((d-5)/13,0,1),lowerForest=1-clamp((s-100)/40,0,1);
+  const hills=outside*.035+Math.sin(x*.19+s*.045)*.27*Math.min(1,Math.max(0,d-3)/3)
+    +lowerForest*shoulder*shoulder*clamp((river-4)/5,0,1)*(2.4+1.5*Math.sin(s*.065+x*.08)+.6*Math.cos(x*.24-s*.11));
   const mountain=rise*(side<0?Math.min(12,outside*.7):-Math.min(24,outside*.85));
   // Keep the stream bed below its water when the mountain shoulder begins to rise.
   const stream=clamp((118-s)/12,0,1),bank=Math.exp(-Math.pow(river/3.8,4))*stream;

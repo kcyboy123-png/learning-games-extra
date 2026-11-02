@@ -1,5 +1,6 @@
 import * as T from './vendor/three.module.js';
 import {shapes} from './assets/character-shapes-v5.mjs';
+import {riverStones} from './assets/river-stones-20261102.mjs';
 
 export const characterGeometry=Object.fromEntries(Object.entries(shapes).map(([name,data])=>{
   const g=new T.BufferGeometry();for(const [key,values] of Object.entries(data))g.setAttribute(key,new T.Float32BufferAttribute(values,key==='uv'?2:3));g.computeBoundingSphere();return [name,g];
@@ -191,7 +192,7 @@ export function cascadeGeometry(){
 }
 
 export async function forestMaterials(){
-  const atlas=await new T.TextureLoader().loadAsync(new URL('./assets/forest-surfaces-v4.png',import.meta.url).href),result={};
+  const atlas=await new T.TextureLoader().loadAsync(new URL('./assets/forest-surfaces-20261102.png',import.meta.url).href),result={};
   for(const [name,x,y] of [['soil',0,0],['bark',1,0],['stone',0,1],['floor',1,1]]){
     const c=document.createElement('canvas');c.width=c.height=512;const ctx=c.getContext('2d'),w=atlas.image.width/2,h=atlas.image.height/2;
     ctx.drawImage(atlas.image,x*w,y*h,w,h,0,0,512,512);
@@ -261,14 +262,12 @@ export function foliageGeometry(){
 }
 
 export function mossRockGeometry(variant=0){
-  const g=new T.IcosahedronGeometry(1,3),p=g.attributes.position,colors=[],c=new T.Color();
+  const shape=riverStones[variant%3],g=new T.BufferGeometry();
+  for(const [name,size] of [['position',3],['normal',3],['uv',2]])g.setAttribute(name,new T.Float32BufferAttribute(shape[name],size));
+  const p=g.attributes.position,colors=[],c=new T.Color();
   for(let i=0;i<p.count;i++){
     const x=p.getX(i),y=p.getY(i),z=p.getZ(i),n=Math.sin(x*9+z*5)*Math.sin(y*8-z*9);
-    const r=1+Math.sin(x*3+z*4+variant)*.15+Math.cos(y*5+x*3+variant)*.075;
-    const bx=Math.sign(x)*Math.abs(x)**(.72+variant*.06),bz=Math.sign(z)*Math.abs(z)**(.84-variant*.05);
-    const cut=Math.min(.77+variant*.05,.85-x*.25+z*.12)+.025*Math.sin(x*13+z*11);
-    p.setXYZ(i,bx*r+.10*y*z,Math.min(cut,.74+x*.24-z*.31,y*r),bz*r+.07*x*y);
-    const moss=T.MathUtils.smoothstep(y+n*.65+Math.sin(x*14-z*8)*.18,.38,.79);
+    const moss=T.MathUtils.smoothstep(y+n*.32+Math.sin(x*8-z*6)*.15,.32,.83)*Math.max(0,g.attributes.normal.getY(i));
     c.set('#c7cdcb').lerp(new T.Color('#5e782f'),moss);c.multiplyScalar(.96+n*.10+y*.04);colors.push(c.r,c.g,c.b);
   }
   g.setAttribute('color',new T.Float32BufferAttribute(colors,3));g.computeVertexNormals();

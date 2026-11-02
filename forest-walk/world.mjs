@@ -1,7 +1,7 @@
 import * as T from './vendor/three.module.js';
-import {footStep,STRIDE} from './lib/gait.mjs?v=walk-memory-20261102';
-import {surfaceTexture,foliageGeometry,mossRockGeometry,fernGeometry,grassGeometry,broadleafGeometry,creekFoamGeometry,characterGeometry,forestMaterials,woodlandTree,contactTexture,stoneStepGeometry,cascadeGeometry,squirrelTailGeometry} from './art.mjs?v=walk-memory-20261102';
-import {pathX,pathSlope,elevation,riverX,terrain,worldAt,clamp} from './trail.mjs?v=walk-memory-20261102';
+import {footStep,STRIDE} from './lib/gait.mjs?v=forest-art-20261102';
+import {surfaceTexture,foliageGeometry,mossRockGeometry,fernGeometry,grassGeometry,broadleafGeometry,creekFoamGeometry,characterGeometry,forestMaterials,woodlandTree,contactTexture,stoneStepGeometry,cascadeGeometry,squirrelTailGeometry} from './art.mjs?v=forest-art-20261102';
+import {pathX,pathSlope,elevation,riverX,terrain,worldAt,clamp} from './trail.mjs?v=forest-art-20261102';
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.94,envMapIntensity:.22,...extra});
 const cloth=color=>new T.MeshPhysicalMaterial({color,roughness:.95,envMapIntensity:.18,sheen:.16,sheenColor:'#e6d2a1',sheenRoughness:.9});
 // Albedo detail stays subtle beneath the storybook palette, avoiding dark double-tinting.
@@ -70,8 +70,8 @@ export async function createWorld(canvas){
   const panorama=await new T.TextureLoader().loadAsync(new URL('./assets/summit-panorama-v4.png',import.meta.url).href);panorama.colorSpace=T.SRGBColorSpace;scene.background=panorama;scene.fog=new T.FogExp2('#d5e0d7',.009);
   const env=panorama.clone();env.mapping=T.EquirectangularReflectionMapping;env.needsUpdate=true;const pmrem=new T.PMREMGenerator(renderer);scene.environment=pmrem.fromEquirectangular(env).texture;env.dispose();pmrem.dispose();
   const camera=new T.PerspectiveCamera(52,1,.1,420);
-  const fill=new T.DirectionalLight('#e4ece7',1.65);scene.add(fill,fill.target);
-  scene.add(new T.HemisphereLight('#dce9e5','#65513b',1.25));scene.add(new T.AmbientLight('#fff0d6',.15));
+  const fill=new T.DirectionalLight('#dce9ed',1.12);scene.add(fill,fill.target);
+  scene.add(new T.HemisphereLight('#dce9e5','#65513b',1.05));scene.add(new T.AmbientLight('#fff0d6',.15));
   const sun=new T.DirectionalLight('#ffe0a1',5.4);sun.position.set(-20,28,8);sun.castShadow=true;sun.shadow.mapSize.set(innerWidth<700?1024:2048,innerWidth<700?1024:2048);Object.assign(sun.shadow.camera,{left:-20,right:20,top:20,bottom:-20,near:1,far:90});sun.shadow.radius=3;sun.shadow.bias=-.00025;sun.shadow.normalBias=.025;scene.add(sun,sun.target);
   const groups=new Map(),dummy=new T.Object3D(),windTime={value:0};
   function breeze(material){material.onBeforeCompile=shader=>{shader.uniforms.uWind=windTime;shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nuniform float uWind;').replace('#include <begin_vertex>',`#include <begin_vertex>
@@ -147,7 +147,7 @@ export async function createWorld(canvas){
   let vegetationSeed;for(let i=0;i<72;i++){if(i===32)vegetationSeed=seed;const s=-3+rnd()*111,x=riverX(s)+(rnd()-.5)*3.6;const o=new T.Mesh(new T.TorusGeometry(.22+rnd()*.4,.012,3,14,Math.PI*(.4+rnd())),rippleMat);o.rotation.x=-Math.PI/2;o.rotation.z=rnd()*6;o.position.set(x,elevation(s)-.71,-s);o.userData={s,phase:rnd()*7};scene.add(o);ripples.push(o);}
   seed=vegetationSeed;
   // Instanced vegetation keeps this small scene practical on classroom tablets.
-  for(let i=0;i<300;i++){
+  for(let i=0;i<264;i++){
     const s=-15+rnd()*242,x=pathX(s)+(rnd()<.5?-1:1)*(4.5+Math.pow(rnd(),1.35)*30);if(x>pathX(s)&&x-pathX(s)<10&&s>35&&s<60||s>205||Math.abs(x-riverX(s))<3.1||s>181&&Math.abs(x-pathX(s))<24||s>145&&x>pathX(s)+4)continue;
     const y=terrain(x,s),size=.78+rnd()*.5,angle=rnd()*Math.PI*2,tree=trees[i%3];
     instance('tree'+i%3,'#e0d5bf',x,y,-s,size,size,size,angle);
@@ -166,6 +166,20 @@ export async function createWorld(canvas){
     }
   }
   seed=valleySeed;
+  // Sparse outer groves give free-look depth without closing the creek or summit vista.
+  const outerSeed=seed;
+  for(let i=0;i<72;i++){
+    const s=-8+rnd()*118,side=i%2?1:-1,x=pathX(s)+side*(18+rnd()*24);
+    if(Math.abs(x-riverX(s))<5)continue;
+    const y=terrain(x,s),size=.64+rnd()*.48,angle=rnd()*6,tree=trees[i%3];
+    instance('tree'+i%3,'#c6c9b8',x,y,-s,size,size*(.86+rnd()*.24),size,angle);
+    for(const [j,c] of tree.crowns.entries()){
+      if(j%2)continue;
+      const r=c.size*size;instance('leaf','#b9cdb4',x+(c.x*Math.cos(angle)+c.z*Math.sin(angle))*size,y+c.y*size,-s+(-c.x*Math.sin(angle)+c.z*Math.cos(angle))*size,r*1.6,r,r*1.4,angle+j);
+    }
+    instance('shrub','#bfcdad',x,y,-s,2.1,1.6,2.1,angle);
+  }
+  seed=outerSeed;
   // A middle layer of saplings closes the empty space beneath the tall canopy.
   for(let i=0;i<100;i++){
     const s=18+rnd()*158,side=i%2?1:-1,x=pathX(s)+side*(5.4+rnd()*10);
@@ -199,7 +213,7 @@ export async function createWorld(canvas){
   for(let s=1;s<109;s+=1.35)for(const side of [-1,1]){
     const x=riverX(s)+side*(2.25+.28*Math.sin(s*1.7)),r=.65+rnd()*.55;
     if(Math.abs(x-pathX(s))<2.65)continue;
-    instance('rock','#e5e7d7',x,elevation(s)-.40,-s,r,.44+rnd()*.35,r*.85,s);
+    instance('rock','#e5e7d7',x,elevation(s)-.40,-s,r,.45+rnd()*.58,r*(.70+rnd()*.40),s);
     const leafX=x+side*.55;
     instance('fern','#d0daac',leafX,terrain(leafX,s),-s,.8,.8,.8,s);
   }
