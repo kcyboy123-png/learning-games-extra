@@ -15,7 +15,9 @@ export function seasonalSites(s){
  }
  return out.sort((a,b)=>a.seed-b.seed).slice(0,64);
 }
-const petal=new T.SphereGeometry(1,7,4),leaf=new T.CircleGeometry(1,5),mound=new T.SphereGeometry(1,10,6);
+const petal=new T.SphereGeometry(1,7,4),leafShape=new T.Shape(),mound=new T.SphereGeometry(1,10,6);
+for(const [i,[x,y]] of [[0,-.9],[-.18,-.2],[-.8,-.28],[-.62,.1],[-.95,.4],[-.35,.36],[0,1],[.35,.36],[.95,.4],[.62,.1],[.8,-.28],[.18,-.2]].entries())i?leafShape.lineTo(x,y):leafShape.moveTo(x,y);
+leafShape.closePath();const leaf=new T.ShapeGeometry(leafShape);
 leaf.rotateX(-Math.PI/2);
 export function createSeasonDetails(sites,se){
  const group=new T.Group();group.name='seasonal-ground';group.userData.season=se;
@@ -33,8 +35,11 @@ export function createSeasonDetails(sites,se){
   const green=[],blue=[],lavender=[];
   for(const p of sites.filter((_,i)=>i%2===0)){
    const x=p.x+Math.sin(p.seed)*.35,z=p.z+Math.cos(p.seed)*.35;
-   green.push({x,z,y:.15,scale:[.34,.20,.29]});
-   for(let i=0;i<13;i++){const a=i*2.399,r=.08+(i%3)*.075,point={x:x+Math.sin(a)*r,z:z+Math.cos(a)*r,y:.28+(i%3)*.045,scale:[.09,.075,.09]};(i%3?blue:lavender).push(point);}
+   green.push({x,z,y:.13,scale:[.30,.16,.26]});
+   for(let j=0;j<5;j++){const a=j*1.257;green.push({x:x+Math.sin(a)*.24,z:z+Math.cos(a)*.24,y:.15,angle:a,scale:[.12,.035,.23]});}
+   for(let i=0;i<13;i++){const a=i*2.399,r=.07+(i%3)*.075,cx=x+Math.sin(a)*r,cz=z+Math.cos(a)*r;
+    for(let j=0;j<4;j++){const t=j*Math.PI/2+a;(p.seed%3?blue:lavender).push({x:cx+Math.sin(t)*.035,z:cz+Math.cos(t)*.035,y:.28+(i%3)*.045,angle:t,scale:[.035,.014,.055]});}
+   }
   }
   add(mound,'#427756',green);add(petal,'#8ebde2',blue);add(petal,'#afa6d9',lavender);
  }
@@ -44,9 +49,13 @@ export function createSeasonDetails(sites,se){
   add(leaf,'#d89538',gold);add(leaf,'#b95831',rust);
  }
  if(se===0){
-  const snow=[];
+  const snow=[],green=[],berries=[];
   for(const p of sites)for(let i=0;i<3;i++){const a=p.seed+i*2.399,r=.24+i*.19;snow.push({x:p.x+Math.sin(a)*r,z:p.z+Math.cos(a)*r,y:.02,angle:a,scale:[.31+i*.035,.10+i*.025,.24+i*.035]});}
-  add(mound,'#edf3f2',snow);
+  for(const p of sites.filter((_,i)=>i%3===0)){const x=p.x+.35,z=p.z-.3;
+   for(let i=0;i<5;i++){const a=i*1.257;green.push({x:x+Math.sin(a)*.10,z:z+Math.cos(a)*.10,y:.14,angle:a,scale:[.09,.035,.20]});}
+   for(let i=0;i<3;i++)berries.push({x:x+(i-1)*.065,z,y:.22+(i%2)*.04,scale:[.045,.045,.045]});
+  }
+  add(mound,'#edf3f2',snow);add(petal,'#648f78',green);add(petal,'#c46f62',berries);
  }
  return group;
 }

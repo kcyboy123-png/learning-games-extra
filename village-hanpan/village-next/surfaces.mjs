@@ -27,6 +27,11 @@ const palettes={
  leaf:['#7fa857','#97ba67','#6a9850','#e9a4b4','#f4c0ca','#d9929f'],
  roof:['#53646a','#3d5056','#8c5545','#6c4039','#719784','#618b79','#5c8170','#4d7362','#52745e','#385443','#4a6a70','#3a5459','#5f7b6b','#4b6457','#3d4247','#2c3034','#7a3b32','#5a2a24','#7d8b8e','#a77760','#825743','#7b926a','#5c7653','#7d6b52','#7d7d74','#6fa08a','#4a7fa6']
 };
+// Expansion buildings share the same grain and winter roof treatment as the first cottages.
+palettes.wood.push('#d7b68e','#c8af89','#c19975','#d7c29b','#b99670','#c5a177','#c9ad83','#d5ba92','#8e7558','#bba17b','#b99a6a','#b39059','#bc9c60');
+palettes.plaster.push('#f4ddbc','#f6e5c8','#f1d6c3','#c4d8d2','#e9dfb9','#f8df9e','#f2e4cb','#f3ead6','#f1dbc5','#e7e6cf','#c67d65','#e8cfc2','#eee0c6');
+palettes.stone.push('#e4d4b6','#d8d0b9','#bcad8d','#d7d8cd','#c7c6b3','#a7b4ba');
+palettes.roof.push('#be6554','#a85549','#64879a','#4b6b7a','#6e99a6','#537786','#73968c','#57796f','#7b98a9','#b988a4');
 function texture(kind){
  if(maps.has(kind))return maps.get(kind);
  const c=document.createElement('canvas');c.width=c.height=kind==='grass'?1024:256;const ctx=c.getContext('2d');let seed=1729;

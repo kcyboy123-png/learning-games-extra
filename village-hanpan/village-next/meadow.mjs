@@ -18,7 +18,7 @@ export function meadowSites(s){
    const clustered=i%4<2,r=clustered?.44:.86,dx=(random()-.5)*r*2,dz=(random()-.5)*r*2;
    const roadside=[[-1,0],[1,0],[0,-1],[0,1]].some(([a,b])=>roads.has(`${x+a},${y+b}`)&&dx*a+dz*b>.45);
    const size=(i<5?.76+random()*.6:.24+random()*.48)*(roadside?.55:1);
-   out.push({key,x:p.x+dx+(clustered?cx:0),z:p.z+dz+(clustered?cz:0),size,angle:random()*Math.PI*2,flower:i<2&&patch!==0&&random()>.12&&!roadside,tone:random()});
+   out.push({key,x:p.x+dx+(clustered?cx:0),z:p.z+dz+(clustered?cz:0),size,angle:random()*Math.PI*2,flower:i<3&&patch!==0&&random()>.12&&!roadside,tone:random()});
   }
  }
  return out;
@@ -26,7 +26,7 @@ export function meadowSites(s){
 
 export function gardenSites(s){
  const blocked=new Set(s.buildings.flatMap(b=>cells(b).map(c=>c.join(',')))),cleared=new Set(s.landscape?.cleared||[]),seen=new Set(),out=[];
- for(const b of s.buildings){if(b.progress<1||!['house','snack','clinic','library','convenience'].includes(b.type))continue;
+ for(const b of s.buildings){if(b.progress<1||!['house','duplex','gardenhouse','snack','chicken','police','clinic','library','convenience','western','japanese','chinese'].includes(b.type))continue;
   for(const[dx,dz]of[[-1,0],[1,0],[0,-1],[0,1]]){const gx=b.x+dx,gy=b.y+dz,key=gx+','+gy;if(gx<2||gx>=SIZE||gy<0||gy>=SIZE||gx===RIVER||key==='14,7'||blocked.has(key)||cleared.has(key)||seen.has(key))continue;
    seen.add(key);const p=toWorld(gx,gy);out.push({key,x:p.x-dx*.78,z:p.z-dz*.78,angle:Math.atan2(dx,dz),variant:(gx*7+gy*3)%3});if(out.length===28)return out;
   }

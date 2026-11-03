@@ -43,7 +43,7 @@ export function createSunlight(renderer){
  const size=new T.Vector2();
  return {
   resize(){renderer.getDrawingBufferSize(size);const w=Math.max(1,size.x),h=Math.max(1,size.y);sceneTarget.setSize(w,h);glowTarget.setSize(Math.max(1,Math.ceil(w/4)),Math.max(1,Math.ceil(h/4)));blur.uniforms.stepSize.value.set(7/w,7/h);finish.uniforms.stepSize.value.set(5/w,5/h);},
-  season(se){finish.uniforms.amount.value=[.09,.16,.10,.14][se];},
+  season(se){finish.uniforms.amount.value=[.12,.19,.13,.17][se];},
   render(world,camera3d){try{finish.uniforms.inverseProjection.value.copy(camera3d.projectionMatrixInverse);finish.uniforms.contactStep.value.set(.26/(camera3d.right-camera3d.left),.26/(camera3d.top-camera3d.bottom));renderer.setRenderTarget(sceneTarget);renderer.render(world,camera3d);quad.material=blur;renderer.setRenderTarget(glowTarget);renderer.render(scene,camera);quad.material=finish;renderer.setRenderTarget(null);renderer.render(scene,camera);}finally{renderer.setRenderTarget(null);}},
   dispose(){sceneTarget.dispose();glowTarget.dispose();quad.geometry.dispose();blur.dispose();finish.dispose();}
  };

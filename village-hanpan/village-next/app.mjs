@@ -1,10 +1,11 @@
+import {createWelcomeLife} from './welcome-life.mjs?v=rabbit20261104';
 import {VillageSound} from './sound.mjs?v=balance1';
 import {upgradeCards,UPGRADE_LOOKS} from './upgrade-ui.mjs?v=balance1';
 import {cozyEffectText,cozyPlacementText,calendarDay,incomePerMinute,catalogueStyle,cozyDescription,fundingAdvice,operatingPreviewText,placementBenefits,constructionText,catalogueBudget,buildBudget,guidedPlacement,buildingBenefit,completionMessage,incomeRate,starterChoices,incomePreviewText} from './economy-ui.mjs?v=home-happiness1';
 import {growthStatus,ratingName,gradeNote,tierRules,developmentSummary,shortageNote} from './grading-ui.mjs?v=balance1';
-import {tickResidents,syncResidents} from './residents.mjs?v=balance1';
+import {tickResidents,syncResidents} from './residents.mjs?v=rabbit20261104';
 // village-next B단계 입력·안내·저장·루프. 경제는 core, 좌표는 grid, 표현은 world에만 맡긴다.
-import {World} from './world.mjs?v=balance1';
+import {World} from './world.mjs?v=rabbit20261104';
 import {villagePromises,promisePreview,newlyKeptPromises} from './promises.mjs?v=balance1';
 import {enableCozy,cozyGrowth,buildingSpec,assessTier,economy,upkeepOf,annualReviews,YEAR,createState,build,demolish,rotatable,rotateBuilding,relocate,canRelocate,relocateLeft,advance,metrics,month,duration,calendarMonth,monthLabel,serialize,parseSave,continueFree,buildCost,clearingCost,canBuild,at,cells,network,connected,TYPES,OPTIONS,MONTH,RULE,SCOPE,unlocked,unlockMonth,unlockMessage,populationRequired,toggleClosed,harvest,upgrade,clearLandscape,HARVEST,HARVEST_SECONDS,demandMonth,UPGRADE_TYPES} from './core.mjs?v=balance1';
 import {toCell,toWorld,spots,placeInfo,facing,entrance,path,walkable,inside,CELL,perimeter,foot,roadSet} from './grid.mjs?v=balance1';
@@ -220,9 +221,9 @@ $('followPlayer').onclick=()=>{const p=world.player.g.position;world.center.set(
 function manualMove(dt){const keyboard=inputVector(keys),usingKeys=keyboard.ix||keyboard.iy,{ix,iy}=usingKeys?keyboard:stick,power=usingKeys?1:stick.power;if(!ix&&!iy)return;if(mode||state.paused||state.ended||document.querySelector('dialog[open]')){keys.clear();stopStick();return;}const v=groundVector(world.angle,ix,iy);if(!v)return;world.player.route=[];world.marker.visible=false;world.followPlayer=true;const roads=roadSet(state);
  const p=world.player.g.position,n=step({x:p.x,z:p.z},v,dt*PLAYER_SPEED*power,(gx,gy)=>walkable(state,gx,gy,roads),CELL,toCell),travel=Math.hypot(n.x-p.x,n.z-p.z);p.x=n.x;p.z=n.z;const target=Math.atan2(v.x,v.z),diff=Math.atan2(Math.sin(target-world.player.g.rotation.y),Math.cos(target-world.player.g.rotation.y));world.player.g.rotation.y+=diff*Math.min(1,dt*14);world.player.distance+=travel;world.player.moving=travel>.0001?1:0;}
 // 4. 새 마을·불러오기·이어받기 때 입력 모드·선택·정보창·플레이어 경로·말풍선·주민을 모두 초기화한다.
-function resetSession(){celebratedPromises=new Set(villagePromises(state).filter(p=>p.done).map(p=>p.id));lastPromiseCheck=-2;fullCatalogue=false;lastIncomeMilestone=Math.floor(state.pop/4);stopStick();keys.clear();enableCozy(state);lesson=false;$('need').classList.add('hide');for(const n of npcs)world.removePerson(n.p);npcs=[];endPlace();closePanels();infoId=null;sel=null;mode=null;bubble=null;world.marker.visible=false;world.sync(state,false);world.place(world.player,5,6.5);resetView();reviewShown=Math.max(0,Math.floor(state.t/YEAR)-(state.t>0&&state.t%YEAR===0?1:0));npcHomes();lastMonth=month(state);}
+function resetSession(){world.welcomeLife?.finish();world.welcomeLife=null;world.welcoming=false;world.welcomeView=null;celebratedPromises=new Set(villagePromises(state).filter(p=>p.done).map(p=>p.id));lastPromiseCheck=-2;fullCatalogue=false;lastIncomeMilestone=Math.floor(state.pop/4);stopStick();keys.clear();enableCozy(state);lesson=false;$('need').classList.add('hide');for(const n of npcs)world.removePerson(n.p);npcs=[];endPlace();closePanels();infoId=null;sel=null;mode=null;bubble=null;world.marker.visible=false;world.sync(state,false);world.place(world.player,5,6.5);resetView();reviewShown=Math.max(0,Math.floor(state.t/YEAR)-(state.t>0&&state.t%YEAR===0?1:0));npcHomes();lastMonth=month(state);}
 // ---- 시각 주민: 집에서 나와 가장 최근 완공한 가게로 길을 따라 걷고 돌아온다. 돈·만족을 바꾸지 않는다. ----
-function npcHomes(){const before=npcs.length;syncResidents(state,npcs,world);if(before>=4&&npcs.length>before&&!state.paused){const names={cat:'고양이',fox:'여우',panda:'판다',deer:'사슴'};toast(`마을이 자라 새 이웃이 왔어요! ${npcs.slice(before).map(n=>names[n.p.species]||'새로운').join('·')} 친구를 찾아보세요.`);}}
+function npcHomes(){const before=npcs.length;syncResidents(state,npcs,world);if(before>=4&&npcs.length>before&&!state.paused){const names={cat:'고양이',fox:'여우',panda:'판다',deer:'사슴',penguin:'펭귄',sheep:'양',elephant:'아기 코끼리'};toast(`마을이 자라 새 이웃이 왔어요! ${npcs.slice(before).map(n=>names[n.p.species]||'새로운').join('·')} 친구를 찾아보세요.`);}}
 function npcTick(dt){npcHomes();const next=tickResidents(state,npcs,dt,time,world);if(next&&(!bubble||time>=bubble.end))bubble=next;}
 let lastIncomeMilestone=Math.floor(state.pop/4);
 // ---- 루프 ----
@@ -239,14 +240,15 @@ function loop(now){const real=document.hidden?0:(now-last)/1000,dt=Math.min(.25,
  if(time>toastEnd)$('toast').classList.remove('show');if(!world.player.route.length)world.marker.visible=false;world.paused=state.paused;world.frame(dt,time,reduced);
  uiTick+=dt;if(uiTick>.25){const growth=state.buildings.filter(b=>b.progress>=1&&isGarden(b)).map(b=>`${b.id}:${growthStage(state,b)}`).join('|');if(growth!==gardenSignature){gardenSignature=growth;world.sync(state,false);}ui();uiTick=0;}if(!reported&&time>3){console.info('village-next render',JSON.stringify(world.renderer.info.render),'memory',JSON.stringify(world.renderer.info.memory));reported=true;}requestAnimationFrame(loop);}
 addEventListener('storage',e=>{if(e.key===OWNER){if(otherOwnerAlive()&&owned){owned=false;if(!state.ended)state.paused=true;endPlace();showPause();toast('다른 탭이 마을을 이어받아 이 탭은 멈췄어요.');ui();}return;}
- if(e.key!==KEY||!e.newValue||owned)return;try{const next=parseSave(e.newValue);state=next;state.paused=true;corrupt=null;resetSession();if($('entranceDialog').open){$('entranceWelcome').hidden=false;$('entranceCaption').hidden=true;}showPause();ui();}catch{}});
+ if(e.key!==KEY||!e.newValue||owned)return;try{const next=parseSave(e.newValue);state=next;state.paused=true;corrupt=null;resetSession();if($('entranceDialog').open)prepareEntrance();showPause();ui();}catch{}});
 function prepareEntrance(){
  state.paused=true;closePanels();document.body.classList.add('entering');
  $('entranceWelcome').hidden=false;$('entranceCaption').hidden=true;
- $('entranceDialog').showModal();showPause();ui();
+ world.previewEntrance();world.welcomeLife=createWelcomeLife(state,npcs,world);if(!$('entranceDialog').open)$('entranceDialog').showModal();showPause();ui();
 }
 function finishEntrance(){
- world.updateEntrance(100);$('entranceDialog').close();document.body.classList.remove('entering');
+ if(!$('entranceDialog').open)return;
+ world.updateEntrance(100);world.welcomeLife?.finish();world.welcomeLife=null;$('entranceDialog').close();document.body.classList.remove('entering');
  last=performance.now();setPaused(document.hidden);$('navBuild').focus();
 }
 $('enterVillage').onclick=()=>{

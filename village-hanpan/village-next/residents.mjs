@@ -4,7 +4,7 @@ import {origin,facing,entrance,toWorld,toCell,path} from './grid.mjs?v=balance1'
 import {growthStage} from './landscape.mjs?v=balance1';
 
 // Positions match model doors and seat centres, in the model's local coordinates.
-const doors={chicken:[0,1.12],buffet:[0,2.5],police:[0,1.12],cinema:[0,2.5],animalFarm:[0,3.5],harbor:[0,2.6],rabbitTower:[0,3.5],skyTower:[0,3.5],largePark:[0,7.3],rosePark:[0,3.5],snack:[.85,1.105],western:[0,1.07],japanese:[.9,1.1],chinese:[0,1.07],convenience:[.9,1.1],supermarket:[2.4,2.32],clinic:[0,1.07],hospital:[0,1.17],kids:[0,1.07],amusement:[2,2.62],school:[0,1.12],library:[0,1.12]};
+const doors={chicken:[0,1.12],buffet:[0,2.5],police:[0,1.12],cinema:[0,2.5],animalFarm:[0,3.5],harbor:[0,2.6],rabbitTower:[0,3.5],skyTower:[0,1.94],largePark:[0,7.3],rosePark:[0,3.5],snack:[.85,1.105],western:[0,1.07],japanese:[.9,1.1],chinese:[0,1.07],convenience:[.9,1.1],supermarket:[2.4,2.32],clinic:[0,1.07],hospital:[0,1.17],kids:[0,1.07],amusement:[2,2.62],school:[0,1.12],library:[0,1.12]};
 export function visitPose(s,b){
  const angle=facing(s,b)*Math.PI/2,o=origin(b.type,b.x,b.y),rest=b.type==='bench'||b.type==='tree',sc=rest?.85:.6;
  const [x,z]=rest?(b.type==='tree'?[.4,.65]:[0,-.2]):doors[b.type]||[0,1.13];
@@ -24,7 +24,13 @@ export function syncResidents(s,people,world){
   const e=entrance(s,home);world.place(n.p,e.gx,e.gy);Object.assign(n.p.g.position,homeWaitingPoint(s,home,i));
  }
 }
-export function homeWaitingPoint(s,home,i){const e=home?entrance(s,home):{gx:5,gy:3},p=toWorld(e.gx,e.gy);return{x:p.x+Math.cos(i*2.399)*(.52+(i%3)*.14),z:p.z+Math.sin(i*2.399)*(.52+(i%3)*.14)};}
+export function homeWaitingPoint(s,home,i){
+ const e=home?entrance(s,home):{gx:5,gy:3},net=network(s),roads=[...net].map(k=>k.split(',').map(Number));
+ roads.sort((a,b)=>(Math.abs(a[0]-e.gx)+Math.abs(a[1]-e.gy))-(Math.abs(b[0]-e.gx)+Math.abs(b[1]-e.gy))||a[1]-b[1]||a[0]-b[0]);
+ const [gx,gy]=roads[Math.floor(i/2)%Math.max(1,roads.length)]||[e.gx,e.gy],p=toWorld(gx,gy),side=i%2?.92:-.92,horizontal=net.has(`${gx+1},${gy}`)&&!net.has(`${gx},${gy+1}`);
+ const along=Math.floor(i/Math.max(2,roads.length*2))*.52;
+ return{x:p.x+(horizontal?along:side),z:p.z+(horizontal?side:along)};
+}
 export function roadRoute(s,from,to){const points=path(s,from,to,true),start=toWorld(from.gx,from.gy);return points.map((p,i)=>{const a=points[i+1]?p:(points[i-1]||start),b=points[i+1]||p,dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz)||1;return{x:p.x-dz/d*.34,z:p.z+dx/d*.34,road:true};});}
 // Keep opposite directions in separate lanes and yield only when closing the gap.
 export function advancePersonRoute(p,dt,people=[]){
@@ -48,8 +54,9 @@ export function advancePersonRoute(p,dt,people=[]){
 export function tickResidents(s,people,dt,time,world){
  if(s.paused||s.ended)return null;
  let bubble=null;const net=network(s),destinations=s.buildings.filter(b=>availableVisit(s,b,net)),roadSig=[...net].join('|');
- for(let i=0;i<people.length;i++){
-  const n=people[i],p=n.p,home=s.buildings.find(b=>b.id===n.home),target=s.buildings.find(b=>b.id===n.target);
+ // Rotate visit priority so a few early residents cannot reserve the only shop forever.
+ for(let slot=0;slot<people.length;slot++){
+  const i=(slot+Math.floor(time/8))%people.length,n=people[i],p=n.p,home=s.buildings.find(b=>b.id===n.home),target=s.buildings.find(b=>b.id===n.target);
   const recover=()=>{p.g.visible=true;p.sitting=false;p.carry.visible=false;p.route=[];n.phase='home';n.target=null;n.pose=null;n.wait=2+i;const nearest=[...net].map(k=>k.split(',').map(Number)).sort((a,b)=>{const x=toWorld(...a),y=toWorld(...b);return Math.hypot(x.x-p.g.position.x,x.z-p.g.position.z)-Math.hypot(y.x-p.g.position.x,y.z-p.g.position.z);})[0]||[5,3];world.place(p,...nearest);};
   if(n.target&&(!target||!availableVisit(s,target,net)||!n.pose||visitPose(s,target).key!==n.pose.key)){recover();continue;}
   if(n.roadSig!==roadSig){n.roadSig=roadSig;if(p.route.some(q=>{const c=toCell(q.x,q.z);return q.road&&!net.has(`${c.gx},${c.gy}`);})){recover();continue;}}
@@ -62,7 +69,10 @@ export function tickResidents(s,people,dt,time,world){
     if(!r.length&&(from.gx!==e.gx||from.gy!==e.gy))continue;
     n.pose=visitPose(s,b);n.target=b.id;n.phase='approach';p.route=[...r,n.pose.front];n.wait=0;break;
    }
-   if(!n.target)n.wait=3+i;
+   if(!n.target){
+    n.wait=3+i;const from=toCell(p.g.position.x,p.g.position.z),near=[...net].map(k=>{const[gx,gy]=k.split(',').map(Number);return{gx,gy,d:Math.abs(gx-from.gx)+Math.abs(gy-from.gy)};}).filter(q=>q.d>0&&q.d<=3);
+    if(near.length)p.route=roadRoute(s,from,near[(i+n.turn)%near.length]);
+   }
   }else if(n.phase==='approach'){p.route=[n.pose.at];n.phase='arrive';}
   else if(n.phase==='arrive'){
    if(n.pose.rest){p.sitting=true;p.seatAngle=n.pose.angle;n.phase='rest';n.wait=7+i;}
