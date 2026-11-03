@@ -4,18 +4,24 @@ export const PALETTES = {
   basic: {sky:0x8fc3dc,horizon:0xdde8cd,fog:0xdce2cb,ground:0x8aa577,deep:0x546e50,warm:0xb7bd8c,leaf:0xffffff,sun:0xffeed4,power:1.65,ambient:1.15,exposure:1.03,trees:30,farTrees:64,shafts:.09},
   pop: {sky:0x82cbdc,horizon:0xffe5c2,fog:0xe8e6ca,ground:0x92b181,deep:0x577d5c,warm:0xc8c893,leaf:0xe4ffcf,sun:0xffdeb1,power:2,ambient:1,exposure:1.06,trees:18,farTrees:40,shafts:.035},
   warm: {sky:0x9bc7cf,horizon:0xffe4b8,fog:0xe8dfbc,ground:0xaaa575,deep:0x818259,warm:0xd3bd89,leaf:0xf6e5ae,sun:0xffd69a,power:1.8,ambient:1,exposure:1.05,trees:12,farTrees:28,shafts:.05},
-  dream: {sky:0x101738,horizon:0x353a61,fog:0x252c4c,ground:0x41677c,deep:0x253d58,warm:0x779391,leaf:0x8aa4ed,sun:0xb8cdff,power:.72,ambient:.7,exposure:1.06,character:0xbcc9e2,trees:24,farTrees:40,shafts:.05},
+  dream: {sky:0x101738,horizon:0x353a61,fog:0x252c4c,ground:0x41677c,deep:0x253d58,warm:0x779391,leaf:0x8aa4ed,sun:0xb8cdff,power:.72,ambient:.7,exposure:1.06,character:0xaab8cf,trees:24,farTrees:40,shafts:.05},
   journey: {sky:0x6ebce5,horizon:0xb8dfe4,fog:0xc4dde3,ground:0xa6c59a,deep:0x84a8a1,warm:0xe8e2bf,leaf:0xc7f4d6,sun:0xfff1d1,power:1.6,ambient:1,exposure:1.0,trees:0,farTrees:0,shafts:.035},
-  moon: {sky:0x111c36,horizon:0x35435f,fog:0x26364d,ground:0x527576,deep:0x2c505e,warm:0x899985,leaf:0x9dbfcb,sun:0xcbdfff,power:.85,ambient:.74,exposure:1.06,character:0xc8d2df,trees:16,farTrees:35,shafts:.035}
+  moon: {sky:0x111c36,horizon:0x35435f,fog:0x26364d,ground:0x527576,deep:0x2c505e,warm:0x899985,leaf:0x9dbfcb,sun:0xcbdfff,power:.85,ambient:.74,exposure:1.06,character:0xb7c5d8,trees:16,farTrees:35,shafts:.035}
 };
 
 // All landmarks live outside the shared walking corridor; no map can block the piano approach.
-export function buildLandmarks(parent,id,groundY,leafTexture) {
+export function buildLandmarks(parent,id,groundY,leafTexture,woodTexture) {
   const root=new THREE.Group();root.name='landmarks-'+id;parent.add(root);
   const animations=[],colliders=[],materials=new Map();
+  // Each stage owns its grain map so switching maps never disposes the piano's texture.
+  const grain=['basic','moon'].includes(id)&&woodTexture?woodTexture.clone():null;
+  if(grain){grain.repeat.set(3,2);grain.needsUpdate=true;}
   const material=(color,glow=false)=>{
     const key=`${color}-${glow}`;
-    if(!materials.has(key))materials.set(key,new THREE.MeshStandardMaterial({color,roughness:.72,metalness:.04,emissive:glow?color:0,emissiveIntensity:glow?.8:0}));
+    if(!materials.has(key)){
+      const timber=!glow&&[0xceae79,0xb49360,0xa78659,0x92714e,0x8e7653,0xb5b7b0,0xbebfac].includes(color);
+      materials.set(key,new THREE.MeshStandardMaterial({color,map:timber?grain:null,bumpMap:timber?grain:null,bumpScale:.018,roughness:timber?.9:.72,metalness:.04,emissive:glow?color:0,emissiveIntensity:glow?.8:0}));
+    }
     return materials.get(key);
   };
   const mesh=(g,c,x,y,z,s=1,group=root,glow=false)=>{const m=new THREE.Mesh(g,material(c,glow));m.position.set(x,y,z);typeof s==='number'?m.scale.setScalar(s):m.scale.set(...s);m.castShadow=!glow;m.receiveShadow=true;group.add(m);return m;};
@@ -30,12 +36,12 @@ export function buildLandmarks(parent,id,groundY,leafTexture) {
   // Three broken rings of small stone pavers replace the featureless circular slab.
   for(let band=0;band<3;band++){
     const count=12+band*6,inner=.06+band*.58,geo=new THREE.RingGeometry(inner+.012,inner+.56,6,1,.018,Math.PI*2/count-.036);
-    const paving=new THREE.InstancedMesh(geo,new THREE.MeshStandardMaterial({color:id==='moon'||id==='dream'?0x9eaaa8:0xd5cdb5,roughness:.96}),count),dummy=new THREE.Object3D();
+    const paving=new THREE.InstancedMesh(geo,new THREE.MeshStandardMaterial({color:id==='moon'||id==='dream'?0x8a9690:0xb8ad91,roughness:.96}),count),dummy=new THREE.Object3D();
     paving.name='clearing-pavers';
     for(let i=0;i<count;i++){dummy.position.set(0,.012,-.62);dummy.rotation.set(-Math.PI/2,0,i*Math.PI*2/count+band*.19);dummy.updateMatrix();paving.setMatrixAt(i,dummy.matrix);paving.setColorAt(i,new THREE.Color().setScalar(.88+(i%4)*.035));}
     paving.receiveShadow=true;root.add(paving);
   }
-  const border=[];for(let i=0;i<38;i++){const a=i*Math.PI*2/38;border.push([Math.cos(a)*1.84,.014,-.62+Math.sin(a)*1.84,.14,.035,.095,-a]);}batches(sphere,0xa6a88c,border);
+  const border=[],edgeMoss=[];for(let i=0;i<38;i++){const a=i*Math.PI*2/38,r=1.84+Math.sin(i*4.7)*.035;border.push([Math.cos(a)*r,.009,-.62+Math.sin(a)*r,.11+(i%3)*.015,.026,.075+(i%4)*.008,-a]);if(i%3===0)edgeMoss.push([Math.cos(a+.06)*1.83,.016,-.62+Math.sin(a+.06)*1.83,.10,.018,.07,-a]);}batches(sphere,0x929879,border);batches(sphere,id==='moon'||id==='dream'?0x526c63:0x788a52,edgeMoss);
   const windowAt=(x,y,z,w=.45,h=.6)=>{mesh(box,0x594c3b,x,y,z,[w+.12,h+.12,.09]);mesh(box,0xffdfa0,x,y,z+.055,[w,h,.025],root,true);mesh(box,0x78664c,x,y,z+.08,[.035,h,.025]);mesh(box,0x78664c,x,y,z+.08,[w,.035,.025]);};
   const shingles=(x,y,z,r,rows,color)=>{for(let i=0;i<rows;i++){const radius=r*(1-i/rows);mesh(new THREE.ConeGeometry(radius,.5,12),color,x,y+i*.28,z);}};
 
@@ -49,6 +55,7 @@ export function buildLandmarks(parent,id,groundY,leafTexture) {
     const boards=[];for(let i=0;i<10;i++)boards.push([x,y+2.06+i*.164,z+1.21,1.75,.023,.035]);batches(box,0xb18a59,boards);
     mesh(new THREE.BoxGeometry(.52,1.05,.08),0x6c8053,x,y+2.52,z+1.3);mesh(sphere,0xe0bb6f,x+.17,y+2.45,z+1.36,.035);
     windowAt(x-.77,y+3.12,z+1.24,.4,.48);windowAt(x+.77,y+3.12,z+1.24,.4,.48);
+    batches(box,0x92714e,[-.77,.77].map(dx=>[x+dx,y+2.83,z+1.32,.6,.065,.21]));
     const posts=[],rails=[];for(let i=0;i<13;i++){const a=i*Math.PI*2/13;if(Math.sin(a)>.7)continue;posts.push([x+Math.cos(a)*1.65,y+2.18,z+Math.sin(a)*1.65,.045,.5,.045]);}
     batches(box,0xe2c896,posts);const ring=mesh(new THREE.TorusGeometry(1.65,.04,6,48,Math.PI*1.5),0xe2c896,x,y+2.45,z);ring.rotation.x=-Math.PI/2;ring.rotation.z=Math.PI*.75;
     const ladder=[];for(let i=0;i<8;i++)ladder.push([x,y+.18+i*.22,z+2.1-i*.075,.65,.065,.12]);batches(box,0xb49360,ladder);
@@ -131,7 +138,7 @@ export function buildLandmarks(parent,id,groundY,leafTexture) {
     const moonLight=new THREE.DirectionalLight(0xb8d5ff,.3);moonLight.position.set(-4,8,-25);root.add(moonLight);
     const pondX=-5.2,pondZ=-3.6,y=groundY(pondX,pondZ)+.03;
     const water=mesh(new THREE.CircleGeometry(2.9,64),0x7b9cbd,pondX,y,pondZ);water.rotation.x=-Math.PI/2;water.scale.y=1.3;water.material.dispose();water.material=new THREE.MeshStandardMaterial({color:0x8aaec5,roughness:.14,metalness:.55});
-    for(let i=0;i<4;i++){const ring=mesh(new THREE.TorusGeometry(.55+i*.45,.016,5,64),0xbcd3df,pondX,y+.015,pondZ);ring.rotation.x=-Math.PI/2;ring.scale.y=1.3;ring.name='pond-ripple';animations.push(t=>{const swell=1+Math.sin(t*.65-i*.9)*.018;ring.scale.set(swell,1.3*swell,1);});}
+    for(let i=0;i<4;i++){const radius=.55+i*.45,ring=new THREE.Mesh(new THREE.RingGeometry(radius-.008,radius+.008,64),new THREE.MeshBasicMaterial({color:0xa9c6d4,transparent:true,opacity:.28-i*.045,depthWrite:false}));ring.position.set(pondX,y+.015,pondZ);root.add(ring);ring.rotation.x=-Math.PI/2;ring.scale.y=1.3;ring.name='pond-ripple';animations.push(t=>{const swell=1+Math.sin(t*.65-i*.9)*.018;ring.scale.set(swell,1.3*swell,1);});}
     colliders.push({x:pondX,z:pondZ,radius:3.7,height:.15});
     const x=1.8,z=-7.8,base=groundY(x,z);
     mesh(new THREE.CylinderGeometry(1.8,1.9,.22,6),0xb8b6a6,x,base+.1,z);
@@ -143,9 +150,11 @@ export function buildLandmarks(parent,id,groundY,leafTexture) {
     const shore=[],lilies=[];for(let i=0;i<42;i++){const a=i*Math.PI*2/42;shore.push([pondX+Math.cos(a)*2.97,y+.04,pondZ+Math.sin(a)*3.83,.23,.12,.17]);if(i%7===0)lilies.push([pondX+Math.cos(a)*1.6,y+.035,pondZ+Math.sin(a)*2,.22,.018,.18]);}batches(sphere,0x7c8c86,shore);batches(sphere,0x739888,lilies);
     // A post-office facade sits behind the existing pavilion, with warm windows and a little clock.
     mesh(box,0xbebfac,x,base+1.28,z-.9,[2.1,2.4,.12]);windowAt(x-.55,base+1.65,z-.8,.45,.6);windowAt(x+.55,base+1.65,z-.8,.45,.6);
+    const siding=[];for(let i=0;i<11;i++)siding.push([x,base+.17+i*.205,z-.828,2.06,.012,.015]);batches(box,0x8e998c,siding);
+    batches(box,0x82918b,[-.55,.55].map(dx=>[x+dx,base+1.30,z-.73,.65,.065,.18]));
     mesh(box,0x637d79,x,base+.65,z-.77,[.6,1.15,.08]);const clock=mesh(new THREE.CircleGeometry(.22,32),0xffe7b1,x,base+2.25,z-.82);mesh(box,0x5b6a62,x,base+2.3,z-.80,[.018,.13,.02]);mesh(box,0x5b6a62,x+.055,base+2.25,z-.80,[.12,.018,.02]);
     for(const [lx,lz] of [[-2.4,-2.4],[4,-4],[-4,3],[4,6],[-3.5,10]])lantern(lx,lz);
-    for(const [lx,lz,power] of [[-2.4,-2.4,3.2],[1.8,-6.8,5]]){const light=new THREE.PointLight(0xffc88b,power,8,2);light.position.set(lx,groundY(lx,lz)+1.8,lz);root.add(light);}
+    for(const [lx,lz,power] of [[-2.4,-2.4,13],[1.8,-6.8,9]]){const light=new THREE.PointLight(0xffc180,power,10,2);light.position.set(lx,groundY(lx,lz)+1.8,lz);root.add(light);}
     // Small mail slots and a hanging sign make the pavilion read as a post office.
     const slots=[];for(let i=0;i<3;i++)slots.push([x-.8+i*.8,base+.76,z-.79,.24,.035,.04]);batches(box,0x506974,slots);
     mesh(box,0x49616a,x,base+2.6,z+.9,[1.15,.3,.08]);

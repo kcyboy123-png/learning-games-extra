@@ -1,9 +1,9 @@
 // '햇살이 머무는 숲' — a real-time three.js stage that follows the app; it never owns the song or the sound.
 // Illustrated cutouts live in a real 3D woodland; vegetation is instanced to keep draw calls low.
 import * as THREE from './lib/three.module.min.js';
-import {pianoKey, WHITE_KEYS, BLACK_KEY_STEPS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs?v=20261104-seven';
-import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261104-seven';
-import {createStorybookChild,backingKey} from './forest-character.mjs?v=20261104-seven';
+import {pianoKey, WHITE_KEYS, BLACK_KEY_STEPS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs?v=20261104-reviewed';
+import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261104-reviewed';
+import {createStorybookChild,backingKey} from './forest-character.mjs?v=20261104-reviewed';
 import {forestInput, forestStep, forestOrbit, forestRoute, forestLook, forestEye, forestTurnToward} from './forest-controls.mjs';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z), C = h => new THREE.Color(h);
@@ -108,7 +108,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   const groundMesh = new THREE.Mesh(ground,new THREE.MeshStandardMaterial({vertexColors:true,map:groundTexture,bumpMap:groundTexture,bumpScale:.045,roughness:1})); groundMesh.receiveShadow = true; scene.add(groundMesh);
 
   const glow = radialTexture();
-  const pool = new THREE.Mesh(new THREE.CircleGeometry(5, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({map: glow, color: theme.character?0xa8c7ef:0xffe6a6, transparent: true, opacity: theme.character?.055:.1, blending: THREE.AdditiveBlending, depthWrite: false, fog: false}));
+  const pool = new THREE.Mesh(new THREE.CircleGeometry(5, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({map: glow, color: theme.character?0xa8c7ef:0xffe6a6, transparent: true, opacity: theme.character?.035:.05, blending: THREE.AdditiveBlending, depthWrite: false, fog: false}));
   pool.position.set(.3, .03, -.4); pool.scale.set(1.2, 1, 1); scene.add(pool);
   const pathLight=pool.clone();pathLight.material=pool.material.clone();pathLight.material.opacity=theme.character?.07:.12;
   pathLight.position.set(1,surfaceY(1,8)+.025,8);pathLight.scale.set(.65,1,.85);scene.add(pathLight);
@@ -125,7 +125,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   const stones = [];
   for (let k = 0; k < 19; k++) { const t = .02 + k * .052, p = PATH.getPointAt(Math.min(.97, t)), side = (k % 2 ? 1 : -1) * .12;
     stones.push({p: V(p.x + side, surfaceY(p.x, p.z) + .035, p.z), r: [0, R() * 3, 0], s: [.8 + R() * .45, 1, .7 + R() * .35]}); }
-  add(stoneGeo, lambert(), stones, () => C(0xffffff).multiplyScalar(.9 + R() * .15));
+  add(stoneGeo, lambert(), stones, () => C(theme.character?0xd5dcd7:0xf1e9d7).multiplyScalar(.9 + R() * .15));
 
   // Fine pebbles and soft moss soften the edge of the path without obstructing it.
   const edgeR=rng(6027),pebbles=[],mossPads=[];
@@ -173,6 +173,9 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
     if (!dryGround(x,z) || pathDist(x, z) < 1.6 || (z > 2 && Math.abs(x - 2.6) < 2.4)) continue;
     leaves.push({p: V(x, surfaceY(x, z) + .25, z), r: [0, R() * 6, 0], s: [.55 + R() * .5, .45 + R() * .3, .55 + R() * .5], c: greens[(k + 2) % 5]}); }
   add(trunkGeo, trunkMaterial, trunks, null, true);
+  // Low woodland masses hide distant trunk ends and give the mist a middle layer.
+  const distantBeds=trunks.filter(t=>Math.hypot(t.p.x,t.p.z)>28).map((t,i)=>({p:V(t.p.x,surfaceY(t.p.x,t.p.z)+.3,t.p.z),r:[0,i*2.4,0],s:[2.6+(i%3)*.6,.8+(i%4)*.12,2.3],c:i%2?theme.deep:theme.ground}));
+  leaves.push(...distantBeds);
   // Forking limbs are visible through the small openings between the illustrated leaf cards.
   const limbParts=[];
   for(const t of trunks.filter(t=>Math.hypot(t.p.x,t.p.z)<22))for(let i=0;i<5;i++){
@@ -199,7 +202,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   const roots=[];
   for(const t of trunks.filter(t=>Math.hypot(t.p.x,t.p.z)<22))for(let i=0;i<5;i++){
     const a=i*1.256+t.p.x,span=.65*t.s[0],x=t.p.x,z=t.p.z;
-    const points=[V(x,groundY(x,z)+.23,z),V(x+Math.cos(a)*span*.48,groundY(x,z)+.1,z+Math.sin(a)*span*.48),V(x+Math.cos(a)*span,groundY(x+Math.cos(a)*span,z+Math.sin(a)*span)+.01,z+Math.sin(a)*span)];
+    const points=[V(x,groundY(x,z)+.23,z),V(x+Math.cos(a)*span*.48,groundY(x,z)+.1,z+Math.sin(a)*span*.48),V(x+Math.cos(a)*span,surfaceY(x+Math.cos(a)*span,z+Math.sin(a)*span)-.12,z+Math.sin(a)*span)];
     roots.push([new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),6,.065*t.s[0],5,false),null,0x826c50]);
   }
   if(roots.length){const mesh=new THREE.Mesh(merge(roots),new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));mesh.castShadow=mesh.receiveShadow=true;scene.add(mesh);roots.forEach(([g])=>g.dispose());}
@@ -246,15 +249,15 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   add(merge(bellParts),lambert({side:THREE.DoubleSide}),bells);
   const bladeParts=[];
   for(let k=0;k<4;k++){
-    const pos=[],indices=[],h=.25+k*.035;
+    const pos=[],indices=[],h=.20+k*.025;
     for(let j=0;j<=4;j++){const t=j/4,w=.022*(1-t)+.001;pos.push(-w,h*t,t*t*.21,w,h*t,t*t*.21);if(j<4){const n=j*2;indices.push(n,n+1,n+2,n+1,n+3,n+2);}}
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(indices);g.computeVertexNormals();
     bladeParts.push([g,mat({r:[(k-2)*.12,k*1.3,0]}),0xffffff,y=>.68+y*.85]);
   }
   const meadowTints=theme.character?[0x788d89,0x93a099,0x607b78]:theme===PALETTES.warm?[0xa49c63,0xbdb17b,0x8b8d52]:[0x879954,0xa4ad69,0x667d48];
   const tufts = [];
-  for (let k = 0; k < 2800; k++) { const a = R() * Math.PI * 2, r = 1.7 + R() * 11, x = Math.cos(a) * r, z = Math.sin(a) * r - .6;
-    if (!dryGround(x,z) || pathDist(x, z) < .5 || Math.hypot(x, z + .9) < 1.7 || Math.hypot(x - GIRL_X, z - .4) < 1) continue;
+  for (let k = 0; k < 2100; k++) { const a = R() * Math.PI * 2, r = 2.2 + R() * 10.5, x = Math.cos(a) * r, z = Math.sin(a) * r - .6;
+    if (!dryGround(x,z) || pathDist(x, z) < .75 || Math.hypot(x, z + .9) < 2.25 || Math.hypot(x - GIRL_X, z - .4) < 1.4) continue;
     tufts.push({p: V(x, surfaceY(x, z), z), r: [0, R() * 6, 0], s: .4 + R() * .7, c: meadowTints[k % 3]}); }
   const grassTime=breezeTime,grassMaterial=lambert({side:THREE.DoubleSide});
   grassMaterial.onBeforeCompile=shader=>{shader.uniforms.grassTime=grassTime;shader.vertexShader='uniform float grassTime;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed.x += sin(grassTime*1.4 + instanceMatrix[3].x*.8 + instanceMatrix[3].z*.4)*.045*pow(clamp(position.y/.4,0.,1.),2.);');};
@@ -392,7 +395,7 @@ function buildPiano(scene) {
     white.instanceMatrix.needsUpdate = true; white.instanceColor.needsUpdate = true;
   }
   drawKeys();
-  return {group: g, press, drawKeys, keyWorld: i => V(keyX(i), .73, .14 + g.position.z)};
+  return {group: g, press, drawKeys, woodMap, keyWorld: i => V(keyX(i), .73, .14 + g.position.z)};
 }
 
 // ---------- complete storybook illustration for the opening and the piano ----------
@@ -412,7 +415,7 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene(), R = rng(20261021);
-  scene.fog = new THREE.Fog(PALETTES.basic.fog,22,72);scene.background=C(PALETTES.basic.horizon);
+  scene.fog = new THREE.Fog(PALETTES.basic.fog,18,60);scene.background=C(PALETTES.basic.horizon);
   const camera = new THREE.PerspectiveCamera(40, 1, .1, 220);
   const ambient=new THREE.HemisphereLight(0xe7eef0,0x69735e,PALETTES.basic.ambient*.94);scene.add(ambient);
   const sun = new THREE.DirectionalLight(PALETTES.basic.sun,PALETTES.basic.power); sun.position.set(-6, 12, -5.5); sun.target.position.set(.2, 0, -.3);
@@ -420,10 +423,13 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
   sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -.0005; sun.shadow.normalBias = .02; sun.shadow.radius = 4;
   scene.add(sun, sun.target);
   const fill = new THREE.DirectionalLight(0xffeedd, .42); fill.position.set(4, 3, 6); scene.add(fill);
+  const pianoRim=new THREE.SpotLight(0xc9dfff,0,10,Math.PI/4,1,2);
+  pianoRim.position.set(2.5,3.8,-1.5);pianoRim.target.position.set(0,.7,-.6);scene.add(pianoRim,pianoRim.target);
   let mapId='basic',theme=PALETTES.basic,scenery=new THREE.Group();scene.add(scenery);
-  let world=buildScenery(scenery,R,leafTexture,theme),landmarks=buildLandmarks(scenery,mapId,groundY,leafTexture);
+  const piano=buildPiano(scene);
+  let world=buildScenery(scenery,R,leafTexture,theme),landmarks=buildLandmarks(scenery,mapId,groundY,leafTexture,piano.woodMap);
   world.colliders.push(...landmarks.colliders);
-  const piano=buildPiano(scene),girl=buildGirl(scene,girlAtlas,seatedGirl,seatedBoy,posesGirl,posesBoy);
+  const girl=buildGirl(scene,girlAtlas,seatedGirl,seatedBoy,posesGirl,posesBoy);
   girl.setEnvironment(theme.character || 0xf9f5ea);
   girl.textures.forEach(t=>renderer.initTexture(t));
   // Soft contact shadows under piano, bench and girl, on top of the real sun shadow.
@@ -451,15 +457,16 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     id=forestMapId(id);if(id===mapId)return;
     const nextTheme=PALETTES[id],next=new THREE.Group();
     let nextWorld,nextLandmarks;
-    try{nextWorld=buildScenery(next,rng(20261021),leafTexture,nextTheme);nextLandmarks=buildLandmarks(next,id,groundY,leafTexture);}
+    try{nextWorld=buildScenery(next,rng(20261021),leafTexture,nextTheme);nextLandmarks=buildLandmarks(next,id,groundY,leafTexture,piano.woodMap);}
     catch(error){releaseScenery(next);throw error;}
     scene.remove(scenery);releaseScenery(scenery);scenery=next;scene.add(scenery);
     mapId=id;theme=nextTheme;world=nextWorld;landmarks=nextLandmarks;world.colliders.push(...landmarks.colliders);
-    scene.fog.color.set(theme.fog);scene.fog.near=id==='journey'?35:22;scene.fog.far=id==='journey'?100:72;scene.background.set(theme.horizon);
+    scene.fog.color.set(theme.fog);scene.fog.near=id==='journey'?35:18;scene.fog.far=id==='journey'?100:60;scene.background.set(theme.horizon);
     ambient.intensity=theme.ambient*.94;sun.color.set(theme.sun);sun.intensity=theme.power;fill.intensity=theme.character?.28:.42;
     ambient.color.set(theme.character ? 0xc7d6f5 : 0xe7eef0);
     ambient.groundColor.set(theme.character ? 0x394d65 : 0x69735e);
     fill.color.set(theme.character ? 0xd7e1ff : 0xffeedd);
+    pianoRim.intensity=theme.character?9:0;
     girl.setEnvironment(theme.character || 0xf9f5ea);
     renderer.toneMappingExposure=theme.exposure;world.shaftMat.uniforms.opacity.value=theme.shafts;
     input={x:0,z:0};state.moving=false;route=[];routeIndex=0;state.hands.forEach(h=>h.hit=0);
@@ -474,11 +481,17 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
   let input = {x:0,z:0}, view = {...FIRST_VIEW}, orbit = {...SEATED_ORBIT}, orbitChanged = false, route = [], routeIndex = 0;
   const camPos = V(2.6, 2.1, 12.8), camLook = V(0, 1, 2), goalPos = V(), goalLook = V();
   let raf = 0, last = 0, frame = 0;
+  let notebookBand = null;
+  function measureNotebook() {
+    const header=document.querySelector('#app>header'),book=document.querySelector('.workspace');
+    notebookBand=header&&book?{top:header.getBoundingClientRect().bottom+scrollY+12,bottom:book.getBoundingClientRect().top+scrollY-54}:null;
+  }
 
   function resize() {
     const w = host.clientWidth || innerWidth, h = host.clientHeight || innerHeight;
     renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w / h < .8 ? 52 : 40; camera.updateProjectionMatrix();
+    measureNotebook();
   }
   function placeOnPath(t) {
     const p = PATH.getPointAt(t), d = PATH.getTangentAt(t);
@@ -556,10 +569,20 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     camPos.lerp(goalPos, a); camLook.lerp(goalLook, a);
     camera.position.copy(camPos); camera.lookAt(camLook);
     // In compose the notebook covers the lower screen, so the shot is framed into the upper band; cinema uses the full frame.
-    const notebook=state.phase==='compose'&&!state.cinema; camera.zoom+=((notebook?.72:1)-camera.zoom)*(rm?1:1-Math.exp(-dt*2.5));
-    const liftGoal = notebook ? .37 : 0; state.lift += (liftGoal - state.lift) * (rm ? 1 : 1 - Math.exp(-dt * 2.5));
+    const notebook=state.phase==='compose'&&!state.cinema,previousZoom=camera.zoom;
+    let zoomGoal=notebook?.72:1,liftGoal=notebook?.37:0;
+    if(notebook&&notebookBand){
+      // Fit the seated child between the real header and book, including landscape phones.
+      camera.clearViewOffset();camera.zoom=1;camera.updateProjectionMatrix();camera.updateMatrixWorld();
+      const top=V(GIRL_X,1.5,SEAT_Z).project(camera).y,bottom=V(GIRL_X,.1,SEAT_Z).project(camera).y,h=host.clientHeight;
+      const available=Math.max(48,notebookBand.bottom-notebookBand.top);
+      if(!orbitChanged)zoomGoal=Math.min(.72,available/(Math.abs(top-bottom)*h*.5));
+      liftGoal=.5-(top+bottom)*zoomGoal*.25-(notebookBand.top+notebookBand.bottom)/(2*h);
+    }
+    camera.zoom=previousZoom+(zoomGoal-previousZoom)*(rm?1:1-Math.exp(-dt*2.5));
+    state.lift += (liftGoal - state.lift) * (rm ? 1 : 1 - Math.exp(-dt * 2.5));
     const w = renderer.domElement.width, h = renderer.domElement.height;
-    if (state.lift > .001) camera.setViewOffset(w, h, 0, h * state.lift, w, h); else camera.clearViewOffset();
+    if (Math.abs(state.lift) > .001) camera.setViewOffset(w, h, 0, h * state.lift, w, h); else camera.clearViewOffset();
     let busy = false;
     for (let i = 0; i < WHITE_KEYS; i++) if (piano.press[i] > 0) { piano.press[i] = Math.max(0, piano.press[i] - dt * 2.6); busy = true; }
     if (busy || state.keysDirty) { piano.drawKeys(); state.keysDirty = busy; }
@@ -625,6 +648,7 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
       }
       if (cinema && !state.cinema) {state.cineT = 0;orbitChanged=false;}
       state.cinema = !!cinema;
+      if(phase==='compose'&&!cinema)measureNotebook();
       if (visible !== state.visible) { state.visible = visible; host.hidden = !visible; if (visible) start(); else {input={x:0,z:0};state.moving=false;halt();} }
     },
     // Melody and actual backing events use independent hands, including low melody notes.
