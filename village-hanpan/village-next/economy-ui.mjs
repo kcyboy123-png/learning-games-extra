@@ -1,5 +1,5 @@
-import {buildingSpec,metrics,TYPES,MONTH,month,monthLabel,calendarMonth,demandMonth,connected,unlocked,HARVEST,HARVEST_SECONDS} from './core.mjs?v=expansion2';
-import {PLAY_SPEED,realSeconds,COZY_EFFECTS} from './data.mjs?v=expansion2';
+import {buildingSpec,metrics,TYPES,MONTH,month,monthLabel,calendarMonth,demandMonth,connected,unlocked,HARVEST,HARVEST_SECONDS} from './core.mjs?v=balance1';
+import {PLAY_SPEED,realSeconds,COZY_EFFECTS} from './data.mjs?v=balance1';
 
 // nextId never decreases, so cancelling or reloading cannot restart completed guidance.
 export const guidedPlacement=s=>s.mode==='run'&&!s.ended&&month(s)<4&&s.nextId-1-s.buildings.filter(b=>b.starter).length<2;

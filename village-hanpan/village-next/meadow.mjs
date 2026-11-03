@@ -1,6 +1,6 @@
 import * as T from '../lib/three.module.min.js';
-import {SIZE,RIVER,cells} from './core.mjs?v=expansion2';
-import {CELL,GROUND_Y,toWorld} from './grid.mjs?v=expansion2';
+import {SIZE,RIVER,cells} from './core.mjs?v=balance1';
+import {CELL,GROUND_Y,toWorld} from './grid.mjs?v=balance1';
 
 // Decoration follows occupancy, never changes the saved landscape or its score.
 export function meadowSites(s){

@@ -1,7 +1,7 @@
-import {PLAYER_SPEED} from './move.mjs?v=expansion2';
-import {TYPES,connected,network} from './core.mjs?v=expansion2';
-import {origin,facing,entrance,toWorld,toCell,path} from './grid.mjs?v=expansion2';
-import {growthStage} from './landscape.mjs?v=expansion2';
+import {PLAYER_SPEED} from './move.mjs?v=balance1';
+import {TYPES,connected,network} from './core.mjs?v=balance1';
+import {origin,facing,entrance,toWorld,toCell,path} from './grid.mjs?v=balance1';
+import {growthStage} from './landscape.mjs?v=balance1';
 
 // Positions match model doors and seat centres, in the model's local coordinates.
 const doors={chicken:[0,1.12],buffet:[0,2.5],police:[0,1.12],cinema:[0,2.5],animalFarm:[0,3.5],harbor:[0,2.6],rabbitTower:[0,3.5],skyTower:[0,3.5],largePark:[0,7.3],rosePark:[0,3.5],snack:[.85,1.105],western:[0,1.07],japanese:[.9,1.1],chinese:[0,1.07],convenience:[.9,1.1],supermarket:[2.4,2.32],clinic:[0,1.07],hospital:[0,1.17],kids:[0,1.07],amusement:[2,2.62],school:[0,1.12],library:[0,1.12]};

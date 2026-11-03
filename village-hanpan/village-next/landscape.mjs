@@ -1,5 +1,5 @@
-import {cityBeauty} from './city-rules.mjs?v=expansion2';
-import {TYPES} from './data.mjs?v=expansion2';
+import {cityBeauty} from './city-rules.mjs?v=balance1';
+import {TYPES} from './data.mjs?v=balance1';
 // Version 1 coordinates are permanent: old saves must not grow a different woodland.
 export const clearablePlot=(x,y)=>Number.isInteger(x)&&Number.isInteger(y)&&x>=2&&x<18&&y>=0&&y<18&&x!==11&&!(x===14&&y===7);
 export function naturalFeature(x,y){if(!Number.isInteger(x)||!Number.isInteger(y)||x<2||x>=18||y<0||y>=18||x===11||(x===14&&y===7))return null;const h=(x*13+y*7)%17;if(h===0)return 'tree';return (x*7+y*11)%13===0?'flowers':null;}

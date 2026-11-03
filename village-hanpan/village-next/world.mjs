@@ -1,18 +1,18 @@
 // village-next 표현 계층. pocket/world.mjs의 헬퍼·모델·배칭·주민 리그를 가져와 18×18 격자 위에 올린다.
 // 경제 값은 계산하지 않는다. sync(state)로 건물을 그리고 preview()로 배치 미리보기를 보여준다.
 import * as T from '../lib/three.module.min.js';
-import {expansionModels} from './expansion-models.mjs?v=expansion2';
-import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=expansion2';
-import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=expansion2';
-import {naturalFeature,growthStage} from './landscape.mjs?v=expansion2';
-import {advancePersonRoute} from './residents.mjs?v=expansion2';
-import {townscapeSites} from './townscape.mjs?v=expansion2';
-import {seasonalSites,createSeasonDetails,disposeSeasonDetails} from './season-details.mjs?v=expansion2';
-import {surfaceOptions,surfaceTime,surfaceWinter} from './surfaces.mjs?v=expansion2';
-import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?v=expansion2';
-import {createSunlight} from './sunlight.mjs?v=expansion2';
-import {paintedTree,treeArtSeason,treeArtReady} from './tree-art.mjs?v=expansion2';
-import {addRabbitArt,updateRabbitArt} from './rabbit-art.mjs?v=expansion2';
+import {expansionModels} from './expansion-models.mjs?v=balance1';
+import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=balance1';
+import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=balance1';
+import {naturalFeature,growthStage} from './landscape.mjs?v=balance1';
+import {advancePersonRoute} from './residents.mjs?v=balance1';
+import {townscapeSites} from './townscape.mjs?v=balance1';
+import {seasonalSites,createSeasonDetails,disposeSeasonDetails} from './season-details.mjs?v=balance1';
+import {surfaceOptions,surfaceTime,surfaceWinter} from './surfaces.mjs?v=balance1';
+import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?v=balance1';
+import {createSunlight} from './sunlight.mjs?v=balance1';
+import {paintedTree,treeArtSeason,treeArtReady} from './tree-art.mjs?v=balance1';
+import {addRabbitArt,updateRabbitArt} from './rabbit-art.mjs?v=balance1';
 
 const materials=new Map(),geometries=new Map();let ghostMode=false;
 const GHOST={transparent:true,opacity:.5,depthWrite:false};
