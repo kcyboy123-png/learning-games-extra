@@ -11,7 +11,9 @@ const CHANGES={
  amusement:{cost:1400,leisure:96,up:25,premium:{leisure:.75},facade:.5,desc:'2×2칸에 여가 96명. 이용 주민마다 월 수입 +0.75인 마을의 명소예요.'}
 };
 const CITY_TYPES=Object.fromEntries(Object.entries(TYPES).map(([k,d])=>[k,{...d,...CHANGES[k]}]));
-export const buildingSpec=(s,type)=>(s?.cityV===1?CITY_TYPES:TYPES)[type];
+// Basic facilities stay affordable; larger cozy facilities are savings goals.
+const COZY_COSTS={apartment:1800,japanese:900,western:1800,chinese:3200,hospital:3600,supermarket:6000,amusement:10000};
+export const buildingSpec=(s,type)=>{const d=(s?.cityV===1?CITY_TYPES:TYPES)[type];return s?.cozyV===1&&Object.hasOwn(COZY_COSTS,type)?{...d,cost:COZY_COSTS[type]}:d;};
 export const cityPhase=s=>s.cityV===1?Math.max(0,Math.min(1,(s.t/MONTH-4)/8)):0;
 export function premiumIncome(s,live){
  if(s.cityV!==1)return 0;
