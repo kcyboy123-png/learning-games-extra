@@ -2,7 +2,7 @@ import {buildingSpec,cityPhase,premiumIncome} from './city-rules.mjs?v=cozy2';
 export {buildingSpec} from './city-rules.mjs?v=cozy2';
 // village-next B단계 경제 코어. public/core.mjs(village-40-v3) 기반 + 완공시각·재배치·월별 해금·텃밭·휴업. 렌더/DOM 접근 없음.
 import {naturalFeature,isGarden,landscapeMetrics} from './landscape.mjs?v=cozy2';
-import {VERSION,RULE,MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,TIERS,season} from './data.mjs?v=cozy2';
+import {VERSION,RULE,MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,TIERS,season,PLAY_SPEED,COZY_EFFECTS} from './data.mjs?v=income1';
 export {MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,RULE,VERSION};
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 export const SCOPE={label:'B규칙'};
@@ -86,7 +86,7 @@ export function metrics(s){const net=network(s),live=s.buildings.filter(b=>b.pro
  const popGoal=Math.min(32+16*Math.min(2,Math.floor(m/12)),12+m*4);
  const D=clamp(clamp(s.pop/popGoal)*(.35-.14*beautyPhase)+service*.30+env*.20+safety*.15+beauty*.14*beautyPhase);
  const Q=clamp(s.sat/100*.50+service*.30+energy*.15+clamp(housing/p)*.05);
- if(s.cozyV===1){const g=cozyGrowth(s);targetSat=Math.min(100,82+g.gardens+g.variety);income=upkeep+80+s.pop*3+Math.min(20,g.gardens)*2+g.buildings*4;}
+ if(s.cozyV===1){const made=s.buildings.filter(b=>!b.starter&&b.progress>=1&&!b.closed);targetSat=Math.min(100,82+made.reduce((n,b)=>n+COZY_EFFECTS[b.type].happiness,0));income=upkeep+(90+made.reduce((n,b)=>n+COZY_EFFECTS[b.type].income,0))*MONTH/(60*PLAY_SPEED);}
  return{landscaping,beautyPhase,premium,net,live,production,use,energy,food,health,education,leisure,housing,service,green,comfort,targetSat,income,upkeep,D,Q,score:s.cozyV===1?cozyGrowth(s).score:Math.round(1000*D*Q),demands,popGoal,fire,drain,optionRate,foodCap:sum('food'),healthCap:sum('health'),educationCap:sum('education'),leisureCap:sum('leisure')};
 }
 export const DEMAND_MONTH={health:2,education:3,leisure:4};

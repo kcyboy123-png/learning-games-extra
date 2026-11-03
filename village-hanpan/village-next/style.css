@@ -259,3 +259,5 @@ body:has(#infoPanel.open) #need{visibility:hidden}
 .zoom-controls #rotate{width:76px;display:flex;align-items:center;justify-content:center;gap:4px;font-size:14px}.rotate-icon{font-size:23px;line-height:1}
 @media(max-width:600px){.cozy footer nav{padding:4px 2px}.zoom-controls{padding:4px 2px}.zoom-controls #rotate{width:44px;flex-direction:column;gap:2px;font-size:11px;line-height:1}.rotate-icon{font-size:21px}}
 @media(max-width:360px){.cozy footer{flex-wrap:wrap}.cozy footer nav{flex-basis:100%;order:2}.zoom-controls{margin-left:auto}.cozy .sheet,.cozy #placePanel,.cozy #need{bottom:145px}.cozy .village-sign{bottom:150px}}
+
+.cozy .build-copy .build-effects{font-size:14px;line-height:1.5;font-weight:700;color:#315c43}.cozy #placeDecision{font-size:15px;font-weight:700;color:#315c43;background:#edf3e3;border-radius:10px;padding:10px 12px}.cozy #placeDecision:empty{display:none}

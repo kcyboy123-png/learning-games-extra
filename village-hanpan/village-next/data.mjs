@@ -36,3 +36,13 @@ export const TIERS=[[950,'레디언트','미래를 짓는 건축가'],[900,'이�
 export const TABS={주거:['주거'],생활:['음식','장보기','생활'],기반:['기반','에너지','안전'],여가:['여가'],조경:['꾸미기']};
 export const SEASONS=['겨울','봄','여름','가을'];
 export const season=m=>m<2||m===11?0:m<5?1:m<8?2:3;
+
+// Cozy rewards are net coins per real playing minute; happiness is a target increase.
+export const COZY_EFFECTS={
+ road:{income:0,happiness:0},house:{income:12,happiness:1},apartment:{income:45,happiness:3},
+ snack:{income:35,happiness:2},western:{income:65,happiness:3},japanese:{income:50,happiness:3},chinese:{income:85,happiness:4},
+ convenience:{income:25,happiness:1},supermarket:{income:130,happiness:4},clinic:{income:22,happiness:3},hospital:{income:75,happiness:6},
+ kids:{income:40,happiness:4},amusement:{income:160,happiness:8},school:{income:30,happiness:4},library:{income:28,happiness:4},
+ fire:{income:22,happiness:2},drain:{income:8,happiness:1},workshop:{income:35,happiness:3},solar:{income:16,happiness:1},generator:{income:20,happiness:1},
+ bridge:{income:0,happiness:1},flower:{income:2,happiness:2},avenue:{income:4,happiness:3},tree:{income:3,happiness:2},bench:{income:2,happiness:2}
+};
