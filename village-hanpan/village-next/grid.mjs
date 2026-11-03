@@ -1,6 +1,6 @@
 // 격자↔월드 좌표, 출입구 방향, 추천 부지, 보행 경로. 경제 상태는 읽기만 한다.
-import {SIZE,RIVER,TYPES,cells,at,network,terrain,unlocked} from './core.mjs?v=compact1';
-import {naturalFeature} from './landscape.mjs?v=clear1';
+import {SIZE,RIVER,TYPES,cells,at,network,terrain,unlocked,canBuild} from './core.mjs?v=expansion2';
+import {naturalFeature} from './landscape.mjs?v=expansion2';
 export const CELL=2.4, GROUND_Y=.103, ROAD_Y=.133;
 export const DIRS=[[0,1],[1,0],[0,-1],[-1,0]]; // 0 남(+z) 1 동(+x) 2 북 3 서. 모델의 문은 로컬 +z.
 export const toWorld=(gx,gy)=>({x:(gx-(SIZE-1)/2)*CELL,z:(gy-(SIZE-1)/2)*CELL});
@@ -13,10 +13,10 @@ export const roadSet=s=>new Set(s.buildings.filter(b=>b.progress>=1&&['road','br
 // 둘레 칸 목록: [바깥 칸 gx,gy, 방향 d] — 건물 칸에서 d 방향으로 한 칸 나간 자리.
 export function perimeter(type,gx,gy){const n=foot(type),out=[];for(let i=0;i<n;i++){out.push([gx+i,gy+n,0]);out.push([gx+n,gy+i,1]);out.push([gx+i,gy-1,2]);out.push([gx-1,gy+i,3]);}return out;}
 // 기본은 길을 향하고, 직접 고른 방향은 길이 바뀌어도 유지한다. 다리는 하천을 가로지른다.
-export function facing(s,b,roads=roadSet(s)){if(b.type==='bridge')return 0;if(Number.isInteger(b.dir)&&b.dir>=0&&b.dir<4)return b.dir;for(const[x,y,d]of perimeter(b.type,b.x,b.y))if(roads.has(`${x},${y}`))return d;return 0;}
+export function facing(s,b,roads=roadSet(s)){if(b.type==='bridge')return 0;if(b.type==='harbor')return b.x<RIVER?1:3;if(Number.isInteger(b.dir)&&b.dir>=0&&b.dir<4)return b.dir;for(const[x,y,d]of perimeter(b.type,b.x,b.y))if(roads.has(`${x},${y}`))return d;return 0;}
 export function entrance(s,b,roads=roadSet(s)){for(const[x,y,d]of perimeter(b.type,b.x,b.y))if(roads.has(`${x},${y}`))return{gx:x,gy:y,dir:d};const n=foot(b.type);return{gx:b.x,gy:b.y+n,dir:0};}
 export function placeInfo(s,type,gx,gy){const net=network(s),adj=perimeter(type,gx,gy).filter(([x,y])=>net.has(`${x},${y}`)).length,natural=cells({type,x:gx,y:gy}).some(([x,y])=>naturalFeature(x,y)&&!s.landscape?.cleared.includes(`${x},${y}`));return{adjacentRoads:adj,connected:adj>0,natural};}
-const free=(s,type,gx,gy)=>cells({type,x:gx,y:gy}).every(([x,y])=>inside(x,y)&&x>=2&&(type==='bridge'?x===RIVER:x!==RIVER)&&!at(s,x,y)&&(terrain(x,y)!=='warehouse'||type==='workshop'));
+const free=(s,type,gx,gy)=>!canBuild(s,type,gx,gy);
 // 추천 부지: 마을 입구와 이어진 길에 붙은 빈 땅. 정비비 없는 자리와 집 가까운 자리를 앞세운다. 정답이 아니라 접근성 좋은 후보 2~3곳.
 // 길·다리는 길 끝에 이어지는 칸, 창고 재생은 (14,7) 고정.
 export function spots(s,type,limit=3){const net=network(s),homes=s.buildings.filter(b=>TYPES[b.type].cap),out=[],seen=new Set();
@@ -25,7 +25,7 @@ export function spots(s,type,limit=3){const net=network(s),homes=s.buildings.fil
  const cost=(gx,gy)=>cells({type,x:gx,y:gy}).filter(([x,y])=>naturalFeature(x,y)&&!s.landscape?.cleared.includes(`${x},${y}`)).length*10;
  if(s.cozyV===1&&type==='road'&&!net.size)for(let gx=2;gx<SIZE;gx++)for(let gy=0;gy<SIZE;gy++)if(free(s,type,gx,gy))push(gx,gy,cost(gx,gy)+Math.abs(gx-5)+Math.abs(gy-8));
  if(type==='road'||type==='bridge'){for(const k of net){const[x,y]=k.split(',').map(Number);for(const[dx,dy]of DIRS){const gx=x+dx,gy=y+dy;if(free(s,type,gx,gy))push(gx,gy,cost(gx,gy)+Math.abs(gx-5)+Math.abs(gy-8));}}}
- else for(let gx=2;gx<SIZE;gx++)for(let gy=0;gy<SIZE;gy++){if(!free(s,type,gx,gy))continue;const adj=perimeter(type,gx,gy).filter(([x,y])=>net.has(`${x},${y}`)).length;if(!adj)continue;
+ else for(let gx=2;gx<SIZE;gx++)for(let gy=0;gy<SIZE;gy++){if(!free(s,type,gx,gy))continue;const adj=perimeter(type,gx,gy).filter(([x,y])=>net.has(`${x},${y}`)).length;if(!adj&&type!=='harbor')continue;
   const near=homes.length?Math.min(...homes.map(h=>Math.abs(h.x-gx)+Math.abs(h.y-gy))):0;push(gx,gy,cost(gx,gy)+near+(adj>1?-1:0));}
  return out.sort((a,b)=>a.score-b.score).slice(0,limit).map(({gx,gy})=>({gx,gy}));}
 export function walkable(s,gx,gy,roads=roadSet(s)){if(!inside(gx,gy)||gx<2)return false;if(gx===RIVER)return roads.has(`${gx},${gy}`);const b=at(s,gx,gy);return !b||b.type==='road'||b.type==='bridge';}

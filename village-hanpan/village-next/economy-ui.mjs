@@ -1,5 +1,5 @@
-import {buildingSpec,metrics,TYPES,MONTH,month,monthLabel,calendarMonth,demandMonth,connected,unlocked,HARVEST,HARVEST_SECONDS} from './core.mjs?v=prices1';
-import {PLAY_SPEED,realSeconds,COZY_EFFECTS} from './data.mjs?v=income1';
+import {buildingSpec,metrics,TYPES,MONTH,month,monthLabel,calendarMonth,demandMonth,connected,unlocked,HARVEST,HARVEST_SECONDS} from './core.mjs?v=expansion2';
+import {PLAY_SPEED,realSeconds,COZY_EFFECTS} from './data.mjs?v=expansion2';
 
 // nextId never decreases, so cancelling or reloading cannot restart completed guidance.
 export const guidedPlacement=s=>s.mode==='run'&&!s.ended&&month(s)<4&&s.nextId-1-s.buildings.filter(b=>b.starter).length<2;
@@ -8,6 +8,9 @@ export const incomePerMinute=v=>netIncome(v)*PLAY_SPEED/MONTH*60;
 export const calendarDay=s=>1+Math.floor((s.t%MONTH)/MONTH*[31,28,31,30,31,30,31,31,30,31,30,31][calendarMonth(s)]);
 // This order matches the 5×5 atlas rendered from the game's models.
 export const cataloguePictures=['road','house','snack','apartment','western','japanese','chinese','convenience','supermarket','clinic','hospital','kids','amusement','school','library','fire','drain','workshop','solar','generator','bridge','flower','avenue','tree','bench'];
+
+export const expansionPictures=["duplex", "gardenhouse", "terracehouse", "chicken", "buffet", "police", "cinema", "animalFarm", "rosePark", "harbor", "rabbitTower", "skyTower", "largePark", "lavender", "hydrangea", "fountain", "flowerArch", "moonGarden", "goldFountain", "starTree", "supermarket"];
+export function catalogueStyle(type){const next=expansionPictures.indexOf(type),i=next<0?cataloguePictures.indexOf(type):next;return `${next<0?'':"background-image:url('assets/expansion-catalogue.png');"}background-position:${i%5*25}% ${Math.floor(i/5)*25}%;`;}
 export const incomeRate=v=>`${netIncome(v)<0?'−':'+'}${(Math.abs(netIncome(v))*PLAY_SPEED/MONTH).toFixed(1)}/초`;
 
 export function buildingBenefit(s,type){
@@ -17,7 +20,7 @@ export function buildingBenefit(s,type){
 }
 export function completionMessage(s,ids){
  const b=s.buildings.find(b=>b.id===ids[0]);if(!b)return '';
- const d=buildingSpec(s,b.type);if(!connected(s,b))return `${d.name} 완공! 길을 이어야 이용할 수 있어요.`;
+ const d=buildingSpec(s,b.type);if(s.cozyV===1)return `${d.name} 완공!\n${cozyEffectText(s,b.type)}`;if(!connected(s,b))return `${d.name} 완공! 길을 이어야 이용할 수 있어요.`;
  const after=metrics(s),before=metrics({...s,buildings:s.buildings.filter(b=>!ids.includes(b.id))});
  const difference=netIncome(after)-netIncome(before),land=after.landscaping.score-before.landscaping.score;
  return `${d.name}${ids.length>1?` 외 ${ids.length-1}곳`:''} 완공! ${buildingBenefit(s,b.type)}\n순수입 ${incomeRate(before)} → ${incomeRate(after)}${land>0?` · 미관 +${land}`:''}${d.cap?' · 입주하면 수입도 자라요':difference<=0?' · 이용할 주민이 늘면 효과도 커져요':''}`;
@@ -45,6 +48,7 @@ export function incomePreview(s,type,x,y,moving=null){
 }
 
 export function incomePreviewText(s,type,x,y,moving=null){
+ if(s.cozyV===1)return cozyPlacementText(s,type,x,y,moving);
  const {before,after,filled,later}=incomePreview(s,type,x,y,moving);
  const line=`순수입 ${incomeRate(before)} → 완공 직후 ${incomeRate(after)}`;
  const service=['health','education','leisure'].some(k=>buildingSpec(s,type)[k]);
@@ -61,11 +65,12 @@ export const catalogueBudget=(money,cost)=>money<cost?`${Math.ceil(cost-money).t
 // Match the two construction crews and whole simulation ticks used by advance().
 export function constructionTime(s,b){
  const queue=s.buildings.filter(x=>x.progress<1),lanes=[0,0];if(!queue.some(x=>x.id===b.id))queue.push(b);
- for(let i=0;i<queue.length;i++){const x=queue[i],crew=lanes[0]<=lanes[1]?0:1,start=lanes[crew];lanes[crew]+=Math.ceil((1-x.progress)*TYPES[x.type].time-1e-8);
+ for(let i=0;i<queue.length;i++){const x=queue[i],crew=lanes[0]<=lanes[1]?0:1,start=lanes[crew];lanes[crew]+=Math.ceil((1-x.progress)*buildingSpec(s,x.type).time-1e-8);
   if(x.id===b.id)return {position:i,wait:realSeconds(Math.max(0,start-(s.carry||0))),finish:realSeconds(Math.max(0,lanes[crew]-(s.carry||0)))};
  }
 }
-export function constructionText(s,b){const t=constructionTime(s,b);return t.position<2?`공사 중 · 완공까지 약 ${t.finish}초`:`대기 ${t.position-1}번째 · 시작까지 약 ${t.wait}초 · 완공까지 약 ${t.finish}초`;}
+const constructionDuration=seconds=>seconds<60?`${seconds}초`:`${Math.floor(seconds/60)}분${seconds%60?` ${seconds%60}초`:''}`;
+export function constructionText(s,b){const t=constructionTime(s,b);return t.position<2?`공사 중 · 완공까지 약 ${constructionDuration(t.finish)}`:`대기 ${t.position-1}번째 · 시작까지 약 ${constructionDuration(t.wait)} · 완공까지 약 ${constructionDuration(t.finish)}`;}
 
 export function serviceChangeText(s,type,before,after){
  const d=buildingSpec(s,type),lines=[];
@@ -88,12 +93,17 @@ export function fundingAdvice(s,price){
  return (s.paused?'일시정지 중에는 기금이 늘지 않아요.':wait===null?'기다리기만 해서는 모이지 않아요. 마을 현황에서 수입·유지비를 살펴요.':`현재 순수입이 유지되면 약 ${wait>=60?Math.ceil(wait/60)+'분':wait+'초'} 뒤 지을 수 있어요.`)+'\n'+harvest;
 }
 
-export const cozyDescription=type=>({"road": "마을 곳곳을 잇는 산책길", "house": "새 이웃을 맞이하는 작은 집", "snack": "이웃들이 함께 먹는 분식집", "apartment": "여러 이웃이 모여 사는 빌라", "western": "따뜻한 차양이 있는 양식집", "japanese": "골목에 어울리는 아담한 일식집", "chinese": "붉은 지붕이 돋보이는 중국집", "convenience": "가까이에서 장보는 작은 가게", "supermarket": "넓은 마을에 어울리는 큰 장보기 공간", "clinic": "이웃을 돌보는 작은 의원", "hospital": "마을의 든든한 병원", "kids": "아이들이 놀러 오는 키즈카페", "amusement": "마을을 활기차게 만드는 놀이동산", "school": "아이들이 함께 배우는 학교", "library": "책을 읽고 쉬어 가는 도서관", "fire": "마을을 지켜 주는 소방서", "drain": "빗물을 모으는 작은 시설", "workshop": "개울 건너 오래된 창고를 새롭게 꾸며요", "solar": "햇빛을 모으는 파란 지붕", "generator": "마을에 빛을 보내는 시설", "bridge": "개울 양쪽을 잇는 나무다리", "flower": "계절마다 피어나는 꽃밭", "avenue": "천천히 자라는 그늘나무", "tree": "집 곁을 초록빛으로 채우는 정원", "bench": "이웃들이 쉬어 가는 벤치"})[type]||"마을을 함께 꾸며요";
+export const cozyDescription=type=>({"road": "마을 곳곳을 잇는 산책길", "house": "새 이웃을 맞이하는 작은 집", "snack": "이웃들이 함께 먹는 분식집", "apartment": "여러 이웃이 모여 사는 빌라", "western": "따뜻한 차양이 있는 양식집", "japanese": "골목에 어울리는 아담한 일식집", "chinese": "붉은 지붕이 돋보이는 중국집", "convenience": "가까이에서 장보는 작은 가게", "supermarket": "넓은 마을에 어울리는 큰 장보기 공간", "clinic": "이웃을 돌보는 작은 의원", "hospital": "마을의 든든한 병원", "kids": "아이들이 놀러 오는 키즈카페", "amusement": "마을을 활기차게 만드는 놀이동산", "school": "아이들이 함께 배우는 학교", "library": "책을 읽고 쉬어 가는 도서관", "fire": "마을을 지켜 주는 소방서", "drain": "빗물을 모으는 작은 시설", "workshop": "개울 건너 오래된 창고를 새롭게 꾸며요", "solar": "햇빛을 모으는 파란 지붕", "generator": "마을에 빛을 보내는 시설", "bridge": "개울 양쪽을 잇는 나무다리", "flower": "계절마다 피어나는 꽃밭", "avenue": "천천히 자라는 그늘나무", "tree": "집 곁을 초록빛으로 채우는 정원", "bench": "이웃들이 쉬어 가는 벤치"})[type]||TYPES[type].desc;
 
-const effectLine=(income,happiness)=>`매분 ${Math.round(income)}코인 더 벌어요\n${happiness>0?`행복 목표 +${Math.round(happiness)}`:'행복 목표 +0'}`;
-export function cozyEffectText(type,target,compact=false){const effect=COZY_EFFECTS[type];if(compact)return `+${effect.income}코인/분 · 행복 +${Math.round(Math.min(effect.happiness,100-target))}${target>=100?'(최대)':''}`;return effectLine(effect.income,Math.min(effect.happiness,100-target))+(target>=100?' (최대 100)':'');}
+const effectLine=(income,happiness,welfare)=>`매분 ${Math.round(income).toLocaleString()}코인 더 벌어요\n행복 +${Math.round(happiness)} · 복지 +${Math.round(welfare)}`;
+export function cozyEffectText(s,type,compact=false){
+ const d=buildingSpec(s,type),e=COZY_EFFECTS[type];
+ if(d.cap)return `인구 +${d.cap}명${compact?'':' · 길이 이어지면 차례로 입주'}\n수입·행복·복지 +0`;
+ return compact?`+${e.income.toLocaleString()}코인/분\n행복 +${e.happiness} · 복지 +${e.welfare}`:effectLine(e.income,e.happiness,e.welfare);
+}
 export function cozyPlacementText(s,type,x,y,moving=null){
- if(moving)return '옮겨도 수입과 행복 효과는 그대로예요.';
- const {before,after}=incomePreview(s,type,x,y);
- return '완공하면 '+effectLine(incomePerMinute(after)-incomePerMinute(before),after.targetSat-before.targetSat)+(before.targetSat>=100?' (최대 100)':'')+`\n마을 전체 수입: 매분 ${Math.round(incomePerMinute(before))} → ${Math.round(incomePerMinute(after))}코인`;
+ if(moving)return '옮겨도 수입·행복·복지 효과는 그대로예요.';
+ const {before,after}=incomePreview(s,type,x,y),d=buildingSpec(s,type),timing=constructionTime(s,{id:s.nextId,type,progress:0});
+ const effect=d.cap?`인구 +${d.cap}명 · 길을 이으면 차례로 입주해요.\n집은 수입·행복·복지를 늘리지 않아요.`:'완공하면 '+effectLine(incomePerMinute(after)-incomePerMinute(before),after.targetSat-before.targetSat,after.welfare-before.welfare)+`\n마을 전체 수입: 매분 ${Math.round(incomePerMinute(before)).toLocaleString()} → ${Math.round(incomePerMinute(after)).toLocaleString()}코인`;
+ return effect+`\n완공까지 약 ${constructionDuration(timing.finish)}${timing.wait?' (공사 대기 포함)':''}`+(!d.cap&&(before.targetSat===100||before.welfare===100)?'\n행복·복지는 각각 최대 100점이에요.':'');
 }

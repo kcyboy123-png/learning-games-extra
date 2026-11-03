@@ -1,5 +1,5 @@
 import * as T from '../lib/three.module.min.js';
-import {rabbitFrames,rabbitAtlasSize} from './rabbit-frames.mjs?v=cozy2';
+import {rabbitFrames,rabbitAtlasSize} from './rabbit-frames.mjs?v=expansion2';
 
 let atlasEntry;
 const pixel=.0059,contactGeometry=new T.PlaneGeometry(1,1).rotateX(-Math.PI/2),contactMaterial=new T.ShaderMaterial({transparent:true,depthWrite:false,vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec2 vUv;void main(){float r=length((vUv-.5)*2.);gl_FragColor=vec4(.16,.20,.095,(1.-smoothstep(.08,1.,r))*.5);}'}),castMaterial=contactMaterial.clone();castMaterial.fragmentShader=castMaterial.fragmentShader.replace('*.5','*.22');

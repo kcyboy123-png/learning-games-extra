@@ -1,8 +1,8 @@
-import {buildingSpec,cityPhase,premiumIncome} from './city-rules.mjs?v=prices1';
-export {buildingSpec} from './city-rules.mjs?v=prices1';
+import {buildingSpec,cityPhase,premiumIncome} from './city-rules.mjs?v=expansion2';
+export {buildingSpec} from './city-rules.mjs?v=expansion2';
 // village-next B단계 경제 코어. public/core.mjs(village-40-v3) 기반 + 완공시각·재배치·월별 해금·텃밭·휴업. 렌더/DOM 접근 없음.
-import {naturalFeature,clearablePlot,isGarden,landscapeMetrics} from './landscape.mjs?v=clear1';
-import {VERSION,RULE,MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,TIERS,season,PLAY_SPEED,COZY_EFFECTS} from './data.mjs?v=income1';
+import {naturalFeature,clearablePlot,isGarden,landscapeMetrics} from './landscape.mjs?v=expansion2';
+import {VERSION,RULE,MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,TIERS,season,PLAY_SPEED,COZY_EFFECTS,POPULATION_UNLOCKS} from './data.mjs?v=expansion2';
 export {MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,RULE,VERSION};
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 export const SCOPE={label:'B규칙'};
@@ -22,7 +22,7 @@ export function createState(mode='run'){
  add('house',4,5,['ins']);add('house',6,5,['ins']);add('generator',4,7);add('tree',6,9);add('tree',4,10);return s;
 }
 // Relaxed decorating keeps past results intact and uses a separate current growth score.
-export function enableCozy(s){if(s.cozyV!==1)s.money=Math.max(300,s.money);s.placementHintsShown??=Math.min(2,s.buildings.filter(b=>!b.starter).length);s.cozyV=1;s.mode='free';s.ended=false;return s;}
+export function enableCozy(s){s.populationPeak=Math.max(s.populationPeak??s.pop,s.pop);if(s.cozyV!==1)s.money=Math.max(300,s.money);s.placementHintsShown??=Math.min(2,s.buildings.filter(b=>!b.starter).length);s.cozyV=1;s.mode='free';s.ended=false;return s;}
 export function cozyGrowth(s){
  const made=s.buildings.filter(b=>!b.starter&&b.progress>=1&&!b.closed&&!['road','bridge'].includes(b.type));
  const gardens=made.filter(isGarden).length,buildings=made.length-gardens,variety=new Set(made.map(b=>b.type)).size,details=made.reduce((n,b)=>n+b.opts.length,0);
@@ -33,12 +33,22 @@ export function network(s){const roads=new Set(s.buildings.filter(b=>b.progress>
 export function connected(s,b,net=network(s)){return cells(b).some(([x,y])=>net.has(`${x},${y}`)||[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>net.has(`${x+dx},${y+dy}`)));}
 export function stage(s){return Math.max(s.stage,month(s)>=7||s.pop>=28?3:month(s)>=2||s.pop>=16?2:month(s)>=1||s.buildings.some(b=>b.type==='snack'&&b.progress>=1)?1:0);}
 // 해금: 정해진 달이 되었거나(9절) 주민 성과로 stage가 앞서면 열린다. 평가 시작은 달을 따르므로 빨리 열어도 벌점이 없다.
-const STAGE_MONTH=[0,1,2,7];export function unlocked(s,type){const d=TYPES[type];return s.cozyV===1||month(s)>=d.unlock||STAGE_MONTH[stage(s)]>=d.unlock;}
+const STAGE_MONTH=[0,1,2,7];export const populationRequired=type=>POPULATION_UNLOCKS[type]??0;
+export function unlocked(s,type){const d=TYPES[type];return s.cozyV===1?Math.max(s.pop,s.populationPeak??s.pop)>=populationRequired(type):month(s)>=d.unlock||STAGE_MONTH[stage(s)]>=d.unlock;}
+export const unlockMessage=(s,type)=>s.cozyV===1?`주민 ${populationRequired(type)}명에 열려요 · 현재 ${s.pop}명`:`${monthLabel(s,TYPES[type].unlock)}에 열려요.`;
 export const unlockMonth=type=>TYPES[type].unlock;
-export function canBuild(s,type,x,y,ignoreId=0){const d=TYPES[type];if(!d)return '알 수 없는 시설이에요.';if(s.paused||s.ended)return '시간을 재개한 뒤 지을 수 있어요.';if(!unlocked(s,type))return `${monthLabel(s,d.unlock)}에 열려요.`;
+// Piers occupy the two adjacent river cells, so bridges and opposite ports cannot overlap.
+export function waterfrontError(s,type,x,y,ignoreId=0){
+ if(type==='harbor'&&x!==RIVER-2&&x!==RIVER+1)return '항구는 개울 바로 옆의 빈 땅 2×2칸에 지어요.';
+ if(type!=='harbor'&&type!=='bridge')return '';
+ const rows=type==='harbor'?[y,y+1]:[y];
+ if(s.buildings.some(b=>b.id!==ignoreId&&(b.type==='harbor'&&rows.some(r=>r>=b.y&&r<b.y+2)||type==='harbor'&&b.type==='bridge'&&rows.includes(b.y))))return '다리나 다른 항구와 겹쳐요. 개울 옆 다른 자리를 골라 주세요.';
+ return '';
+}
+export function canBuild(s,type,x,y,ignoreId=0){const d=TYPES[type];if(!d)return '알 수 없는 시설이에요.';if(s.paused||s.ended)return '시간을 재개한 뒤 지을 수 있어요.';if(!unlocked(s,type)&&!s.buildings.some(b=>b.id===ignoreId&&b.type===type))return unlockMessage(s,type);
  if(!Number.isInteger(x)||!Number.isInteger(y))return '땅을 골라 주세요.';
  for(const[cx,cy]of cells({type,x,y})){if(cx<0||cy<0||cx>=SIZE||cy>=SIZE)return '마을 경계 안에 놓아 주세요.';const o=at(s,cx,cy);if(o&&o.id!==ignoreId)return '이미 사용 중인 땅이에요.';if(cx<2)return '이 숲은 보전하는 구역이에요.';if(type==='bridge'?cx!==RIVER:cx===RIVER)return type==='bridge'?'다리는 개울 위에 놓아요.':'개울에는 다리를 놓아 주세요.';if(terrain(cx,cy)==='warehouse'&&type!=='workshop')return '오래된 창고는 재생 공간으로 고쳐 써요.';}
- if(type==='workshop'&&(x!==14||y!==7))return '강 건너 오래된 창고(14,7)에서 개조해요.';return '';
+ if(type==='workshop'&&(x!==14||y!==7))return '강 건너 오래된 창고(14,7)에서 개조해요.';return waterfrontError(s,type,x,y,ignoreId);
 }
 export const cost=(type,opts=[],s)=>buildingSpec(s,type).cost+opts.reduce((a,o)=>a+(OPTIONS[o]?.cost||0),0);
 export function clearingCost(s,type,x,y){return cells({type,x,y}).filter(([cx,cy])=>naturalFeature(cx,cy)&&!s.landscape?.cleared.includes(`${cx},${cy}`)).length*12;}
@@ -49,9 +59,9 @@ export function build(s,type,x,y,opts=[],dir){if(dir!==undefined&&(!validDirecti
  const price=buildCost(s,type,x,y,opts);if(s.money<price)return{error:`건설비가 부족해요. ${price}이 필요하고 지금 ${Math.floor(s.money)}이 있어요.`};s.money-=price;const b={id:s.nextId++,type,x,y,opts:[...opts],progress:0,starter:false};if(s.cozyV===1)b.paidCost=cost(type,opts,s);if(dir!==undefined)b.dir=dir;if(isGarden(b))b.plantedAt=s.t;clearUnder(s,b);s.buildings.push(b);return{building:b};}
 export function clearLandscape(s,x,y){if(s.paused||s.ended)return{error:'시간을 재개한 뒤 철거할 수 있어요.'};if(!(s.cozyV===1?clearablePlot(x,y):naturalFeature(x,y))||at(s,x,y))return{error:'마을 안의 나무나 조경을 골라 주세요.'};if(s.landscape?.cleared.includes(`${x},${y}`))return{error:'이미 정리한 자리예요.'};const fee=s.cozyV===1?0:12;if(s.money<fee)return{error:'정비에는 12코인이 필요해요.'};s.landscape??={version:1,cleared:[]};s.landscape.cleared.push(`${x},${y}`);s.money-=fee;return{fee};}
 const validDirection=dir=>Number.isInteger(dir)&&dir>=0&&dir<4;
-export const rotatable=type=>Object.hasOwn(TYPES,type)&&!['road','bridge'].includes(type);
+export const rotatable=type=>Object.hasOwn(TYPES,type)&&!['road','bridge','harbor'].includes(type);
 export function rotateBuilding(s,id,dir){const b=s.buildings.find(b=>b.id===id);if(s.paused||s.ended)return{error:'재개한 뒤 방향을 바꿀 수 있어요.'};if(!b||!rotatable(b.type)||!validDirection(dir))return{error:'방향을 바꿀 건물을 골라 주세요.'};b.dir=dir;return{};}
-export const UPGRADE_TYPES=['house','apartment','snack','western','japanese','chinese','clinic','hospital','kids','amusement','school','library','fire','workshop','convenience','supermarket'];
+export const UPGRADE_TYPES=['house','apartment','duplex','gardenhouse','terracehouse','chicken','snack','western','japanese','chinese','clinic','hospital','kids','amusement','school','library','fire','workshop','convenience','supermarket'];
 export function upgradeError(s,id,opt){const b=s.buildings.find(b=>b.id===id);if(s.paused||s.ended)return '재개한 뒤 개선할 수 있어요.';if(!b||b.progress<1||!Object.hasOwn(OPTIONS,opt)||b.opts.includes(opt)||b.opts.length>=2||!UPGRADE_TYPES.includes(b.type))return '이 설계는 적용할 수 없어요.';if(s.money<OPTIONS[opt].cost)return '건설비가 부족해요.';return ''; }
 export function upgrade(s,id,opt){const error=upgradeError(s,id,opt);if(error)return{error};const b=s.buildings.find(b=>b.id===id);s.money-=OPTIONS[opt].cost;b.opts.push(opt);return{};}
 // Refund the original construction price; older saves retain their pre-increase refund.
@@ -63,7 +73,7 @@ export function harvest(s){if(s.paused||s.ended)return{error:'재개한 뒤 돌�
 export function canRelocate(s,b){if(!b)return '시설을 찾을 수 없어요.';if(s.paused||s.ended)return '재개한 뒤 옮길 수 있어요.';if(b.starter)return '처음부터 있던 시설은 옮기지 않아요.';if(['road','bridge','workshop'].includes(b.type))return '길·다리·창고 재생 공간은 옮길 수 없어요.';if(b.progress<1)return '공사가 끝난 뒤 옮길 수 있어요.';if(s.cozyV===1)return '';if(b.moved)return '이 건물은 이미 한 번 옮겼어요.';if(b.completedAt===undefined||s.t-b.completedAt>RELOCATE_WINDOW)return '완공 후 이동 가능한 시간이 지났어요.';return '';}
 export const relocateLeft=(s,b)=>b.completedAt===undefined?0:Math.max(0,RELOCATE_WINDOW-(s.t-b.completedAt));
 // 옮기는 동안 상태를 바꾸지 않고 확정 순간에만 위치·정비비·사용 여부를 한 번에 적용한다.
-export function relocate(s,id,x,y,dir){if(dir!==undefined&&!validDirection(dir))return{error:'건물 방향을 확인해 주세요.'};const b=s.buildings.find(b=>b.id===id);const why=canRelocate(s,b);if(why)return{error:why};if(b.x===x&&b.y===y)return{error:'같은 자리예요.'};const error=canBuild(s,b.type,x,y,b.id);if(error)return{error};const fee=clearingCost(s,b.type,x,y);if(s.money<fee)return{error:`자연 정비비 ${fee}이 필요해요.`};
+export function relocate(s,id,x,y,dir){const b=s.buildings.find(b=>b.id===id);if(dir!==undefined&&(!validDirection(dir)||!rotatable(b?.type)))return{error:'건물 방향을 확인해 주세요.'};const why=canRelocate(s,b);if(why)return{error:why};if(b.x===x&&b.y===y)return{error:'같은 자리예요.'};const error=canBuild(s,b.type,x,y,b.id);if(error)return{error};const fee=clearingCost(s,b.type,x,y);if(s.money<fee)return{error:`자연 정비비 ${fee}이 필요해요.`};
  s.money-=fee;b.x=x;b.y=y;if(dir!==undefined)b.dir=dir;b.moved=true;clearUnder(s,b);return{fee};}
 // New towns grow through occupied homes and used services; v2 saves retain their annual multipliers.
 export const economy=s=>{const y=s.economyV===2?Math.min(2,Math.floor(month(s)/12)):0;return{income:[1,.6,.4][y],upkeep:[1,1.5,2][y]};};
@@ -90,8 +100,9 @@ export function metrics(s){const net=network(s),live=s.buildings.filter(b=>b.pro
  const popGoal=Math.min(32+16*Math.min(2,Math.floor(m/12)),12+m*4);
  const D=clamp(clamp(s.pop/popGoal)*(.35-.14*beautyPhase)+service*.30+env*.20+safety*.15+beauty*.14*beautyPhase);
  const Q=clamp(s.sat/100*.50+service*.30+energy*.15+clamp(housing/p)*.05);
- if(s.cozyV===1){const made=s.buildings.filter(b=>!b.starter&&b.progress>=1&&!b.closed);targetSat=Math.min(100,82+made.reduce((n,b)=>n+COZY_EFFECTS[b.type].happiness,0));income=upkeep+(90+made.reduce((n,b)=>n+COZY_EFFECTS[b.type].income,0))*MONTH/(60*PLAY_SPEED);}
- return{environment:Math.round(clamp(env)*100),landscaping,beautyPhase,premium,net,live,production,use,energy,food,health,education,leisure,housing,service,green,comfort,targetSat,income,upkeep,D,Q,score:s.cozyV===1?cozyGrowth(s).score:Math.round(1000*D*Q),demands,popGoal,fire,drain,optionRate,foodCap:sum('food'),healthCap:sum('health'),educationCap:sum('education'),leisureCap:sum('leisure')};
+ let welfare=0;
+ if(s.cozyV===1){const made=s.buildings.filter(b=>!b.starter&&b.progress>=1&&!b.closed);welfare=Math.min(100,made.reduce((n,b)=>n+COZY_EFFECTS[b.type].welfare,0));targetSat=Math.min(100,50+made.reduce((n,b)=>n+COZY_EFFECTS[b.type].happiness,0));income=upkeep+(90+made.reduce((n,b)=>n+COZY_EFFECTS[b.type].income,0))*MONTH/(60*PLAY_SPEED);}
+ return{welfare,environment:Math.round(clamp(env)*100),landscaping,beautyPhase,premium,net,live,production,use,energy,food,health,education,leisure,housing,service,green,comfort,targetSat,income,upkeep,D,Q,score:s.cozyV===1?cozyGrowth(s).score:Math.round(1000*D*Q),demands,popGoal,fire,drain,optionRate,foodCap:sum('food'),healthCap:sum('health'),educationCap:sum('education'),leisureCap:sum('leisure')};
 }
 export const DEMAND_MONTH={health:2,education:3,leisure:4};
 export const demandMonth=(s,key)=>DEMAND_MONTH[key]+(s.economyV===4?1:0);
@@ -123,13 +134,14 @@ function end(s){const v=metrics(s),avg=s.hist.reduce((a,h)=>a+h.score,0)/Math.ma
 // 정수 초 단위 시뮬레이션: 프레임 간격이나 기기 속도가 경제에 영향을 주지 않는다.
 export function advance(s,dt){if(s.paused||s.ended||!Number.isFinite(dt)||dt<0)return;const total=s.carry+dt;let steps=Math.floor(total+1e-8);s.carry=Math.max(0,total-steps);steps=Math.min(steps,86400);
  for(let i=0;i<steps&&!s.ended;i++){if(s.mode==='run'&&s.t>=duration(s)){end(s);break;}
-  s.stage=stage(s);for(const b of s.buildings.filter(b=>b.progress<1).slice(0,2)){b.progress=Math.min(1,b.progress+1/TYPES[b.type].time);if(b.progress>=1-1e-9){b.progress=1;b.completedAt=s.t+1;}}
+  s.stage=stage(s);for(const b of s.buildings.filter(b=>b.progress<1).slice(0,2)){b.progress=Math.min(1,b.progress+1/buildingSpec(s,b.type).time);if(b.progress>=1-1e-9){b.progress=1;b.completedAt=s.t+1;}}
   if(s.harvestAt!==null&&s.t+1-s.harvestAt>=HARVEST_SECONDS){const hm=Math.floor(s.harvestAt/MONTH);s.harvestAt=null;if(!s.harvested.includes(hm)){s.harvested.push(hm);s.harvested=s.harvested.slice(-36);s.money+=HARVEST;}}
   const v=metrics(s),cashBefore=s.money;s.money=Math.max(0,s.money+(v.income-v.upkeep)/MONTH);
   // A small harvest pauses the shortage clock; sustainable income or a month's reserve clears it.
   if(s.scoringV===2&&s.mode==='run'){const loss=v.upkeep-v.income;if(loss<=0||cashBefore>=loss||s.money>=loss)s.cashStress=0;else if(s.money===0)s.cashStress=Math.min(CASH_STRESS_LIMIT,s.cashStress+1);}
-  const target=s.t<MONTH?Math.max(78,v.targetSat):v.targetSat;s.sat+=clamp(target-s.sat,-.12,.12);
-  if(s.t%12===11&&s.pop<v.housing&&s.sat>=55)s.pop++;
+  const target=s.cozyV===1?v.targetSat:s.t<MONTH?Math.max(78,v.targetSat):v.targetSat;s.sat+=clamp(target-s.sat,-.12,.12);
+  if(s.t%12===11&&s.pop<v.housing&&(s.cozyV===1||s.sat>=55))s.pop++;
+  if(s.cozyV===1)s.populationPeak=Math.max(s.populationPeak??s.pop,s.pop);
   s.t++;if(s.t%MONTH===0){const atMonth={...s,t:s.t-1},snapshot=metrics(atMonth);if(s.mode==='run')s.hist.push({month:s.hist.length+1,score:snapshot.score,scoring:s.scoringV===2?'next-b2':'next-b1',...(s.scoringV===2?tierConditions(atMonth,snapshot):{}),D:Math.round(snapshot.D*100),Q:Math.round(snapshot.Q*100)});}
   if(s.mode==='run'&&s.t===duration(s))end(s);
  }if(s.ended)s.carry=0;
@@ -140,6 +152,7 @@ export function parseSave(text){if(typeof text!=='string'||text.length>500000)th
  const num=(v,a,b)=>typeof v==='number'&&Number.isFinite(v)&&v>=a&&v<=b;
  const validConditions=h=>h&&Array.isArray(h.reasons)&&h.reasons.length<=Object.keys(TIER_CAPS).length&&new Set(h.reasons).size===h.reasons.length&&h.reasons.every(k=>Object.hasOwn(TIER_CAPS,k)&&TIER_CAPS[k]===h.cap)&&h.cap===(h.reasons.length?TIER_CAPS[h.reasons[0]]:1000);
  if(!s||s.v!==VERSION||s.rule!==RULE||!['run','free'].includes(s.mode)||!num(s.t,0,s.mode==='run'?duration(s):1e8)||!Number.isInteger(s.t)||!num(s.carry,0,1)||!num(s.money,0,1e8)||!Number.isInteger(s.pop)||!num(s.pop,0,10000)||!num(s.sat,0,100)||!Number.isInteger(s.stage)||!num(s.stage,0,3)||typeof s.paused!=='boolean'||typeof s.ended!=='boolean'||!Array.isArray(s.buildings)||s.buildings.length>SIZE*SIZE||!Array.isArray(s.hist)||s.hist.length>(s.runMonths??12))throw Error('저장 내용이 올바르지 않아요.');
+ if(s.populationPeak!==undefined&&(!Number.isInteger(s.populationPeak)||!num(s.populationPeak,s.pop,10000)))throw Error('인구 성장 기록을 확인해 주세요.');
  if(s.placementHintsShown!==undefined&&(!Number.isInteger(s.placementHintsShown)||!num(s.placementHintsShown,0,2)))throw Error('자리 안내 기록을 확인해 주세요.');
  if(s.cozyV!==undefined&&(s.cozyV!==1||s.mode!=='free'||s.ended))throw Error('꾸미기 기록을 확인해 주세요.');
  if(s.cityV!==undefined&&(s.cityV!==1||s.economyV!==4||s.scoringV!==2))throw Error('도시 발전 규칙을 확인해 주세요.');
@@ -156,6 +169,7 @@ export function parseSave(text){if(typeof text!=='string'||text.length>500000)th
   if(b.dir!==undefined&&(!validDirection(b.dir)||!rotatable(b.type)))throw Error('시설 방향이 올바르지 않아요.');
   if(b.completedAt!==undefined&&(!Number.isInteger(b.completedAt)||!num(b.completedAt,0,Math.max(s.t,0))||b.progress<1))throw Error('완공 기록이 올바르지 않아요.');if(b.moved!==undefined&&(typeof b.moved!=='boolean'||b.starter))throw Error('재배치 기록이 올바르지 않아요.');if(b.closed!==undefined&&(b.closed!==true||b.progress<1))throw Error('휴업 기록이 올바르지 않아요.');
   ids.add(b.id);for(const[x,y]of cells(b)){const k=`${x},${y}`;if(x<0||y<0||x>=SIZE||y>=SIZE||occupied.has(k)||((x===RIVER)!==(b.type==='bridge'))||x<2)throw Error('시설 배치가 올바르지 않아요.');occupied.add(k);}}
+ for(const b of s.buildings)if(waterfrontError(s,b.type,b.x,b.y,b.id))throw Error('항구와 다리의 위치를 확인해 주세요.');
  if(!Number.isInteger(s.nextId)||s.nextId<=Math.max(0,...ids))throw Error('시설 번호를 확인해 주세요.');
  for(let i=0;i<s.hist.length;i++){const h=s.hist[i];if(h.month!==i+1||!num(h.score,0,1000)||!num(h.D,0,100)||!num(h.Q,0,100))throw Error('월별 기록이 올바르지 않아요.');}
  const validHistoryGrade=h=>s.scoringV===2?h.scoring==='next-b2'&&validConditions(h):h.scoring!=='next-b2';

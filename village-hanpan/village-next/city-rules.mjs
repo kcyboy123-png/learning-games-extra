@@ -1,4 +1,4 @@
-import {TYPES,MONTH} from './data.mjs?v=cozy2';
+import {TYPES,MONTH} from './data.mjs?v=expansion2';
 
 // Only new towns opt in; existing prices, capacities and recorded scores stay intact.
 const CHANGES={
@@ -12,8 +12,9 @@ const CHANGES={
 };
 const CITY_TYPES=Object.fromEntries(Object.entries(TYPES).map(([k,d])=>[k,{...d,...CHANGES[k]}]));
 // Basic facilities stay affordable; larger cozy facilities are savings goals.
-const COZY_COSTS={apartment:1800,japanese:900,western:1800,chinese:3200,hospital:3600,supermarket:6000,amusement:10000};
-export const buildingSpec=(s,type)=>{const d=(s?.cityV===1?CITY_TYPES:TYPES)[type];return s?.cozyV===1&&Object.hasOwn(COZY_COSTS,type)?{...d,cost:COZY_COSTS[type]}:d;};
+const COZY_COSTS={apartment:1800,japanese:900,western:1800,chinese:3200,hospital:3600,supermarket:5000,amusement:2000};
+const COZY_TIMES={apartment:120,japanese:75,western:150,chinese:180,hospital:225,supermarket:270};
+export const buildingSpec=(s,type)=>{const d=(s?.cityV===1?CITY_TYPES:TYPES)[type];return s?.cozyV===1&&Object.hasOwn(COZY_COSTS,type)?{...d,cost:COZY_COSTS[type],time:COZY_TIMES[type]??d.time}:d;};
 export const cityPhase=s=>s.cityV===1?Math.max(0,Math.min(1,(s.t/MONTH-4)/8)):0;
 export function premiumIncome(s,live){
  if(s.cityV!==1)return 0;

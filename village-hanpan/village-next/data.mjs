@@ -28,21 +28,82 @@ export const TYPES={
  flower:{name:'계절 꽃밭',cost:30,time:8,up:0,e:0,unlock:1,stage:1,group:'꾸미기',desc:'40초 뒤 꽃망울, 120초 뒤 만개. 집 가까이 심으면 조경 점수가 올라요.'},
  avenue:{name:'그늘 가로수',cost:55,time:12,up:0,e:0,unlock:1,stage:1,group:'꾸미기',desc:'작은 묘목에서 그늘나무로 자라요. 꽃밭·쉼터와 균형 있게 배치해요.'},
  tree:{name:'작은 정원',cost:35,time:5,up:0,e:0,unlock:1,stage:1,sprite:15,group:'꾸미기',desc:'생활권 주변의 녹지. 효과에는 상한이 있어요.'},
- bench:{name:'쉼터 벤치',cost:25,time:5,up:0,e:0,unlock:3,stage:2,sprite:19,group:'꾸미기',desc:'주민이 쉬는 곳. 정원과 함께 꾸며 보세요.'}
+ bench:{name:'쉼터 벤치',cost:25,time:5,up:0,e:0,unlock:3,stage:2,sprite:19,group:'꾸미기',desc:'주민이 쉬는 곳. 정원과 함께 꾸며 보세요.'},
+ duplex:{"name":"2층집","cost":650,"time":45,"up":5,"e":-2,"unlock":0,"stage":0,"group":"주거","desc":"발코니가 있는 아늑한 2층집. 이웃 8명이 살아요.","cap":8,"sprite":0},
+ gardenhouse:{"name":"마당 있는 집","cost":900,"time":50,"up":5,"e":-2,"unlock":0,"stage":0,"group":"주거","desc":"꽃이 핀 앞마당과 작은 우편함. 이웃 6명이 살아요.","cap":6,"sprite":0},
+ terracehouse:{"name":"테라스 주택","cost":2400,"time":85,"up":5,"e":-2,"unlock":0,"stage":0,"group":"주거","desc":"옥상 정원이 이어진 알록달록한 집. 이웃 16명이 살아요.","cap":16,"sprite":1,"foot":2},
+ chicken:{"name":"치킨집","cost":450,"time":35,"up":5,"e":-2,"unlock":0,"stage":0,"group":"음식","desc":"바삭한 치킨을 나눠 먹는 노란 골목 가게.","food":24,"sprite":2},
+ buffet:{"name":"뷔페","cost":3500,"time":80,"up":5,"e":-2,"unlock":0,"stage":0,"group":"음식","desc":"유리 지붕 아래 여러 음식을 함께 즐겨요.","food":80,"foot":2},
+ police:{"name":"경찰서","cost":1200,"time":55,"up":5,"e":-2,"unlock":0,"stage":0,"group":"생활","desc":"파란 지붕과 순찰차가 있는 든든한 경찰서.","leisure":8},
+ cinema:{"name":"영화관","cost":12000,"time":180,"up":5,"e":-2,"unlock":0,"stage":0,"group":"여가","desc":"반짝이는 간판 아래 함께 영화를 보는 곳.","leisure":80,"foot":2},
+ animalFarm:{"name":"동물농장","cost":18000,"time":270,"up":5,"e":-2,"unlock":0,"stage":0,"group":"여가","desc":"빨간 헛간과 울타리 안의 양·소·닭을 만나요.","leisure":64,"foot":2},
+ rosePark:{"name":"장미공원","cost":12000,"time":180,"up":0,"e":0,"unlock":0,"stage":0,"group":"꾸미기","desc":"장미 아치와 분수, 벤치가 있는 꽃 공원.","garden":"flowers","leisure":48,"foot":2},
+ harbor:{"name":"항구","cost":90000,"time":360,"up":5,"e":-2,"unlock":0,"stage":0,"group":"명소","desc":"개울 바로 옆 2×2칸에 지어요. 등대와 배가 물을 향해요.","leisure":80,"foot":2},
+ rabbitTower:{"name":"토끼탑","cost":150000,"time":450,"up":5,"e":-2,"unlock":0,"stage":0,"group":"명소","desc":"꽃 광장 위로 우뚝 선 마을의 커다란 토끼.","leisure":96,"foot":2},
+ skyTower:{"name":"하늘빛 타워","cost":180000,"time":540,"up":5,"e":-2,"unlock":0,"stage":0,"group":"명소","desc":"하늘로 길게 뻗은 유리 전망대와 초록 광장.","leisure":120,"foot":2},
+ largePark:{"name":"대형 놀이동산","cost":350000,"time":720,"up":5,"e":-2,"unlock":0,"stage":0,"group":"명소","desc":"4×4칸의 큰 명소. 대관람차·회전목마·기차와 동화 성!","leisure":240,"foot":4},
+ lavender:{"name":"라벤더 꽃밭","cost":180,"time":12,"up":0,"e":0,"unlock":0,"stage":0,"group":"꾸미기","desc":"보랏빛 꽃이 줄지어 피는 작은 화단.","garden":"flowers"},
+ hydrangea:{"name":"수국길","cost":320,"time":16,"up":0,"e":0,"unlock":0,"stage":0,"group":"꾸미기","desc":"파란 수국과 분홍 수국 사이로 난 돌길.","garden":"flowers"},
+ fountain:{"name":"작은 분수","cost":850,"time":25,"up":0,"e":0,"unlock":0,"stage":0,"group":"꾸미기","desc":"시원한 물줄기가 솟는 동그란 쉼터.","garden":"rest"},
+ flowerArch:{"name":"꽃 아치","cost":1400,"time":30,"up":0,"e":0,"unlock":0,"stage":0,"group":"꾸미기","desc":"덩굴과 장미가 감싼 정원의 입구.","garden":"flowers"},
+ moonGarden:{"name":"달빛 정원","cost":60000,"time":270,"up":0,"e":0,"unlock":0,"stage":0,"group":"레어","desc":"초승달 조형물과 은빛 꽃이 빛나는 정원.","garden":"flowers","foot":2},
+ goldFountain:{"name":"황금 분수","cost":120000,"time":360,"up":0,"e":0,"unlock":0,"stage":0,"group":"레어","desc":"세 겹의 황금 물그릇과 에메랄드빛 연못.","garden":"rest","foot":2},
+ starTree:{"name":"별빛 나무","cost":240000,"time":540,"up":0,"e":0,"unlock":0,"stage":0,"group":"레어","desc":"황금 가지에 별과 작은 등이 매달린 특별한 나무.","garden":"trees","foot":2}
 };
 export const OPTIONS={ins:{name:'단열 보강',cost:45,desc:'겨울·여름 에너지 수요 25% 절약'},shade:{name:'차양 설치',cost:25,desc:'여름 냉방 수요 20% 절약'},reuse:{name:'재사용 자재',cost:20,desc:'자원 재사용 성과에 반영'}};
 export const TIERS=[[950,'레디언트','미래를 짓는 건축가'],[900,'이모탈','초록 도시의 거장'],[800,'다이아몬드','마을 설계의 달인'],[700,'플래티넘','빛나는 도시 설계자'],[600,'골드','든든한 마을 건축가'],[450,'실버','성장하는 건축단장'],[300,'브론즈','가능성을 짓는 설계자'],[0,'새싹','첫 마을의 개척자']];
 // 해금 달(0=1월). B규칙: 정해진 달 또는 주민 수 성과로 앞당겨진다. 에너지 시설은 부족 대응을 위해 처음부터 열려 있다.
-export const TABS={주거:['주거'],생활:['음식','장보기','생활'],기반:['기반','에너지','안전'],여가:['여가'],조경:['꾸미기']};
+export const TABS={주거:['주거'],먹거리:['음식','장보기'],생활:['생활'],기반:['기반','에너지','안전'],여가:['여가'],명소:['명소'],조경:['꾸미기'],레어:['레어']};
 export const SEASONS=['겨울','봄','여름','가을'];
 export const season=m=>m<2||m===11?0:m<5?1:m<8?2:3;
 
 // Cozy rewards are net coins per real playing minute; happiness is a target increase.
 export const COZY_EFFECTS={
- road:{income:0,happiness:0},house:{income:12,happiness:1},apartment:{income:45,happiness:3},
- snack:{income:35,happiness:2},western:{income:65,happiness:3},japanese:{income:50,happiness:3},chinese:{income:85,happiness:4},
- convenience:{income:25,happiness:1},supermarket:{income:130,happiness:4},clinic:{income:22,happiness:3},hospital:{income:75,happiness:6},
- kids:{income:40,happiness:4},amusement:{income:160,happiness:8},school:{income:30,happiness:4},library:{income:28,happiness:4},
- fire:{income:22,happiness:2},drain:{income:8,happiness:1},workshop:{income:35,happiness:3},solar:{income:16,happiness:1},generator:{income:20,happiness:1},
- bridge:{income:0,happiness:1},flower:{income:2,happiness:2},avenue:{income:4,happiness:3},tree:{income:3,happiness:2},bench:{income:2,happiness:2}
+ road:{income:0,happiness:0,welfare:0},
+ house:{income:0,happiness:0,welfare:0},
+ apartment:{income:0,happiness:0,welfare:0},
+ duplex:{income:0,happiness:0,welfare:0},
+ gardenhouse:{income:0,happiness:0,welfare:0},
+ terracehouse:{income:0,happiness:0,welfare:0},
+ snack:{income:35,happiness:2,welfare:0},
+ western:{income:65,happiness:3,welfare:1},
+ japanese:{income:50,happiness:3,welfare:0},
+ chinese:{income:85,happiness:4,welfare:1},
+ chicken:{income:48,happiness:4,welfare:0},
+ buffet:{income:105,happiness:5,welfare:2},
+ convenience:{income:25,happiness:1,welfare:3},
+ supermarket:{income:130,happiness:2,welfare:8},
+ clinic:{income:5,happiness:0,welfare:12},
+ hospital:{income:15,happiness:1,welfare:25},
+ school:{income:8,happiness:0,welfare:18},
+ library:{income:10,happiness:3,welfare:12},
+ police:{income:8,happiness:1,welfare:15},
+ fire:{income:8,happiness:0,welfare:12},
+ drain:{income:2,happiness:0,welfare:6},
+ kids:{income:40,happiness:6,welfare:3},
+ amusement:{income:160,happiness:10,welfare:1},
+ cinema:{income:180,happiness:8,welfare:2},
+ animalFarm:{income:210,happiness:9,welfare:4},
+ largePark:{income:3000,happiness:15,welfare:3},
+ workshop:{income:35,happiness:3,welfare:6},
+ solar:{income:16,happiness:0,welfare:4},
+ generator:{income:20,happiness:0,welfare:2},
+ bridge:{income:0,happiness:1,welfare:2},
+ flower:{income:2,happiness:3,welfare:0},
+ avenue:{income:4,happiness:2,welfare:2},
+ tree:{income:3,happiness:3,welfare:1},
+ bench:{income:2,happiness:2,welfare:2},
+ lavender:{income:8,happiness:4,welfare:0},
+ hydrangea:{income:12,happiness:5,welfare:1},
+ fountain:{income:20,happiness:4,welfare:2},
+ flowerArch:{income:25,happiness:6,welfare:0},
+ rosePark:{income:85,happiness:10,welfare:3},
+ harbor:{income:600,happiness:3,welfare:10},
+ rabbitTower:{income:1200,happiness:12,welfare:3},
+ skyTower:{income:1500,happiness:5,welfare:8},
+ moonGarden:{income:250,happiness:12,welfare:2},
+ goldFountain:{income:450,happiness:8,welfare:6},
+ starTree:{income:800,happiness:15,welfare:3}
 };
+// Population unlocks persist once reached; old buildings stay usable.
+export const POPULATION_UNLOCKS={"house":0,"road":0,"snack":0,"flower":0,"avenue":0,"tree":0,"bench":0,"solar":0,"generator":0,"bridge":0,"drain":0,"duplex":12,"convenience":12,"chicken":12,"clinic":12,"lavender":12,"japanese":16,"kids":16,"hydrangea":16,"gardenhouse":20,"school":20,"fire":20,"fountain":20,"apartment":24,"library":24,"police":24,"flowerArch":24,"western":28,"terracehouse":32,"amusement":32,"workshop":32,"chinese":40,"buffet":40,"hospital":48,"supermarket":48,"cinema":64,"rosePark":64,"animalFarm":80,"moonGarden":100,"harbor":120,"rabbitTower":160,"goldFountain":160,"skyTower":200,"largePark":240,"starTree":240};

@@ -1,17 +1,18 @@
 // village-next 표현 계층. pocket/world.mjs의 헬퍼·모델·배칭·주민 리그를 가져와 18×18 격자 위에 올린다.
 // 경제 값은 계산하지 않는다. sync(state)로 건물을 그리고 preview()로 배치 미리보기를 보여준다.
 import * as T from '../lib/three.module.min.js';
-import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=compact1';
-import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=compact1';
-import {naturalFeature,growthStage} from './landscape.mjs?v=clear1';
-import {advancePersonRoute} from './residents.mjs?v=compact1';
-import {townscapeSites} from './townscape.mjs?v=clear1';
-import {seasonalSites,createSeasonDetails,disposeSeasonDetails} from './season-details.mjs?v=cozy2';
-import {surfaceOptions,surfaceTime,surfaceWinter} from './surfaces.mjs?v=cozy2';
-import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?v=cozy2';
-import {createSunlight} from './sunlight.mjs?v=cozy2';
-import {paintedTree,treeArtSeason,treeArtReady} from './tree-art.mjs?v=cozy2';
-import {addRabbitArt,updateRabbitArt} from './rabbit-art.mjs?v=cozy2';
+import {expansionModels} from './expansion-models.mjs?v=expansion2';
+import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=expansion2';
+import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=expansion2';
+import {naturalFeature,growthStage} from './landscape.mjs?v=expansion2';
+import {advancePersonRoute} from './residents.mjs?v=expansion2';
+import {townscapeSites} from './townscape.mjs?v=expansion2';
+import {seasonalSites,createSeasonDetails,disposeSeasonDetails} from './season-details.mjs?v=expansion2';
+import {surfaceOptions,surfaceTime,surfaceWinter} from './surfaces.mjs?v=expansion2';
+import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?v=expansion2';
+import {createSunlight} from './sunlight.mjs?v=expansion2';
+import {paintedTree,treeArtSeason,treeArtReady} from './tree-art.mjs?v=expansion2';
+import {addRabbitArt,updateRabbitArt} from './rabbit-art.mjs?v=expansion2';
 
 const materials=new Map(),geometries=new Map();let ghostMode=false;
 const GHOST={transparent:true,opacity:.5,depthWrite:false};
@@ -350,7 +351,7 @@ function ecoDetails(a,b){
   }
  }
 }
-const MODELS={house:[a=>alignedCottage(a),.6],snack:[a=>alignedCottage(a,'snack'),.6],generator:[a=>alignedCottage(a,'generator'),.6],tree:[gardenModel,.85],road:[roadModel,1],apartment:[apartmentModel,.6],western:[westernModel,.6],japanese:[japaneseModel,.6],chinese:[chineseModel,.6],convenience:[convenienceModel,.6],supermarket:[supermarketModel,.6],clinic:[clinicModel,.6],hospital:[hospitalModel,.6],kids:[kidsModel,.6],amusement:[amusementModel,.6],school:[schoolModel,.6],library:[libraryModel,.6],fire:[fireModel,.6],drain:[drainModel,.6],workshop:[workshopModel,.6],solar:[solarModel,.6],bridge:[bridgeModel,1],flower:[flowerModel,.85],avenue:[avenueModel,.8],bench:[benchModel,.85]};
+const MODELS={...expansionModels({T,box,ball,dot,cylinder,taper,cone,rounded,softBlock,mesh,geometry,flat,roof,cottageRoof,casement,door,sign,label,flower,shrub,pot,bench,clump,amusementModel,GLASS,GLOW,WATER}),house:[a=>alignedCottage(a),.6],snack:[a=>alignedCottage(a,'snack'),.6],generator:[a=>alignedCottage(a,'generator'),.6],tree:[gardenModel,.85],road:[roadModel,1],apartment:[apartmentModel,.6],western:[westernModel,.6],japanese:[japaneseModel,.6],chinese:[chineseModel,.6],convenience:[convenienceModel,.6],supermarket:[supermarketModel,.6],clinic:[clinicModel,.6],hospital:[hospitalModel,.6],kids:[kidsModel,.6],amusement:[amusementModel,.6],school:[schoolModel,.6],library:[libraryModel,.6],fire:[fireModel,.6],drain:[drainModel,.6],workshop:[workshopModel,.6],solar:[solarModel,.6],bridge:[bridgeModel,1],flower:[flowerModel,.85],avenue:[avenueModel,.8],bench:[benchModel,.85]};
 function scaffold(a,p,n=1){ // 공사 단계: 터 정비 → 골조 → 외장(모델) → 간판·개장. y스케일 늘이기 없음.
  const w=CELL*n*.86;rounded(a,'#9a7f5d',0,0,0,w,w,.06,.2);for(const[x,z]of[[-1,-1],[1,-1],[1,1],[-1,1]]){box(a,'#c2a579',x*w/2,.5,z*w/2,.09,1,.09);box(a,'#e2c981',x*w/2,.9,z*w/2,.17,.12,.14);}
  for(const z of[-1,1])box(a,'#e7cd7b',0,.72,z*w/2,w,.04,.04);for(const x of[-1,1])box(a,'#e7cd7b',x*w/2,.72,0,.04,.04,w);
@@ -359,7 +360,7 @@ function scaffold(a,p,n=1){ // 공사 단계: 터 정비 → 골조 → 외장(�
  if(p<.25){for(const x of[-.4,.4])for(const z of[-.3,.3])softBlock(a,'#b8ac90',x*n,.13,z*n,.28*n,.16,.24*n,.025);}
  if(p>=.25&&p<.6){for(const[x,z]of[[-.6,-.5],[.6,-.5],[.6,.5],[-.6,.5]])box(a,'#b28b60',x,.6,z,.08,1.1,.08);for(const z of[-.5,.5])box(a,'#c5af89',0,1.15,z,1.3,.07,.07);for(const x of[-.6,.6])box(a,'#c5af89',x,1.15,0,.07,.07,1.1);box(a,'#a08560',0,.1,0,1.4,.08,1.1);for(const side of[-1,1]){const brace=softBlock(a,'#bd9869',side*.55,.65,-.5,.08,.85,.08,.015);brace.rotation.z=side*.42;}softBlock(a,'#d9d2c0',0,1.21,-.45,1.36,.055,.28,.015);}}
 function personRig(scene,color,id){
- const variant=(id.charCodeAt(0)-97)%4,species=id==='player'?'rabbit':({e:'cat',f:'fox',g:'panda',h:'deer'}[id]||(variant%2===0?'otter':'bear'));
+ const variant=(id.charCodeAt(0)-97)%4,species=id==='player'?'rabbit':['otter','bear','otter','bear','cat','fox','panda','deer'][(id.charCodeAt(0)-97)%8];
  const rabbit=species==='rabbit',otter=species==='otter',cat=species==='cat',fox=species==='fox',panda=species==='panda',deer=species==='deer',fur=rabbit?'#fff1df':({cat:'#d4c3b0',fox:'#d99d68',panda:'#f7f0e2',deer:'#c9a17d'}[species]||(otter?'#b99a7c':'#d6b083')),cream=rabbit?'#fff5e3':'#f5e6d0';
  const cloth=rabbit?'#d7838b':({cat:'#8aabba',fox:'#c49b67',panda:'#d5a38f',deer:'#b69ab3'}[species])|| (otter?(variant===0?'#79a586':'#9fa76d'):(variant===1?'#ede8d6':'#b7a4bd'));
  const petBall=(g,c,x,y,z,w,h=w,d=w,o)=>mesh(g,geometry('pet-soft',()=>new T.SphereGeometry(1,24,18)),c,x,y,z,w,h,d,{roughness:.92,emissive:c,emissiveIntensity:c===fur||c===cream?.075:0,...o});
@@ -487,7 +488,7 @@ export class World{
   for(let i=0;i<38;i++){const z=-L/2+1+i*(L-2)/38,side=i%2?1:-1,x=rx+side*1.23;pebble(S,'#b8ac90',x,-.12,z,.23,.18,.34,WET);pebble(S,'#6f8858',x+.06,.02,z,.17,.05,.22);if(i%3===0){flower(S,x+side*.18,z+.2,'#fff2ce');flower(S,x+side*.28,z+.4,'#e9adba');clump(S,'#81b56c',x+side*.24,.11,z-.1,.23,.13,.26);tuft(S,x+side*.1,z-.28,.7);}}
   // 보전 숲 (0~1열) · 마을 입구 표지 · 흩어진 풀
   for(let gy=0;gy<SIZE;gy++)for(let gx=0;gx<2;gx++){const p=toWorld(gx,gy),h=hash(gx,gy);tree(S,p.x+(h%7-3)*.14,p.z+(h%5-2)*.18,1.05+(h%4)*.12,h%9===0);if(h%3===0)tuft(S,p.x+.9,p.z-.8,1.1);}
-  const gate=toWorld(5,3);for(const x of[-1,1]){cylinder(S,'#5b6660',gate.x+x*1.3,.95,gate.z-1.4,.055,1.75);box(S,'#fff0b5',gate.x+x*1.3,1.82,gate.z-1.4,.24,.3,.24,GLOW);cone(S,'#5b6660',gate.x+x*1.3,2.04,gate.z-1.4,.24,.16);}label(S,'개울마을',gate.x,1.35,gate.z-1.9,2.2,.5,'#fff6de','#345347',76);
+  const gate=toWorld(5,3);for(const x of[-1,1]){cylinder(S,'#5b6660',gate.x+x*1.3,.95,gate.z-1.4,.055,1.75);box(S,'#fff0b5',gate.x+x*1.3,1.82,gate.z-1.4,.24,.3,.24,GLOW);cone(S,'#5b6660',gate.x+x*1.3,2.04,gate.z-1.4,.24,.16);}label(S,'동물의숲',gate.x,1.35,gate.z-1.9,2.2,.5,'#fff6de','#345347',76);
  }
  syncTownscape(s){const sites=townscapeSites(s),sig=JSON.stringify(sites);if(sig===this.townscapeSig)return;this.townscapeSig=sig;if(this.townscape)dispose(this.townscape);const g=this.townscape=new T.Group();g.name='developed-streets';this.scene.add(g);
   const lamp=(a,x,z)=>{cylinder(a,'#547064',x,.73,z,.035,1.45);box(a,'#567367',x,.12,z,.17,.18,.17);box(a,'#ffe7a3',x,1.49,z,.18,.25,.18,GLOW);for(const dx of[-.1,.1])for(const dz of[-.1,.1])box(a,'#547064',x+dx,1.49,z+dz,.018,.28,.018);cone(a,'#547064',x,1.68,z,.18,.15);ball(a,'#d7bd7a',x,1.79,z,.032);};
@@ -596,7 +597,7 @@ export class World{
  screen(p){const v=p.clone().project(this.camera);return{x:(v.x+1)*innerWidth/2,y:(1-v.y)*innerHeight/2};}
  animateRides(dt,reduced){
   if(!this.paused&&!reduced)this.rideTime=(this.rideTime||0)+dt;
-  for(const ride of this.rides||[]){const wheel=ride.userData.ride==='wheel',axis=wheel?'z':'y';ride.rotation[axis]=((this.rideTime||0)*(wheel?.10:.20))%(Math.PI*2);
+  for(const ride of this.rides||[]){if(ride.userData.ride==='train'){const track=ride.userData.track,t=((this.rideTime||0)*.022)%1,p=track.getPoint(t),v=track.getTangent(t);ride.position.copy(p);ride.rotation.y=Math.atan2(v.x,v.z);continue;}const wheel=ride.userData.ride==='wheel',axis=wheel?'z':'y';ride.rotation[axis]=((this.rideTime||0)*(wheel?.10:.20))%(Math.PI*2);
    for(const child of ride.children){if(child.userData.cabin)child.rotation.z=-ride.rotation.z;if(Number.isInteger(child.userData.pony))child.position.y=.68+Math.sin(ride.rotation.y*3+child.userData.pony*Math.PI/3)*.09;}
   }
  }

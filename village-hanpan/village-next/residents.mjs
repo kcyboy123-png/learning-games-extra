@@ -1,10 +1,10 @@
-import {PLAYER_SPEED} from './move.mjs?v=cozy2';
-import {TYPES,connected,network} from './core.mjs?v=compact1';
-import {origin,facing,entrance,toWorld,toCell,path} from './grid.mjs?v=compact1';
-import {growthStage} from './landscape.mjs?v=clear1';
+import {PLAYER_SPEED} from './move.mjs?v=expansion2';
+import {TYPES,connected,network} from './core.mjs?v=expansion2';
+import {origin,facing,entrance,toWorld,toCell,path} from './grid.mjs?v=expansion2';
+import {growthStage} from './landscape.mjs?v=expansion2';
 
 // Positions match model doors and seat centres, in the model's local coordinates.
-const doors={snack:[.85,1.105],western:[0,1.07],japanese:[.9,1.1],chinese:[0,1.07],convenience:[.9,1.1],supermarket:[2.4,2.32],clinic:[0,1.07],hospital:[0,1.17],kids:[0,1.07],amusement:[2,2.62],school:[0,1.12],library:[0,1.12]};
+const doors={chicken:[0,1.12],buffet:[0,2.5],police:[0,1.12],cinema:[0,2.5],animalFarm:[0,3.5],harbor:[0,2.6],rabbitTower:[0,3.5],skyTower:[0,3.5],largePark:[0,7.3],rosePark:[0,3.5],snack:[.85,1.105],western:[0,1.07],japanese:[.9,1.1],chinese:[0,1.07],convenience:[.9,1.1],supermarket:[2.4,2.32],clinic:[0,1.07],hospital:[0,1.17],kids:[0,1.07],amusement:[2,2.62],school:[0,1.12],library:[0,1.12]};
 export function visitPose(s,b){
  const angle=facing(s,b)*Math.PI/2,o=origin(b.type,b.x,b.y),rest=b.type==='bench'||b.type==='tree',sc=rest?.85:.6;
  const [x,z]=rest?(b.type==='tree'?[.4,.65]:[0,-.2]):doors[b.type]||[0,1.13];
@@ -14,17 +14,17 @@ export function visitPose(s,b){
 export function availableVisit(s,b,net){const d=TYPES[b.type];return b.progress>=1&&!b.closed&&connected(s,b,net)&&(b.type==='bench'||b.type==='tree'&&growthStage(s,b)===2||!b.starter&&(d.food||d.health||d.education||d.leisure));}
 export function syncResidents(s,people,world){
  const net=network(s),homes=s.buildings.filter(b=>TYPES[b.type].cap&&b.progress>=1&&!b.closed&&connected(s,b,net));
- const count=homes.length?4+[12,20,32,48].filter(pop=>s.pop>=pop).length:0;
+ const count=homes.length?Math.min(24,Math.ceil(s.pop/2)):0;
  while(people.length>count)world.removePerson(people.pop().p);
  for(let i=0;i<count;i++){
   let n=people[i];if(n&&homes.some(h=>h.id===n.home))continue;
   const home=homes[i%homes.length];
-  if(!n){n={p:world.person(['#e0a46c','#8f93b8','#c9a35e','#7fa3a8'][i%4],String.fromCharCode(97+i)),phase:'home',wait:2+i*3,target:null};people.push(n);}
-  n.home=home.id;n.phase='home';n.target=null;n.pose=null;n.wait=2+i*3;n.p.g.visible=true;n.p.sitting=false;n.p.carry.visible=false;n.p.route=[];
+  if(!n){n={p:world.person(['#e0a46c','#8f93b8','#c9a35e','#7fa3a8'][i%4],String.fromCharCode(97+i)),phase:'home',wait:2+(i%8)*2,target:null};people.push(n);}
+  n.home=home.id;n.phase='home';n.target=null;n.pose=null;n.wait=2+(i%8)*2;n.p.g.visible=true;n.p.sitting=false;n.p.carry.visible=false;n.p.route=[];
   const e=entrance(s,home);world.place(n.p,e.gx,e.gy);Object.assign(n.p.g.position,homeWaitingPoint(s,home,i));
  }
 }
-export function homeWaitingPoint(s,home,i){const e=home?entrance(s,home):{gx:5,gy:3},p=toWorld(e.gx,e.gy);return{x:p.x+Math.cos(i*Math.PI/4)*.8,z:p.z+Math.sin(i*Math.PI/4)*.8};}
+export function homeWaitingPoint(s,home,i){const e=home?entrance(s,home):{gx:5,gy:3},p=toWorld(e.gx,e.gy);return{x:p.x+Math.cos(i*2.399)*(.52+(i%3)*.14),z:p.z+Math.sin(i*2.399)*(.52+(i%3)*.14)};}
 export function roadRoute(s,from,to){const points=path(s,from,to,true),start=toWorld(from.gx,from.gy);return points.map((p,i)=>{const a=points[i+1]?p:(points[i-1]||start),b=points[i+1]||p,dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz)||1;return{x:p.x-dz/d*.34,z:p.z+dx/d*.34,road:true};});}
 // Keep opposite directions in separate lanes and yield only when closing the gap.
 export function advancePersonRoute(p,dt,people=[]){
@@ -34,7 +34,7 @@ export function advancePersonRoute(p,dt,people=[]){
  const x=p.g.position.x+dx/d*step,z=p.g.position.z+dz/d*step;
  const blocker=!p.passTime&&p.id!=='player'&&people.find(o=>o!==p&&o.id!=='player'&&o.g.visible&&!o.sitting&&Math.hypot(x-o.g.position.x,z-o.g.position.z)<.44&&Math.hypot(x-o.g.position.x,z-o.g.position.z)<Math.hypot(p.g.position.x-o.g.position.x,p.g.position.z-o.g.position.z)-1e-5);
  if(blocker){p.blockedFor=(p.blockedFor||0)+dt;
-  // shortcut: one brief soft pass breaks dense crowds; use local avoidance if the cast grows beyond eight.
+  // shortcut: one brief soft pass breaks dense crowds; use local avoidance if the cast grows beyond 24.
   if(p.blockedFor>3&&!people.some(o=>o!==p&&o.passTime>0)){p.passTime=2;p.blockedFor=0;if(q.yield)p.route.shift();return 0;}
   if(p.blockedFor>1.2&&q.road&&!q.yield&&(p.id>blocker.id||!blocker.route.length)){
    const c=toCell(p.g.position.x,p.g.position.z),center=toWorld(c.gx,c.gy),away={x:p.g.position.x-blocker.g.position.x,z:p.g.position.z-blocker.g.position.z};
