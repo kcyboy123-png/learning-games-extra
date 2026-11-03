@@ -2,7 +2,7 @@
 <canvas id="world" aria-label="동물의숲 입체 지도. 땅을 누르면 걷거나 자리를 고르고, 끌면 시점이 움직입니다."></canvas>
 <header>
  <div class="card clock"><div><b id="calendar">1년 차 · 봄 · 3월</b><small id="left">남은 시간 80:00</small></div><i class="bar"><i id="monthBar"></i></i><button id="pause" aria-label="일시정지">❚❚ 일시정지</button></div>
- <div class="card stats"><div class="money-pocket"><small><svg class="coin-stamp" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 11V7c0-3 3-3 3 0v3m2 0V6c0-3 3-3 3 0v5M7 13c0-4 10-4 10 0s-10 4-10 0Z"/><path d="M10 13h.1m4 0h.1"/></svg> 마을 기금</small><b id="money">240</b><small id="incomeRate" aria-label="현재 속도로 1분간 얻는 기금">1분당 +0.0</small></div><div class="village-stat"><small>인구</small><b id="pop">8명</b></div><div class="village-stat"><small>마을성장</small><b id="heartScore">100점</b></div><div class="village-stat"><small>친환경</small><b id="ecoScore">0점</b></div><div><small>♥ 행복</small><b id="sat">78%</b></div></div>
+ <div class="card stats"><div class="money-pocket"><small><svg class="coin-stamp" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 11V7c0-3 3-3 3 0v3m2 0V6c0-3 3-3 3 0v5M7 13c0-4 10-4 10 0s-10 4-10 0Z"/><path d="M10 13h.1m4 0h.1"/></svg> 마을 기금</small><b id="money">240</b><small id="incomeRate" aria-label="현재 속도로 1분간 얻는 기금">1분당 +0.0</small></div><div class="village-stat"><small>인구</small><b id="pop">8명</b></div><div class="village-stat"><small>마을성장</small><b id="heartScore">100점</b></div><div class="village-stat"><small>친환경</small><b id="ecoScore">0점</b></div><div class="village-stat"><small>행복지수</small><b id="sat">50점</b></div></div>
  <div class="card score"><small id="scoreScope">마을 성장</small><b id="score">씨앗 마을</b><em id="tierName">첫 생활시설을 완성해요</em><button id="reviewYears" class="record-link">성장 기록 · 0/3</button></div>
 </header>
 <button id="phoneGoal" class="phone-only" aria-controls="need" aria-expanded="false"><span id="phoneGrowth">씨앗 마을</span><span id="phoneTask">지금 할 일 보기</span></button>
@@ -28,4 +28,4 @@
 <dialog id="resultDialog" aria-labelledby="resultTitle"><h2 id="resultTitle" tabindex="-1" class="eyebrow">마을 성장 기록</h2><div id="resultBody"></div><p class="dim">결과는 확정됐어요. 3년 최종 평가와 점수는 고정돼요. 이후에도 건설·수입·업그레이드는 계속돼요.</p><button id="freeMode" class="primary">이 마을 계속하기 · 평가 고정</button></dialog>
 <dialog id="corruptDialog"><h2>저장 기록을 읽지 못했어요</h2><p>기록이 손상되어 그대로 쓸 수 없어요. 손상된 원본은 덮어쓰지 않고 보존했어요. 파일로 내보내 두거나 백업에 보관하고 새 마을을 시작할 수 있어요.</p><div class="row"><button id="corruptExport">손상 기록 내보내기</button><button id="corruptNew" class="danger">백업에 보관하고 새로 시작</button></div></dialog>
 <div id="error" hidden role="alert"></div>
-<script type="module" src="app.mjs?v=balance1"></script></body></html>
+<script type="module" src="app.mjs?v=home-happiness1"></script></body></html>
