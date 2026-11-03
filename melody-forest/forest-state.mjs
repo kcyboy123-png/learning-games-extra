@@ -61,6 +61,8 @@ export function forestMapFor(progression) { return forestMapId(LEGACY_MAP[progre
 export function forestMapName(id) { const m = FOREST_MAPS.find(m => m.id === forestMapId(id)); return `${m.icon} ${m.name}`; }
 
 // 22 modelled white keys from C3 (midi 48) to C6 (midi 84); the app's 15 pitches are keys 7..21. Black keys return null.
+// Black keys follow C, D, F, G and A; E–F and B–C stay open.
+export const BLACK_KEY_STEPS = [0,1,3,4,5];
 export const KEY_START = 48, WHITE_KEYS = 22;
 const WHITE = [0, null, 1, null, 2, 3, null, 4, null, 5, null, 6];
 export function pianoKey(midi) {

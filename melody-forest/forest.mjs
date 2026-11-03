@@ -1,16 +1,16 @@
 // '햇살이 머무는 숲' — a real-time three.js stage that follows the app; it never owns the song or the sound.
 // Illustrated cutouts live in a real 3D woodland; vegetation is instanced to keep draw calls low.
 import * as THREE from './lib/three.module.min.js';
-import {pianoKey, WHITE_KEYS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs';
-import {PALETTES,buildLandmarks} from './forest-landmarks.mjs';
-import {createStorybookChild,backingKey} from './forest-character.mjs';
+import {pianoKey, WHITE_KEYS, BLACK_KEY_STEPS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs?v=20261104-seven';
+import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261104-seven';
+import {createStorybookChild,backingKey} from './forest-character.mjs?v=20261104-seven';
 import {forestInput, forestStep, forestOrbit, forestRoute, forestLook, forestEye, forestTurnToward} from './forest-controls.mjs';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z), C = h => new THREE.Color(h);
-// The bench and the seated child sit on the keyboard centreline (22 keys centred at x=0).
-const KEY_W = .058, GIRL_X = -.15, SEAT_Z = .44, SEAT_Y = .65;
+// The full A0–C8 piano has 52 white keys; the existing C3–C6 animation occupies slots 16–37.
+const KEY_W = 1.27 / 52, GIRL_X = -.15, SEAT_Z = .44, SEAT_Y = .65;
 const FIRST_VIEW = {yaw: .16, pitch: .04}, SEATED_ORBIT = {yaw: .31, pitch: .52, distance: 6};
-const keyX = i => (i - (WHITE_KEYS - 1) / 2) * KEY_W;
+const keyX = i => (i + 16 - 25.5) * KEY_W;
 function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const mat = (m = {}) => new THREE.Matrix4().compose(m.p || V(0, 0, 0), new THREE.Quaternion().setFromEuler(new THREE.Euler(...(m.r || [0, 0, 0]))), m.s ? (typeof m.s === 'number' ? V(m.s, m.s, m.s) : V(...m.s)) : V(1, 1, 1));
@@ -44,7 +44,13 @@ function lumpy(g, amount, freq = 3.1) {
     const n = Math.sin(d.x * freq + 1.3) * Math.cos(d.y * freq * 1.3) + Math.sin(d.z * freq * 1.7 + d.x * 2.1) * .6;
     v.multiplyScalar(1 + n * amount); p.setXYZ(i, v.x, v.y, v.z);
   }
-  g.computeVertexNormals(); return g;
+  g.computeVertexNormals();
+  // Icosahedra duplicate seam vertices; average their normals so organic forms stay smooth.
+  const normals=g.attributes.normal,shared=new Map(),keys=[];
+  for(let i=0;i<p.count;i++){const key=[p.getX(i),p.getY(i),p.getZ(i)].map(v=>Math.round(v*1e5)).join(',');keys.push(key);if(!shared.has(key))shared.set(key,V(0,0,0));shared.get(key).add(V(normals.getX(i),normals.getY(i),normals.getZ(i)));}
+  for(const n of shared.values())n.normalize();
+  for(let i=0;i<p.count;i++){const n=shared.get(keys[i]);normals.setXYZ(i,n.x,n.y,n.z);}
+  return g;
 }
 function radialTexture(inner = 'rgba(255,255,255,1)') {
   const cv = document.createElement('canvas'); cv.width = cv.height = 128;
@@ -69,14 +75,16 @@ const groundY = (x, z) => {
 };
 
 function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
-  const surfaceY=(x,z)=>groundY(x,z)-(theme===PALETTES.journey?Math.min(25,Math.hypot(Math.max(0,Math.abs(x)-7),Math.max(0,z-15,-5-z))*4):0);
+  const dryGround=(x,z)=>theme!==PALETTES.moon||Math.hypot((x+5.2)/3.15,(z+3.6)/4.05)>1;
+  const surfaceY=(x,z)=>groundY(x,z)-(dryGround(x,z)?0:.15)-(theme===PALETTES.journey?Math.min(25,Math.hypot(Math.max(0,Math.abs(x)-7),Math.max(0,z-15,-5-z))*4):0);
   const lambert = o => new THREE.MeshLambertMaterial({vertexColors: true, ...o});
+  const breezeTime={value:0};
   // Sky dome with a warm low sun glow, matched to the fog for a soft woodland horizon.
   const sky = new THREE.Mesh(new THREE.SphereGeometry(95, 32, 16), new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
-    uniforms: {top: {value: C(theme.sky)}, hor: {value: C(theme.horizon)}, sun: {value: V(-.45, .55, -.7).normalize()}},
+    uniforms: {top: {value: C(theme.sky)}, hor: {value: C(theme.horizon)}, sun: {value: V(-.45, .55, -.7).normalize()}, glowColor: {value:C(theme.sun)}, glowPower: {value:theme.character?.035:.16}},
     vertexShader: 'varying vec3 vP;void main(){vP=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-    fragmentShader: 'uniform vec3 top,hor,sun;varying vec3 vP;void main(){float h=max(vP.y,0.);vec3 c=mix(hor,top,smoothstep(.05,.75,h));c+=vec3(1.,.82,.5)*pow(max(dot(vP,sun),0.),12.)*.22;gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}'
+    fragmentShader: 'uniform vec3 top,hor,sun,glowColor;uniform float glowPower;varying vec3 vP;void main(){float h=max(vP.y,0.);vec3 c=mix(hor,top,smoothstep(.05,.75,h));c+=glowColor*pow(max(dot(vP,sun),0.),12.)*glowPower;gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}'
   }));
   scene.add(sky);
 
@@ -97,12 +105,12 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   for(let n=0;n<8500;n++) {const x=grain()*512,y=grain()*512,v=grain();paint.fillStyle=v<.5?'rgba(78,97,59,.055)':'rgba(255,255,231,.13)';paint.fillRect(x,y,1+grain()*3,2+grain()*5);}
   for(let n=0;n<45;n++){const x=grain()*512,y=grain()*512,r=12+grain()*38,gr=paint.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,n%3?'rgba(68,92,40,.18)':'rgba(164,132,72,.16)');gr.addColorStop(1,'rgba(80,100,50,0)');paint.fillStyle=gr;paint.fillRect(x-r,y-r,r*2,r*2);}
   const groundTexture = new THREE.CanvasTexture(groundCanvas);groundTexture.colorSpace=THREE.SRGBColorSpace;groundTexture.wrapS=groundTexture.wrapT=THREE.RepeatWrapping;groundTexture.repeat.set(12,12);
-  const groundMesh = new THREE.Mesh(ground, lambert({map:groundTexture})); groundMesh.receiveShadow = true; scene.add(groundMesh);
+  const groundMesh = new THREE.Mesh(ground,new THREE.MeshStandardMaterial({vertexColors:true,map:groundTexture,bumpMap:groundTexture,bumpScale:.06,roughness:1})); groundMesh.receiveShadow = true; scene.add(groundMesh);
 
   const glow = radialTexture();
-  const pool = new THREE.Mesh(new THREE.CircleGeometry(5, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({map: glow, color: 0xffe6a6, transparent: true, opacity: .32, blending: THREE.AdditiveBlending, depthWrite: false, fog: false}));
+  const pool = new THREE.Mesh(new THREE.CircleGeometry(5, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({map: glow, color: theme.character?0xa8c7ef:0xffe6a6, transparent: true, opacity: theme.character?.055:.1, blending: THREE.AdditiveBlending, depthWrite: false, fog: false}));
   pool.position.set(.3, .03, -.4); pool.scale.set(1.2, 1, 1); scene.add(pool);
-  const pathLight=pool.clone();pathLight.material=pool.material.clone();pathLight.material.opacity=.16;
+  const pathLight=pool.clone();pathLight.material=pool.material.clone();pathLight.material.opacity=theme.character?.07:.12;
   pathLight.position.set(1,surfaceY(1,8)+.025,8);pathLight.scale.set(.65,1,.85);scene.add(pathLight);
 
   const add = (geo, material, list, colorFn, shadow) => {
@@ -130,7 +138,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   // Mossy rocks: faceted stone with moss baked on upward faces.
   const rockBase = lumpy(new THREE.IcosahedronGeometry(1, 3), .09, 2.3);
   const rockGeo = merge([[rockBase, null, 0xb7ae9c, (y, ny) => ny > .45 ? 1 : .82]]), rc = rockGeo.attributes.color, rn = rockGeo.attributes.normal, moss = C(0x7d9a45);
-  for(let i=0;i<rc.count;i++){const c=new THREE.Color(rc.getX(i),rc.getY(i),rc.getZ(i));c.lerp(moss,smooth(.15,.8,rn.getY(i)));rc.setXYZ(i,c.r,c.g,c.b);}
+  for(let i=0;i<rc.count;i++){const c=new THREE.Color(rc.getX(i),rc.getY(i),rc.getZ(i));const rp=rockGeo.attributes.position,patch=.35+.5*(.5+.5*Math.sin(rp.getX(i)*12+rp.getZ(i)*7)*Math.cos(rp.getZ(i)*11));c.lerp(moss,smooth(.3,.88,rn.getY(i))*patch);rc.setXYZ(i,c.r,c.g,c.b);}
   const rocks = [[-1.9, -.4, .55], [2.3, .6, .4], [-2.6, 2.2, .35], [1.9, 5.4, .45], [-2.1, 7.4, .6], [3.1, -2.6, .7], [-3.4, -2.9, .9], [3.6, 9.5, .5], [-.4, 10.4, .38], [2.8, 2.2, .3], [-1.4, 4.0, .28]];
   add(rockGeo, lambert({flatShading: false}), rocks.map(([x, z, s]) => ({p: V(x, surfaceY(x, z) + s * .15, z), r: [R() * .4, R() * 6, 0], s: [s * 1.2, s * .65, s]})), null, true);
 
@@ -145,7 +153,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   const trunkGeo=trunkG;
   const trunkMaterial=new THREE.MeshLambertMaterial({map:bark,color:0xb4a080});
   const trunks = [], leaves = [], greens = [0x5f8f3e, 0x6e9e44, 0x86ad4c, 0x4f7f3a, 0x9bb957];
-  const clear = (x, z) => Math.hypot(x, z + .6) > 6.2 && pathDist(x, z) > 2.8 && !(z > 3 && x > 1 && Math.abs(z / Math.max(x, .01) - 1.5) < .9) && !(z > 2 && Math.abs(x - 2.6) < 2.8);
+  const clear = (x, z) => !(theme===PALETTES.moon&&(Math.hypot(x-1.8,z+7.8)<3.2||Math.hypot(x+5.2,z+3.6)<4.1)) && Math.hypot(x, z + .6) > 6.2 && pathDist(x, z) > 2.8 && !(z > 3 && x > 1 && Math.abs(z / Math.max(x, .01) - 1.5) < .9) && !(z > 2 && Math.abs(x - 2.6) < 2.8);
   let tries = 0;
   while (trunks.length < theme.trees && tries++ < 900) {
     const a = R() * Math.PI * 2, r = 6.4 + R() * 9, x = Math.cos(a) * r, z = Math.sin(a) * r - 1.5;
@@ -162,7 +170,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
     leaves.push({p: V(x, y + h + .5, z), r: [0, R() * 6, 0], s: [2.6 + R() * 1.5, 2.4 + R() * 1.6, 2.6 + R() * 1.5], c: [0x4f7a4a, 0x5d8a52, 0x6f9a5a][k % 3]}); }
   // Bushes hugging the clearing edge.
   for (let k = 0; k < 34; k++) { const a = R() * Math.PI * 2, r = 4.6 + R() * 3.4, x = Math.cos(a) * r, z = Math.sin(a) * r - .8;
-    if (pathDist(x, z) < 1.6 || (z > 2 && Math.abs(x - 2.6) < 2.4)) continue;
+    if (!dryGround(x,z) || pathDist(x, z) < 1.6 || (z > 2 && Math.abs(x - 2.6) < 2.4)) continue;
     leaves.push({p: V(x, surfaceY(x, z) + .25, z), r: [0, R() * 6, 0], s: [.55 + R() * .5, .45 + R() * .3, .55 + R() * .5], c: greens[(k + 2) % 5]}); }
   add(trunkGeo, trunkMaterial, trunks, null, true);
   // Forking limbs are visible through the small openings between the illustrated leaf cards.
@@ -173,17 +181,28 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
     for(let n=0;n<3;n++){const [g,m]=rod(points[n],points[n+1],[.095,.06,.025][n],7);limbParts.push([g,m,0x806d50]);}
   }
   const limbs=new THREE.Mesh(merge(limbParts),lambert());limbs.castShadow=true;scene.add(limbs);
-  const cards=[];
-  for(const t of leaves){const near=Math.hypot(t.p.x,t.p.z)<23,bush=t.p.y<2;
-    for(let j=0;j<(bush?18:near?22:10);j++){
-      const a=R()*Math.PI*2,v=R()*1.8-.9,r=Math.sqrt(1-v*v);
-      cards.push({p:V(t.p.x+Math.cos(a)*r*t.s[0]*.82,t.p.y+v*t.s[1]*.75,t.p.z+Math.sin(a)*r*t.s[2]*.82),r:[(R()-.5)*1.4,a,R()*.8-.4],s:(bush?.55:1.2)+R()*(bush?.5:1.5),c:bush?0xd3dfaf:0xe3e9c9});
-    }
+  // Curved leaf clusters keep depth and soft silhouettes with one instanced draw.
+  const sprigs=[];
+  for(const t of leaves){const bush=t.p.y<2,near=Math.hypot(t.p.x,t.p.z)<23,count=bush?10:near?18:10;
+    for(let i=0;i<count;i++){const a=i*2.4+R()*.4,v=R()*1.6-.8,r=Math.sqrt(1-v*v);sprigs.push({p:V(t.p.x+Math.cos(a)*r*t.s[0]*.65,t.p.y+v*t.s[1]*.65,t.p.z+Math.sin(a)*r*t.s[2]*.65),r:[(R()-.5)*.9,a,(R()-.5)*.6],s:(bush?.85:1.8)+R()*(bush?.3:.65)});}
   }
-  const foliageMaterial=new THREE.MeshLambertMaterial({map:leafTexture,alphaTest:.35,side:THREE.DoubleSide,color:theme.leaf,emissive:theme.leaf,emissiveMap:leafTexture,emissiveIntensity:.28});
-  const foliage=add(new THREE.PlaneGeometry(1,1),foliageMaterial,cards,t=>C(t.c),true);
-  // Alpha-tested shadow material prevents rectangular card shadows.
-  foliage.customDepthMaterial=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:leafTexture,alphaTest:.35,side:THREE.DoubleSide});
+  const sprigGeo=new THREE.PlaneGeometry(1,1,3,3),sprigPosition=sprigGeo.attributes.position;
+  for(let i=0;i<sprigPosition.count;i++)sprigPosition.setZ(i,Math.sin(sprigPosition.getX(i)*Math.PI)*.1);sprigGeo.computeVertexNormals();
+  const sprigMaterial=new THREE.MeshLambertMaterial({map:leafTexture,color:theme.leaf,emissive:theme.leaf,emissiveMap:leafTexture,emissiveIntensity:.08,alphaTest:.45,side:THREE.DoubleSide});
+  const sprigMesh=add(sprigGeo,sprigMaterial,sprigs,(t,i)=>C([0xf2f0df,0xcbdac4,0xe3e9dc,0xb6cbb4][i%4]),true);
+  sprigMesh.customDepthMaterial=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:leafTexture,alphaTest:.45,side:THREE.DoubleSide});
+  // The leaf edges and their shadows follow the same slow breeze without CPU instance updates.
+  for(const material of [sprigMaterial,sprigMesh.customDepthMaterial])material.onBeforeCompile=shader=>{
+    shader.uniforms.breezeTime=breezeTime;shader.vertexShader='uniform float breezeTime;\n'+shader.vertexShader;
+    shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed.z += sin(breezeTime*.7 + instanceMatrix[3].x*.7 + instanceMatrix[3].z*.4)*.035*(position.y+.5);');
+  };
+  const roots=[];
+  for(const t of trunks.filter(t=>Math.hypot(t.p.x,t.p.z)<22))for(let i=0;i<5;i++){
+    const a=i*1.256+t.p.x,span=.65*t.s[0],x=t.p.x,z=t.p.z;
+    const points=[V(x,groundY(x,z)+.23,z),V(x+Math.cos(a)*span*.48,groundY(x,z)+.1,z+Math.sin(a)*span*.48),V(x+Math.cos(a)*span,groundY(x+Math.cos(a)*span,z+Math.sin(a)*span)+.01,z+Math.sin(a)*span)];
+    roots.push([new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points),6,.065*t.s[0],5,false),null,0x826c50]);
+  }
+  if(roots.length){const mesh=new THREE.Mesh(merge(roots),new THREE.MeshStandardMaterial({vertexColors:true,roughness:1}));mesh.castShadow=mesh.receiveShadow=true;scene.add(mesh);roots.forEach(([g])=>g.dispose());}
   const leafShape=new THREE.Shape();leafShape.moveTo(0,0);leafShape.bezierCurveTo(-.42,.35,-.3,.75,0,1);leafShape.bezierCurveTo(.3,.75,.42,.35,0,0);
   const smallLeaf=new THREE.ShapeGeometry(leafShape,3),lp=smallLeaf.attributes.position;
   for(let i=0;i<lp.count;i++)lp.setZ(i,Math.sin(lp.getY(i)*Math.PI)*.12-Math.abs(lp.getX(i))*.18);
@@ -198,24 +217,24 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
     }
   }
   const fernSpots=[];
-  for(let i=0;i<100;i++) {const a=R()*6.28,r=2.5+R()*9,x=Math.cos(a)*r,z=Math.sin(a)*r;
-    if(pathDist(x,z)<.8 || Math.hypot(x,z+.9)<2)continue;
+  for(let i=0;i<72;i++) {const a=R()*6.28,r=2.5+R()*9,x=Math.cos(a)*r,z=Math.sin(a)*r;
+    if(!dryGround(x,z) || pathDist(x,z)<.8 || Math.hypot(x,z+.9)<2)continue;
     fernSpots.push({p:V(x,surfaceY(x,z),z),r:[0,R()*6.28,0],s:.55+R()*.6});
   }
   add(merge(fernParts),lambert({side:THREE.DoubleSide}),fernSpots);
 
   // Flowers in three tints along the path and the clearing rim; grass tufts everywhere close.
   const flower = (petal) => { const parts = [[new THREE.CylinderGeometry(.006, .008, .2, 4), mat({p: V(0, .1, 0)}), 0x5d8a3a]];
-    for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2; parts.push([new THREE.SphereGeometry(.034, 10, 6), mat({p: V(Math.cos(a) * .036, .2, Math.sin(a) * .036), r: [0, -a, 0], s: [1.3, .42, .80]}), petal]); }
+    for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2; parts.push([new THREE.SphereGeometry(.034, 8, 5), mat({p: V(Math.cos(a) * .036, .2, Math.sin(a) * .036), r: [0, -a, 0], s: [1.3, .42, .80]}), petal]); }
     for(const side of[-1,1])parts.push([new THREE.SphereGeometry(.035,8,4),mat({p:V(side*.027,.09,0),r:[0,0,side*.6],s:[1.35,.25,.6]}),0x729547]);
-    parts.push([new THREE.SphereGeometry(.02, 10, 6), mat({p: V(0, .208, 0)}), 0xf3b63f]); return merge(parts); };
+    parts.push([new THREE.SphereGeometry(.02, 6, 4), mat({p: V(0, .208, 0)}), 0xf3b63f]); return merge(parts); };
   const flowerMat = lambert();
-  [0xf6a5b8, 0xfff6ea, 0xc8b2ee].forEach((tint, f) => {
+  (theme===PALETTES.warm?[0xecc58d,0xfff6dc,0xd5b2ae]:theme.character?[0xb8b6e6,0xe4ebf2,0x92afcb]:[0xf1a9b7,0xfff4e4,0xc3b3df]).forEach((tint, f) => {
     const list = [];
     for (let k = 0; k < 110; k++) { let x, z;
       if (k < 58) { const p = PATH.getPointAt(R() * .97), side = R() < .5 ? -1 : 1; x = p.x + side * (.55 + R() * .9); z = p.z + (R() - .5) * .6; }
       else { const a = R() * Math.PI * 2, r = 2.6 + R() * 4.5; x = Math.cos(a) * r; z = Math.sin(a) * r - .6; }
-      if (Math.hypot(x - GIRL_X, z - .3) < 1.9 || Math.hypot(x, z + .9) < 1.9 || pathDist(x, z) < .45) continue;
+      if (!dryGround(x,z) || Math.hypot(x - GIRL_X, z - .3) < 1.9 || Math.hypot(x, z + .9) < 1.9 || pathDist(x, z) < .45) continue;
       list.push({p: V(x, surfaceY(x, z), z), r: [(R() - .5) * .3, R() * 6, (R() - .5) * .3], s: .9 + R() * .9});
     }
     add(flower(tint), flowerMat, list);
@@ -233,10 +252,10 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
     bladeParts.push([g,mat({r:[(k-2)*.12,k*1.3,0]}),0xffffff,y=>.5+y*1.4]);
   }
   const tufts = [];
-  for (let k = 0; k < 4200; k++) { const a = R() * Math.PI * 2, r = 1.7 + R() * 11, x = Math.cos(a) * r, z = Math.sin(a) * r - .6;
-    if (pathDist(x, z) < .5 || Math.hypot(x, z + .9) < 1.7 || Math.hypot(x - GIRL_X, z - .4) < 1) continue;
+  for (let k = 0; k < 3200; k++) { const a = R() * Math.PI * 2, r = 1.7 + R() * 11, x = Math.cos(a) * r, z = Math.sin(a) * r - .6;
+    if (!dryGround(x,z) || pathDist(x, z) < .5 || Math.hypot(x, z + .9) < 1.7 || Math.hypot(x - GIRL_X, z - .4) < 1) continue;
     tufts.push({p: V(x, surfaceY(x, z), z), r: [0, R() * 6, 0], s: .4 + R() * .7, c: [0x7fae4c, 0x93b957, 0x6c9a44][k % 3]}); }
-  const grassTime={value:0},grassMaterial=lambert({side:THREE.DoubleSide});
+  const grassTime=breezeTime,grassMaterial=lambert({side:THREE.DoubleSide});
   grassMaterial.onBeforeCompile=shader=>{shader.uniforms.grassTime=grassTime;shader.vertexShader='uniform float grassTime;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed.x += sin(grassTime*1.4 + instanceMatrix[3].x*.8 + instanceMatrix[3].z*.4)*.045*pow(clamp(position.y/.4,0.,1.),2.);');};
   add(merge(bladeParts),grassMaterial,tufts,t=>C(t.c));
 
@@ -248,7 +267,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
     const parts=[[stem,null,0xf2e7ce],[caps,null,color,(y,ny)=>ny<-.2?.8:1]];
     for(let j=0;j<4;j++){const a=j*Math.PI/2+.4;parts.push([new THREE.SphereGeometry(.018,6,3),mat({p:V(Math.cos(a)*.068,.269,Math.sin(a)*.068),s:[1,.18,.7]}),0xf5e8cd]);}
     const clusters=[];
-    mushroomBeds.forEach(([x,z])=>{for(let j=0;j<3;j++){
+    mushroomBeds.forEach(([x,z])=>{if(!dryGround(x,z))return;for(let j=0;j<3;j++){
       const a=detailRandom()*Math.PI*2,r=.12+detailRandom()*.3,px=x+Math.cos(a)*r,pz=z+Math.sin(a)*r;
       clusters.push({p:V(px,surfaceY(px,pz),pz),r:[0,detailRandom()*6.28,(detailRandom()-.5)*.13],s:.48+detailRandom()*.65});
     }});
@@ -258,7 +277,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   const litter=[];
   for(let i=0;i<100;i++){
     const a=detailRandom()*Math.PI*2,r=2.3+detailRandom()*5,x=Math.cos(a)*r,z=Math.sin(a)*r;
-    if(pathDist(x,z)<.6)continue;
+    if(!dryGround(x,z)||pathDist(x,z)<.6)continue;
     litter.push({p:V(x,surfaceY(x,z)+.025,z),r:[-Math.PI/2,0,detailRandom()*6.28],s:[.14+detailRandom()*.1,.18+detailRandom()*.12,.2],c:[0xbfa05a,0xd1b66d,0x9e794b][i%3]});
   }
   add(smallLeaf.clone(),new THREE.MeshLambertMaterial({side:THREE.DoubleSide}),litter,t=>C(t.c));
@@ -277,10 +296,10 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   shaftMesh.renderOrder = 2; scene.add(shaftMesh);
 
   // Drifting motes of light in the clearing.
-  const N = 170, mp = new Float32Array(N * 3), base = [];
+  const N = theme.character?100:65, mp = new Float32Array(N * 3), base = [];
   for (let i = 0; i < N; i++) { const b = [(R() - .5) * 11, .3 + R() * 4.5, (R() - .5) * 11 - .5, R() * 6.3]; base.push(b); mp.set(b.slice(0, 3), i * 3); }
   const mg = new THREE.BufferGeometry(); mg.setAttribute('position', new THREE.BufferAttribute(mp, 3));
-  const motes = new THREE.Points(mg, new THREE.PointsMaterial({map: glow, color: 0xffe3a0, size: .085, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: .85}));
+  const motes = new THREE.Points(mg, new THREE.PointsMaterial({map: glow, color: theme.character?0xd2def4:0xffe3a0, size: .065, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: .6}));
   motes.renderOrder = 3; scene.add(motes);
   const colliders = [...rocks.map(([x,z,s])=>({x,z,radius:s*1.2,height:s*1.2})), ...trunks.map(t=>({x:t.p.x,z:t.p.z,radius:t.s[0]*.45,height:20}))];
   return {sky,shaftMat, motes, moteBase: base, glow, grassTime, colliders};
@@ -297,7 +316,7 @@ function caseShape(s = 1) {
 }
 function buildPiano(scene) {
   const g = new THREE.Group(); g.position.set(0, 0, .02); scene.add(g);
-  const BOTTOM = .63, H = .27, TOP = BOTTOM + H, IVORY = 0xf4ead4, WOOD = 0xb57f4c, GOLD = 0xffffff;
+  const BOTTOM = .63, H = .27, TOP = BOTTOM + H, IVORY = 0x9c704d, WOOD = 0x6f4b34, GOLD = 0xffffff;
   const flat = (geo) => geo.rotateX(-Math.PI / 2); // shape (x, depth) → floor plan (x, -z)
   const body = flat(new THREE.ExtrudeGeometry(caseShape(), {depth: H, bevelEnabled: true, bevelThickness: .025, bevelSize: .025, bevelSegments: 4, curveSegments: 36}));
   const lid = flat(new THREE.ExtrudeGeometry(caseShape(), {depth: .022, bevelEnabled: true, bevelThickness: .008, bevelSize: .008, bevelSegments: 2, curveSegments: 36})).translate(.72, 0, 0);
@@ -331,25 +350,43 @@ function buildPiano(scene) {
   // Bench: rose velvet cushion on curved wooden legs.
   const cushion = new THREE.Shape(); { const w = .32, d = .17, r = .05; cushion.moveTo(-w + r, -d); cushion.lineTo(w - r, -d); cushion.quadraticCurveTo(w, -d, w, -d + r); cushion.lineTo(w, d - r); cushion.quadraticCurveTo(w, d, w - r, d); cushion.lineTo(-w + r, d); cushion.quadraticCurveTo(-w, d, -w, d - r); cushion.lineTo(-w, -d + r); cushion.quadraticCurveTo(-w, -d, -w + r, -d); }
   const bx = GIRL_X, bz = SEAT_Z + .02;
-  lacquer.push([flat(new THREE.ExtrudeGeometry(cushion, {depth: .05, bevelEnabled: true, bevelThickness: .025, bevelSize: .025, bevelSegments: 4, curveSegments: 8})), mat({p: V(bx, SEAT_Y - .1, bz)}), 0xd98d8f, (y, ny) => .8 + ny * .25]);
+  const velvet=[ [flat(new THREE.ExtrudeGeometry(cushion, {depth: .05, bevelEnabled: true, bevelThickness: .025, bevelSize: .025, bevelSegments: 4, curveSegments: 8})), mat({p: V(bx, SEAT_Y - .1, bz)}), 0xad6f70, (y, ny) => .9 + ny * .1] ];
+  const seat=new THREE.Mesh(merge(velvet),new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95}));seat.castShadow=seat.receiveShadow=true;g.add(seat);
   lacquer.push([new THREE.BoxGeometry(.62, .05, .32), mat({p: V(bx, SEAT_Y - .12, bz)}), WOOD]);
   for (const [x, z] of [[-.27, -.13], [.27, -.13], [-.27, .13], [.27, .13]]) lacquer.push([leg, mat({p: V(bx + x, 0, bz + z), s: [.6, .87, .6]}), WOOD]);
-  const lacquerMat = new THREE.MeshStandardMaterial({vertexColors: true, roughness: .3, envMapIntensity: .8});
-  const goldMat = new THREE.MeshStandardMaterial({color: 0xe0b45c, metalness: .85, roughness: .3, envMapIntensity: 1.2});
+  const grainCanvas=document.createElement('canvas');grainCanvas.width=512;grainCanvas.height=256;
+  const grainCtx=grainCanvas.getContext('2d'),grainRandom=rng(8821);grainCtx.fillStyle='#eee8dc';grainCtx.fillRect(0,0,512,256);
+  for(let i=0;i<190;i++){const y=grainRandom()*256;grainCtx.strokeStyle=i%3?'rgba(100,76,43,.08)':'rgba(255,255,245,.18)';grainCtx.lineWidth=.5+grainRandom();grainCtx.beginPath();grainCtx.moveTo(0,y);grainCtx.bezierCurveTo(150,y+grainRandom()*9,300,y-8,512,y+2);grainCtx.stroke();}
+  const woodMap=new THREE.CanvasTexture(grainCanvas);woodMap.colorSpace=THREE.SRGBColorSpace;woodMap.wrapS=woodMap.wrapT=THREE.RepeatWrapping;woodMap.anisotropy=4;
+  const lacquerMat = new THREE.MeshPhysicalMaterial({vertexColors:true,map:woodMap,roughness:.38,clearcoat:.3,clearcoatRoughness:.35,envMapIntensity:.65});
+  const goldMat = new THREE.MeshStandardMaterial({color: 0xc3a46e, metalness: .8, roughness: .34, envMapIntensity: 1.2});
   const caseMesh = new THREE.Mesh(merge(lacquer), lacquerMat), goldMesh = new THREE.Mesh(merge(gold), goldMat);
+  const uv=[],positions=caseMesh.geometry.attributes.position,normals=caseMesh.geometry.attributes.normal;
+  for(let i=0;i<positions.count;i++){const side=Math.abs(normals.getX(i))>.6;uv.push(side?positions.getZ(i):positions.getX(i),Math.abs(normals.getY(i))>.6?positions.getZ(i):positions.getY(i));}
+  caseMesh.geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
   caseMesh.castShadow = caseMesh.receiveShadow = goldMesh.castShadow = true; g.add(caseMesh, goldMesh);
-  // Modelled keys: 22 white (C3–C6) and their black keys; pressed keys tilt down and glow.
-  const white = new THREE.InstancedMesh(new THREE.BoxGeometry(KEY_W - .004, .024, .16), new THREE.MeshStandardMaterial({color: 0xffffff, roughness: .35}), WHITE_KEYS);
-  const blacks = [];
-  for (let i = 0; i < WHITE_KEYS - 1; i++) if (![2, 6].includes(i % 7)) blacks.push(i);
-  const black = new THREE.InstancedMesh(new THREE.BoxGeometry(.03, .028, .095), new THREE.MeshStandardMaterial({color: 0x241c1c, roughness: .25}), blacks.length);
-  blacks.forEach((i, k) => black.setMatrixAt(k, mat({p: V(keyX(i) + KEY_W / 2, .745, .07)})));
-  white.castShadow = black.castShadow = true; g.add(white, black);
+  // The score has its own matte paper material; it must not share the polished wood finish.
+  const paper=document.createElement('canvas');paper.width=256;paper.height=320;const ink=paper.getContext('2d');
+  ink.fillStyle='#fff8e7';ink.fillRect(0,0,256,320);ink.strokeStyle='#736f63';ink.lineWidth=1.4;
+  for(let row=0;row<3;row++){for(let line=0;line<5;line++){ink.beginPath();ink.moveTo(24,58+row*86+line*9);ink.lineTo(232,58+row*86+line*9);ink.stroke();}for(let note=0;note<5;note++){const x=43+note*36,y=78+row*86+((note+row)%4-2)*4.5;ink.fillStyle='#55564f';ink.beginPath();ink.ellipse(x,y,6,4,-.3,0,Math.PI*2);ink.fill();ink.beginPath();ink.moveTo(x+5,y);ink.lineTo(x+5,y-23);ink.stroke();}}
+  const scoreMap=new THREE.CanvasTexture(paper);scoreMap.colorSpace=THREE.SRGBColorSpace;scoreMap.anisotropy=4;
+  const paperMat=new THREE.MeshStandardMaterial({map:scoreMap,roughness:1});
+  for(const side of [-1,1]){const page=new THREE.Mesh(new THREE.PlaneGeometry(.168,.226),paperMat);page.name='piano-score';page.position.set(side*.09,TOP+.22,-.132);page.rotation.set(-.28,-side*.12,0);g.add(page);}
+  const felt=new THREE.Mesh(new THREE.BoxGeometry(1.3,.014,.012),new THREE.MeshStandardMaterial({color:0x885349,roughness:1}));felt.position.set(0,.75,-.006);g.add(felt);
+  // A real 88-key silhouette: A0, B0, then seven complete C–B octaves and C8.
+  const white = new THREE.InstancedMesh(new THREE.BoxGeometry(KEY_W-.0009,.018,.2),new THREE.MeshStandardMaterial({color:0xfffdf3,roughness:.32}),52);
+  white.name='piano-white-keys';
+  const blacks=[];for(let i=0;i<51;i++)if(BLACK_KEY_STEPS.includes((i+5)%7))blacks.push(i);
+  const black=new THREE.InstancedMesh(new THREE.BoxGeometry(KEY_W*.6,.023,.125),new THREE.MeshStandardMaterial({color:0x141a17,roughness:.29}),blacks.length);
+  black.name='piano-black-keys';
+  blacks.forEach((i,k)=>black.setMatrixAt(k,mat({p:V((i-25.5+.5)*KEY_W,.744,.065)})));
+  white.castShadow=black.castShadow=white.receiveShadow=black.receiveShadow=true;g.add(white,black);
   const base = C(0xfffbf0), hot = C(0xffcf6e), tmpC = new THREE.Color(), press = new Float32Array(WHITE_KEYS);
   function drawKeys() {
-    for (let i = 0; i < WHITE_KEYS; i++) {
-      white.setMatrixAt(i, mat({p: V(keyX(i), .72 - press[i] * .007, .12), r: [press[i] * .06, 0, 0]}));
-      white.setColorAt(i, tmpC.copy(base).lerp(hot, press[i] * .85));
+    for (let i = 0; i < 52; i++) {
+      const down=press[i-16]||0;
+      white.setMatrixAt(i,mat({p:V((i-25.5)*KEY_W,.72-down*.007,.1),r:[down*.06,0,0]}));
+      white.setColorAt(i,tmpC.copy(base).lerp(hot,down*.85));
     }
     white.instanceMatrix.needsUpdate = true; white.instanceColor.needsUpdate = true;
   }
@@ -363,7 +400,7 @@ function buildGirl(scene, atlas, seatedGirl, seatedBoy, posesGirl, posesBoy) { r
 // ---------- stage ----------
 export async function createForest(host, {onEvent = () => {}} = {}) {
   const loader=new THREE.TextureLoader();
-  const art=await loadForestArt(loader,['./assets/forest/children-storybook-v3.png','./assets/forest/leaf-cluster-v2.png','./assets/forest/girl-storybook-v2.png','./assets/forest/boy-seated-v4.png','./assets/forest/girl-playing-poses-v1.png','./assets/forest/boy-playing-poses-v1.png']);
+  const art=await loadForestArt(loader,['./assets/forest/children-storybook-v3.png','./assets/forest/leaf-cluster-v3.png','./assets/forest/girl-storybook-v2.png','./assets/forest/boy-seated-v4.png','./assets/forest/girl-playing-poses-v1.png','./assets/forest/boy-playing-poses-v1.png']);
   const [girlAtlas,leafTexture,seatedGirl,seatedBoy,posesGirl,posesBoy]=art;
   for(const t of art){t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;}
   const canvas = document.createElement('canvas'); canvas.className = 'forest-canvas'; canvas.setAttribute('aria-hidden', 'true');
@@ -374,17 +411,19 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene(), R = rng(20261021);
-  scene.fog = new THREE.Fog(0xdce2cb, 17, 60); scene.background = C(0xe4e6c2);
+  scene.fog = new THREE.Fog(PALETTES.basic.fog,22,72);scene.background=C(PALETTES.basic.horizon);
   const camera = new THREE.PerspectiveCamera(40, 1, .1, 220);
-  const ambient=new THREE.HemisphereLight(0xe9f4eb, 0x667b55, .95);scene.add(ambient);
-  const sun = new THREE.DirectionalLight(0xffedc8, 2.0); sun.position.set(-6, 12, -5.5); sun.target.position.set(.2, 0, -.3);
+  const ambient=new THREE.HemisphereLight(0xe9f4eb,0x68745b,PALETTES.basic.ambient);scene.add(ambient);
+  const sun = new THREE.DirectionalLight(PALETTES.basic.sun,PALETTES.basic.power); sun.position.set(-6, 12, -5.5); sun.target.position.set(.2, 0, -.3);
   sun.castShadow = true; Object.assign(sun.shadow.camera, {left: -12, right: 12, top: 12, bottom: -12, near: 2, far: 30});
-  sun.shadow.mapSize.set(1024, 1024); sun.shadow.bias = -.0005; sun.shadow.normalBias = .02; sun.shadow.radius = 4;
+  sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -.0005; sun.shadow.normalBias = .02; sun.shadow.radius = 4;
   scene.add(sun, sun.target);
   const fill = new THREE.DirectionalLight(0xffeedd, .55); fill.position.set(4, 3, 6); scene.add(fill);
   let mapId='basic',theme=PALETTES.basic,scenery=new THREE.Group();scene.add(scenery);
   let world=buildScenery(scenery,R,leafTexture,theme),landmarks=buildLandmarks(scenery,mapId,groundY,leafTexture);
+  world.colliders.push(...landmarks.colliders);
   const piano=buildPiano(scene),girl=buildGirl(scene,girlAtlas,seatedGirl,seatedBoy,posesGirl,posesBoy);
+  girl.setEnvironment(theme.character || 0xf9f5ea);
   girl.textures.forEach(t=>renderer.initTexture(t));
   // Soft contact shadows under piano, bench and girl, on top of the real sun shadow.
   const shadowMat = new THREE.MeshBasicMaterial({map: radialTexture('rgba(0,0,0,1)'), transparent: true, opacity: .42, depthWrite: false, color: 0x2a3a1a, fog: false});
@@ -415,8 +454,12 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     catch(error){releaseScenery(next);throw error;}
     scene.remove(scenery);releaseScenery(scenery);scenery=next;scene.add(scenery);
     mapId=id;theme=nextTheme;world=nextWorld;landmarks=nextLandmarks;world.colliders.push(...landmarks.colliders);
-    scene.fog.color.set(theme.fog);scene.fog.near=id==='journey'?35:17;scene.fog.far=id==='journey'?100:60;scene.background.set(theme.horizon);
+    scene.fog.color.set(theme.fog);scene.fog.near=id==='journey'?35:22;scene.fog.far=id==='journey'?100:72;scene.background.set(theme.horizon);
     ambient.intensity=theme.ambient;sun.color.set(theme.sun);sun.intensity=theme.power;fill.intensity=mapId==='dream'||mapId==='moon'?.3:.55;
+    ambient.color.set(theme.character ? 0xc7d6f5 : 0xe9f4eb);
+    ambient.groundColor.set(theme.character ? 0x394d65 : 0x68745b);
+    fill.color.set(theme.character ? 0xd7e1ff : 0xffeedd);
+    girl.setEnvironment(theme.character || 0xf9f5ea);
     renderer.toneMappingExposure=theme.exposure;world.shaftMat.uniforms.opacity.value=theme.shafts;
     input={x:0,z:0};state.moving=false;route=[];routeIndex=0;state.hands.forEach(h=>h.hit=0);
     if(forestCamera(state.phase)!=='seated'){placeOnPath(WALK_FROM);view={...FIRST_VIEW};state.openingT=motion.matches?1:0;shotFor(state.phase==='opening'?'opening':'arrive');camPos.copy(goalPos);camLook.copy(goalLook);}
@@ -454,8 +497,8 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
       const eye = forestEye(g, g.y, view);
       goalPos.set(eye.position.x, eye.position.y, eye.position.z); goalLook.set(eye.target.x, eye.target.y, eye.target.z); return Infinity;
     }
-    if (state.cinema && !orbitChanged) {const t=motion.matches?0:1-Math.exp(-state.cineT/18),a=motion.matches?0:Math.sin(state.cineT*.09)*.18*t;goalPos.set(6.8-4.1*t+a,4.5-2*t,SEAT_Z+4.4-2*t-a);goalLook.set(-.1+.1*t,.78+.07*t,-.2-.2*t);return 2.4;}
-    if (!orbitChanged) {goalPos.set(GIRL_X+2.7,2.5,SEAT_Z+2.4);goalLook.set(GIRL_X-.1,.78,-.2);return 2.4;}
+    if (state.cinema && !orbitChanged) {const t=motion.matches?0:1-Math.exp(-state.cineT/18),a=motion.matches?0:Math.sin(state.cineT*.09)*.18*t;goalPos.set(5.3-2.5*t+a,3.7-1.1*t,SEAT_Z+7.5-4.1*t-a);goalLook.set(.3,1.55,-2.0);return 2.4;}
+    if (!orbitChanged) {goalPos.set(3.4,2.3,5.3);goalLook.set(-.25,1,-1.1);return 2.4;}
     goalLook.set(g.x,g.y+.8,g.z-.5);
     const dx = Math.sin(orbit.yaw), dz = Math.cos(orbit.yaw);
     let distance = orbit.distance * Math.cos(orbit.pitch);
@@ -512,22 +555,22 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     camPos.lerp(goalPos, a); camLook.lerp(goalLook, a);
     camera.position.copy(camPos); camera.lookAt(camLook);
     // In compose the notebook covers the lower screen, so the shot is framed into the upper band; cinema uses the full frame.
-    const notebook=state.phase==='compose'&&!state.cinema; camera.zoom+=((notebook?.45:1)-camera.zoom)*(rm?1:1-Math.exp(-dt*2.5));
-    const liftGoal = notebook ? .32 : 0; state.lift += (liftGoal - state.lift) * (rm ? 1 : 1 - Math.exp(-dt * 2.5));
+    const notebook=state.phase==='compose'&&!state.cinema; camera.zoom+=((notebook?.72:1)-camera.zoom)*(rm?1:1-Math.exp(-dt*2.5));
+    const liftGoal = notebook ? .37 : 0; state.lift += (liftGoal - state.lift) * (rm ? 1 : 1 - Math.exp(-dt * 2.5));
     const w = renderer.domElement.width, h = renderer.domElement.height;
     if (state.lift > .001) camera.setViewOffset(w, h, 0, h * state.lift, w, h); else camera.clearViewOffset();
     let busy = false;
     for (let i = 0; i < WHITE_KEYS; i++) if (piano.press[i] > 0) { piano.press[i] = Math.max(0, piano.press[i] - dt * 2.6); busy = true; }
     if (busy || state.keysDirty) { piano.drawKeys(); state.keysDirty = busy; }
-    pose(dt);landmarks.animate(state.time,rm);
+    pose(dt);landmarks.animate(state.time,rm,Math.max(...state.hands.map(h=>h.hit)));
     // Hold the first impression through the wide shot, then ease into normal map lighting.
     const entrance = state.phase === 'opening' && !rm ? 1-smooth(.45, 1, state.openingT) : 0;
     world.shaftMat.uniforms.opacity.value = theme.shafts * (1.35 + entrance * 2.7);
     world.shaftMat.uniforms.color.value.set(theme.sun);
     sun.intensity = theme.power * (1 + entrance * .38);
     renderer.toneMappingExposure = theme.exposure * (1 + entrance * .09);
+    world.grassTime.value=rm?0:state.time;
     if (!rm) {
-      world.grassTime.value=state.time;
       const p = world.motes.geometry.attributes.position;
       world.moteBase.forEach((b, i) => p.setXYZ(i, b[0] + Math.sin(state.time * .21 + b[3]) * .5, b[1] + Math.sin(state.time * .33 + b[3] * 2) * .35, b[2] + Math.cos(state.time * .17 + b[3]) * .5));
       p.needsUpdate = true;

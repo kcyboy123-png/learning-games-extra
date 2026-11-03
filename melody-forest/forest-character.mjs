@@ -36,6 +36,7 @@ export function createStorybookChild(scene,atlas,seatedGirl,seatedBoy,posesGirl,
   let avatar='girl',frame=-1,stride=0,weight=0,last=V(),placed=false,facingFront=false,time=0,poseTime=0;
   function setFrame(i){const n=i+(avatar==='boy'?3:0);if(n!==frame){frame=n;material.map=textures[n];}const [x,y,r,b]=frames[n];const height=i===2?1.35:1.4,aspect=i===2?(avatar==='boy'?766/1380:627/836):(r-x)/(b-y);mesh.scale.set(aspect*height,height,1);}
   return {root,mesh,textures,setFrame,
+    setEnvironment(tint){material.color.set(tint);},
     setCharacter(value){avatar=value==='boy'?'boy':'girl';frame=-1;},
     // Whole-sheet fade for sitting down; the stage decides visibility, the drawing is never altered.
     setOpacity(k){material.opacity=Math.max(0,Math.min(1,k));material.depthWrite=material.opacity===1;material.alphaTest=.4*Math.max(.001,material.opacity);},
