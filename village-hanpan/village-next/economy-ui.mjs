@@ -1,4 +1,4 @@
-import {buildingSpec,metrics,TYPES,MONTH,month,monthLabel,calendarMonth,demandMonth,connected,unlocked,HARVEST,HARVEST_SECONDS} from './core.mjs?v=clear1';
+import {buildingSpec,metrics,TYPES,MONTH,month,monthLabel,calendarMonth,demandMonth,connected,unlocked,HARVEST,HARVEST_SECONDS} from './core.mjs?v=compact1';
 import {PLAY_SPEED,realSeconds,COZY_EFFECTS} from './data.mjs?v=income1';
 
 // nextId never decreases, so cancelling or reloading cannot restart completed guidance.
@@ -56,7 +56,7 @@ export function incomePreviewText(s,type,x,y,moving=null){
 
 export const buildBudget=(money,price)=>money<price?`기금 ${Math.ceil(price-money).toLocaleString()} 부족`:`짓고 남는 기금 ${Math.floor(money-price).toLocaleString()}`;
 
-export const catalogueBudget=(money,cost)=>money<cost?`${Math.ceil(cost-money)} 더 모으면 지을 수 있어요`:'자리 고르기';
+export const catalogueBudget=(money,cost)=>money<cost?`${Math.ceil(cost-money)}코인 부족`:'';
 
 // Match the two construction crews and whole simulation ticks used by advance().
 export function constructionTime(s,b){
@@ -91,7 +91,7 @@ export function fundingAdvice(s,price){
 export const cozyDescription=type=>({"road": "마을 곳곳을 잇는 산책길", "house": "새 이웃을 맞이하는 작은 집", "snack": "이웃들이 함께 먹는 분식집", "apartment": "여러 이웃이 모여 사는 빌라", "western": "따뜻한 차양이 있는 양식집", "japanese": "골목에 어울리는 아담한 일식집", "chinese": "붉은 지붕이 돋보이는 중국집", "convenience": "가까이에서 장보는 작은 가게", "supermarket": "넓은 마을에 어울리는 큰 장보기 공간", "clinic": "이웃을 돌보는 작은 의원", "hospital": "마을의 든든한 병원", "kids": "아이들이 놀러 오는 키즈카페", "amusement": "마을을 활기차게 만드는 놀이동산", "school": "아이들이 함께 배우는 학교", "library": "책을 읽고 쉬어 가는 도서관", "fire": "마을을 지켜 주는 소방서", "drain": "빗물을 모으는 작은 시설", "workshop": "개울 건너 오래된 창고를 새롭게 꾸며요", "solar": "햇빛을 모으는 파란 지붕", "generator": "마을에 빛을 보내는 시설", "bridge": "개울 양쪽을 잇는 나무다리", "flower": "계절마다 피어나는 꽃밭", "avenue": "천천히 자라는 그늘나무", "tree": "집 곁을 초록빛으로 채우는 정원", "bench": "이웃들이 쉬어 가는 벤치"})[type]||"마을을 함께 꾸며요";
 
 const effectLine=(income,happiness)=>`매분 ${Math.round(income)}코인 더 벌어요\n${happiness>0?`행복 목표 +${Math.round(happiness)}`:'행복 목표 +0'}`;
-export function cozyEffectText(type,target){const effect=COZY_EFFECTS[type];return effectLine(effect.income,Math.min(effect.happiness,100-target))+(target>=100?' (최대 100)':'');}
+export function cozyEffectText(type,target,compact=false){const effect=COZY_EFFECTS[type];if(compact)return `+${effect.income}코인/분 · 행복 +${Math.round(Math.min(effect.happiness,100-target))}${target>=100?'(최대)':''}`;return effectLine(effect.income,Math.min(effect.happiness,100-target))+(target>=100?' (최대 100)':'');}
 export function cozyPlacementText(s,type,x,y,moving=null){
  if(moving)return '옮겨도 수입과 행복 효과는 그대로예요.';
  const {before,after}=incomePreview(s,type,x,y);

@@ -45,9 +45,12 @@ export function clearingCost(s,type,x,y){return cells({type,x,y}).filter(([cx,cy
 export function buildCost(s,type,x,y,opts=[]){return cost(type,opts,s)+clearingCost(s,type,x,y);}
 function clearUnder(s,b){s.landscape??={version:1,cleared:[]};for(const[cx,cy]of cells(b))if(naturalFeature(cx,cy)&&!s.landscape.cleared.includes(`${cx},${cy}`))s.landscape.cleared.push(`${cx},${cy}`);}
 // 공사비는 확정 순간 한 번만 차감된다(선차감). 완공 때는 아무것도 차감하지 않는다.
-export function build(s,type,x,y,opts=[]){const error=canBuild(s,type,x,y);if(error)return{error};if(!Array.isArray(opts)||opts.length>2||new Set(opts).size!==opts.length||opts.some(o=>!Object.hasOwn(OPTIONS,o))||opts.length&&!TYPES[type].sprite&&TYPES[type].sprite!==0)return{error:'설계 옵션을 확인해 주세요.'};
- const price=buildCost(s,type,x,y,opts);if(s.money<price)return{error:`건설비가 부족해요. ${price}이 필요하고 지금 ${Math.floor(s.money)}이 있어요.`};s.money-=price;const b={id:s.nextId++,type,x,y,opts:[...opts],progress:0,starter:false};if(isGarden(b))b.plantedAt=s.t;clearUnder(s,b);s.buildings.push(b);return{building:b};}
+export function build(s,type,x,y,opts=[],dir){if(dir!==undefined&&(!validDirection(dir)||!rotatable(type)))return{error:'건물 방향을 확인해 주세요.'};const error=canBuild(s,type,x,y);if(error)return{error};if(!Array.isArray(opts)||opts.length>2||new Set(opts).size!==opts.length||opts.some(o=>!Object.hasOwn(OPTIONS,o))||opts.length&&!TYPES[type].sprite&&TYPES[type].sprite!==0)return{error:'설계 옵션을 확인해 주세요.'};
+ const price=buildCost(s,type,x,y,opts);if(s.money<price)return{error:`건설비가 부족해요. ${price}이 필요하고 지금 ${Math.floor(s.money)}이 있어요.`};s.money-=price;const b={id:s.nextId++,type,x,y,opts:[...opts],progress:0,starter:false};if(dir!==undefined)b.dir=dir;if(isGarden(b))b.plantedAt=s.t;clearUnder(s,b);s.buildings.push(b);return{building:b};}
 export function clearLandscape(s,x,y){if(s.paused||s.ended)return{error:'시간을 재개한 뒤 철거할 수 있어요.'};if(!(s.cozyV===1?clearablePlot(x,y):naturalFeature(x,y))||at(s,x,y))return{error:'마을 안의 나무나 조경을 골라 주세요.'};if(s.landscape?.cleared.includes(`${x},${y}`))return{error:'이미 정리한 자리예요.'};const fee=s.cozyV===1?0:12;if(s.money<fee)return{error:'정비에는 12코인이 필요해요.'};s.landscape??={version:1,cleared:[]};s.landscape.cleared.push(`${x},${y}`);s.money-=fee;return{fee};}
+const validDirection=dir=>Number.isInteger(dir)&&dir>=0&&dir<4;
+export const rotatable=type=>Object.hasOwn(TYPES,type)&&!['road','bridge'].includes(type);
+export function rotateBuilding(s,id,dir){const b=s.buildings.find(b=>b.id===id);if(s.paused||s.ended)return{error:'재개한 뒤 방향을 바꿀 수 있어요.'};if(!b||!rotatable(b.type)||!validDirection(dir))return{error:'방향을 바꿀 건물을 골라 주세요.'};b.dir=dir;return{};}
 export const UPGRADE_TYPES=['house','apartment','snack','western','japanese','chinese','clinic','hospital','kids','amusement','school','library','fire','workshop','convenience','supermarket'];
 export function upgradeError(s,id,opt){const b=s.buildings.find(b=>b.id===id);if(s.paused||s.ended)return '재개한 뒤 개선할 수 있어요.';if(!b||b.progress<1||!Object.hasOwn(OPTIONS,opt)||b.opts.includes(opt)||b.opts.length>=2||!UPGRADE_TYPES.includes(b.type))return '이 설계는 적용할 수 없어요.';if(s.money<OPTIONS[opt].cost)return '건설비가 부족해요.';return ''; }
 export function upgrade(s,id,opt){const error=upgradeError(s,id,opt);if(error)return{error};const b=s.buildings.find(b=>b.id===id);s.money-=OPTIONS[opt].cost;b.opts.push(opt);return{};}
@@ -59,8 +62,8 @@ export function harvest(s){if(s.paused||s.ended)return{error:'재개한 뒤 돌�
 export function canRelocate(s,b){if(!b)return '시설을 찾을 수 없어요.';if(s.paused||s.ended)return '재개한 뒤 옮길 수 있어요.';if(b.starter)return '처음부터 있던 시설은 옮기지 않아요.';if(['road','bridge','workshop'].includes(b.type))return '길·다리·창고 재생 공간은 옮길 수 없어요.';if(b.progress<1)return '공사가 끝난 뒤 옮길 수 있어요.';if(s.cozyV===1)return '';if(b.moved)return '이 건물은 이미 한 번 옮겼어요.';if(b.completedAt===undefined||s.t-b.completedAt>RELOCATE_WINDOW)return '완공 후 이동 가능한 시간이 지났어요.';return '';}
 export const relocateLeft=(s,b)=>b.completedAt===undefined?0:Math.max(0,RELOCATE_WINDOW-(s.t-b.completedAt));
 // 옮기는 동안 상태를 바꾸지 않고 확정 순간에만 위치·정비비·사용 여부를 한 번에 적용한다.
-export function relocate(s,id,x,y){const b=s.buildings.find(b=>b.id===id);const why=canRelocate(s,b);if(why)return{error:why};if(b.x===x&&b.y===y)return{error:'같은 자리예요.'};const error=canBuild(s,b.type,x,y,b.id);if(error)return{error};const fee=clearingCost(s,b.type,x,y);if(s.money<fee)return{error:`자연 정비비 ${fee}이 필요해요.`};
- s.money-=fee;b.x=x;b.y=y;b.moved=true;clearUnder(s,b);return{fee};}
+export function relocate(s,id,x,y,dir){if(dir!==undefined&&!validDirection(dir))return{error:'건물 방향을 확인해 주세요.'};const b=s.buildings.find(b=>b.id===id);const why=canRelocate(s,b);if(why)return{error:why};if(b.x===x&&b.y===y)return{error:'같은 자리예요.'};const error=canBuild(s,b.type,x,y,b.id);if(error)return{error};const fee=clearingCost(s,b.type,x,y);if(s.money<fee)return{error:`자연 정비비 ${fee}이 필요해요.`};
+ s.money-=fee;b.x=x;b.y=y;if(dir!==undefined)b.dir=dir;b.moved=true;clearUnder(s,b);return{fee};}
 // New towns grow through occupied homes and used services; v2 saves retain their annual multipliers.
 export const economy=s=>{const y=s.economyV===2?Math.min(2,Math.floor(month(s)/12)):0;return{income:[1,.6,.4][y],upkeep:[1,1.5,2][y]};};
 export const upkeepOf=(s,b)=>b.closed||b.progress<1?0:buildingSpec(s,b.type).up*economy(s).upkeep;
@@ -87,7 +90,7 @@ export function metrics(s){const net=network(s),live=s.buildings.filter(b=>b.pro
  const D=clamp(clamp(s.pop/popGoal)*(.35-.14*beautyPhase)+service*.30+env*.20+safety*.15+beauty*.14*beautyPhase);
  const Q=clamp(s.sat/100*.50+service*.30+energy*.15+clamp(housing/p)*.05);
  if(s.cozyV===1){const made=s.buildings.filter(b=>!b.starter&&b.progress>=1&&!b.closed);targetSat=Math.min(100,82+made.reduce((n,b)=>n+COZY_EFFECTS[b.type].happiness,0));income=upkeep+(90+made.reduce((n,b)=>n+COZY_EFFECTS[b.type].income,0))*MONTH/(60*PLAY_SPEED);}
- return{landscaping,beautyPhase,premium,net,live,production,use,energy,food,health,education,leisure,housing,service,green,comfort,targetSat,income,upkeep,D,Q,score:s.cozyV===1?cozyGrowth(s).score:Math.round(1000*D*Q),demands,popGoal,fire,drain,optionRate,foodCap:sum('food'),healthCap:sum('health'),educationCap:sum('education'),leisureCap:sum('leisure')};
+ return{environment:Math.round(clamp(env)*100),landscaping,beautyPhase,premium,net,live,production,use,energy,food,health,education,leisure,housing,service,green,comfort,targetSat,income,upkeep,D,Q,score:s.cozyV===1?cozyGrowth(s).score:Math.round(1000*D*Q),demands,popGoal,fire,drain,optionRate,foodCap:sum('food'),healthCap:sum('health'),educationCap:sum('education'),leisureCap:sum('leisure')};
 }
 export const DEMAND_MONTH={health:2,education:3,leisure:4};
 export const demandMonth=(s,key)=>DEMAND_MONTH[key]+(s.economyV===4?1:0);
@@ -148,6 +151,7 @@ export function parseSave(text){if(typeof text!=='string'||text.length>500000)th
  if(!s.landscape||s.landscape.version!==1||!Array.isArray(s.landscape.cleared)||s.landscape.cleared.length>324||new Set(s.landscape.cleared).size!==s.landscape.cleared.length||s.landscape.cleared.some(k=>typeof k!=='string'||!/^\d{1,2},\d{1,2}$/.test(k)||!(s.cozyV===1?clearablePlot:naturalFeature)(...k.split(',').map(Number))||k!==k.split(',').map(Number).join(',')))throw Error('조경 기록이 올바르지 않아요.');
  for(const b of s.buildings)if(b?.plantedAt!==undefined&&(!isGarden(b)||!num(b.plantedAt,0,s.t)))throw Error('식물 성장 기록이 올바르지 않아요.');
  const occupied=new Set(),ids=new Set();for(const b of s.buildings){if(!b||!Object.hasOwn(TYPES,b.type)||!Number.isInteger(b.id)||b.id<1||ids.has(b.id)||!Number.isInteger(b.x)||!Number.isInteger(b.y)||!num(b.progress,0,1)||typeof b.starter!=='boolean'||!Array.isArray(b.opts)||b.opts.length>2||new Set(b.opts).size!==b.opts.length||b.opts.some(o=>!Object.hasOwn(OPTIONS,o)))throw Error('시설 정보가 올바르지 않아요.');
+  if(b.dir!==undefined&&(!validDirection(b.dir)||!rotatable(b.type)))throw Error('시설 방향이 올바르지 않아요.');
   if(b.completedAt!==undefined&&(!Number.isInteger(b.completedAt)||!num(b.completedAt,0,Math.max(s.t,0))||b.progress<1))throw Error('완공 기록이 올바르지 않아요.');if(b.moved!==undefined&&(typeof b.moved!=='boolean'||b.starter))throw Error('재배치 기록이 올바르지 않아요.');if(b.closed!==undefined&&(b.closed!==true||b.progress<1))throw Error('휴업 기록이 올바르지 않아요.');
   ids.add(b.id);for(const[x,y]of cells(b)){const k=`${x},${y}`;if(x<0||y<0||x>=SIZE||y>=SIZE||occupied.has(k)||((x===RIVER)!==(b.type==='bridge'))||x<2)throw Error('시설 배치가 올바르지 않아요.');occupied.add(k);}}
  if(!Number.isInteger(s.nextId)||s.nextId<=Math.max(0,...ids))throw Error('시설 번호를 확인해 주세요.');

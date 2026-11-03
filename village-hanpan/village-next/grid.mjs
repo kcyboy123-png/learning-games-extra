@@ -1,5 +1,5 @@
 // 격자↔월드 좌표, 출입구 방향, 추천 부지, 보행 경로. 경제 상태는 읽기만 한다.
-import {SIZE,RIVER,TYPES,cells,at,network,terrain,unlocked} from './core.mjs?v=clear1';
+import {SIZE,RIVER,TYPES,cells,at,network,terrain,unlocked} from './core.mjs?v=compact1';
 import {naturalFeature} from './landscape.mjs?v=clear1';
 export const CELL=2.4, GROUND_Y=.103, ROAD_Y=.133;
 export const DIRS=[[0,1],[1,0],[0,-1],[-1,0]]; // 0 남(+z) 1 동(+x) 2 북 3 서. 모델의 문은 로컬 +z.
@@ -12,8 +12,8 @@ export const origin=(type,gx,gy)=>{const n=foot(type),o=(n-1)/2;return toWorld(g
 export const roadSet=s=>new Set(s.buildings.filter(b=>b.progress>=1&&['road','bridge'].includes(b.type)).map(b=>`${b.x},${b.y}`));
 // 둘레 칸 목록: [바깥 칸 gx,gy, 방향 d] — 건물 칸에서 d 방향으로 한 칸 나간 자리.
 export function perimeter(type,gx,gy){const n=foot(type),out=[];for(let i=0;i<n;i++){out.push([gx+i,gy+n,0]);out.push([gx+n,gy+i,1]);out.push([gx+i,gy-1,2]);out.push([gx-1,gy+i,3]);}return out;}
-// 건물은 저장값 없이 인접한 길 쪽으로 문을 낸다. 길이 나중에 생겨도 자동으로 그쪽을 향한다. 2×2도 둘레 어느 변이든 길이 닿으면 그 변을 향한다.
-export function facing(s,b,roads=roadSet(s)){if(b.type==='bridge')return 0;for(const[x,y,d]of perimeter(b.type,b.x,b.y))if(roads.has(`${x},${y}`))return d;return 0;}
+// 기본은 길을 향하고, 직접 고른 방향은 길이 바뀌어도 유지한다. 다리는 하천을 가로지른다.
+export function facing(s,b,roads=roadSet(s)){if(b.type==='bridge')return 0;if(Number.isInteger(b.dir)&&b.dir>=0&&b.dir<4)return b.dir;for(const[x,y,d]of perimeter(b.type,b.x,b.y))if(roads.has(`${x},${y}`))return d;return 0;}
 export function entrance(s,b,roads=roadSet(s)){for(const[x,y,d]of perimeter(b.type,b.x,b.y))if(roads.has(`${x},${y}`))return{gx:x,gy:y,dir:d};const n=foot(b.type);return{gx:b.x,gy:b.y+n,dir:0};}
 export function placeInfo(s,type,gx,gy){const net=network(s),adj=perimeter(type,gx,gy).filter(([x,y])=>net.has(`${x},${y}`)).length,natural=cells({type,x:gx,y:gy}).some(([x,y])=>naturalFeature(x,y)&&!s.landscape?.cleared.includes(`${x},${y}`));return{adjacentRoads:adj,connected:adj>0,natural};}
 const free=(s,type,gx,gy)=>cells({type,x:gx,y:gy}).every(([x,y])=>inside(x,y)&&x>=2&&(type==='bridge'?x===RIVER:x!==RIVER)&&!at(s,x,y)&&(terrain(x,y)!=='warehouse'||type==='workshop'));

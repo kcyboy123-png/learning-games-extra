@@ -1,10 +1,10 @@
 // village-next 표현 계층. pocket/world.mjs의 헬퍼·모델·배칭·주민 리그를 가져와 18×18 격자 위에 올린다.
 // 경제 값은 계산하지 않는다. sync(state)로 건물을 그리고 preview()로 배치 미리보기를 보여준다.
 import * as T from '../lib/three.module.min.js';
-import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=clear1';
-import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=clear1';
+import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=compact1';
+import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=compact1';
 import {naturalFeature,growthStage} from './landscape.mjs?v=clear1';
-import {advancePersonRoute} from './residents.mjs?v=clear1';
+import {advancePersonRoute} from './residents.mjs?v=compact1';
 import {townscapeSites} from './townscape.mjs?v=clear1';
 import {seasonalSites,createSeasonDetails,disposeSeasonDetails} from './season-details.mjs?v=cozy2';
 import {surfaceOptions,surfaceTime,surfaceWinter} from './surfaces.mjs?v=cozy2';

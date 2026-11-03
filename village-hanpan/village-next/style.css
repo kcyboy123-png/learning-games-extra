@@ -224,7 +224,7 @@ body:has(#infoPanel.open) #need{visibility:hidden}
 .cozy header{justify-content:space-between;align-items:start;flex-wrap:nowrap;right:14px}
 .cozy .clock{min-width:0;flex:none;padding:10px 14px}.cozy .clock b{font-size:15px}
 .cozy .stats{flex:none;margin:0;padding:10px 18px}.cozy .stats .money-pocket{padding:0;border:0}
-.cozy #left,.cozy .bar,.cozy .stats>div:not(.money-pocket),.cozy .score,.cozy #phoneGoal,.cozy #seasonNote,.cozy footer .hint,.cozy #navStatus,.cozy #navHarvest,.cozy #openPromises,.cozy #placeDetails,.cozy #skipLesson{display:none!important}
+.cozy #left,.cozy .bar,.cozy .stats>div:not(.money-pocket):not(.village-stat),.cozy .score,.cozy #phoneGoal,.cozy #seasonNote,.cozy footer .hint,.cozy #navStatus,.cozy #navHarvest,.cozy #openPromises,.cozy #placeDetails,.cozy #skipLesson{display:none!important}
 .cozy footer{bottom:14px}.cozy footer nav{display:flex;gap:5px}.cozy footer nav button{display:flex;min-width:85px;justify-content:center;align-items:center;gap:6px}
 .cozy .view{display:none}.cozy .view button{width:84px;font-size:14px}.cozy .view #rotate,.cozy .view #zoomIn,.cozy .view #zoomOut{display:none}
 .cozy #need{top:auto;bottom:92px;left:14px;max-height:60dvh;overflow:auto;width:min(320px,calc(100vw - 28px))}.cozy #need.hide{display:none!important}.cozy #need p{display:block}
@@ -267,3 +267,26 @@ body:has(#infoPanel.open) #need{visibility:hidden}
 @media(max-width:600px){.cozy footer{flex-wrap:wrap}.cozy footer nav{order:2;flex-basis:100%;gap:8px}.cozy footer nav button{min-width:44px}.cozy .zoom-controls{margin-left:auto}.cozy .sheet,.cozy #placePanel,.cozy #need{bottom:145px}.cozy .village-sign{bottom:150px}#removeMode{left:8px;right:8px;top:90px;justify-content:space-between;padding:10px 14px}#removeMode b{font-size:16px}}
 
 .demolishing #navBuild{background:transparent;color:#34574a}
+
+/* Compact catalogue: one touch target per facility, with details after selection. */
+.cozy #buildPanel{width:min(840px,calc(100vw - 32px));max-height:calc(100dvh - 210px);padding:12px 16px;left:50%;right:auto;transform:translate(-50%,20px)}
+.cozy #buildPanel.open{transform:translate(-50%,0)}
+.cozy #buildPanel>.row{top:-12px;margin-bottom:4px;padding-block:4px}.cozy #buildPanel>.row button{min-height:44px}
+.cozy #buildGuide{font-size:13px;line-height:1.4;margin:4px 0 8px}
+.cozy #buildPanel .tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;overflow:visible;margin:8px 0}
+.cozy #buildPanel .tabs button{min-width:0;min-height:44px;padding:8px 4px;font-size:14px}
+.cozy #buildList{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0 0}
+@media(min-width:900px){.cozy #buildList{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.cozy #buildList button{display:grid;grid-template-columns:48px minmax(0,1fr);gap:6px 10px;padding:9px 10px;border-radius:13px;align-items:center;align-content:start}
+.cozy #buildList .build-thumb{width:48px;height:48px;border-radius:9px}
+.cozy #buildList .build-copy{gap:2px}.cozy #buildList .build-head{display:flex;flex-direction:column;align-items:start;gap:2px}
+.cozy #buildList .build-head b{font:700 15px/1.4 SUIT,sans-serif;word-break:keep-all}
+.cozy #buildList .build-price{font:700 14px/1.4 SUIT,sans-serif;display:flex;align-items:baseline;gap:3px;border:0;border-radius:0;background:none;padding:0}
+.cozy #buildList .build-price small{display:inline;font-size:12px}
+.cozy #buildList .build-effects{grid-column:1/-1;border:0;border-radius:6px;background:#fff0cc;color:#594219;padding:4px 6px;font-size:13px;font-weight:700;line-height:1.4;white-space:normal}
+.cozy #buildList .build-effects::first-line{font:inherit}.cozy #buildList .build-action{border:0;padding:0;font-size:12px;line-height:1.3;color:#874d28}.cozy #buildList .build-action:empty{display:none}
+.direction-button{min-height:44px;margin:8px 0}.direction-button[hidden]{display:none}
+.cozy .stats{display:flex;align-items:center;gap:0;padding:9px 12px}.cozy .stats .money-pocket{min-width:104px;padding-right:12px}
+.cozy .stats .village-stat{display:block;min-width:78px;padding:0 10px;border-left:1px solid #d8d9bb}.cozy .stats .village-stat small{font-size:12px;white-space:nowrap}.cozy .stats .village-stat b{display:block;font-size:18px;white-space:nowrap}
+@media(max-width:820px){.cozy .clock{width:auto}.cozy .clock b{font-size:13px}.cozy .stats{flex-basis:auto}.cozy .stats .money-pocket{min-width:94px;padding-right:8px}.cozy .stats .village-stat{min-width:68px;padding:0 8px}}
+@media(max-width:700px){.cozy header{flex-wrap:wrap;width:auto}.cozy .clock{flex:1 1 100%;max-width:none;justify-content:space-between;padding:6px 10px}.cozy .stats{flex:1 1 100%;padding:6px 8px;justify-content:space-around}.cozy .stats .money-pocket{min-width:0;flex:1.3;padding-right:6px}.cozy .stats .village-stat{display:block;flex:1;min-width:0;padding:0 6px}.cozy .stats .village-stat b{font-size:17px}.cozy #buildList{grid-template-columns:repeat(2,minmax(0,1fr))}.cozy #buildGuide{display:none}.cozy #buildPanel{width:calc(100vw - 16px);max-height:calc(100dvh - 300px);padding:10px}.cozy #buildPanel>.row{top:-10px}.cozy #buildPanel .tabs{gap:8px}.cozy #buildPanel .tabs button{font-size:13px}.cozy #buildList button{grid-template-columns:38px minmax(0,1fr);gap:5px 7px;padding:8px}.cozy #buildList .build-thumb{width:38px;height:38px}.cozy #buildList .build-head b{font-size:13px}.cozy #buildList .build-effects{font-size:12px;padding:4px}.cozy #buildList .build-price{font-size:13px}#removeMode{top:160px}}

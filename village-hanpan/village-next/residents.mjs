@@ -1,6 +1,6 @@
 import {PLAYER_SPEED} from './move.mjs?v=cozy2';
-import {TYPES,connected,network} from './core.mjs?v=clear1';
-import {origin,facing,entrance,toWorld,toCell,path} from './grid.mjs?v=clear1';
+import {TYPES,connected,network} from './core.mjs?v=compact1';
+import {origin,facing,entrance,toWorld,toCell,path} from './grid.mjs?v=compact1';
 import {growthStage} from './landscape.mjs?v=clear1';
 
 // Positions match model doors and seat centres, in the model's local coordinates.
