@@ -1,5 +1,5 @@
 // 격자↔월드 좌표, 출입구 방향, 추천 부지, 보행 경로. 경제 상태는 읽기만 한다.
-import {SIZE,RIVER,TYPES,cells,at,network,terrain,unlocked} from './core.mjs?v=cozy2';
+import {SIZE,RIVER,TYPES,cells,at,network,terrain,unlocked} from './core.mjs?v=road1';
 import {naturalFeature} from './landscape.mjs?v=cozy2';
 export const CELL=2.4, GROUND_Y=.103, ROAD_Y=.133;
 export const DIRS=[[0,1],[1,0],[0,-1],[-1,0]]; // 0 남(+z) 1 동(+x) 2 북 3 서. 모델의 문은 로컬 +z.
@@ -23,6 +23,7 @@ export function spots(s,type,limit=3){const net=network(s),homes=s.buildings.fil
  if(type==='workshop')return free(s,type,14,7)?[{gx:14,gy:7}]:[];
  const push=(gx,gy,score)=>{const k=`${gx},${gy}`;if(seen.has(k))return;seen.add(k);out.push({gx,gy,score});};
  const cost=(gx,gy)=>cells({type,x:gx,y:gy}).filter(([x,y])=>naturalFeature(x,y)&&!s.landscape?.cleared.includes(`${x},${y}`)).length*10;
+ if(s.cozyV===1&&type==='road'&&!net.size)for(let gx=2;gx<SIZE;gx++)for(let gy=0;gy<SIZE;gy++)if(free(s,type,gx,gy))push(gx,gy,cost(gx,gy)+Math.abs(gx-5)+Math.abs(gy-8));
  if(type==='road'||type==='bridge'){for(const k of net){const[x,y]=k.split(',').map(Number);for(const[dx,dy]of DIRS){const gx=x+dx,gy=y+dy;if(free(s,type,gx,gy))push(gx,gy,cost(gx,gy)+Math.abs(gx-5)+Math.abs(gy-8));}}}
  else for(let gx=2;gx<SIZE;gx++)for(let gy=0;gy<SIZE;gy++){if(!free(s,type,gx,gy))continue;const adj=perimeter(type,gx,gy).filter(([x,y])=>net.has(`${x},${y}`)).length;if(!adj)continue;
   const near=homes.length?Math.min(...homes.map(h=>Math.abs(h.x-gx)+Math.abs(h.y-gy))):0;push(gx,gy,cost(gx,gy)+near+(adj>1?-1:0));}

@@ -261,3 +261,5 @@ body:has(#infoPanel.open) #need{visibility:hidden}
 @media(max-width:360px){.cozy footer{flex-wrap:wrap}.cozy footer nav{flex-basis:100%;order:2}.zoom-controls{margin-left:auto}.cozy .sheet,.cozy #placePanel,.cozy #need{bottom:145px}.cozy .village-sign{bottom:150px}}
 
 .cozy .build-copy .build-effects{font-size:14px;line-height:1.5;font-weight:700;color:#315c43}.cozy #placeDecision{font-size:15px;font-weight:700;color:#315c43;background:#edf3e3;border-radius:10px;padding:10px 12px}.cozy #placeDecision:empty{display:none}
+
+.cozy .build-copy .build-effects{white-space:pre-line;background:#fff0cc;border:1px solid #e3cb8c;border-radius:9px;padding:8px 10px;color:#594219;font-size:13px}.cozy .build-effects::first-line{font-size:16px;font-weight:800}.cozy #placeDecision{white-space:pre-line;background:#fff0cc;border:1px solid #e3cb8c;color:#594219;line-height:1.7}.cozy #placeDecision::first-line{font-size:18px;font-weight:800}
