@@ -34,6 +34,9 @@ export function createSunlight(renderer){
   }
   void main(){vec3 c=texture2D(source,vUv).rgb;
    c*=contactShade();
+   float sunlit=smoothstep(.8,2.,dot(c,vec3(.2126,.7152,.0722)));
+   c*=mix(vec3(.97,1.,1.025),vec3(1.035,1.008,.965),sunlit);
+   c*=1.-.045*smoothstep(.32,.82,length((vUv-vec2(.51,.48))*vec2(.9,1.)));
    vec3 b=texture2D(glow,vUv).rgb*.4;
    b+=(texture2D(glow,vUv+stepSize).rgb+texture2D(glow,vUv-stepSize).rgb+texture2D(glow,vUv+stepSize*vec2(1.,-1.)).rgb+texture2D(glow,vUv+stepSize*vec2(-1.,1.)).rgb)*.15;
    gl_FragColor=vec4(c+b*amount*vec3(1.,.92,.74),1.);

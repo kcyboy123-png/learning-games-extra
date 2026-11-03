@@ -48,7 +48,7 @@ function geometry(flowers){
  }else if(!flowers){
   for(let i=0;i<7;i++){
    const a=i*2.399,h=.13+(i%4)*.055,r=.02+(i%2)*.018;
-   const point=(side,t)=>{const width=(.006+Math.sin(t*Math.PI)*.032)*(t===1?0:1),bend=r+t*t*.14;return[Math.cos(a)*width*side+Math.sin(a)*bend,h*(t-.2*t*t),Math.sin(a)*width*side-Math.cos(a)*bend];};
+   const point=(side,t)=>{const width=(.006+Math.sin(t*Math.PI)*.038)*(t===1?0:1),bend=r+t*t*.14;return[Math.cos(a)*width*side+Math.sin(a)*bend,h*(t-.2*t*t),Math.sin(a)*width*side-Math.cos(a)*bend];};
    for(let j=0;j<4;j++){const t=j/4,u=(j+1)/4;tint=['#8ca65d','#9fba65','#bace80','#d0dc97'][j];tri(point(-1,t),point(1,t),point(-1,u));tri(point(1,t),point(1,u),point(-1,u));}
   }
  }else{
@@ -66,7 +66,13 @@ function geometry(flowers){
    tint='#dba93f';for(let j=0;j<8;j++){const a=j*Math.PI/4,b=(j+1)*Math.PI/4;tri([x,h+.022,z],[x+Math.sin(a)*.025,h+.009,z+Math.cos(a)*.025],[x+Math.sin(b)*.025,h+.009,z+Math.cos(b)*.025]);}
   }
  }
- const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setAttribute('color',new T.Float32BufferAttribute(colors,3));g.computeVertexNormals();return g;
+ const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(pos,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setAttribute('color',new T.Float32BufferAttribute(colors,3));g.computeVertexNormals();
+ // Shared corners need shared normals; otherwise each soft petal looks like cut paper.
+ const normals=g.attributes.normal,sums=new Map(),keys=[];
+ for(let i=0;i<pos.length;i+=3){const key=pos.slice(i,i+3).map(v=>v.toFixed(5)).join(','),n=i/3,sum=sums.get(key)||new T.Vector3();sum.x+=normals.getX(n);sum.y+=normals.getY(n);sum.z+=normals.getZ(n);sums.set(key,sum);keys.push(key);}
+ for(const sum of sums.values())sum.normalize();
+ keys.forEach((key,i)=>{const n=sums.get(key);normals.setXYZ(i,n.x,n.y,n.z);});
+ return g;
 }
 
 export function createMeadow(s){

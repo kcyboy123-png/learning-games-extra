@@ -19,11 +19,20 @@ const petal=new T.SphereGeometry(1,7,4),leafShape=new T.Shape(),mound=new T.Sphe
 for(const [i,[x,y]] of [[0,-.9],[-.18,-.2],[-.8,-.28],[-.62,.1],[-.95,.4],[-.35,.36],[0,1],[.35,.36],[.95,.4],[.62,.1],[.8,-.28],[.18,-.2]].entries())i?leafShape.lineTo(x,y):leafShape.moveTo(x,y);
 leafShape.closePath();const leaf=new T.ShapeGeometry(leafShape);
 leaf.rotateX(-Math.PI/2);
+const leafColors=[];
+for(let i=0;i<leaf.attributes.position.count;i++){
+ const p=leaf.attributes.position,x=p.getX(i),z=p.getZ(i),edge=Math.min(1,Math.abs(x)+Math.abs(z)*.3);
+ p.setY(i,.018*(x*x+z*z)+.010*Math.sin(z*3));leafColors.push(1,.92+edge*.08,.82+edge*.12);
+}
+leaf.setAttribute('color',new T.Float32BufferAttribute(leafColors,3));leaf.computeVertexNormals();
+const snowMound=mound.clone(),snowColors=[];
+for(let i=0;i<snowMound.attributes.position.count;i++){const light=(snowMound.attributes.position.getY(i)+1)/2;snowColors.push(.80+light*.20,.88+light*.12,1);}
+snowMound.setAttribute('color',new T.Float32BufferAttribute(snowColors,3));
 export function createSeasonDetails(sites,se){
  const group=new T.Group();group.name='seasonal-ground';group.userData.season=se;
  const add=(geo,color,points)=>{
   if(!points.length)return;
-  const material=new T.MeshStandardMaterial({color,roughness:.95,side:T.DoubleSide}),mesh=new T.InstancedMesh(geo,material,points.length),pose=new T.Object3D();mesh.receiveShadow=true;
+  const material=new T.MeshStandardMaterial({color,vertexColors:!!geo.attributes.color,roughness:.95,side:T.DoubleSide}),mesh=new T.InstancedMesh(geo,material,points.length),pose=new T.Object3D();mesh.receiveShadow=true;
   points.forEach((p,i)=>{pose.position.set(p.x,GROUND_Y+p.y,p.z);pose.rotation.set(p.rx||0,p.angle||0,p.rz||0);pose.scale.set(...p.scale);pose.updateMatrix();mesh.setMatrixAt(i,pose.matrix);});group.add(mesh);
  };
  if(se===1){
@@ -55,7 +64,7 @@ export function createSeasonDetails(sites,se){
    for(let i=0;i<5;i++){const a=i*1.257;green.push({x:x+Math.sin(a)*.10,z:z+Math.cos(a)*.10,y:.14,angle:a,scale:[.09,.035,.20]});}
    for(let i=0;i<3;i++)berries.push({x:x+(i-1)*.065,z,y:.22+(i%2)*.04,scale:[.045,.045,.045]});
   }
-  add(mound,'#edf3f2',snow);add(petal,'#648f78',green);add(petal,'#c46f62',berries);
+  add(snowMound,'#f8fbff',snow);add(petal,'#648f78',green);add(petal,'#c46f62',berries);
  }
  return group;
 }
