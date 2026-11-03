@@ -1,3 +1,4 @@
+import {VillageSound} from './sound.mjs?v=sound1';
 import {upgradeCards,UPGRADE_LOOKS} from './upgrade-ui.mjs?v=cozy2';
 import {cozyEffectText,cozyPlacementText,calendarDay,incomePerMinute,cataloguePictures,cozyDescription,fundingAdvice,operatingPreviewText,placementBenefits,constructionText,catalogueBudget,buildBudget,guidedPlacement,buildingBenefit,completionMessage,incomeRate,starterChoices,incomePreviewText} from './economy-ui.mjs?v=clear1';
 import {growthStatus,ratingName,gradeNote,tierRules,developmentSummary,shortageNote} from './grading-ui.mjs?v=cozy2';
@@ -31,13 +32,14 @@ let time=0,last=performance.now(),toastEnd=0,uiTick=0,lastMonth=month(state),mod
 let lesson=false,recommendedSpot=null;
 let removing=false,removeTarget=null;
 function toast(t){$('toast').textContent=t;$('toast').classList.add('show');toastEnd=time+4;}
+const sound=new VillageSound(()=>toast('메뉴의 소리 버튼을 눌러 다시 켜 주세요.'));
 // ---- 저장 ----
 function save(reason=''){if(otherOwnerAlive()){owned=false;state.paused=true;$('saved').textContent='다른 탭 진행 중 · 저장 보호';return false;}if(!storageOK){$('saved').textContent='저장 불가';return false;}if(corrupt){$('saved').textContent='손상 기록 보호 중 · 저장 안 함';return false;}try{state.savedAt=Date.now();localStorage.setItem(KEY,serialize(state));$('saved').textContent='자동 저장됨'+(reason?' · '+reason:'');return true;}catch{storageOK=false;$('saved').textContent='저장 공간 확인 필요';toast('저장할 수 없어요. 저장 공간을 확인해 주세요.');return false;}}
 function download(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([serialize(state)],{type:'application/json'}));a.download=`개울마을-${RULE}-${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),10000);toast('마을 파일을 내보냈어요.');}
 $('file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(otherOwnerAlive()){toast('다른 탭에서 마을이 진행 중이에요. 먼저 이 탭에서 이어받아 주세요.');return;}try{const next=parseSave(await f.text());if(otherOwnerAlive()){toast('다른 탭에서 마을이 진행 중이에요. 먼저 이 탭에서 이어받아 주세요.');return;}if(storageOK&&localStorage.getItem(KEY))localStorage.setItem(BACKUP,localStorage.getItem(KEY));state=next;state.paused=true;corrupt=null;resetSession();if(save('불러옴'))toast('마을 파일을 불러왔어요. 이전 기록은 백업에 남겼어요.');else toast('파일은 열었지만 저장하지 못했어요. 내보내기로 보관해 주세요.');showPause();}catch(err){toast('불러오지 못했어요: '+err.message+' (원본은 그대로예요)');}};
 // ---- 시간 표시 ----
 const mmss=sec=>`${String(Math.floor(sec/60)).padStart(2,'0')}:${String(Math.floor(sec%60)).padStart(2,'0')}`;
-function ui(){const m=month(state),v=metrics(state),growth=growthStatus(state,v);
+function ui(){sound.update(!document.hidden&&(!state.paused||!!world.entrance));$('toggleSound').textContent=sound.blocked?'소리 다시 켜기':sound.enabled?'소리 켜짐':'소리 꺼짐';$('toggleSound').setAttribute('aria-pressed',String(sound.enabled&&!sound.blocked));const m=month(state),v=metrics(state),growth=growthStatus(state,v);
  $('calendar').textContent=`${1+Math.floor(month(state)/12)}년 차 · ${SEASONS[season(calendarMonth(state))]} · ${monthLabel(state)} ${calendarDay(state)}일`;$('left').textContent=state.mode==='free'?'3년 평가는 고정 · 계속 가꿔요':state.ended?'종료':`남은 시간 ${mmss(realSeconds(duration(state)-state.t))}`;$('monthBar').style.width=`${(state.t%MONTH)/MONTH*100}%`;
  $('money').textContent=Math.floor(state.money).toLocaleString();$('incomeRate').textContent=`1분당 ${incomePerMinute(v)<0?'−':'+'}${Math.abs(incomePerMinute(v)).toFixed(1)}`;$('incomeRate').title=state.paused?'일시정지 중 · 재개하면 이 속도로 변해요':'유지비를 뺀 현재 속도 · 진행 중인 실제 시간 기준';$('pop').textContent=`${state.pop}명 / 집 ${v.housing}`;$('sat').textContent=Math.round(state.sat)+'%';$('score').textContent=state.result?ratingName(state.result.total):growth.name;$('scoreScope').textContent=state.result?'3년 종합 평가 · 기록 고정':'마을 성장';$('tierName').textContent=state.result?`${state.result.total}점 · 최종 기록`:`${growth.detail}`;
  $('pause').textContent=state.paused?'▶ 재개':'❚❚ 일시정지';$('pause').disabled=state.ended;world.season(season(calendarMonth(state)));const note=['❄ 눈 덮인 겨울 · 따뜻한 집을 준비해요','🌸 벚꽃 피는 봄 · 새로운 이웃을 맞아요','☀ 초록이 짙은 여름 · 시원한 그늘을 만들어요','🍂 단풍 드는 가을 · 마을의 결실을 살펴요'][season(calendarMonth(state))];if($('seasonNote').textContent!==note)$('seasonNote').textContent=note;
@@ -141,7 +143,7 @@ function info(){const b=state.buildings.find(b=>b.id===infoId);if(!b){closePanel
 $('move').onclick=()=>{const b=state.buildings.find(b=>b.id===infoId);if(!b)return;startPlace(b.type,b.id);};
 $('closeShop').onclick=()=>{const r=toggleClosed(state,infoId);if(r.error){toast(r.error);return;}world.sync(state,false);save('휴업');toast(r.closed?'휴업했어요. 유지비와 효과가 0이 돼요. 언제든 무료로 재개할 수 있어요.':'영업을 재개했어요.');info();};
 $('remove').onclick=()=>askRemove({id:infoId});
-$('confirmRemove').onclick=()=>{const target=removeTarget;if(!target)return;if(otherOwnerAlive()){toast('다른 탭이 진행 중이에요. 이 탭에서 이어받은 뒤 철거해 주세요.');$('removeDialog').close();return;}const prev=$('removeDialog').dataset.prev==='1';$('removeDialog').dataset.keep='1';$('removeDialog').close();state.paused=prev;removeTarget=null;const r=target.id?demolish(state,target.id):clearLandscape(state,target.gx,target.gy);if(r.error){toast(r.error);return;}const repeat=removing;closePanels();if(repeat)setRemoving(true);world.sync(state,false);save('철거');toast(r.refund?`철거하고 ${r.refund}코인을 돌려받았어요.`:'철거했어요.');ui();};
+$('confirmRemove').onclick=()=>{const target=removeTarget;if(!target)return;if(otherOwnerAlive()){toast('다른 탭이 진행 중이에요. 이 탭에서 이어받은 뒤 철거해 주세요.');$('removeDialog').close();return;}const prev=$('removeDialog').dataset.prev==='1';$('removeDialog').dataset.keep='1';$('removeDialog').close();state.paused=prev;removeTarget=null;const r=target.id?demolish(state,target.id):clearLandscape(state,target.gx,target.gy);if(r.error){toast(r.error);return;}const repeat=removing;closePanels();if(repeat)setRemoving(true);world.sync(state,false);save('철거');toast(r.refund?`철거하고 ${r.refund}코인을 돌려받았어요.`:'철거했어요.');ui();sound.effect('remove');};
 $('cancelRemove').onclick=()=>$('removeDialog').close();
 $('removeDialog').addEventListener('close',()=>{removeTarget=null;world.highlightBuilding(null);});
 // ---- 일시정지 ----
@@ -156,7 +158,7 @@ function otherOwnerAlive(){try{const o=JSON.parse(localStorage.getItem(OWNER)||'
 setInterval(()=>{if(owned&&!state.paused){stamp();save('진행');}},2000);
 addEventListener('pagehide',()=>{if(!owned||otherOwnerAlive())return;save('보관');try{localStorage.removeItem(OWNER);}catch{}}); // 진행 탭은 2초마다 저장해 이어받기 손실을 2초 이내로 줄인다
 $('pause').onclick=()=>setPaused(!state.paused);$('resume').onclick=()=>setPaused(false);
-document.addEventListener('visibilitychange',()=>{last=performance.now();if(document.hidden&&!state.paused&&!state.ended)setPaused(true);});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)sound.update(false);last=performance.now();if(document.hidden&&!state.paused&&!state.ended)setPaused(true);});
 $('takeover').onclick=()=>{try{const r=localStorage.getItem(KEY);if(r){state=parseSave(r);corrupt=null;resetSession();}}catch{}claim();setPaused(false);};
 // ---- 하단 메뉴 · 시점 ----
 $('navBuild').onclick=()=>$('buildPanel').classList.contains('open')?closePanels():openBuild();
@@ -180,6 +182,8 @@ $('phoneGoal').onclick=()=>$('navNeed').click();
 $('phoneMenuOpen').onclick=()=>{const open=$('phoneMenu').classList.contains('open');closePanels();if(open)return;$('phoneMenu').classList.add('open');$('phoneViewOptions').open=false;$('phoneMenuOpen').setAttribute('aria-expanded','true');$('phoneSummary').textContent='마음에 드는 곳부터 천천히 가꿔요.';for(const b of document.querySelectorAll('[data-phone-action]')){const source=$(b.dataset.phoneAction);b.disabled=source.disabled;if(b.dataset.phoneAction==='navHarvest')b.textContent=source.textContent;}};
 $('phoneMenuClose').onclick=dismissPanels;$('help').onclick=()=>$('phoneMenuOpen').click();$('helpGuide').onclick=()=>modal($('helpDialog'));$('closeHelp').onclick=()=>$('helpDialog').close();
 for(const b of document.querySelectorAll('[data-phone-action]'))b.onclick=()=>{const source=$(b.dataset.phoneAction);if(source.disabled)return;closePanels();source.click();};
+$('toggleSound').onclick=()=>{sound.toggle();ui();};
+document.addEventListener('click',e=>{const button=e.target.closest('button');if(button&&!button.disabled&&!['toggleSound','confirmRemove'].includes(button.id))sound.effect('select');});
 $('phoneStick').onclick=()=>{const on=document.body.classList.toggle('phone-stick');stopStick();$('phoneStick').setAttribute('aria-pressed',String(on));$('phoneStick').textContent=on?'조이스틱 끄기':'조이스틱 켜기';closePanels();};
 // ---- 터치/마우스: 탭=선택·걷기, 드래그=카메라, 핀치=확대. 손가락을 뗄 때 건설되지 않는다. ----
 const canvas=$('world');let drag=null,pinch=null;const touches=new Map();
@@ -226,7 +230,7 @@ function loop(now){const real=document.hidden?0:(now-last)/1000,dt=Math.min(.25,
  if(world.entrance){world.updateEntrance(dt);if(!world.entrance)finishEntrance();}
  const before=state.buildings.filter(b=>b.progress<1).map(b=>b.id);if(owned)advancePlay(Math.min(real,60));const done=before.filter(id=>{const b=state.buildings.find(b=>b.id===id);return b&&b.progress>=1;});
  if(!state.cozyV&&state.economyV===4&&!done.length&&month(state)===lastMonth&&Math.floor(state.pop/4)>lastIncomeMilestone){lastIncomeMilestone=Math.floor(state.pop/4);if(state.pop===12||state.pop===16)toast(`이웃 ${state.pop}명! 지금 순수입 ${incomeRate(metrics(state))} · 손님과 생활시설이 함께 늘면 수입도 자라요.`);}
- if(done.length){world.sync(state,!reduced);save('완공');const b=state.buildings.find(b=>b.id===done[0]);toast(`${buildingSpec(state,b.type).name} 완성! 마을이 더 다채로워졌어요.`);if(buildingSpec(state,b.type).cap)npcHomes();}
+ if(done.length){sound.effect('complete');world.sync(state,!reduced);save('완공');const b=state.buildings.find(b=>b.id===done[0]);toast(`${buildingSpec(state,b.type).name} 완성! 마을이 더 다채로워졌어요.`);if(buildingSpec(state,b.type).cap)npcHomes();}
  const m=month(state);if(m!==lastMonth){lastMonth=m;world.sync(state,false);save(monthLabel(state));}
 
  manualMove(dt);npcTick(dt);if(bubble&&bubble.p.g.visible&&time<bubble.end){const p=bubble.p.g.position.clone();p.y=1.5;const s=world.screen(p);$('bubble').textContent=bubble.text;$('bubble').style.cssText=`display:block;left:${s.x}px;top:${s.y}px`;}else $('bubble').style.display='none';
@@ -244,7 +248,7 @@ function finishEntrance(){
  last=performance.now();setPaused(document.hidden);$('navBuild').focus();
 }
 $('enterVillage').onclick=()=>{
- $('entranceWelcome').hidden=true;$('entranceCaption').hidden=false;world.startEntrance();
+ $('entranceWelcome').hidden=true;$('entranceCaption').hidden=false;world.startEntrance();sound.start();
  if(reduced)finishEntrance();else $('skipEntrance').focus();
 };
 $('skipEntrance').onclick=finishEntrance;
