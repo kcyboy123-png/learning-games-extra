@@ -1,11 +1,11 @@
 // village-next 표현 계층. pocket/world.mjs의 헬퍼·모델·배칭·주민 리그를 가져와 18×18 격자 위에 올린다.
 // 경제 값은 계산하지 않는다. sync(state)로 건물을 그리고 preview()로 배치 미리보기를 보여준다.
 import * as T from '../lib/three.module.min.js';
-import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=cozy2';
-import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=cozy2';
-import {naturalFeature,growthStage} from './landscape.mjs?v=cozy2';
-import {advancePersonRoute} from './residents.mjs?v=cozy2';
-import {townscapeSites} from './townscape.mjs?v=cozy2';
+import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=clear1';
+import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=clear1';
+import {naturalFeature,growthStage} from './landscape.mjs?v=clear1';
+import {advancePersonRoute} from './residents.mjs?v=clear1';
+import {townscapeSites} from './townscape.mjs?v=clear1';
 import {seasonalSites,createSeasonDetails,disposeSeasonDetails} from './season-details.mjs?v=cozy2';
 import {surfaceOptions,surfaceTime,surfaceWinter} from './surfaces.mjs?v=cozy2';
 import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?v=cozy2';
@@ -518,15 +518,17 @@ export class World{
    }batch(flowers);flowers.traverse(o=>{o.userData.keepArtHierarchy=true;});batch(yard);}
   for(let gx=2;gx<SIZE;gx++)for(let gy=0;gy<SIZE;gy++){const f=naturalFeature(gx,gy);if(f&&!cleared.has(`${gx},${gy}`)&&!occupied.has(`${gx},${gy}`))keys.push([gx,gy,f]);}
   const ware=!at(s,14,7);const sig=keys.map(k=>k.join(':')).join('|')+(ware?'|W':'');if(sig===this.natureSig)return;this.natureSig=sig;if(this.nature)dispose(this.nature);const g=this.nature=new T.Group();this.scene.add(g);
-  for(const[gx,gy,f]of keys){const p=toWorld(gx,gy),h=hash(gx,gy);if(f==='tree'){tree(g,p.x+(h%5-2)*.12,p.z+(h%7-3)*.1,1.1+(h%3)*.1,(gx<9&&gy<11)||h%5===0);for(let j=0;j<3;j++){const t=j*2.1+.5,x=p.x+Math.sin(t)*.78,z=p.z+Math.cos(t)*.78;shrub(g,x,z,1.05);patch(g,x+.15,z+.1,j%2?'#fff2ce':'#e9adba');}pebble(g,'#b8bcad',p.x-.7,.15,p.z+.4,.22,.12,.19);}else{patch(g,p.x-.5,p.z-.3,'#e9adba');patch(g,p.x+.6,p.z+.4,'#f2d58c');patch(g,p.x+.1,p.z-.9,'#e59bb6');}}
+  this.natureBounds=[];for(const[gx,gy,f]of keys){const p=toWorld(gx,gy),h=hash(gx,gy);this.natureBounds.push({gx,gy,box:new T.Box3(new T.Vector3(p.x-.95,GROUND_Y,p.z-.95),new T.Vector3(p.x+.95,f==='tree'?3.5:.6,p.z+.95))});if(f==='tree'){tree(g,p.x+(h%5-2)*.12,p.z+(h%7-3)*.1,1.1+(h%3)*.1,(gx<9&&gy<11)||h%5===0);for(let j=0;j<3;j++){const t=j*2.1+.5,x=p.x+Math.sin(t)*.78,z=p.z+Math.cos(t)*.78;shrub(g,x,z,1.05);patch(g,x+.15,z+.1,j%2?'#fff2ce':'#e9adba');}pebble(g,'#b8bcad',p.x-.7,.15,p.z+.4,.22,.12,.19);}else{patch(g,p.x-.5,p.z-.3,'#e9adba');patch(g,p.x+.6,p.z+.4,'#f2d58c');patch(g,p.x+.1,p.z-.9,'#e59bb6');}}
   if(ware){const w=new T.Group(),p=toWorld(14,7);w.position.set(p.x,GROUND_Y-.01,p.z);w.rotation.y=Math.PI/2;g.add(w);const m=new T.Group();m.scale.setScalar(.6);w.add(m);workshopModel(m,0,true);}batch(g);}
  // 건물 한 채: 원점 바닥 중앙, 문은 인접한 길 쪽. stage 1·2 터 정비/골조, 3 외장(간판 없음), 4 완공.
  model(parent,b,s,stage){const dir=facing(s,b,this.roads),g=new T.Group(),p=origin(b.type,b.x,b.y),n=foot(b.type);g.position.set(p.x,b.type==='bridge'?ROAD_Y-.03:GROUND_Y-.01,p.z);g.rotation.y=dir*Math.PI/2;parent.add(g);
-  if(stage<3&&!['road','bridge'].includes(b.type)){scaffold(g,b.progress,n);return g;}const[make,sc]=MODELS[b.type]||[alignedCottage,.6];const m=new T.Group();m.scale.setScalar(sc);g.add(m);m.userData.palette=(b.x+b.y)%3;if(TYPES[b.type].cap||TYPES[b.type].food||TYPES[b.type].health||TYPES[b.type].education||TYPES[b.type].leisure)shade(m,0,.025,0,1.95*n);const finish=make(m,growthStage(s,b));finish.push(streetDetails(m,b.type),cottageYard(m,b.type));
+  if(stage<3&&!['road','bridge'].includes(b.type)){scaffold(g,b.progress,n);this.rememberBuilding(b,g);return g;}const[make,sc]=MODELS[b.type]||[alignedCottage,.6];const m=new T.Group();m.scale.setScalar(sc);g.add(m);m.userData.palette=(b.x+b.y)%3;if(TYPES[b.type].cap||TYPES[b.type].food||TYPES[b.type].health||TYPES[b.type].education||TYPES[b.type].leisure)shade(m,0,.025,0,1.95*n);const finish=make(m,growthStage(s,b));finish.push(streetDetails(m,b.type),cottageYard(m,b.type));
   if(stage===4)ecoDetails(m,b);
-  if(stage<4){for(const f of finish)f.visible=false;const w=CELL*n*.43;for(const[x,z]of[[-1,-1],[1,-1],[1,1],[-1,1]])box(g,'#c2a579',x*w,.5,z*w,.09,1,.09);for(const z of[-1,1])box(g,'#e7cd7b',0,.95,z*w,w*2,.04,.04);}return g;}
+  if(stage<4){for(const f of finish)f.visible=false;const w=CELL*n*.43;for(const[x,z]of[[-1,-1],[1,-1],[1,1],[-1,1]])box(g,'#c2a579',x*w,.5,z*w,.09,1,.09);for(const z of[-1,1])box(g,'#e7cd7b',0,.95,z*w,w*2,.04,.04);}this.rememberBuilding(b,g);return g;}
+ rememberBuilding(b,g){this.buildingBounds??=new Map();g.updateWorldMatrix(true,true);this.buildingBounds.set(b.id,{id:b.id,box:new T.Box3().setFromObject(g)});}
+ pickObject(px,py){this.ray.setFromCamera(new T.Vector2(px/innerWidth*2-1,1-py/innerHeight*2),this.camera);let nearest=null,distance=Infinity;const point=new T.Vector3();for(const item of [...(this.buildingBounds?.values()||[]),...(this.natureBounds||[])]){if(!this.ray.ray.intersectBox(item.box,point))continue;const d=point.distanceToSquared(this.ray.ray.origin);if(d<distance){distance=d;nearest=item;}}return nearest;}
  // 완공 건물은 한 묶음(배칭)으로, 공사 중 건물은 각각. 묶음은 구성·방향·성장단계가 바뀔 때만 다시 만든다.
- sync(s,animate=true){this.seasonDetailSites=seasonalSites(s);this.roads=roadSet(s);this.syncTownscape(s);this.syncNature(s);this.seasonAnchors=s.buildings.filter(b=>b.progress>=1&&b.type==='tree').slice(0,6).map(b=>toWorld(b.x,b.y));
+ sync(s,animate=true){for(const id of this.buildingBounds?.keys()||[])if(!s.buildings.some(b=>b.id===id))this.buildingBounds.delete(id);this.seasonDetailSites=seasonalSites(s);this.roads=roadSet(s);this.syncTownscape(s);this.syncNature(s);this.seasonAnchors=s.buildings.filter(b=>b.progress>=1&&b.type==='tree').slice(0,6).map(b=>toWorld(b.x,b.y));
   const done=s.buildings.filter(b=>b.progress>=1),pending=s.buildings.filter(b=>b.progress<1);
   const sig=done.map(b=>`${b.id}:${b.type}:${b.x},${b.y}:${facing(s,b,this.roads)}:${growthStage(s,b)}:${b.closed?1:0}:${b.opts.join(',')}`).join('|');
   if(sig!==this.builtSig){if(this.built)dispose(this.built);const g=this.built=new T.Group();this.dynamic.add(g);for(const b of done)this.model(g,b,s,4);batch(g);this.rides=[];g.traverse(o=>{if(o.userData.ride)this.rides.push(o);});this.animateRides(0,true);

@@ -235,7 +235,7 @@ body:has(#infoPanel.open) #need{visibility:hidden}
 .cozy #placePanel #confirm:disabled{opacity:1;background:#9aafa0}
 @media(max-width:600px){.cozy header{right:8px;left:8px;gap:8px}.cozy .clock{padding:8px;gap:6px}.cozy .clock b{font-size:13px}.cozy #pause{font-size:12px;padding:6px;min-width:44px}.cozy .stats{padding:8px 12px}.cozy footer{left:8px;right:8px;bottom:10px;transform:none}.cozy footer nav{width:100%;padding:5px}.cozy footer nav button{min-width:0;flex:1;padding:9px 5px;font-size:13px}.cozy .nav-icon{display:none}.cozy .view{display:none}.cozy #need{bottom:82px}.cozy .village-sign{bottom:85px;right:12px}.cozy .village-sign b{font-size:16px}.cozy .village-sign small{font-size:11px}.cozy:has(.sheet.open) .village-sign,.cozy:has(#need:not(.hide)) .village-sign{display:none}}
 
-.cozy footer #navBuild{order:1}.cozy footer #navDeco{order:2}.cozy footer #navNeed{order:3}.cozy footer #phoneMenuOpen{order:4}.cozy #phoneMenu summary{min-height:46px;padding:12px 0}.cozy #statusPanel>.tools{display:none}
+.cozy footer #navBuild{order:1}.cozy footer #navDeco{order:2}.cozy footer #navNeed{order:3}.cozy footer #navRemove{order:4}.cozy footer #phoneMenuOpen{order:5}.cozy #phoneMenu summary{min-height:46px;padding:12px 0}.cozy #statusPanel>.tools{display:none}
 
 .cozy .village-sign{pointer-events:none}
 .cozy footer #navDeco{display:flex}
@@ -263,3 +263,7 @@ body:has(#infoPanel.open) #need{visibility:hidden}
 .cozy .build-copy .build-effects{font-size:14px;line-height:1.5;font-weight:700;color:#315c43}.cozy #placeDecision{font-size:15px;font-weight:700;color:#315c43;background:#edf3e3;border-radius:10px;padding:10px 12px}.cozy #placeDecision:empty{display:none}
 
 .cozy .build-copy .build-effects{white-space:pre-line;background:#fff0cc;border:1px solid #e3cb8c;border-radius:9px;padding:8px 10px;color:#594219;font-size:13px}.cozy .build-effects::first-line{font-size:16px;font-weight:800}.cozy #placeDecision{white-space:pre-line;background:#fff0cc;border:1px solid #e3cb8c;color:#594219;line-height:1.7}.cozy #placeDecision::first-line{font-size:18px;font-weight:800}
+#removeMode{position:fixed;top:110px;left:16px;display:flex;align-items:center;gap:18px;padding:14px 16px;border:2px solid #bd7254;background:#fff6e8;z-index:12}#removeMode[hidden]{display:none}#removeMode b,#removeMode span{display:block}#removeMode span{margin-top:6px;font-size:13px}#removeMode button{min-width:64px;min-height:44px}#removeText{white-space:pre-line;line-height:1.8}.cozy #navRemove[aria-pressed=true]{background:#a64b32;color:#fff}.demolishing #world{cursor:crosshair}.demolishing .village-sign{display:none}
+@media(max-width:600px){.cozy footer{flex-wrap:wrap}.cozy footer nav{order:2;flex-basis:100%;gap:8px}.cozy footer nav button{min-width:44px}.cozy .zoom-controls{margin-left:auto}.cozy .sheet,.cozy #placePanel,.cozy #need{bottom:145px}.cozy .village-sign{bottom:150px}#removeMode{left:8px;right:8px;top:90px;justify-content:space-between;padding:10px 14px}#removeMode b{font-size:16px}}
+
+.demolishing #navBuild{background:transparent;color:#34574a}
