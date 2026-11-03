@@ -615,7 +615,7 @@
     const rescued = mem.rescued;
 
     const creaturesHtml = items.map(({ m, t, x, y }) => {
-      const got = passed(m.id);
+      const got = passed(m.id)||root.ThinkstarTeacherPreview;
       const isComp = companions.some(c=>c.id===m.id);
       const ring = rescued === m.id ? ' rescued' : '';
       return `<button type="button" class="wc wc-${t}${got ? ' got' : ' hidden-friend'}${isComp ? ' is-companion' : ''}${ring}"
@@ -627,7 +627,7 @@
     }).join('');
 
     const listHtml = items.map(({m}) => {
-      const got = passed(m.id);
+      const got = passed(m.id)||root.ThinkstarTeacherPreview;
       return `<li><button type="button" class="wl-item" data-creature="${esc(m.id)}">
         ${sprite(m, !got, 'tiny')}<b>${got ? esc(m.friendName) : '아직 만나지 않은 친구'}</b>
         <small>${esc(m.subject)} · ${tastes[taste(m)]} · ${esc(m.title)}</small></button></li>`;
@@ -795,8 +795,8 @@
       st.near = best;
       if (best) {
         vp.querySelector(`.wc[data-creature="${CSS.escape(best.m.id)}"]`)?.classList.add('near');
-        const got = passed(best.m.id);
-        encBtn.textContent = got ? `${best.m.friendName} · 다시 도전` : '이 친구 만나기';
+        const got = passed(best.m.id)||root.ThinkstarTeacherPreview;
+        encBtn.textContent = root.ThinkstarTeacherPreview ? `${best.m.friendName} · 문제 보기` : got ? `${best.m.friendName} · 다시 도전` : '이 친구 만나기';
         encBtn.setAttribute('aria-label', `${got ? best.m.friendName : '아직 만나지 않은 친구'} · ${best.m.title} 도전 열기`);
         encWrap.dataset.taste=best.t;
         encBtn.dataset.taste=best.t;
