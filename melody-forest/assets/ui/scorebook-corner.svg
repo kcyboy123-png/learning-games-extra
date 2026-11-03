@@ -1,25 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 120" fill="none">
   <defs>
-    <linearGradient id="leaf" x2="1" y2="1"><stop stop-color="#c5d5a0"/><stop offset="1" stop-color="#69824d"/></linearGradient>
-    <radialGradient id="petal"><stop stop-color="#fffef4"/><stop offset=".7" stop-color="#fff8e9"/><stop offset="1" stop-color="#e1d7b6"/></radialGradient>
+    <linearGradient id="leaf" x1="0" y1="0" x2="25" y2="28" gradientUnits="userSpaceOnUse"><stop stop-color="#d7dfaf"/><stop offset=".5" stop-color="#99ad76"/><stop offset="1" stop-color="#5e794d"/></linearGradient>
+    <radialGradient id="cream" cx=".35" cy=".2" r=".85"><stop stop-color="#fffef7"/><stop offset=".65" stop-color="#fbf2db"/><stop offset="1" stop-color="#d4c9a7"/></radialGradient>
+    <radialGradient id="rose"><stop stop-color="#fff1dc"/><stop offset=".7" stop-color="#eac2ad"/><stop offset="1" stop-color="#c99e87"/></radialGradient>
+    <radialGradient id="gold" cx=".35" cy=".3"><stop stop-color="#ffe3a0"/><stop offset=".6" stop-color="#dfb45d"/><stop offset="1" stop-color="#b98d42"/></radialGradient>
+    <g id="leaflet"><path d="M0 27C-3 13 5 3 19 0C23 15 17 27 0 27Z" fill="url(#leaf)" stroke="#6d8752" stroke-width=".55"/><path d="M0 27L17 3M7 17L5 10M7 17L15 16M12 10L12 5" stroke="#e1e6bc" stroke-width=".65" stroke-linecap="round" opacity=".65"/></g>
+    <path id="petal" d="M0 2C-7-3-11-13-6-18C-3-22 4-22 7-17C11-10 6-2 0 2Z"/>
+    <g id="blossom"><g fill="url(#cream)" stroke="#ded3b2" stroke-width=".5"><use href="#petal"/><use href="#petal" transform="rotate(72)"/><use href="#petal" transform="rotate(144)"/><use href="#petal" transform="rotate(216)"/><use href="#petal" transform="rotate(288)"/></g><circle r="5.2" fill="url(#gold)"/><g fill="#f9e4a5"><circle cx="-2" cy="-1" r=".8"/><circle cx="1" cy="-2" r=".7"/><circle cx="2" cy="1" r=".65"/></g></g>
   </defs>
-  <path d="M18 115C9 90 15 65 26 42C38 20 68 20 125 15M23 51C15 33 14 20 19 5M38 29C58 39 80 35 97 24" stroke="#869764" stroke-width="2.2" stroke-linecap="round"/>
-  <g fill="url(#leaf)" stroke="#7e955b" stroke-width=".5">
-    <path d="M18 100C1 96 0 84 3 77C17 79 24 88 18 100Z"/>
-    <path d="M15 83C28 77 34 65 29 57C16 60 12 69 15 83Z"/>
-    <path d="M22 61C7 57 5 45 8 39C20 41 26 49 22 61Z"/>
-    <path d="M23 42C30 32 28 22 23 17C15 26 16 34 23 42Z"/>
-    <path d="M47 25C42 12 48 4 54 2C62 12 57 20 47 25Z"/>
-    <path d="M66 22C72 36 83 37 89 34C85 23 77 19 66 22Z"/>
-    <path d="M85 19C85 7 94 1 101 3C102 13 94 19 85 19Z"/>
-    <path d="M107 17C114 28 124 27 129 22C124 13 116 12 107 17Z"/>
-  </g>
-  <g transform="translate(24 91)">
-    <g fill="url(#petal)" stroke="#e5dabb" stroke-width=".5">
-      <ellipse cy="-10" rx="7" ry="12"/><ellipse cy="-10" rx="7" ry="12" transform="rotate(72)"/><ellipse cy="-10" rx="7" ry="12" transform="rotate(144)"/><ellipse cy="-10" rx="7" ry="12" transform="rotate(216)"/><ellipse cy="-10" rx="7" ry="12" transform="rotate(288)"/>
-    </g><circle r="5" fill="#d4ad55"/><circle cx="-1" cy="-1" r="2.4" fill="#f2d17a"/>
-  </g>
-  <g transform="translate(48 27) scale(.65)">
-    <g fill="#f2cec2" stroke="#deb8a4" stroke-width=".6"><ellipse cy="-8" rx="7" ry="10"/><ellipse cy="-8" rx="7" ry="10" transform="rotate(72)"/><ellipse cy="-8" rx="7" ry="10" transform="rotate(144)"/><ellipse cy="-8" rx="7" ry="10" transform="rotate(216)"/><ellipse cy="-8" rx="7" ry="10" transform="rotate(288)"/></g><circle r="4.5" fill="#e4be63"/>
-  </g>
+  <path d="M15 116C8 93 13 66 25 44C40 19 76 17 134 17M24 44C16 29 15 15 18 3M45 27C62 34 84 35 102 26" stroke="#e2d8ae" stroke-width="4" stroke-linecap="round"/>
+  <path d="M15 116C8 93 13 66 25 44C40 19 76 17 134 17M24 44C16 29 15 15 18 3M45 27C62 34 84 35 102 26" stroke="#899c64" stroke-width="1.6" stroke-linecap="round"/>
+  <use href="#leaflet" transform="translate(16 101) rotate(-105) scale(.8)"/>
+  <use href="#leaflet" transform="translate(9 65) rotate(8) scale(.86)"/>
+  <use href="#leaflet" transform="translate(12 65) rotate(-130) scale(.75)"/>
+  <use href="#leaflet" transform="translate(18 43) rotate(-17) scale(.75)"/>
+  <use href="#leaflet" transform="translate(48 25) rotate(-125) scale(.75)"/>
+  <use href="#leaflet" transform="translate(58 13) rotate(62) scale(.86)"/>
+  <use href="#leaflet" transform="translate(82 20) rotate(-115) scale(.68)"/>
+  <use href="#leaflet" transform="translate(102 13) rotate(62) scale(.72)"/>
+  <path d="M23 70Q33 54 39 53M88 18Q101 6 112 8" stroke="#93a572" stroke-width="1.2"/>
+  <ellipse cx="39" cy="51" rx="3" ry="4" fill="#f6e1bc" transform="rotate(30 39 51)"/>
+  <ellipse cx="113" cy="8" rx="3.5" ry="2.5" fill="#f5dfb8"/>
+  <use href="#blossom" transform="translate(23 92) rotate(-12)"/>
+  <use href="#blossom" transform="translate(59 23) rotate(28) scale(.62)"/>
+  <g transform="translate(37 32) rotate(20) scale(.56)"><g fill="url(#rose)" stroke="#d5b399" stroke-width=".5"><use href="#petal"/><use href="#petal" transform="rotate(72)"/><use href="#petal" transform="rotate(144)"/><use href="#petal" transform="rotate(216)"/><use href="#petal" transform="rotate(288)"/></g><circle r="5" fill="url(#gold)"/></g>
 </svg>

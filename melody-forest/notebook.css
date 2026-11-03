@@ -120,19 +120,19 @@ body.forest-mode:not(.forest-cinema) .workspace{padding:16px 22px 20px;backgroun
 .piano-nav[hidden]{display:none}.piano-nav button{min-width:80px;min-height:44px;padding:6px 9px;font-size:12px;background:#e8eddf;color:#324e3d;border:1px solid #b5c1a9;white-space:nowrap}.piano-nav button:disabled{opacity:.45}.piano-range{font-size:12px;text-align:center;line-height:1.4;font-variant-numeric:tabular-nums}.piano-nav button:focus-visible{outline:3px solid #386949;outline-offset:2px}
 
 /* Reference A: a single bound scorebook, with the scenery selector above its rim. */
-body.forest-mode:not(.forest-cinema) .workspace{max-width:1060px;margin-left:auto;margin-right:auto;padding:16px 20px 12px;border:7px solid #bda474;border-radius:23px;background:radial-gradient(ellipse at 50% 0,#fffef3 30%,#f5efd9 100%);box-shadow:inset 0 0 0 2px #65805a,inset 0 0 0 5px #f9f3d9,0 2px 0 2px #826b49,0 13px 28px #203d3438}
+body.forest-mode:not(.forest-cinema) .workspace{max-width:1060px;margin-left:auto;margin-right:auto;padding:16px 20px 12px;border:7px solid transparent;border-radius:23px;background:radial-gradient(ellipse at 35% 0,var(--book-light,#fffef5) 20%,var(--book-shade,#f5efd9) 100%) padding-box,linear-gradient(135deg,var(--binding-light,#ecdcac),var(--binding-shade,#bda16b) 38%,var(--binding-light,#ddc591) 73%,var(--binding-shade,#a68e62)) border-box;box-shadow:inset 0 0 0 2px #65805a,inset 0 0 0 5px #fbf5df,inset 0 8px 14px #fffdf1b3,0 2px 0 2px #8c7754,0 14px 30px #203d3433}
 .workspace>.forest-bar{position:absolute;right:18px;top:-54px;width:266px;padding:0;margin:0;min-height:44px}
 .workspace .forest-map-choice{width:100%;gap:7px;font-size:12px}.workspace .forest-map-choice select{min-height:44px;padding:6px 11px;background:#fffceded;border:1px solid #abb793;border-radius:10px;box-shadow:0 2px 8px #273d2522}
-.workspace .view-bar{margin:0 0 10px;padding:0 0 8px;border-bottom:1px solid #d8d7bd;gap:8px}
+.workspace .view-bar{margin:0 0 10px;padding:0 0 8px;border-bottom:1px solid #d8d7bd;box-shadow:0 1px #fffef3;gap:8px}
 .workspace .group-switch{padding:0;gap:4px;background:transparent;border-radius:0}
 .workspace .group-btn{min-width:108px;min-height:44px;padding:7px 14px;border:1px solid #b9c5a3;border-radius:11px 11px 5px 5px;background:#e9edd9;color:#3c5943;font-size:14px}
 .workspace .group-btn[aria-pressed=true]{background:linear-gradient(#617f4c,#436345);border-color:#4b6943;box-shadow:inset 0 1px #d1dfb077,0 2px 3px #48613c24;color:#fffbed}
 .workspace .quick-listen{gap:6px}.workspace .quick-listen button,.workspace .view-toggle{min-height:44px;padding:7px 11px;font-size:13px;border-radius:7px;box-shadow:none}
-.workspace .score-book{background:#fffef6;border:1px solid #b4c0a3;border-radius:11px;box-shadow:inset 0 0 0 3px #f3f0de,0 2px 2px #8e99751c;padding:7px 7px 3px}
+.workspace .score-book{background:repeating-linear-gradient(0deg,#c1b79206 0 1px,transparent 1px 4px),radial-gradient(ellipse at 50% 40%,#fffff8,#f9f5e5);border:1px solid #b6bea0;border-radius:11px;box-shadow:inset 0 0 0 3px #f1edda,inset 0 5px 12px #84744b0d,0 2px 0 #fffcef,0 3px 4px #78815d24;padding:7px 7px 3px}
 .workspace .measure-select{padding:0 0 0 5.8%;gap:5px;border:0;background:transparent}
 .workspace .measure-select button{min-height:44px;padding:4px 8px;border:0;border-radius:7px 7px 2px 2px;background:linear-gradient(transparent 16%,#e2e7c9 16%,#e2e7c9 84%,transparent 84%);color:#465b42;font-size:13px}
 .workspace .measure-select button[aria-pressed=true]{background:linear-gradient(transparent 16%,#bdcf9b 16%,#bdcf9b 84%,transparent 84%);color:#294b35;box-shadow:inset 0 -2px #6c8c52}
-.workspace .sheet{max-height:152px;background:transparent;color:#2e4938}.workspace .sheet .bar-bg.active{fill:#f0f3df}.workspace .sheet .staff-line{stroke:#7f8f77;stroke-width:1}.workspace .sheet .bar-line{stroke:#89977f}.workspace .sheet .chord-guide{fill-opacity:.025}.workspace .sheet .guide-dot{fill:#779564;opacity:.45}
+.workspace .sheet{max-height:152px;background:transparent;color:#294631}.workspace .sheet .bar-bg.active{fill:#dce7b9;fill-opacity:.38}.workspace .sheet .staff-line{stroke:#7f8f77;stroke-width:1}.workspace .sheet .bar-line{stroke:#89977f}.workspace .sheet .chord-guide{fill-opacity:.025}.workspace .sheet .guide-dot{fill:#6e8b59;opacity:.4}.workspace .sheet .note-name{fill:#52654b;font-size:14px}.workspace .sheet .note-head{filter:drop-shadow(0 1px 0 #28432b12)}
 .workspace[data-view=full] .sheet{max-height:130px}.workspace .system+.system{border-top:0;margin-top:3px}
 .workspace .palette{margin:8px 0 0;padding:0 4px;background:transparent;border:0;border-radius:0;gap:7px}
 .workspace .duration-group{gap:7px}.workspace .duration-group button{min-height:44px;padding:4px 12px;border:1px solid #c6c9a9;border-radius:7px;background:linear-gradient(#fffdf2,#eee8d1);box-shadow:inset 0 1px #fffef7,0 1px 1px #b9ad8a44;color:#3d553c}.workspace .duration-icon{width:22px;height:28px}.workspace .duration-group span{font-size:13px}
@@ -144,13 +144,13 @@ body.forest-mode:not(.forest-cinema) .workspace{max-width:1060px;margin-left:aut
 @media print{body.forest-mode:not(.forest-cinema) .workspace{border:0;box-shadow:none;background:white}.workspace>.forest-bar{display:none}}
 
 /* Ivory keys set into a light timber case with a quiet green felt edge. */
-.workspace .piano{padding:7px 8px 9px;border:1px solid #a28b60;border-radius:10px;background:repeating-linear-gradient(1deg,transparent 0 5px,#8a6e3b0c 6px,transparent 7px 12px),linear-gradient(#ebd9ac,#cbb381);box-shadow:inset 0 1px #fff9dd,inset 0 -3px #aa9266,0 2px 3px #776a4526}
+.workspace .piano{padding:7px 8px 9px;border:1px solid #a28b60;border-radius:10px;background:repeating-linear-gradient(1deg,transparent 0 5px,#8a6e3b12 6px,transparent 7px 12px),linear-gradient(110deg,#f3e2b7,#d2bb89 28%,#ead5a5 75%,#bca575);box-shadow:inset 0 2px #fff9dd,inset 0 -3px #aa9266,0 2px 3px #776a4526}
 .workspace .piano-keys{border-top:3px solid #4d684a;background:#4d684a;box-shadow:0 0 0 2px #5a7351,0 0 0 4px #e8dbb6;border-radius:2px}
 .workspace .piano .key{height:132px;min-height:132px;padding-bottom:11px;border-right-color:#b7b19b;border-radius:0 0 3px 3px;color:#36553f;background:linear-gradient(#d8d4bb3d,transparent 25%),linear-gradient(90deg,#e9e1cc,#fffcef 8%,#fffcef 94%,#e0d6be);box-shadow:inset 0 -4px #d5c8aa,inset 0 -6px #fff8e5}
 .workspace .piano .key.tone,.workspace .piano .key.tone:hover:not(:disabled){background:linear-gradient(#d8d4bb3d,transparent 25%),linear-gradient(90deg,#e9e1cc,#fffcef 8%,#fffcef 94%,#e0d6be);border-color:#b7b19b;box-shadow:inset 0 -4px #d5c8aa,inset 0 -6px #fff8e5}
 .workspace .piano .key:disabled{color:#7b8276;background:linear-gradient(#d8d4bb3d,transparent 25%),linear-gradient(90deg,#dfd9c6,#f4f1e4 8%,#f4f1e4 94%,#ddd4c0);box-shadow:inset 0 -4px #c9c0ac,inset 0 -6px #eee8d8}
-.workspace .piano .black-key{height:59%;border:1px solid #1d261e;border-radius:0 0 3px 3px;background:linear-gradient(90deg,#252b23,#3c4437 15%,#2f372c 83%,#1d241c);box-shadow:inset 0 -5px #182018,inset 0 -7px #4b5745,inset 1px 0 #8a907b,1px 3px 3px #2c38294d}
-.workspace .piano .black-key::after{inset:3px 3px 9px;border-top-color:#8c93805e}
+.workspace .piano .black-key{height:59%;border:1px solid #1d261e;border-radius:0 0 3px 3px;background:linear-gradient(90deg,#20261f,#40483a 12%,#2e372c 18%,#293227 80%,#182118);box-shadow:inset 0 -6px #161d16,inset 0 -8px #53604b,inset 1px 0 #90977d,1px 3px 3px #2c38294d}
+.workspace .piano .black-key::after{inset:3px 3px 9px;border-top-color:#afb69b80;background:linear-gradient(105deg,#d8dec016,transparent 38%);border-left:1px solid #b6bf9b18}
 .workspace .piano .key .dot{width:4px;height:4px;left:calc(50% - 2px);bottom:44px;background:#7b9661;box-shadow:none}
 .workspace .piano .key b{font-size:17px}.workspace .piano .key small{font-size:10px;color:#6c7961;line-height:1.3}
 .workspace .piano .key.pressing,.workspace .piano .key:active:not(:disabled){transform:translateY(2px);background:linear-gradient(#d7e2c1,#f6f6df 70%,#dce5c4);box-shadow:inset 0 -2px #bdc7a2}
@@ -172,7 +172,7 @@ body.forest-mode:not(.forest-cinema) .workspace::after{right:-6px;bottom:-21px;t
 .workspace .measure-select button[aria-pressed=true]{background:transparent;color:#294b35;box-shadow:none}
 .workspace .measure-select button[aria-pressed=true]::before{background:linear-gradient(#c7d5a8,#b7c997);box-shadow:inset 0 -2px #7d965f}
 .workspace .primary:disabled{background:#e5e8d8;color:#8c9680;border-color:#ccd2bf;box-shadow:none}
-.workspace .piano .key b{font-weight:700;text-shadow:0 1px #fffaf0}.workspace .keyboard-panel .free-choice strong,.workspace .keyboard-panel .free-choice small,.workspace .keyboard-panel .free-state{color:#5e7052}
+.workspace .piano .key b{font-weight:700;text-shadow:0 1px #fffaf0}.workspace .piano .key.current{box-shadow:inset 0 -4px #71895b,inset 0 -7px #c4d6a3}.workspace .piano .key.struck{animation:forest-key-struck .65s ease-out}.workspace .piano .key:focus-visible{outline:3px solid #547047;outline-offset:-4px;z-index:1}.workspace .keyboard-panel .free-choice strong,.workspace .keyboard-panel .free-choice small,.workspace .keyboard-panel .free-state{color:#5e7052}
 .workspace .staff-scroll{scrollbar-color:#adbb90 #f1eedc;scroll-padding:10px}
 .workspace .view-bar .view-toggle{border-color:#bec8aa}.workspace .more{border-color:#d4d6bc}.workspace .more summary{font-size:13px;color:#61734f}
 @media(max-width:700px){
@@ -192,3 +192,26 @@ body.forest-mode:not(.forest-cinema) .workspace::after{right:-6px;bottom:-21px;t
  .workspace[data-view=focus] .view-bar{display:flex}.workspace[data-view=focus] .quick-listen{flex-basis:100%}
 }
 @media print{.workspace::before,.workspace::after{display:none!important}.workspace .score-system{min-width:0}}
+
+/* Olive selection and honey-coloured playback echo the paper and timber. */
+.workspace .sheet .note.selected{color:#355d3e}.workspace .sheet .note.selected .note-hit{fill:#658b4f;fill-opacity:.14;stroke:#6f8f51}.workspace .sheet .note.selected ellipse{stroke:#355d3e}
+.workspace .sheet .note.sounding{color:#946c25}.workspace .sheet .note.sounding .note-hit{fill:#e9c772;fill-opacity:.32}.workspace .sheet .bar-bg.playing{fill:#efdcaa;fill-opacity:.55}
+@keyframes forest-key-struck{from{background:#f4dc9c;box-shadow:inset 0 -4px #b79d60,inset 0 -7px #fff0b6}to{box-shadow:inset 0 -4px #d5c8aa,inset 0 -6px #fff8e5}}
+@media(prefers-reduced-motion:reduce){.workspace .piano .key.struck{animation:none}}
+
+/* A cooler paper surround joins the two night scenes without dimming the notation. */
+.workspace:is([data-theme=dream],[data-theme=moon]){--book-light:#f9faf1;--book-shade:#e6ecdf;--binding-light:#d8ddc0;--binding-shade:#9daa91}
+.workspace[data-theme=warm]{--book-light:#fffaf0;--book-shade:#f1e7cd;--binding-light:#f0d9a8;--binding-shade:#b99a6b}
+.workspace .focus-card{border:1px solid #b6bea0;border-radius:11px;background:#fffdf1;box-shadow:inset 0 0 0 3px #f1edda,0 2px 2px #78815d24}
+.workspace .note-row{border:1px solid #a9ba90;border-left:4px solid #708d55;border-radius:8px;background:#f0f3e2}.workspace .note-row strong{color:#35573c}
+.workspace .sheet .note:focus-visible .note-hit{stroke:#527449;stroke-width:3;stroke-dasharray:4 3}
+.workspace :is(button,select,input,summary):focus-visible{outline:3px solid #4f7045;outline-offset:3px}.workspace .piano .key:focus-visible{outline-offset:-4px}
+body.forest-mode .brand small{font-size:12px}.workspace .piano-hint{font-size:13px;line-height:1.55}
+.workspace .forest-map-choice select{font-size:14px}
+@media(hover:hover){
+ .workspace :is(.outlined,.quick-listen button,.view-toggle,.piano-nav button):hover:not(:disabled){background:#e8edd6;border-color:#98ab7c;color:#36563a}
+ .workspace :is(.primary,.group-btn[aria-pressed=true],.duration-group button[aria-pressed=true]):hover:not(:disabled){background:linear-gradient(#708b51,#46663d);border-color:#577342;color:#fffdf0}
+ .workspace .measure-select button:hover:not(:disabled){background:transparent;color:#294b35}.workspace .measure-select button:hover::before{background:#d2dfb3}
+ .workspace :is(.history-buttons button,.note-row .quiet):hover:not(:disabled){background:#e7edd4;color:#36563a;border-color:#9eaf89}
+}
+@media(max-width:600px){.workspace .forest-map-choice select{font-size:16px}.workspace .piano-hint{margin-top:4px}}

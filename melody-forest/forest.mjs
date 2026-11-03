@@ -94,7 +94,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
     const x = gp.getX(i), z = gp.getZ(i), r = Math.hypot(x, z + .6);
     gp.setY(i, surfaceY(x, z));
     tmp.copy(deep).lerp(grass, 1 - smooth(8, 30, r)).lerp(warm, 1 - smooth(1.5, 6, r));
-    tmp.lerp(earth, (1 - smooth(.25, .9, pathDist(x, z))) * .55).multiplyScalar(.92 + .1 * Math.sin(x * 1.7) * Math.sin(z * 1.3));
+    tmp.lerp(earth, (1 - smooth(.25, .9, pathDist(x, z))) * .55).multiplyScalar(.94 + .06 * Math.sin(x * .7) * Math.sin(z * .53));
     gc.push(tmp.r, tmp.g, tmp.b);
   }
   ground.setAttribute('color', new THREE.Float32BufferAttribute(gc, 3)); ground.computeVertexNormals();
@@ -105,7 +105,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   for(let n=0;n<8500;n++) {const x=grain()*512,y=grain()*512,v=grain();paint.fillStyle=v<.5?'rgba(78,97,59,.055)':'rgba(255,255,231,.13)';paint.fillRect(x,y,1+grain()*3,2+grain()*5);}
   for(let n=0;n<45;n++){const x=grain()*512,y=grain()*512,r=12+grain()*38,gr=paint.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,n%3?'rgba(68,92,40,.18)':'rgba(164,132,72,.16)');gr.addColorStop(1,'rgba(80,100,50,0)');paint.fillStyle=gr;paint.fillRect(x-r,y-r,r*2,r*2);}
   const groundTexture = new THREE.CanvasTexture(groundCanvas);groundTexture.colorSpace=THREE.SRGBColorSpace;groundTexture.wrapS=groundTexture.wrapT=THREE.RepeatWrapping;groundTexture.repeat.set(12,12);
-  const groundMesh = new THREE.Mesh(ground,new THREE.MeshStandardMaterial({vertexColors:true,map:groundTexture,bumpMap:groundTexture,bumpScale:.06,roughness:1})); groundMesh.receiveShadow = true; scene.add(groundMesh);
+  const groundMesh = new THREE.Mesh(ground,new THREE.MeshStandardMaterial({vertexColors:true,map:groundTexture,bumpMap:groundTexture,bumpScale:.045,roughness:1})); groundMesh.receiveShadow = true; scene.add(groundMesh);
 
   const glow = radialTexture();
   const pool = new THREE.Mesh(new THREE.CircleGeometry(5, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({map: glow, color: theme.character?0xa8c7ef:0xffe6a6, transparent: true, opacity: theme.character?.055:.1, blending: THREE.AdditiveBlending, depthWrite: false, fog: false}));
@@ -247,14 +247,15 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   const bladeParts=[];
   for(let k=0;k<4;k++){
     const pos=[],indices=[],h=.25+k*.035;
-    for(let j=0;j<=4;j++){const t=j/4,w=.019*(1-t)+.001;pos.push(-w,h*t,t*t*.16,w,h*t,t*t*.16);if(j<4){const n=j*2;indices.push(n,n+1,n+2,n+1,n+3,n+2);}}
+    for(let j=0;j<=4;j++){const t=j/4,w=.022*(1-t)+.001;pos.push(-w,h*t,t*t*.21,w,h*t,t*t*.21);if(j<4){const n=j*2;indices.push(n,n+1,n+2,n+1,n+3,n+2);}}
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(indices);g.computeVertexNormals();
-    bladeParts.push([g,mat({r:[(k-2)*.12,k*1.3,0]}),0xffffff,y=>.5+y*1.4]);
+    bladeParts.push([g,mat({r:[(k-2)*.12,k*1.3,0]}),0xffffff,y=>.68+y*.85]);
   }
+  const meadowTints=theme.character?[0x788d89,0x93a099,0x607b78]:theme===PALETTES.warm?[0xa49c63,0xbdb17b,0x8b8d52]:[0x879954,0xa4ad69,0x667d48];
   const tufts = [];
-  for (let k = 0; k < 3200; k++) { const a = R() * Math.PI * 2, r = 1.7 + R() * 11, x = Math.cos(a) * r, z = Math.sin(a) * r - .6;
+  for (let k = 0; k < 2800; k++) { const a = R() * Math.PI * 2, r = 1.7 + R() * 11, x = Math.cos(a) * r, z = Math.sin(a) * r - .6;
     if (!dryGround(x,z) || pathDist(x, z) < .5 || Math.hypot(x, z + .9) < 1.7 || Math.hypot(x - GIRL_X, z - .4) < 1) continue;
-    tufts.push({p: V(x, surfaceY(x, z), z), r: [0, R() * 6, 0], s: .4 + R() * .7, c: [0x7fae4c, 0x93b957, 0x6c9a44][k % 3]}); }
+    tufts.push({p: V(x, surfaceY(x, z), z), r: [0, R() * 6, 0], s: .4 + R() * .7, c: meadowTints[k % 3]}); }
   const grassTime=breezeTime,grassMaterial=lambert({side:THREE.DoubleSide});
   grassMaterial.onBeforeCompile=shader=>{shader.uniforms.grassTime=grassTime;shader.vertexShader='uniform float grassTime;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed.x += sin(grassTime*1.4 + instanceMatrix[3].x*.8 + instanceMatrix[3].z*.4)*.045*pow(clamp(position.y/.4,0.,1.),2.);');};
   add(merge(bladeParts),grassMaterial,tufts,t=>C(t.c));
@@ -413,12 +414,12 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
   const scene = new THREE.Scene(), R = rng(20261021);
   scene.fog = new THREE.Fog(PALETTES.basic.fog,22,72);scene.background=C(PALETTES.basic.horizon);
   const camera = new THREE.PerspectiveCamera(40, 1, .1, 220);
-  const ambient=new THREE.HemisphereLight(0xe9f4eb,0x68745b,PALETTES.basic.ambient);scene.add(ambient);
+  const ambient=new THREE.HemisphereLight(0xe7eef0,0x69735e,PALETTES.basic.ambient*.94);scene.add(ambient);
   const sun = new THREE.DirectionalLight(PALETTES.basic.sun,PALETTES.basic.power); sun.position.set(-6, 12, -5.5); sun.target.position.set(.2, 0, -.3);
   sun.castShadow = true; Object.assign(sun.shadow.camera, {left: -12, right: 12, top: 12, bottom: -12, near: 2, far: 30});
   sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -.0005; sun.shadow.normalBias = .02; sun.shadow.radius = 4;
   scene.add(sun, sun.target);
-  const fill = new THREE.DirectionalLight(0xffeedd, .55); fill.position.set(4, 3, 6); scene.add(fill);
+  const fill = new THREE.DirectionalLight(0xffeedd, .42); fill.position.set(4, 3, 6); scene.add(fill);
   let mapId='basic',theme=PALETTES.basic,scenery=new THREE.Group();scene.add(scenery);
   let world=buildScenery(scenery,R,leafTexture,theme),landmarks=buildLandmarks(scenery,mapId,groundY,leafTexture);
   world.colliders.push(...landmarks.colliders);
@@ -455,9 +456,9 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     scene.remove(scenery);releaseScenery(scenery);scenery=next;scene.add(scenery);
     mapId=id;theme=nextTheme;world=nextWorld;landmarks=nextLandmarks;world.colliders.push(...landmarks.colliders);
     scene.fog.color.set(theme.fog);scene.fog.near=id==='journey'?35:22;scene.fog.far=id==='journey'?100:72;scene.background.set(theme.horizon);
-    ambient.intensity=theme.ambient;sun.color.set(theme.sun);sun.intensity=theme.power;fill.intensity=mapId==='dream'||mapId==='moon'?.3:.55;
-    ambient.color.set(theme.character ? 0xc7d6f5 : 0xe9f4eb);
-    ambient.groundColor.set(theme.character ? 0x394d65 : 0x68745b);
+    ambient.intensity=theme.ambient*.94;sun.color.set(theme.sun);sun.intensity=theme.power;fill.intensity=theme.character?.28:.42;
+    ambient.color.set(theme.character ? 0xc7d6f5 : 0xe7eef0);
+    ambient.groundColor.set(theme.character ? 0x394d65 : 0x69735e);
     fill.color.set(theme.character ? 0xd7e1ff : 0xffeedd);
     girl.setEnvironment(theme.character || 0xf9f5ea);
     renderer.toneMappingExposure=theme.exposure;world.shaftMat.uniforms.opacity.value=theme.shafts;
