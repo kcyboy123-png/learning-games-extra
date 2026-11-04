@@ -1,9 +1,9 @@
 // '햇살이 머무는 숲' — a real-time three.js stage that follows the app; it never owns the song or the sound.
 // Illustrated cutouts live in a real 3D woodland; vegetation is instanced to keep draw calls low.
 import * as THREE from './lib/three.module.min.js';
-import {pianoKey, WHITE_KEYS, BLACK_KEY_STEPS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs?v=20261104-reviewed';
-import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261104-reviewed';
-import {createStorybookChild,backingKey} from './forest-character.mjs?v=20261104-reviewed';
+import {pianoKey, WHITE_KEYS, BLACK_KEY_STEPS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs?v=20261104-sixmaps';
+import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261104-sixmaps';
+import {createStorybookChild,backingKey} from './forest-character.mjs?v=20261104-sixmaps';
 import {forestInput, forestStep, forestOrbit, forestRoute, forestLook, forestEye, forestTurnToward} from './forest-controls.mjs';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z), C = h => new THREE.Color(h);
@@ -82,7 +82,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   // Sky dome with a warm low sun glow, matched to the fog for a soft woodland horizon.
   const sky = new THREE.Mesh(new THREE.SphereGeometry(95, 32, 16), new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
-    uniforms: {top: {value: C(theme.sky)}, hor: {value: C(theme.horizon)}, sun: {value: V(-.45, .55, -.7).normalize()}, glowColor: {value:C(theme.sun)}, glowPower: {value:theme.character?.035:.16}},
+    uniforms: {top: {value: C(theme.sky)}, hor: {value: C(theme.horizon)}, sun: {value: V(...theme.light).normalize()}, glowColor: {value:C(theme.sun)}, glowPower: {value:theme.character?.035:.16}},
     vertexShader: 'varying vec3 vP;void main(){vP=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
     fragmentShader: 'uniform vec3 top,hor,sun,glowColor;uniform float glowPower;varying vec3 vP;void main(){float h=max(vP.y,0.);vec3 c=mix(hor,top,smoothstep(.05,.75,h));c+=glowColor*pow(max(dot(vP,sun),0.),12.)*glowPower;gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n#include <colorspace_fragment>\n}'
   }));
@@ -151,7 +151,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   for(let i=0;i<210;i++){const x=R()*256;bx.strokeStyle=i%3?'rgba(49,40,28,.22)':'rgba(231,211,167,.25)';bx.lineWidth=.5+R()*2;bx.beginPath();bx.moveTo(x,0);for(let y=0;y<=512;y+=16)bx.lineTo(x+Math.sin(y*.024+i)*3,y);bx.stroke();}
   const bark=new THREE.CanvasTexture(barkCanvas);bark.colorSpace=THREE.SRGBColorSpace;bark.wrapS=bark.wrapT=THREE.RepeatWrapping;bark.repeat.set(2,3);
   const trunkGeo=trunkG;
-  const trunkMaterial=new THREE.MeshLambertMaterial({map:bark,color:0xb4a080});
+  const trunkMaterial=new THREE.MeshStandardMaterial({map:bark,bumpMap:bark,bumpScale:.065,roughness:1,color:0xc2ae91});
   const trunks = [], leaves = [], greens = [0x5f8f3e, 0x6e9e44, 0x86ad4c, 0x4f7f3a, 0x9bb957];
   const clear = (x, z) => !(theme===PALETTES.moon&&(Math.hypot(x-1.8,z+7.8)<3.2||Math.hypot(x+5.2,z+3.6)<4.1)) && Math.hypot(x, z + .6) > 6.2 && pathDist(x, z) > 2.8 && !(z > 3 && x > 1 && Math.abs(z / Math.max(x, .01) - 1.5) < .9) && !(z > 2 && Math.abs(x - 2.6) < 2.8);
   let tries = 0;
@@ -187,12 +187,12 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   // Curved leaf clusters keep depth and soft silhouettes with one instanced draw.
   const sprigs=[];
   for(const t of leaves){const bush=t.p.y<2,near=Math.hypot(t.p.x,t.p.z)<23,count=bush?10:near?18:10;
-    for(let i=0;i<count;i++){const a=i*2.4+R()*.4,v=R()*1.6-.8,r=Math.sqrt(1-v*v);sprigs.push({p:V(t.p.x+Math.cos(a)*r*t.s[0]*.65,t.p.y+v*t.s[1]*.65,t.p.z+Math.sin(a)*r*t.s[2]*.65),r:[(R()-.5)*.9,a,(R()-.5)*.6],s:(bush?.85:1.8)+R()*(bush?.3:.65)});}
+    for(let i=0;i<count;i++){const a=i*2.4+R()*.4,v=R()*1.6-.8,r=Math.sqrt(1-v*v);sprigs.push({p:V(t.p.x+Math.cos(a)*r*t.s[0]*.65,t.p.y+v*t.s[1]*.65,t.p.z+Math.sin(a)*r*t.s[2]*.65),r:[(R()-.5)*.9,a,(R()-.5)*.6],s:(bush?.85:1.8)+R()*(bush?.3:.65),c:theme===PALETTES.warm?[0xffb05a,0xff8037,0xf6d9a7,0xd9a963][i%4]:[0xf2f0df,0xcbdac4,0xe3e9dc,0xb6cbb4][i%4]});}
   }
   const sprigGeo=new THREE.PlaneGeometry(1,1,3,3),sprigPosition=sprigGeo.attributes.position;
   for(let i=0;i<sprigPosition.count;i++)sprigPosition.setZ(i,Math.sin(sprigPosition.getX(i)*Math.PI)*.1);sprigGeo.computeVertexNormals();
-  const sprigMaterial=new THREE.MeshLambertMaterial({map:leafTexture,color:theme.leaf,emissive:theme.leaf,emissiveMap:leafTexture,emissiveIntensity:.08,alphaTest:.45,side:THREE.DoubleSide});
-  const sprigMesh=add(sprigGeo,sprigMaterial,sprigs,(t,i)=>C([0xf2f0df,0xcbdac4,0xe3e9dc,0xb6cbb4][i%4]),true);
+  const sprigMaterial=new THREE.MeshLambertMaterial({map:leafTexture,color:theme.leaf,emissive:theme.leaf,emissiveMap:leafTexture,emissiveIntensity:theme===PALETTES.warm?.12:.055,alphaTest:.45,side:THREE.DoubleSide});
+  const sprigMesh=add(sprigGeo,sprigMaterial,sprigs,t=>C(t.c),true);
   sprigMesh.customDepthMaterial=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:leafTexture,alphaTest:.45,side:THREE.DoubleSide});
   // The leaf edges and their shadows follow the same slow breeze without CPU instance updates.
   for(const material of [sprigMaterial,sprigMesh.customDepthMaterial])material.onBeforeCompile=shader=>{
@@ -228,18 +228,21 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
 
   // Flowers in three tints along the path and the clearing rim; grass tufts everywhere close.
   const flower = (petal) => { const parts = [[new THREE.CylinderGeometry(.006, .008, .2, 4), mat({p: V(0, .1, 0)}), 0x5d8a3a]];
-    for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2; parts.push([new THREE.SphereGeometry(.034, 8, 5), mat({p: V(Math.cos(a) * .036, .2, Math.sin(a) * .036), r: [0, -a, 0], s: [1.3, .42, .80]}), petal]); }
-    for(const side of[-1,1])parts.push([new THREE.SphereGeometry(.035,8,4),mat({p:V(side*.027,.09,0),r:[0,0,side*.6],s:[1.35,.25,.6]}),0x729547]);
+    for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2; parts.push([new THREE.SphereGeometry(.034, 6, 4), mat({p: V(Math.cos(a) * .036, .2, Math.sin(a) * .036), r: [0, -a, 0], s: [1.3, .42, .80]}), petal]); }
+    for(const side of[-1,1])parts.push([new THREE.SphereGeometry(.035,6,3),mat({p:V(side*.027,.09,0),r:[0,0,side*.6],s:[1.35,.25,.6]}),0x729547]);
     parts.push([new THREE.SphereGeometry(.02, 6, 4), mat({p: V(0, .208, 0)}), 0xf3b63f]); return merge(parts); };
   const flowerMat = lambert();
-  (theme===PALETTES.warm?[0xecc58d,0xfff6dc,0xd5b2ae]:theme.character?[0xb8b6e6,0xe4ebf2,0x92afcb]:[0xf1a9b7,0xfff4e4,0xc3b3df]).forEach((tint, f) => {
+  (theme===PALETTES.warm?[0xe0a247,0xffedb2,0xc78065]:theme===PALETTES.pop?[0xed8fad,0xffeed9,0xa896cb]:theme===PALETTES.journey?[0xf7edcc,0xa4c9e5,0xe8bccd]:theme.character?[0xb8b6e6,0xe4ebf2,0x92afcb]:[0xf1b8bf,0xfff4e4,0xc3b3df]).forEach((tint, f) => {
     const list = [];
     for (let k = 0; k < 110; k++) { let x, z;
       if (k < 58) { const p = PATH.getPointAt(R() * .97), side = R() < .5 ? -1 : 1; x = p.x + side * (.55 + R() * .9); z = p.z + (R() - .5) * .6; }
       else { const a = R() * Math.PI * 2, r = 2.6 + R() * 4.5; x = Math.cos(a) * r; z = Math.sin(a) * r - .6; }
       if (!dryGround(x,z) || Math.hypot(x - GIRL_X, z - .3) < 1.9 || Math.hypot(x, z + .9) < 1.9 || pathDist(x, z) < .45) continue;
-      list.push({p: V(x, surfaceY(x, z), z), r: [(R() - .5) * .3, R() * 6, (R() - .5) * .3], s: .9 + R() * .9});
+      list.push({p: V(x, surfaceY(x, z), z), r: [(R() - .5) * .3, R() * 6, (R() - .5) * .3], s: .7 + R() * .8});
     }
+    // Loose flower drifts give the middle distance a garden scale without filling the path.
+    for(let k=0;k<45;k++){const side=k%2?1:-1,cx=side*(4.3+f*.7),cz=-3.7+f*2.1,a=k*2.4,r=.2+R()*.85,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r;
+      if(dryGround(x,z))list.push({p:V(x,surfaceY(x,z),z),r:[0,R()*6.28,0],s:.65+R()*.55});}
     add(flower(tint), flowerMat, list);
   });
   // Bell-shaped woodland flowers add a second silhouette at the edge of the clearing.
@@ -287,9 +290,9 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   add(smallLeaf.clone(),new THREE.MeshLambertMaterial({side:THREE.DoubleSide}),litter,t=>C(t.c));
 
   // Warm sun shafts: open cones with a view-angle fade, additive, never writing depth.
-  const sunDir = V(-.5, 1, -.45).normalize(), shaftMat = new THREE.ShaderMaterial({
+  const sunDir = V(...theme.light).normalize(), shaftMat = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,
-    uniforms: {color: {value: C(0xffdf9e)}, opacity: {value: .22}},
+    uniforms: {color: {value: C(theme.sun)}, opacity: {value: theme.shafts}},
     vertexShader: 'varying float vF;varying float vV;void main(){vec4 w=modelMatrix*instanceMatrix*vec4(position,1.);vec3 n=normalize(mat3(modelMatrix*instanceMatrix)*normal);vF=abs(dot(n,normalize(cameraPosition-w.xyz)));vV=position.y+.5;gl_Position=projectionMatrix*viewMatrix*w;}',
     fragmentShader: 'uniform vec3 color;uniform float opacity;varying float vF;varying float vV;void main(){float a=pow(vF,2.2)*smoothstep(0.,.3,vV)*(1.-smoothstep(.55,1.,vV));gl_FragColor=vec4(color,a*opacity);\n#include <colorspace_fragment>\n}'
   });
@@ -418,16 +421,16 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
   scene.fog = new THREE.Fog(PALETTES.basic.fog,18,60);scene.background=C(PALETTES.basic.horizon);
   const camera = new THREE.PerspectiveCamera(40, 1, .1, 220);
   const ambient=new THREE.HemisphereLight(0xe7eef0,0x69735e,PALETTES.basic.ambient*.94);scene.add(ambient);
-  const sun = new THREE.DirectionalLight(PALETTES.basic.sun,PALETTES.basic.power); sun.position.set(-6, 12, -5.5); sun.target.position.set(.2, 0, -.3);
+  const sun = new THREE.DirectionalLight(PALETTES.basic.sun,PALETTES.basic.power); sun.position.set(...PALETTES.basic.light); sun.target.position.set(.2, 0, -.3);
   sun.castShadow = true; Object.assign(sun.shadow.camera, {left: -12, right: 12, top: 12, bottom: -12, near: 2, far: 30});
   sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -.0005; sun.shadow.normalBias = .02; sun.shadow.radius = 4;
   scene.add(sun, sun.target);
-  const fill = new THREE.DirectionalLight(0xffeedd, .42); fill.position.set(4, 3, 6); scene.add(fill);
+  const fill = new THREE.DirectionalLight(0xd7e6ed, .3); fill.position.set(4, 3, 6); scene.add(fill);
   const pianoRim=new THREE.SpotLight(0xc9dfff,0,10,Math.PI/4,1,2);
   pianoRim.position.set(2.5,3.8,-1.5);pianoRim.target.position.set(0,.7,-.6);scene.add(pianoRim,pianoRim.target);
   let mapId='basic',theme=PALETTES.basic,scenery=new THREE.Group();scene.add(scenery);
   const piano=buildPiano(scene);
-  let world=buildScenery(scenery,R,leafTexture,theme),landmarks=buildLandmarks(scenery,mapId,groundY,leafTexture,piano.woodMap);
+  let world=buildScenery(scenery,R,leafTexture,theme),landmarks=buildLandmarks(scenery,mapId,groundY,leafTexture,piano.woodMap,world.glow);
   world.colliders.push(...landmarks.colliders);
   const girl=buildGirl(scene,girlAtlas,seatedGirl,seatedBoy,posesGirl,posesBoy);
   girl.setEnvironment(theme.character || 0xf9f5ea);
@@ -457,16 +460,16 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     id=forestMapId(id);if(id===mapId)return;
     const nextTheme=PALETTES[id],next=new THREE.Group();
     let nextWorld,nextLandmarks;
-    try{nextWorld=buildScenery(next,rng(20261021),leafTexture,nextTheme);nextLandmarks=buildLandmarks(next,id,groundY,leafTexture,piano.woodMap);}
+    try{nextWorld=buildScenery(next,rng(20261021),leafTexture,nextTheme);nextLandmarks=buildLandmarks(next,id,groundY,leafTexture,piano.woodMap,nextWorld.glow);}
     catch(error){releaseScenery(next);throw error;}
     scene.remove(scenery);releaseScenery(scenery);scenery=next;scene.add(scenery);
     mapId=id;theme=nextTheme;world=nextWorld;landmarks=nextLandmarks;world.colliders.push(...landmarks.colliders);
     scene.fog.color.set(theme.fog);scene.fog.near=id==='journey'?35:18;scene.fog.far=id==='journey'?100:60;scene.background.set(theme.horizon);
-    ambient.intensity=theme.ambient*.94;sun.color.set(theme.sun);sun.intensity=theme.power;fill.intensity=theme.character?.28:.42;
+    ambient.intensity=theme.ambient*.94;sun.color.set(theme.sun);sun.intensity=theme.power;sun.position.set(...theme.light);
     ambient.color.set(theme.character ? 0xc7d6f5 : 0xe7eef0);
     ambient.groundColor.set(theme.character ? 0x394d65 : 0x69735e);
-    fill.color.set(theme.character ? 0xd7e1ff : 0xffeedd);
-    pianoRim.intensity=theme.character?9:0;
+    fill.color.set(theme.character ? 0xd7e1ff : 0xd7e6ed);
+    pianoRim.intensity=theme.character?16:0;
     girl.setEnvironment(theme.character || 0xf9f5ea);
     renderer.toneMappingExposure=theme.exposure;world.shaftMat.uniforms.opacity.value=theme.shafts;
     input={x:0,z:0};state.moving=false;route=[];routeIndex=0;state.hands.forEach(h=>h.hit=0);
@@ -661,6 +664,3 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     }
   };
 }
-
-
-
