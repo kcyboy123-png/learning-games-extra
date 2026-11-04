@@ -1,6 +1,6 @@
 import {startCozyReview,cozyReviews,reviewSnapshot} from './cozy-review.mjs?v=review20261104';
 import {createWelcomeLife} from './welcome-life.mjs?v=friends20261104';
-import {VillageSound} from './sound.mjs?v=balance1';
+import {VillageSound} from './sound.mjs?v=audio20261105';
 import {upgradeCards,UPGRADE_LOOKS} from './upgrade-ui.mjs?v=balance1';
 import {effectNumber,cozyEffectText,cozyPlacementText,calendarDay,incomePerMinute,catalogueStyle,cozyDescription,fundingAdvice,operatingPreviewText,placementBenefits,constructionText,catalogueBudget,buildBudget,guidedPlacement,buildingBenefit,completionMessage,incomeRate,starterChoices,incomePreviewText} from './economy-ui.mjs?v=review20261104';
 import {growthStatus,ratingName,gradeNote,tierRules,developmentSummary,shortageNote} from './grading-ui.mjs?v=balance1';
@@ -46,7 +46,7 @@ function download(){const a=document.createElement('a');a.href=URL.createObjectU
 $('file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(otherOwnerAlive()){toast('다른 탭에서 마을이 진행 중이에요. 먼저 이 탭에서 이어받아 주세요.');return;}try{const next=parseSave(await f.text());if(otherOwnerAlive()){toast('다른 탭에서 마을이 진행 중이에요. 먼저 이 탭에서 이어받아 주세요.');return;}if(storageOK&&localStorage.getItem(KEY))localStorage.setItem(BACKUP,localStorage.getItem(KEY));state=next;state.paused=true;corrupt=null;resetSession();if(save('불러옴'))toast('마을 파일을 불러왔어요. 이전 기록은 백업에 남겼어요.');else toast('파일은 열었지만 저장하지 못했어요. 내보내기로 보관해 주세요.');showPause();}catch(err){toast('불러오지 못했어요: '+err.message+' (원본은 그대로예요)');}};
 // ---- 시간 표시 ----
 const mmss=sec=>`${String(Math.floor(sec/60)).padStart(2,'0')}:${String(Math.floor(sec%60)).padStart(2,'0')}`;
-function ui(){sound.update(!document.hidden&&(!state.paused||!!world.entrance));$('toggleSound').textContent=sound.blocked?'소리 다시 켜기':sound.enabled?'소리 켜짐':'소리 꺼짐';$('toggleSound').setAttribute('aria-pressed',String(sound.enabled&&!sound.blocked));const m=month(state),v=metrics(state),growth=growthStatus(state,v);
+function ui(){sound.update(!document.hidden&&(!state.paused||!!world.entrance));$('toggleSound').textContent=sound.blocked?'소리 다시 켜기':sound.enabled&&(sound.levels.music||sound.levels.effects)?'소리 켜짐':'소리 꺼짐';$('toggleSound').setAttribute('aria-pressed',String(!!(sound.enabled&&!sound.blocked&&(sound.levels.music||sound.levels.effects))));const m=month(state),v=metrics(state),growth=growthStatus(state,v);
  $('calendar').textContent=`${1+Math.floor(month(state)/12)}년 차 · ${SEASONS[season(calendarMonth(state))]} · ${monthLabel(state)} ${calendarDay(state)}일`;document.body.classList.toggle('reviewing',!!state.cozyReview);$('left').textContent=state.cozyReview?(state.cozyReview.months.length===36?'3년 평가 완료 · 계속 가꿔요':`3년 평가까지 ${mmss(realSeconds(36*MONTH-state.t))}`):'자유롭게 가꾸는 마을';$('monthBar').style.width=`${(state.t%MONTH)/MONTH*100}%`;
  $('money').textContent=Math.floor(state.money).toLocaleString();$('incomeRate').textContent=`1분당 ${incomePerMinute(v)<0?'−':'+'}${effectNumber(Math.abs(incomePerMinute(v)))}`;$('incomeRate').title=state.paused?'일시정지 중 · 재개하면 이 속도로 변해요':'유지비를 뺀 현재 속도 · 진행 중인 실제 시간 기준';$('pop').textContent=`${state.pop}명`;$('heartScore').textContent=`${cozyGrowth(state).score}점`;$('ecoScore').textContent=`${v.environment}점`;$('sat').textContent=Math.round(state.sat)+'점';$('score').textContent=state.result?ratingName(state.result.total):growth.name;$('scoreScope').textContent=state.result?'3년 종합 평가 · 기록 고정':'마을 성장';$('tierName').textContent=state.result?`${state.result.total}점 · 최종 기록`:`${growth.detail}`;
  $('pause').textContent=state.paused?'▶ 재개':'❚❚ 일시정지';$('pause').disabled=state.ended;world.season(season(calendarMonth(state)));const note=['❄ 눈 덮인 겨울 · 따뜻한 집을 준비해요','🌸 벚꽃 피는 봄 · 새로운 이웃을 맞아요','☀ 초록이 짙은 여름 · 시원한 그늘을 만들어요','🍂 단풍 드는 가을 · 마을의 결실을 살펴요'][season(calendarMonth(state))];if($('seasonNote').textContent!==note)$('seasonNote').textContent=note;
@@ -191,7 +191,10 @@ $('phoneGoal').onclick=()=>$('navNeed').click();
 $('phoneMenuOpen').onclick=()=>{const open=$('phoneMenu').classList.contains('open');closePanels();if(open)return;$('phoneMenu').classList.add('open');$('phoneViewOptions').open=false;$('phoneMenuOpen').setAttribute('aria-expanded','true');$('phoneSummary').textContent=state.cozyReview?'3년 동안 마을의 발전·친환경·행복·복지를 함께 가꿔요.':'이전 마을은 자유 꾸미기로 보존돼요. 새 마을에서 3년 평가를 시작할 수 있어요.';for(const b of document.querySelectorAll('[data-phone-action]')){const source=$(b.dataset.phoneAction);b.disabled=source.disabled;if(b.dataset.phoneAction==='navHarvest')b.textContent=source.textContent;}};
 $('phoneMenuClose').onclick=dismissPanels;$('help').onclick=()=>$('phoneMenuOpen').click();$('helpGuide').onclick=()=>modal($('helpDialog'));$('closeHelp').onclick=()=>$('helpDialog').close();
 for(const b of document.querySelectorAll('[data-phone-action]'))b.onclick=()=>{const source=$(b.dataset.phoneAction);if(source.disabled)return;closePanels();source.click();};
-$('toggleSound').onclick=()=>{sound.toggle();ui();};
+function syncSoundControls(){for(const key of ['music','effects']){$(key+'Volume').value=Math.round(sound.levels[key]*100);$(key+'VolumeValue').textContent=Math.round(sound.levels[key]*100)+'%';}}
+$('toggleSound').onclick=()=>{sound.toggle();syncSoundControls();ui();};
+for(const key of ['music','effects'])$(key+'Volume').oninput=e=>{sound.setLevel(key,Number(e.target.value)/100);syncSoundControls();ui();};
+syncSoundControls();
 document.addEventListener('click',e=>{const button=e.target.closest('button');if(button&&!button.disabled&&!['toggleSound','confirmRemove'].includes(button.id))sound.effect('select');});
 
 // ---- 터치/마우스: 탭=선택·걷기, 드래그=카메라, 핀치=확대. 손가락을 뗄 때 건설되지 않는다. ----

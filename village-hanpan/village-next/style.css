@@ -295,3 +295,5 @@ body:has(#infoPanel.open) #need{visibility:hidden}
 .cozy #buildList button.population-locked{opacity:1;background:#f0efe7;border-style:dashed}.population-locked .build-thumb{filter:saturate(.5)}.cozy #buildList .population-locked .build-action{color:#58675d}.facility-effects{white-space:pre-line;line-height:1.7;background:#fff0cc;padding:10px;border-radius:10px}
 
 @media(max-height:540px) and (min-aspect-ratio:4/5){.entrance-welcome{padding:3vh 4vw 7vh;gap:6px}.entrance-welcome h1{font-size:clamp(30px,4vw,44px)}.entrance-welcome small{font-size:12px}.entrance-welcome button{width:190px;min-height:48px;margin-top:6px;font-size:17px}}
+
+#soundOptions summary{font-size:14px;font-weight:700;color:#365642}.sound-levels{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px 4px}.sound-levels input{grid-column:1/-1;width:100%;min-height:44px;accent-color:#4f765e}.sound-levels output{font-variant-numeric:tabular-nums;color:#47634f}
