@@ -9,11 +9,12 @@ import {naturalFeature,growthStage} from './landscape.mjs?v=balance1';
 import {advancePersonRoute} from './residents.mjs?v=friends20261104';
 import {townscapeSites} from './townscape.mjs?v=friends20261104';
 import {seasonalSites,createSeasonDetails,disposeSeasonDetails} from './season-details.mjs?v=friends20261104';
-import {surfaceOptions,surfaceTime,surfaceWinter} from './surfaces.mjs?v=friends20261104';
+import {surfaceOptions,surfaceTime,surfaceWinter} from './surfaces.mjs?v=scenario20261104';
 import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?v=friends20261104';
 import {createSunlight} from './sunlight.mjs?v=friends20261104';
 import {paintedTree,treeArtSeason,treeArtReady} from './tree-art.mjs?v=balance1';
 import {addRabbitArt,updateRabbitArt} from './rabbit-art.mjs?v=balance1';
+import {addPenguinArt,updatePenguinArt} from './penguin-art.mjs';
 
 const materials=new Map(),geometries=new Map();let ghostMode=false;
 const GHOST={transparent:true,opacity:.5,depthWrite:false};
@@ -594,7 +595,7 @@ export class World{
   this.petals.material.color.set(['#fffef6','#ffe1eb','#f5dc84','#c57b40'][se]);
  }
 
- person(color,id){const p=personRig(this.scene,color,id);p.scarf.visible=this.se===0;if(id==='player')p.g.rotation.y=1.3;addRabbitArt(p);this.people.push(p);return p;}
+ person(color,id){const p=personRig(this.scene,color,id);p.scarf.visible=this.se===0;if(id==='player')p.g.rotation.y=1.3;addRabbitArt(p);addPenguinArt(p);this.people.push(p);return p;}
  removePerson(p){dispose(p.g);this.people=this.people.filter(q=>q!==p);}
  place(p,gx,gy){const w=toWorld(gx,gy);p.g.position.set(w.x,GROUND_Y,w.z);p.route=[];}
  focus(gx,gy){this.followPlayer=false;const w=toWorld(gx,gy);this.center.set(w.x,0,w.z);}
@@ -662,6 +663,7 @@ export class World{
    const gx=Math.round(p.g.position.x/CELL+(SIZE-1)/2),gy=Math.round(p.g.position.z/CELL+(SIZE-1)/2);p.g.position.y=(this.roads.has(`${gx},${gy}`)?ROAD_Y:GROUND_Y)+sit*.08;}
 
   updateRabbitArt(this.player,this.angle,idleTime,reduced);
+  for(const p of this.people)updatePenguinArt(p,this.angle,idleTime,reduced,this.se===0);
   for(let i=this.animations.length-1;i>=0;i--){const a=this.animations[i];a.t+=motionDt;const u=Math.min(1,a.t/.9);a.g.position.y=GROUND_Y+.3+u*1.6;a.g.scale.setScalar(1-u*.8);if(u===1||reduced){dispose(a.g);this.animations.splice(i,1);}}
   this.petals.visible=!reduced;
   if(this.petals.visible){this.petals.count=Math.min(this.petals.instanceMatrix.count,[96,64,20,56][this.se??1]);for(let i=0;i<this.petals.count;i++){const o=this.petalPose,t=idleTime*.24+i*1.618,summer=this.se===2;o.position.set(this.center.x-9+(i*3.71%18)+Math.sin(t)*.55,summer?.7+Math.sin(t*1.4+i)*.32:.25+(5-((idleTime*(this.se===0?.23:.32)+i*.71)%5)),this.center.z-9+(i*2.37%18)+Math.cos(t*.7)*.6);o.rotation.set(t,i,t*.6);o.scale.set(this.se===0?.048:this.se===3?.085:.065,summer?.012+Math.abs(Math.sin(idleTime*7+i))*.04:.012,this.se===0?.048:summer?.065:.045);o.updateMatrix();this.petals.setMatrixAt(i,o.matrix);}this.petals.instanceMatrix.needsUpdate=true;}

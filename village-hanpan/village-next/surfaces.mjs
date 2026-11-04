@@ -5,6 +5,10 @@ export const surfaceTime={value:0},surfaceWinter={value:0};
 const maps=new Map();
 let architectureArt;
 function paintArchitecture(kind,ctx,map){
+ if(kind==='stone'){
+  const image=new Image();image.onload=()=>{ctx.globalAlpha=.40;ctx.drawImage(image,40,25,140,55,0,0,256,256);ctx.globalAlpha=1;map.needsUpdate=true;};
+  image.src=new URL('./assets/scenario-stone.webp',import.meta.url).href;return;
+ }
  const quadrant={plaster:[0,0],wood:[1,0],roof:[0,1],stone:[1,1]}[kind];
  if(!quadrant||typeof Image==='undefined')return;
  architectureArt??=new Promise(resolve=>{
@@ -55,8 +59,8 @@ function texture(kind){
  if(kind==='grass'){
   map.repeat.set(.12,.12);
   // Detailed neutral meadow albedo is softly blended so paths and buildings remain legible.
-  const art=new Image();art.onload=()=>{ctx.fillStyle='#fffef5';ctx.fillRect(0,0,1024,1024);ctx.globalAlpha=.28;ctx.drawImage(art,0,0,1024,1024);ctx.globalAlpha=1;map.needsUpdate=true;};
-  art.src=new URL('./assets/meadow-soft.png',import.meta.url).href;
+  const art=new Image();art.onload=()=>{ctx.fillStyle='#fffef5';ctx.fillRect(0,0,1024,1024);ctx.globalAlpha=.38;ctx.drawImage(art,0,0,1024,1024);ctx.globalAlpha=1;map.needsUpdate=true;};
+  art.src=new URL('./assets/scenario-meadow.webp',import.meta.url).href;
  }
  paintArchitecture(kind,ctx,map);maps.set(kind,map);return map;
 }
