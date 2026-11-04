@@ -28,6 +28,23 @@ export function cozyGrowth(s){
  const gardens=made.filter(isGarden).length,buildings=made.length-gardens,variety=new Set(made.map(b=>b.type)).size,details=made.reduce((n,b)=>n+b.opts.length,0);
  return {gardens,buildings,variety,score:Math.round(100+250*Math.min(1,gardens/24)+300*Math.min(1,variety/28)+150*Math.min(1,buildings/28)+100*Math.min(1,details/20)+100*Math.min(1,Math.max(0,s.pop-8)/232))};
 }
+const BASIC_GARDENS=new Set(['flower','avenue','tree','bench']);
+export function cozyRates(type,count){
+ const income=[1,.75,.5,.35,.25][count-1]??.2;
+ const care=BASIC_GARDENS.has(type)?(count<=4?1:count===5?.75:count===6?.5:.25):([1,.6,.35,.2][count-1]??.1);
+ return {income,care};
+}
+// Stable IDs keep individual effects consistent after moving, reloading or reordering saves.
+export function cozyEffects(s,pending=false){
+ const total={income:0,happiness:0,welfare:0,counts:{},effects:new Map()};
+ for(const b of s.buildings.filter(b=>!b.starter&&!b.closed&&(pending||b.progress>=1)).sort((a,b)=>a.id-b.id)){
+  const count=total.counts[b.type]=(total.counts[b.type]||0)+1,rate=cozyRates(b.type,count),base=COZY_EFFECTS[b.type];
+  const income=base.income*rate.income,happiness=Math.min(50-total.happiness,base.happiness*rate.care),welfare=Math.min(100-total.welfare,base.welfare*rate.care);
+  total.effects.set(b.id,{count,rate,income,happiness,welfare,potentialHappiness:base.happiness*rate.care,potentialWelfare:base.welfare*rate.care,limited:happiness+1e-9<base.happiness*rate.care||welfare+1e-9<base.welfare*rate.care});
+  total.income+=income;total.happiness+=happiness;total.welfare+=welfare;
+ }
+ return total;
+}
 export function network(s){const roads=new Set(s.buildings.filter(b=>b.progress>=1&&['road','bridge'].includes(b.type)).map(b=>`${b.x},${b.y}`)),seen=new Set(),q=s.cozyV===1&&!roads.has('5,3')?[...roads].slice(0,1):['5,3'];
  while(q.length){const k=q.pop();if(seen.has(k)||!roads.has(k))continue;seen.add(k);const[x,y]=k.split(',').map(Number);for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]])q.push(`${x+dx},${y+dy}`);}return seen;}
 export function connected(s,b,net=network(s)){return cells(b).some(([x,y])=>net.has(`${x},${y}`)||[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>net.has(`${x+dx},${y+dy}`)));}
@@ -101,7 +118,7 @@ export function metrics(s){const net=network(s),live=s.buildings.filter(b=>b.pro
  const D=clamp(clamp(s.pop/popGoal)*(.35-.14*beautyPhase)+service*.30+env*.20+safety*.15+beauty*.14*beautyPhase);
  const Q=clamp(s.sat/100*.50+service*.30+energy*.15+clamp(housing/p)*.05);
  let welfare=0;
- if(s.cozyV===1){const made=s.buildings.filter(b=>!b.starter&&b.progress>=1&&!b.closed);welfare=Math.min(100,made.reduce((n,b)=>n+COZY_EFFECTS[b.type].welfare,0));targetSat=Math.min(100,50+made.reduce((n,b)=>n+COZY_EFFECTS[b.type].happiness,0));income=upkeep+(90+made.reduce((n,b)=>n+COZY_EFFECTS[b.type].income,0))*MONTH/(60*PLAY_SPEED);}
+ if(s.cozyV===1){const effect=cozyEffects(s);welfare=effect.welfare;targetSat=50+effect.happiness;income=upkeep+(90+effect.income)*MONTH/(60*PLAY_SPEED);}
  return{welfare,environment:Math.round(clamp(env)*100),landscaping,beautyPhase,premium,net,live,production,use,energy,food,health,education,leisure,housing,service,green,comfort,targetSat,income,upkeep,D,Q,score:s.cozyV===1?cozyGrowth(s).score:Math.round(1000*D*Q),demands,popGoal,fire,drain,optionRate,foodCap:sum('food'),healthCap:sum('health'),educationCap:sum('education'),leisureCap:sum('leisure')};
 }
 export const DEMAND_MONTH={health:2,education:3,leisure:4};

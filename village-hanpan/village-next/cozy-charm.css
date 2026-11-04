@@ -60,3 +60,6 @@
 @media(min-width:701px) and (max-width:1100px) and (min-height:481px){.cozy .sheet,.cozy #buildPanel{bottom:210px;max-height:calc(100dvh - 340px)}}
 @media(min-width:821px) and (min-height:481px){body.cozy #placePanel,body.cozy #infoPanel{max-height:calc(100dvh - 320px)}}
 @media(max-height:480px){.cozy .sheet,.cozy .sheet.open,.cozy #buildPanel,.cozy #buildPanel.open,.cozy #placePanel{left:132px;right:12px;top:auto;transform:none;width:auto;bottom:108px;max-height:calc(100dvh - 200px)}}
+
+.balance-note{max-width:420px;margin:0;padding:10px 14px;border-radius:12px;background:#fff8e8;color:#34503f;font:600 14px/1.6 SUIT,sans-serif;text-shadow:none}
+@media(max-height:480px){.balance-note{max-width:460px;font-size:12px;padding:6px 10px}}

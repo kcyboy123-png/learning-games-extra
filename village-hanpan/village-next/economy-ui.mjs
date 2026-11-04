@@ -1,5 +1,5 @@
-import {buildingSpec,metrics,TYPES,MONTH,month,monthLabel,calendarMonth,demandMonth,connected,unlocked,HARVEST,HARVEST_SECONDS} from './core.mjs?v=balance1';
-import {PLAY_SPEED,realSeconds,COZY_EFFECTS} from './data.mjs?v=balance1';
+import {cozyEffects,buildingSpec,metrics,TYPES,MONTH,month,monthLabel,calendarMonth,demandMonth,connected,unlocked,HARVEST,HARVEST_SECONDS} from './core.mjs?v=duplicates20261104';
+import {PLAY_SPEED,realSeconds} from './data.mjs?v=balance1';
 
 // nextId never decreases, so cancelling or reloading cannot restart completed guidance.
 export const guidedPlacement=s=>s.mode==='run'&&!s.ended&&month(s)<4&&s.nextId-1-s.buildings.filter(b=>b.starter).length<2;
@@ -20,7 +20,7 @@ export function buildingBenefit(s,type){
 }
 export function completionMessage(s,ids){
  const b=s.buildings.find(b=>b.id===ids[0]);if(!b)return '';
- const d=buildingSpec(s,b.type);if(s.cozyV===1)return `${d.name} 완공!\n${cozyEffectText(s,b.type)}`;if(!connected(s,b))return `${d.name} 완공! 길을 이어야 이용할 수 있어요.`;
+ const d=buildingSpec(s,b.type);if(s.cozyV===1){const after=cozyEffects(s),before=cozyEffects({...s,buildings:s.buildings.filter(b=>!ids.includes(b.id))});return `${d.name}${ids.length>1?` 외 ${ids.length-1}곳`:''} 완공!\n${d.cap&&ids.length===1?`인구 +${d.cap}명`:effectLine(after.income-before.income,after.happiness-before.happiness,after.welfare-before.welfare)}`;}if(!connected(s,b))return `${d.name} 완공! 길을 이어야 이용할 수 있어요.`;
  const after=metrics(s),before=metrics({...s,buildings:s.buildings.filter(b=>!ids.includes(b.id))});
  const difference=netIncome(after)-netIncome(before),land=after.landscaping.score-before.landscaping.score;
  return `${d.name}${ids.length>1?` 외 ${ids.length-1}곳`:''} 완공! ${buildingBenefit(s,b.type)}\n순수입 ${incomeRate(before)} → ${incomeRate(after)}${land>0?` · 미관 +${land}`:''}${d.cap?' · 입주하면 수입도 자라요':difference<=0?' · 이용할 주민이 늘면 효과도 커져요':''}`;
@@ -95,15 +95,24 @@ export function fundingAdvice(s,price){
 
 export const cozyDescription=type=>({"road": "마을 곳곳을 잇는 산책길", "house": "새 이웃을 맞이하는 작은 집", "snack": "이웃들이 함께 먹는 분식집", "apartment": "여러 이웃이 모여 사는 빌라", "western": "따뜻한 차양이 있는 양식집", "japanese": "골목에 어울리는 아담한 일식집", "chinese": "붉은 지붕이 돋보이는 중국집", "convenience": "가까이에서 장보는 작은 가게", "supermarket": "넓은 마을에 어울리는 큰 장보기 공간", "clinic": "이웃을 돌보는 작은 의원", "hospital": "마을의 든든한 병원", "kids": "아이들이 놀러 오는 키즈카페", "amusement": "마을을 활기차게 만드는 놀이동산", "school": "아이들이 함께 배우는 학교", "library": "책을 읽고 쉬어 가는 도서관", "fire": "마을을 지켜 주는 소방서", "drain": "빗물을 모으는 작은 시설", "workshop": "개울 건너 오래된 창고를 새롭게 꾸며요", "solar": "햇빛을 모으는 파란 지붕", "generator": "마을에 빛을 보내는 시설", "bridge": "개울 양쪽을 잇는 나무다리", "flower": "계절마다 피어나는 꽃밭", "avenue": "천천히 자라는 그늘나무", "tree": "집 곁을 초록빛으로 채우는 정원", "bench": "이웃들이 쉬어 가는 벤치"})[type]||TYPES[type].desc;
 
-const effectLine=(income,happiness,welfare)=>`매분 ${Math.round(income).toLocaleString()}코인 더 벌어요\n행복 +${Math.round(happiness)} · 복지 +${Math.round(welfare)}`;
-export function cozyEffectText(s,type,compact=false){
- const d=buildingSpec(s,type),e=COZY_EFFECTS[type];
+export const effectNumber=n=>n.toLocaleString('ko-KR',{maximumFractionDigits:2});
+const effectLine=(income,happiness,welfare)=>`매분 ${effectNumber(income)}코인 더 벌어요\n행복 +${effectNumber(happiness)} · 복지 +${effectNumber(welfare)}`;
+export function cozyEffectText(s,type,compact=false,building=null){
+ const d=buildingSpec(s,type);
  if(d.cap)return `인구 +${d.cap}명`;
- return compact?`+${e.income.toLocaleString()}코인/분\n행복 +${e.happiness} · 복지 +${e.welfare}`:effectLine(e.income,e.happiness,e.welfare);
+ if(building?.closed)return '휴업 중 · 수입·행복·복지 +0';
+ if(building?.starter)return '시작 시설 · 추가 수입·행복·복지 +0';
+ const next=building?s:{...s,buildings:[...s.buildings,{id:s.nextId,type,progress:1}]},pending=!building||building.progress<1;
+ const e=cozyEffects(next,pending).effects.get(building?.id??s.nextId);
+ const order=e.count>1?`같은 시설 ${e.count}번째 · 수입 ${Math.round(e.rate.income*100)}%`:'첫 시설 · 수입 100%';
+ const cap=e.limited?'\n행복·복지 최대치 반영':'';
+ if(compact)return `+${effectNumber(e.income)}코인/분 · ${e.count}번째\n행복 +${effectNumber(e.happiness)} · 복지 +${effectNumber(e.welfare)}${cap}`;
+ return effectLine(e.income,e.happiness,e.welfare)+`\n${order}`+(e.count>1?'\n같은 시설은 추가 효과가 조금씩 줄어요.':'')+cap+(e.limited?`\n상한 적용 전: 행복 +${effectNumber(e.potentialHappiness)} · 복지 +${effectNumber(e.potentialWelfare)}`:'')+(pending&&s.buildings.some(b=>!b.starter&&!b.closed&&b.progress<1)?'\n진행 중인 공사까지 모두 완공한 예상이에요.':'')+(building&&building.progress>=1?'\n운영 중인 시설 기준 · 완공·휴업에 따라 달라져요.':'');
 }
 export function cozyPlacementText(s,type,x,y,moving=null){
  if(moving)return buildingSpec(s,type).cap?cozyEffectText(s,type):'옮겨도 수입·행복·복지 효과는 그대로예요.';
- const {before,after}=incomePreview(s,type,x,y),d=buildingSpec(s,type),timing=constructionTime(s,{id:s.nextId,type,progress:0});
- const effect=d.cap?cozyEffectText(s,type):'완공하면 '+effectLine(incomePerMinute(after)-incomePerMinute(before),after.targetSat-before.targetSat,after.welfare-before.welfare)+`\n마을 전체 수입: 매분 ${Math.round(incomePerMinute(before)).toLocaleString()} → ${Math.round(incomePerMinute(after)).toLocaleString()}코인`;
- return effect+`\n완공까지 약 ${constructionDuration(timing.finish)}${timing.wait?' (공사 대기 포함)':''}`+(!d.cap&&(before.targetSat===100||before.welfare===100)?'\n행복·복지는 각각 최대 100점이에요.':'');
+ const before=cozyEffects(s,true),after=cozyEffects({...s,buildings:[...s.buildings,{id:s.nextId,type,progress:1}]},true),d=buildingSpec(s,type),timing=constructionTime(s,{id:s.nextId,type,progress:0});
+ const queued=s.buildings.some(b=>!b.starter&&!b.closed&&b.progress<1);
+ const effect=d.cap?cozyEffectText(s,type):cozyEffectText(s,type)+`\n${queued?'대기 공사 포함 예상':'마을 전체'} 수입: 매분 ${effectNumber(90+before.income)} → ${effectNumber(90+after.income)}코인`;
+ return effect+`\n완공까지 약 ${constructionDuration(timing.finish)}${timing.wait?' (공사 대기 포함)':''}`;
 }

@@ -1,17 +1,17 @@
 import {createWelcomeLife} from './welcome-life.mjs?v=friends20261104';
 import {VillageSound} from './sound.mjs?v=balance1';
 import {upgradeCards,UPGRADE_LOOKS} from './upgrade-ui.mjs?v=balance1';
-import {cozyEffectText,cozyPlacementText,calendarDay,incomePerMinute,catalogueStyle,cozyDescription,fundingAdvice,operatingPreviewText,placementBenefits,constructionText,catalogueBudget,buildBudget,guidedPlacement,buildingBenefit,completionMessage,incomeRate,starterChoices,incomePreviewText} from './economy-ui.mjs?v=home-happiness1';
+import {effectNumber,cozyEffectText,cozyPlacementText,calendarDay,incomePerMinute,catalogueStyle,cozyDescription,fundingAdvice,operatingPreviewText,placementBenefits,constructionText,catalogueBudget,buildBudget,guidedPlacement,buildingBenefit,completionMessage,incomeRate,starterChoices,incomePreviewText} from './economy-ui.mjs?v=duplicates20261104';
 import {growthStatus,ratingName,gradeNote,tierRules,developmentSummary,shortageNote} from './grading-ui.mjs?v=balance1';
 import {tickResidents,syncResidents} from './residents.mjs?v=friends20261104';
 // village-next B단계 입력·안내·저장·루프. 경제는 core, 좌표는 grid, 표현은 world에만 맡긴다.
 import {World} from './world.mjs?v=friends20261104';
 import {villagePromises,promisePreview,newlyKeptPromises} from './promises.mjs?v=balance1';
-import {enableCozy,cozyGrowth,buildingSpec,assessTier,economy,upkeepOf,annualReviews,YEAR,createState,build,demolish,rotatable,rotateBuilding,relocate,canRelocate,relocateLeft,advance,metrics,month,duration,calendarMonth,monthLabel,serialize,parseSave,continueFree,buildCost,clearingCost,canBuild,at,cells,network,connected,TYPES,OPTIONS,MONTH,RULE,SCOPE,unlocked,unlockMonth,unlockMessage,populationRequired,toggleClosed,harvest,upgrade,clearLandscape,HARVEST,HARVEST_SECONDS,demandMonth,UPGRADE_TYPES} from './core.mjs?v=balance1';
+import {cozyEffects,enableCozy,cozyGrowth,buildingSpec,assessTier,economy,upkeepOf,annualReviews,YEAR,createState,build,demolish,rotatable,rotateBuilding,relocate,canRelocate,relocateLeft,advance,metrics,month,duration,calendarMonth,monthLabel,serialize,parseSave,continueFree,buildCost,clearingCost,canBuild,at,cells,network,connected,TYPES,OPTIONS,MONTH,RULE,SCOPE,unlocked,unlockMonth,unlockMessage,populationRequired,toggleClosed,harvest,upgrade,clearLandscape,HARVEST,HARVEST_SECONDS,demandMonth,UPGRADE_TYPES} from './core.mjs?v=duplicates20261104';
 import {toCell,toWorld,spots,placeInfo,facing,entrance,path,walkable,inside,CELL,perimeter,foot,roadSet} from './grid.mjs?v=balance1';
 import {groundVector,inputVector,step,stickVector,PLAYER_SPEED} from './move.mjs?v=balance1';
 import {naturalFeature,clearablePlot,growthStage,isGarden} from './landscape.mjs?v=balance1';
-import {PLAY_SPEED,realSeconds,season,SEASONS,TABS,TIERS} from './data.mjs?v=balance1';
+import {COZY_EFFECTS,PLAY_SPEED,realSeconds,season,SEASONS,TABS,TIERS} from './data.mjs?v=balance1';
 import {KEY,BACKUP,OWNER,A_KEY} from './app-keys.mjs?v=balance1';
 const EARLY=['house','road','snack']; // 초반 강조. 나머지는 해금되면 탭에 나타난다.
 const SERVICE={health:['의료','clinic','hospital'],education:['교육','school','library'],leisure:['여가','kids','library']};
@@ -24,6 +24,11 @@ if(!state){state=createState();state.money=600;state.sat=50;}
 // Preserve the pre-migration town once before switching the ongoing play style.
 if(!corrupt&&state.cozyV!==1&&raw&&storageOK){try{if(!localStorage.getItem(BACKUP+'-before-cozy'))localStorage.setItem(BACKUP+'-before-cozy',raw);}catch{storageOK=false;}}
 enableCozy(state);
+// Explain future earnings once; never rewrite existing funds, buildings or historical results.
+if(raw&&!corrupt){try{if(!localStorage.getItem(KEY+'-duplicates1-notice')){
+ const oldIncome=90+state.buildings.filter(b=>!b.starter&&!b.closed&&b.progress>=1).reduce((n,b)=>n+COZY_EFFECTS[b.type].income,0),newIncome=90+cozyEffects(state).income;
+ if(oldIncome>newIncome+.001){$('balanceNotice').hidden=false;$('balanceNotice').textContent=`같은 시설의 추가 효과가 조금씩 줄어요. 앞으로 수입은 분당 ${effectNumber(oldIncome)} → ${effectNumber(newIncome)}코인이에요. 모아 둔 돈과 마을·기록은 그대로예요.`;}
+}}catch{}}
 const TAB=Math.random().toString(36).slice(2)+Date.now().toString(36);let owned=false; // 6. 한 탭만 시간을 진행한다
 await Promise.race([Promise.all([document.fonts.load('700 48px SUIT'),document.fonts.load('32px Wanted')]).catch(()=>{}),new Promise(resolve=>setTimeout(resolve,3000))]);
 let world;try{world=new World($('world'));window.__world=world;window.__vn={get state(){return state;},world};}catch(e){$('error').hidden=false;$('error').textContent='입체 화면을 열지 못했어요. WebGL을 지원하는 Chrome 또는 Edge에서 다시 열어주세요.';throw e;}
@@ -42,7 +47,7 @@ $('file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)r
 const mmss=sec=>`${String(Math.floor(sec/60)).padStart(2,'0')}:${String(Math.floor(sec%60)).padStart(2,'0')}`;
 function ui(){sound.update(!document.hidden&&(!state.paused||!!world.entrance));$('toggleSound').textContent=sound.blocked?'소리 다시 켜기':sound.enabled?'소리 켜짐':'소리 꺼짐';$('toggleSound').setAttribute('aria-pressed',String(sound.enabled&&!sound.blocked));const m=month(state),v=metrics(state),growth=growthStatus(state,v);
  $('calendar').textContent=`${1+Math.floor(month(state)/12)}년 차 · ${SEASONS[season(calendarMonth(state))]} · ${monthLabel(state)} ${calendarDay(state)}일`;$('left').textContent=state.mode==='free'?'3년 평가는 고정 · 계속 가꿔요':state.ended?'종료':`남은 시간 ${mmss(realSeconds(duration(state)-state.t))}`;$('monthBar').style.width=`${(state.t%MONTH)/MONTH*100}%`;
- $('money').textContent=Math.floor(state.money).toLocaleString();$('incomeRate').textContent=`1분당 ${incomePerMinute(v)<0?'−':'+'}${Math.round(Math.abs(incomePerMinute(v))).toLocaleString()}`;$('incomeRate').title=state.paused?'일시정지 중 · 재개하면 이 속도로 변해요':'유지비를 뺀 현재 속도 · 진행 중인 실제 시간 기준';$('pop').textContent=`${state.pop}명`;$('heartScore').textContent=`${cozyGrowth(state).score}점`;$('ecoScore').textContent=`${v.environment}점`;$('sat').textContent=Math.round(state.sat)+'점';$('score').textContent=state.result?ratingName(state.result.total):growth.name;$('scoreScope').textContent=state.result?'3년 종합 평가 · 기록 고정':'마을 성장';$('tierName').textContent=state.result?`${state.result.total}점 · 최종 기록`:`${growth.detail}`;
+ $('money').textContent=Math.floor(state.money).toLocaleString();$('incomeRate').textContent=`1분당 ${incomePerMinute(v)<0?'−':'+'}${effectNumber(Math.abs(incomePerMinute(v)))}`;$('incomeRate').title=state.paused?'일시정지 중 · 재개하면 이 속도로 변해요':'유지비를 뺀 현재 속도 · 진행 중인 실제 시간 기준';$('pop').textContent=`${state.pop}명`;$('heartScore').textContent=`${cozyGrowth(state).score}점`;$('ecoScore').textContent=`${v.environment}점`;$('sat').textContent=Math.round(state.sat)+'점';$('score').textContent=state.result?ratingName(state.result.total):growth.name;$('scoreScope').textContent=state.result?'3년 종합 평가 · 기록 고정':'마을 성장';$('tierName').textContent=state.result?`${state.result.total}점 · 최종 기록`:`${growth.detail}`;
  $('pause').textContent=state.paused?'▶ 재개':'❚❚ 일시정지';$('pause').disabled=state.ended;world.season(season(calendarMonth(state)));const note=['❄ 눈 덮인 겨울 · 따뜻한 집을 준비해요','🌸 벚꽃 피는 봄 · 새로운 이웃을 맞아요','☀ 초록이 짙은 여름 · 시원한 그늘을 만들어요','🍂 단풍 드는 가을 · 마을의 결실을 살펴요'][season(calendarMonth(state))];if($('seasonNote').textContent!==note)$('seasonNote').textContent=note;
  const hb=$('navHarvest');hb.disabled=state.ended||state.harvestAt!==null;hb.textContent=state.harvestAt!==null?`🥬 돌보는 중 ${realSeconds(HARVEST_SECONDS-(state.t-state.harvestAt))}초`:state.harvested.includes(m)?'🥬 이번 달 완료':`🥬 텃밭 돌보기 +${HARVEST}`;
  $('reviewYears').textContent=state.result&&(state.runMonths??12)<36?'이전 규칙 기록':`성장 기록 · ${Math.min(3,annualReviews(state).length)}/3`;
@@ -56,7 +61,7 @@ function need(v){
  else{title='나만의 정원을 만들어 볼까요?';why='꽃과 나무, 벤치를 섞어 놓으면 마을이 더 다채로워져요.';action=()=>openBuild('조경');label='꾸미기 열기';}
  $('needTitle').textContent=title;$('needWhy').textContent=why;b.hidden=false;b.textContent=label;b.onclick=action;
 }
-function status(v){const g=cozyGrowth(state);$('statusBody').innerHTML=`<p class="cozy-score"><span>마을성장</span><strong>${g.score}점</strong></p><p>마을성장은 다양한 집·가게·정원과 이웃이 늘고, 친환경 개선을 하면 올라요. 최대 1,000점이에요.</p><div><span>행복지수</span><b>${Math.round(state.sat)} / 100점</b></div><div><span>복지지수</span><b>${v.welfare} / 100점</b></div><p class="dim">행복은 먹거리·놀이·정원, 복지는 병원·학교·안전 시설로 자라요.</p><div><span>친환경</span><b>${v.environment} / 100점</b></div><p class="dim">녹지·조경, 전력 공급, 친환경 개선을 함께 살펴요.</p><div><span>함께 사는 이웃</span><b>${state.pop}명</b></div><div><span>내가 가꾼 정원</span><b>${g.gardens}곳</b></div><div><span>내가 지은 건물</span><b>${g.buildings}동</b></div><p class="dim">기금은 꾸준히 모여요. 서두르지 않고 마음대로 꾸며요.</p>`;}
+function status(v){const g=cozyGrowth(state);$('statusBody').innerHTML=`<p class="cozy-score"><span>마을성장</span><strong>${g.score}점</strong></p><p>마을성장은 다양한 집·가게·정원과 이웃이 늘고, 친환경 개선을 하면 올라요. 최대 1,000점이에요.</p><div><span>행복지수</span><b>${Math.round(state.sat)} / 100점</b></div><div><span>복지지수</span><b>${effectNumber(v.welfare)} / 100점</b></div><p class="dim">행복은 먹거리·놀이·정원, 복지는 병원·학교·안전 시설로 자라요.</p><div><span>친환경</span><b>${v.environment} / 100점</b></div><p class="dim">녹지·조경, 전력 공급, 친환경 개선을 함께 살펴요.</p><div><span>함께 사는 이웃</span><b>${state.pop}명</b></div><div><span>내가 가꾼 정원</span><b>${g.gardens}곳</b></div><div><span>내가 지은 건물</span><b>${g.buildings}동</b></div><p class="dim">같은 시설의 수입은 100% → 75% → 50% → 35% → 25% → 20%로 줄어요. 행복·복지는 100% → 60% → 35% → 20% → 10%예요. 기본 꽃밭·가로수·작은 정원·벤치는 4개까지 행복·복지를 모두 받아요. 집의 수용 인원과 전력·서비스 공급량은 그대로예요.</p>`;}
 // Recorded years are derived from existing month snapshots, without changing save files.
 $('reviewYears').onclick=()=>{const old=annualReviews(state);$('reviewBody').innerHTML=old.length?'<p>이전 방식으로 남긴 기록이에요. 지금의 꾸미기 점수와는 별개로 보관해요.</p>'+old.map(r=>`<p>${r.year}년 차 · ${r.total}점</p>`).join(''):'<p>아직 이전 기록이 없어요. 지금의 성장은 메뉴의 마을 현황에서 볼 수 있어요.</p>';modal($('reviewDialog'));};
 $('closeReview').onclick=()=>$('reviewDialog').close();
@@ -74,13 +79,13 @@ $('closePromises').onclick=dismissPanels;
 // ---- 짓기 패널 ----
 let tab='먹거리',fullCatalogue=false;
 function openBuild(t){closePanels();if(typeof t==='string'){tab=t;fullCatalogue=true;}const choices=null;$('buildPanel').classList.add('open');$('buildPanel').scrollTop=0;$('locked').open=false;
- $('buildGuide').textContent=`주민 ${state.pop}명 · 인구가 늘면 새 시설이 열려요. 행복·복지는 각각 최대 100점이에요.`;$('moreBuildings').hidden=true;
+ $('buildGuide').textContent=`주민 ${state.pop}명 · 같은 시설은 추가 효과가 줄어요. 공사 중인 시설도 예상에 포함해요.`;$('moreBuildings').hidden=true;
  $('tabs').hidden=!!choices;$('tabs').innerHTML=choices?'':Object.keys(TABS).map(k=>`<button data-tab="${k}" aria-pressed="${k===tab}" class="${k===tab?'on':''}">${k}</button>`).join('');$('tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{const selected=b.dataset.tab;openBuild(selected);$('tabs').querySelector(`[data-tab="${selected}"]`).focus();});
  const types=(choices||Object.keys(TYPES).filter(k=>TABS[tab].includes(buildingSpec(state,k).group))).sort((a,b)=>buildingSpec(state,a).cost-buildingSpec(state,b).cost);
  $('buildList').innerHTML=types.map(t=>{const d=buildingSpec(state,t),locked=!unlocked(state,t);return `<button data-type="${t}" data-cost="${d.cost}" class="${locked?'population-locked':''}" ${locked?'disabled':''}><span class="build-thumb" aria-hidden="true" style="${catalogueStyle(t)}"></span><span class="build-copy"><span class="build-head"><b>${d.name}</b><strong class="build-price">${d.cost.toLocaleString()}<small>코인</small></strong></span><span class="build-action">${locked?`인구 ${populationRequired(t)}명에 열려요`:catalogueBudget(state.money,d.cost)}</span></span><span class="build-effects">${cozyEffectText(state,t,true)}</span></button>`;}).join('');
  $('locked').hidden=true;$('locked').innerHTML='';
  $('buildList').querySelectorAll('button').forEach(b=>b.onclick=()=>startPlace(b.dataset.type));}
-function refreshCatalogueBudget(){for(const button of $('buildList').querySelectorAll('[data-cost]')){const cost=Number(button.dataset.cost),type=button.dataset.type,locked=!unlocked(state,type);button.disabled=locked;button.classList.toggle('population-locked',locked);button.classList.toggle('poor',!locked&&state.money<cost);button.querySelector('.build-action').textContent=locked?`인구 ${populationRequired(type)}명에 열려요`:catalogueBudget(state.money,cost);} $('buildGuide').textContent=`주민 ${state.pop}명 · 인구가 늘면 새 시설이 열려요. 행복·복지는 각각 최대 100점이에요.`;}
+function refreshCatalogueBudget(){for(const button of $('buildList').querySelectorAll('[data-cost]')){const cost=Number(button.dataset.cost),type=button.dataset.type,locked=!unlocked(state,type);button.disabled=locked;button.classList.toggle('population-locked',locked);button.classList.toggle('poor',!locked&&state.money<cost);const effect=cozyEffectText(state,type,true),label=button.querySelector('.build-effects');if(label.textContent!==effect)label.textContent=effect;button.querySelector('.build-action').textContent=locked?`인구 ${populationRequired(type)}명에 열려요`:catalogueBudget(state.money,cost);} $('buildGuide').textContent=`주민 ${state.pop}명 · 같은 시설은 추가 효과가 줄어요. 공사 중인 시설도 예상에 포함해요.`;}
 $('moreBuildings').onclick=()=>{fullCatalogue=!fullCatalogue;openBuild();};
 function closePanels(){setRemoving(false);$('need').classList.add('hide');$('navNeed').setAttribute('aria-expanded','false');if(mode)endPlace();world.highlightBuilding(null);infoId=null;document.body.classList.remove('phone-need');$('phoneGoal').setAttribute('aria-expanded','false');$('phoneMenuOpen').setAttribute('aria-expanded','false');for(const id of['phoneMenu','buildPanel','statusPanel','infoPanel','placePanel','promisesPanel'])$(id).classList.remove('open');}
 function dismissPanels(){const inMenu=$('phoneMenu').classList.contains('open');closePanels();infoId=null;$(inMenu?'phoneMenuOpen':'navBuild').focus();}
@@ -135,7 +140,7 @@ $('finishRemove').onclick=()=>{closePanels();$('navRemove').focus();};
 let upgradeMarkup='',upgradeBuilding=null;
 function info(){const b=state.buildings.find(b=>b.id===infoId);if(!b){closePanels();infoId=null;return;}const d=buildingSpec(state,b.type),v=metrics(state),live=b.progress>=1,con=connected(state,b,v.net),road=state.cozyV===1&&b.type==='road',removable=state.cozyV===1||!b.starter||isGarden(b);
  if(world.highlightBuilding(b))focusPlace(b.x+(foot(b.type)-1)/2,b.y+(foot(b.type)-1)/2);if(upgradeBuilding!==b)$('manageBuilding').open=road;$('manageBuilding').hidden=!removable;$('manageBuilding').querySelector('summary').textContent=road?'길 관리':'옮기기 · 휴업 · 철거';
- $('rotateBuilding').hidden=!rotatable(b.type);$('rotateBuilding').disabled=state.paused||state.ended;$('infoTitle').textContent=d.name+(b.starter?' (시작 시설)':'');$('infoBody').innerHTML=`<p>${cozyDescription(b.type)}</p><p class="facility-effects">${b.starter&&!d.cap?'시작 시설 · 추가 수입·행복·복지 +0':cozyEffectText(state,b.type)}</p><p class="facility-state">${live?b.closed?'휴업 중 · 재개하면 효과를 받아요':d.cap&&!con?'길을 이어야 새 이웃이 입주해요':(state.cozyV===1||con||isGarden(b))?'이용 중':'길과 연결하면 이용할 수 있어요':constructionText(state,b)}</p>`;
+ $('rotateBuilding').hidden=!rotatable(b.type);$('rotateBuilding').disabled=state.paused||state.ended;$('infoTitle').textContent=d.name+(b.starter?' (시작 시설)':'');$('infoBody').innerHTML=`<p>${cozyDescription(b.type)}</p><p class="facility-effects">${b.starter&&!d.cap?'시작 시설 · 추가 수입·행복·복지 +0':cozyEffectText(state,b.type,false,b)}</p><p class="facility-state">${live?b.closed?'휴업 중 · 재개하면 효과를 받아요':d.cap&&!con?'길을 이어야 새 이웃이 입주해요':(state.cozyV===1||con||isGarden(b))?'이용 중':'길과 연결하면 이용할 수 있어요':constructionText(state,b)}</p>`;
  const ecoEligible=UPGRADE_TYPES.includes(b.type);
  $('upgradeSection').hidden=!ecoEligible;$('upgradeNote').textContent=b.opts.length>=2?'개선 2개 완료 · 건물의 새 모습을 살펴봐요.':`남은 개선 ${2-b.opts.length}개 · 효과를 비교해 골라요. 모습도 바뀌어요.`;const html=ecoEligible?upgradeCards(state,b):'';
  if(upgradeMarkup!==html||upgradeBuilding!==b){const focusedOpt=$('optRow').contains(document.activeElement)?document.activeElement.dataset.opt:null;upgradeMarkup=html;upgradeBuilding=b;$('optRow').innerHTML=html;$('optRow').querySelectorAll('button').forEach(x=>x.onclick=()=>{const opt=x.dataset.opt,r=upgrade(state,b.id,opt);if(r.error){toast(r.error);return;}world.sync(state,false);if(!reduced)world.sparkle(b.x,b.y);save('친환경 개선');toast(`${OPTIONS[opt].name} 완료! ${UPGRADE_LOOKS[opt]}이 생겼어요.`);info();ui();});if(focusedOpt){const next=$('optRow').querySelector(`[data-opt="${focusedOpt}"]`);(next&&!next.disabled?next:$('upgradeNote')).focus({preventScroll:!!next&&!next.disabled});}}
@@ -232,7 +237,7 @@ function loop(now){const real=document.hidden?0:(now-last)/1000,dt=Math.min(.25,
  if(world.entrance){world.updateEntrance(dt);if(!world.entrance)finishEntrance();}
  const previousPopulation=state.populationPeak??state.pop,before=state.buildings.filter(b=>b.progress<1).map(b=>b.id);if(owned)advancePlay(Math.min(real,60));const done=before.filter(id=>{const b=state.buildings.find(b=>b.id===id);return b&&b.progress>=1;});
  if(!state.cozyV&&state.economyV===4&&!done.length&&month(state)===lastMonth&&Math.floor(state.pop/4)>lastIncomeMilestone){lastIncomeMilestone=Math.floor(state.pop/4);if(state.pop===12||state.pop===16)toast(`이웃 ${state.pop}명! 지금 순수입 ${incomeRate(metrics(state))} · 손님과 생활시설이 함께 늘면 수입도 자라요.`);}
- if(done.length){sound.effect('complete');world.sync(state,!reduced);save('완공');const b=state.buildings.find(b=>b.id===done[0]);toast(`${buildingSpec(state,b.type).name} 완성! 마을이 더 다채로워졌어요.`);if(buildingSpec(state,b.type).cap)npcHomes();}
+ if(done.length){sound.effect('complete');world.sync(state,!reduced);save('완공');const b=state.buildings.find(b=>b.id===done[0]);toast(completionMessage(state,done));if(buildingSpec(state,b.type).cap)npcHomes();}
  if(state.cozyV===1&&state.populationPeak>previousPopulation){const opened=Object.keys(TYPES).filter(t=>populationRequired(t)>previousPopulation&&populationRequired(t)<=state.populationPeak);if(opened.length){toast(`인구 ${state.pop}명! ${opened.slice(0,2).map(t=>TYPES[t].name).join('·')}${opened.length>2?` 외 ${opened.length-2}종`:''}이 열렸어요.`);save('인구 해금');}}
  const m=month(state);if(m!==lastMonth){lastMonth=m;world.sync(state,false);save(monthLabel(state));}
 
@@ -249,7 +254,7 @@ function prepareEntrance(){
 function finishEntrance(){
  if(!$('entranceDialog').open)return;
  world.updateEntrance(100);world.welcomeLife?.finish();world.welcomeLife=null;$('entranceDialog').close();document.body.classList.remove('entering');
- last=performance.now();setPaused(document.hidden);$('navBuild').focus();
+ try{localStorage.setItem(KEY+'-duplicates1-notice','1');}catch{}last=performance.now();setPaused(document.hidden);$('navBuild').focus();
 }
 $('enterVillage').onclick=()=>{
  $('entranceWelcome').hidden=true;$('entranceCaption').hidden=false;world.startEntrance();sound.start();
