@@ -1,3 +1,4 @@
+import {recordCozyMonth,validateCozyReview} from './cozy-review.mjs?v=review20261104';
 import {buildingSpec,cityPhase,premiumIncome} from './city-rules.mjs?v=balance1';
 export {buildingSpec} from './city-rules.mjs?v=balance1';
 // village-next B단계 경제 코어. public/core.mjs(village-40-v3) 기반 + 완공시각·재배치·월별 해금·텃밭·휴업. 렌더/DOM 접근 없음.
@@ -118,7 +119,7 @@ export function metrics(s){const net=network(s),live=s.buildings.filter(b=>b.pro
  const D=clamp(clamp(s.pop/popGoal)*(.35-.14*beautyPhase)+service*.30+env*.20+safety*.15+beauty*.14*beautyPhase);
  const Q=clamp(s.sat/100*.50+service*.30+energy*.15+clamp(housing/p)*.05);
  let welfare=0;
- if(s.cozyV===1){const effect=cozyEffects(s);welfare=effect.welfare;targetSat=50+effect.happiness;income=upkeep+(90+effect.income)*MONTH/(60*PLAY_SPEED);}
+ if(s.cozyV===1){const effect=cozyEffects(s);welfare=effect.welfare;targetSat=Math.min(50+effect.happiness,80+20*clamp(env));income=upkeep+(90+effect.income)*MONTH/(60*PLAY_SPEED);}
  return{welfare,environment:Math.round(clamp(env)*100),landscaping,beautyPhase,premium,net,live,production,use,energy,food,health,education,leisure,housing,service,green,comfort,targetSat,income,upkeep,D,Q,score:s.cozyV===1?cozyGrowth(s).score:Math.round(1000*D*Q),demands,popGoal,fire,drain,optionRate,foodCap:sum('food'),healthCap:sum('health'),educationCap:sum('education'),leisureCap:sum('leisure')};
 }
 export const DEMAND_MONTH={health:2,education:3,leisure:4};
@@ -159,7 +160,7 @@ export function advance(s,dt){if(s.paused||s.ended||!Number.isFinite(dt)||dt<0)r
   const target=s.cozyV===1?v.targetSat:s.t<MONTH?Math.max(78,v.targetSat):v.targetSat;s.sat+=clamp(target-s.sat,-.12,.12);
   if(s.t%12===11&&s.pop<v.housing&&(s.cozyV===1||s.sat>=55))s.pop++;
   if(s.cozyV===1)s.populationPeak=Math.max(s.populationPeak??s.pop,s.pop);
-  s.t++;if(s.t%MONTH===0){const atMonth={...s,t:s.t-1},snapshot=metrics(atMonth);if(s.mode==='run')s.hist.push({month:s.hist.length+1,score:snapshot.score,scoring:s.scoringV===2?'next-b2':'next-b1',...(s.scoringV===2?tierConditions(atMonth,snapshot):{}),D:Math.round(snapshot.D*100),Q:Math.round(snapshot.Q*100)});}
+  s.t++;if(s.t%MONTH===0){const atMonth={...s,t:s.t-1},snapshot=metrics(atMonth);recordCozyMonth(s,snapshot);if(s.mode==='run')s.hist.push({month:s.hist.length+1,score:snapshot.score,scoring:s.scoringV===2?'next-b2':'next-b1',...(s.scoringV===2?tierConditions(atMonth,snapshot):{}),D:Math.round(snapshot.D*100),Q:Math.round(snapshot.Q*100)});}
   if(s.mode==='run'&&s.t===duration(s))end(s);
  }if(s.ended)s.carry=0;
 }
@@ -172,6 +173,7 @@ export function parseSave(text){if(typeof text!=='string'||text.length>500000)th
  if(s.populationPeak!==undefined&&(!Number.isInteger(s.populationPeak)||!num(s.populationPeak,s.pop,10000)))throw Error('인구 성장 기록을 확인해 주세요.');
  if(s.placementHintsShown!==undefined&&(!Number.isInteger(s.placementHintsShown)||!num(s.placementHintsShown,0,2)))throw Error('자리 안내 기록을 확인해 주세요.');
  if(s.cozyV!==undefined&&(s.cozyV!==1||s.mode!=='free'||s.ended))throw Error('꾸미기 기록을 확인해 주세요.');
+ validateCozyReview(s);
  if(s.cityV!==undefined&&(s.cityV!==1||s.economyV!==4||s.scoringV!==2))throw Error('도시 발전 규칙을 확인해 주세요.');
  if(s.economyV!==undefined&&![2,3,4].includes(s.economyV))throw Error('경제 규칙을 확인해 주세요.');
  if(s.scoringV!==undefined&&s.scoringV!==2||s.scoringV===2&&(!Number.isInteger(s.cashStress)||!num(s.cashStress,0,Math.min(s.t,CASH_STRESS_LIMIT)))||s.scoringV===undefined&&s.cashStress!==undefined)throw Error('평가 규칙과 운영비 부족 기록을 확인해 주세요.');
