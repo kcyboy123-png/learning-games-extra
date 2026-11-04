@@ -1,7 +1,7 @@
 import {network} from './core.mjs?v=balance1';
 import {toWorld,toCell} from './grid.mjs?v=balance1';
-import {gardenSites} from './meadow.mjs?v=seven20261104';
-import {availableVisit,visitPose,roadRoute} from './residents.mjs?v=seven20261104';
+import {gardenSites} from './meadow.mjs?v=friends20261104';
+import {availableVisit,visitPose,roadRoute} from './residents.mjs?v=friends20261104';
 
 // Animate the actual residents while the lesson clock stays paused. No saved data is changed.
 export function createWelcomeLife(s,people,world){

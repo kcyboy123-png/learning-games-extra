@@ -1,6 +1,6 @@
 import {TYPES,RIVER,SIZE,network,connected,cells} from './core.mjs?v=balance1';
 import {naturalFeature} from './landscape.mjs?v=balance1';
-import {gardenSites} from './meadow.mjs?v=seven20261104';
+import {gardenSites} from './meadow.mjs?v=friends20261104';
 // Visual maturity follows connected facilities, never adds saved buildings or bonuses.
 export function townscapeSites(s){
  const net=network(s),live=s.buildings.filter(b=>b.progress>=1&&!b.closed&&connected(s,b,net));

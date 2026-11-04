@@ -1,11 +1,11 @@
-import {createWelcomeLife} from './welcome-life.mjs?v=seven20261104';
+import {createWelcomeLife} from './welcome-life.mjs?v=friends20261104';
 import {VillageSound} from './sound.mjs?v=balance1';
 import {upgradeCards,UPGRADE_LOOKS} from './upgrade-ui.mjs?v=balance1';
 import {cozyEffectText,cozyPlacementText,calendarDay,incomePerMinute,catalogueStyle,cozyDescription,fundingAdvice,operatingPreviewText,placementBenefits,constructionText,catalogueBudget,buildBudget,guidedPlacement,buildingBenefit,completionMessage,incomeRate,starterChoices,incomePreviewText} from './economy-ui.mjs?v=home-happiness1';
 import {growthStatus,ratingName,gradeNote,tierRules,developmentSummary,shortageNote} from './grading-ui.mjs?v=balance1';
-import {tickResidents,syncResidents} from './residents.mjs?v=seven20261104';
+import {tickResidents,syncResidents} from './residents.mjs?v=friends20261104';
 // village-next B단계 입력·안내·저장·루프. 경제는 core, 좌표는 grid, 표현은 world에만 맡긴다.
-import {World} from './world.mjs?v=seven20261104';
+import {World} from './world.mjs?v=friends20261104';
 import {villagePromises,promisePreview,newlyKeptPromises} from './promises.mjs?v=balance1';
 import {enableCozy,cozyGrowth,buildingSpec,assessTier,economy,upkeepOf,annualReviews,YEAR,createState,build,demolish,rotatable,rotateBuilding,relocate,canRelocate,relocateLeft,advance,metrics,month,duration,calendarMonth,monthLabel,serialize,parseSave,continueFree,buildCost,clearingCost,canBuild,at,cells,network,connected,TYPES,OPTIONS,MONTH,RULE,SCOPE,unlocked,unlockMonth,unlockMessage,populationRequired,toggleClosed,harvest,upgrade,clearLandscape,HARVEST,HARVEST_SECONDS,demandMonth,UPGRADE_TYPES} from './core.mjs?v=balance1';
 import {toCell,toWorld,spots,placeInfo,facing,entrance,path,walkable,inside,CELL,perimeter,foot,roadSet} from './grid.mjs?v=balance1';
@@ -186,7 +186,7 @@ $('phoneMenuClose').onclick=dismissPanels;$('help').onclick=()=>$('phoneMenuOpen
 for(const b of document.querySelectorAll('[data-phone-action]'))b.onclick=()=>{const source=$(b.dataset.phoneAction);if(source.disabled)return;closePanels();source.click();};
 $('toggleSound').onclick=()=>{sound.toggle();ui();};
 document.addEventListener('click',e=>{const button=e.target.closest('button');if(button&&!button.disabled&&!['toggleSound','confirmRemove'].includes(button.id))sound.effect('select');});
-$('phoneStick').onclick=()=>{const on=document.body.classList.toggle('phone-stick');stopStick();$('phoneStick').setAttribute('aria-pressed',String(on));$('phoneStick').textContent=on?'조이스틱 끄기':'조이스틱 켜기';closePanels();};
+
 // ---- 터치/마우스: 탭=선택·걷기, 드래그=카메라, 핀치=확대. 손가락을 뗄 때 건설되지 않는다. ----
 const canvas=$('world');let drag=null,pinch=null;const touches=new Map();
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
@@ -212,7 +212,7 @@ addEventListener('focusin',()=>keys.clear());
 let stick={ix:0,iy:0,power:0},stickPointer=null;
 const moveStick=$('moveStick');
 function stopStick(){stick={ix:0,iy:0,power:0};stickPointer=null;$('stickKnob').style.transform='translate(0,0)';}
-function dragStick(e){const r=moveStick.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2;stick=stickVector(dx,dy);const d=Math.hypot(dx,dy)||1,k=Math.min(40,d)/d;$('stickKnob').style.transform=`translate(${dx*k}px,${dy*k}px)`;}
+function dragStick(e){const r=moveStick.getBoundingClientRect(),dx=e.clientX-r.left-r.width/2,dy=e.clientY-r.top-r.height/2;const radius=Math.max(12,(r.width-$('stickKnob').offsetWidth)/2-6);stick=stickVector(dx,dy,radius);const d=Math.hypot(dx,dy)||1,k=Math.min(radius,d)/d;$('stickKnob').style.transform=`translate(${dx*k}px,${dy*k}px)`;}
 moveStick.addEventListener('pointerdown',e=>{e.preventDefault();if(mode||state.paused||state.ended||document.querySelector('dialog[open]')||stickPointer!==null)return;try{moveStick.setPointerCapture(e.pointerId);}catch{return;}stickPointer=e.pointerId;closePanels();infoId=null;dragStick(e);});
 moveStick.addEventListener('pointermove',e=>{if(e.pointerId===stickPointer)dragStick(e);});
 for(const name of ['pointerup','pointercancel','lostpointercapture'])moveStick.addEventListener(name,e=>{if(e.pointerId===stickPointer)stopStick();});

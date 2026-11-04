@@ -3,12 +3,12 @@ export function addNeighborDetails(p,h){
  const {T,petBall,mesh,geometry}=h,{species,body,head,ears,limbs,knees,fur,cream}=p;
  let trunk=null;
  if(species==='penguin'){
-  head.position.y=.99;head.scale.x=1.10;body.scale.x=1.06;
+  head.position.y=.99;head.scale.x=1.28;body.scale.x=1.06;
   for(const side of[-1,1])petBall(head,cream,side*.15,-.015,.252,.185,.218,.05);
   petBall(head,'#dfad68',0,-.13,.36,.08,.038,.07);
   petBall(body,cream,0,.54,.245,.22,.25,.055);
   for(const side of[-1,1]){const bow=petBall(body,'#be7e80',side*.055,.78,.245,.065,.04,.025);bow.rotation.z=side*.3;}petBall(body,'#e9b99b',0,.78,.277,.025);
-  petBall(head,'#9ab8a0',-.09,.335,-.04,.23,.06,.20);petBall(head,'#6e9685',-.09,.385,-.04,.045,.025,.035);
+  petBall(head,'#9ab8a0',-.09,.335,-.04,.23,.06,.20);petBall(head,'#6e9685',-.09,.385,-.04,.045,.025,.035);for(let i=0;i<3;i++)petBall(body,'#f1dfbc',0,.65-i*.065,.30,.017,.017,.007);
   for(let k=0;k<2;k++){petBall(limbs[k*2+1],fur,0,-.17,-.01,.13,.24,.065);petBall(knees[k],'#dfad68',0,-.19,.09,.16,.045,.21);}
  }else if(species==='sheep'){
   petBall(head,'#f5edd9',0,.235,-.075,.37,.17,.275);
@@ -23,7 +23,7 @@ export function addNeighborDetails(p,h){
   for(const side of[-1,1]){const ear=new T.Group();ear.position.set(side*.37,.05,-.055);ear.rotation.z=-side*.1;ear.userData.restZ=ear.rotation.z;head.add(ear);ears.push(ear);petBall(ear,fur,side*.10,0,0,.24,.29,.08);petBall(ear,'#d5b8b9',side*.12,0,.06,.16,.21,.025);}
   trunk=new T.Group();trunk.position.set(0,-.10,.29);head.add(trunk);
   const curve=new T.CatmullRomCurve3([new T.Vector3(0,0,0),new T.Vector3(0,-.13,.09),new T.Vector3(0,-.26,.15),new T.Vector3(.035,-.24,.26)]);
-  mesh(trunk,geometry('baby-elephant-trunk',()=>new T.TubeGeometry(curve,14,.063,10,false)),fur,0,0,0);petBall(trunk,fur,.035,-.24,.26,.069,.058,.065);
+  mesh(trunk,geometry('baby-elephant-trunk',()=>new T.TubeGeometry(curve,14,.063,10,false)),fur,0,0,0);petBall(trunk,fur,.035,-.24,.26,.069,.058,.065);for(let i=0;i<3;i++)petBall(trunk,'#8d9fae',.005,-.075-i*.047,.10+i*.022,.036,.005,.008);petBall(trunk,'#748999',.035,-.235,.321,.023,.018,.005);
  }
  return{trunk};
 }
