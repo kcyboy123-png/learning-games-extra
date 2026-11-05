@@ -1,6 +1,6 @@
 // 격자↔월드 좌표, 출입구 방향, 추천 부지, 보행 경로. 경제 상태는 읽기만 한다.
-import {SIZE,RIVER,TYPES,cells,at,network,terrain,unlocked,canBuild} from './core.mjs?v=balance1';
-import {naturalFeature} from './landscape.mjs?v=balance1';
+import {SIZE,RIVER,TYPES,cells,at,network,terrain,unlocked,canBuild} from './core.mjs?v=perf1';
+import {naturalFeature} from './landscape.mjs?v=perf1';
 export const CELL=2.4, GROUND_Y=.103, ROAD_Y=.133;
 export const DIRS=[[0,1],[1,0],[0,-1],[-1,0]]; // 0 남(+z) 1 동(+x) 2 북 3 서. 모델의 문은 로컬 +z.
 export const toWorld=(gx,gy)=>({x:(gx-(SIZE-1)/2)*CELL,z:(gy-(SIZE-1)/2)*CELL});
@@ -9,7 +9,8 @@ export const inside=(gx,gy)=>gx>=0&&gy>=0&&gx<SIZE&&gy<SIZE;
 export const foot=type=>TYPES[type].foot||1;
 // 모델 원점: 점유 칸들의 바닥 중앙(2×2는 네 칸 가운데).
 export const origin=(type,gx,gy)=>{const n=foot(type),o=(n-1)/2;return toWorld(gx+o,gy+o);};
-export const roadSet=s=>new Set(s.buildings.filter(b=>b.progress>=1&&['road','bridge'].includes(b.type)).map(b=>`${b.x},${b.y}`));
+import {roadSet} from './roads.mjs?v=perf1';
+export {roadSet} from './roads.mjs?v=perf1';
 // 둘레 칸 목록: [바깥 칸 gx,gy, 방향 d] — 건물 칸에서 d 방향으로 한 칸 나간 자리.
 export function perimeter(type,gx,gy){const n=foot(type),out=[];for(let i=0;i<n;i++){out.push([gx+i,gy+n,0]);out.push([gx+n,gy+i,1]);out.push([gx+i,gy-1,2]);out.push([gx-1,gy+i,3]);}return out;}
 // 기본은 길을 향하고, 직접 고른 방향은 길이 바뀌어도 유지한다. 다리는 하천을 가로지른다.

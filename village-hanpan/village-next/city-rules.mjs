@@ -1,4 +1,4 @@
-import {TYPES,MONTH} from './data.mjs?v=balance1';
+import {TYPES,MONTH} from './data.mjs?v=perf1';
 
 // Only new towns opt in; existing prices, capacities and recorded scores stay intact.
 const CHANGES={

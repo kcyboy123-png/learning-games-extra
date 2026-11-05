@@ -1,3 +1,4 @@
+import {buildingSpec} from './city-rules.mjs?v=perf1';
 export const PAINTABLE=new Set(['house','duplex','gardenhouse','apartment','terracehouse','snack','convenience','chicken','western','japanese','chinese','buffet','supermarket','cinema','animalFarm','harbor','skyTower','rabbitTower']);
 export const PALETTES=[
  {name:'기본색',wall:'#f1e3c3',roof:'#719784',accent:'#547668'},
@@ -9,12 +10,16 @@ export const PALETTES=[
 ];
 export const validPaint=n=>Number.isInteger(n)&&n>=0&&n<PALETTES.length;
 export const canPaint=b=>!!b&&b.progress>=1&&PAINTABLE.has(b.type);
+export const paintCost=(s,b,value)=>(b.paint??0)===value?0:Math.min(100,Math.max(5,Math.ceil(buildingSpec(s,b.type).cost/100)));
 export function setBuildingPaint(s,id,value){
  const b=s.buildings.find(b=>b.id===id);
  if(!canPaint(b)||!validPaint(value))return {error:'완성된 건물과 색을 다시 골라 주세요.'};
  if(s.ended)return {error:'마을을 이어서 가꾼 뒤 바꿔 주세요.'};
+ const cost=paintCost(s,b,value);
+ if(!Number.isFinite(s.money)||s.money<cost)return {error:`색을 바꾸려면 ${cost}코인이 필요해요.`};
+ s.money-=cost;
  if(value===0)delete b.paint;else b.paint=value;
- return {};
+ return {cost};
 }
 // Only explicitly tagged exterior parts change; shared source materials stay untouched.
 export function paintPart(mesh,role){mesh.userData.paintRole=role;return mesh;}

@@ -1,4 +1,4 @@
-import {OPTIONS,upgradeError} from './core.mjs?v=balance1';
+import {OPTIONS,upgradeError} from './core.mjs?v=perf1';
 
 export const UPGRADE_LOOKS={ins:'두꺼운 초록 창틀',shade:'초록 줄무늬 차양',reuse:'재사용 목재 화단'};
 const BENEFITS={ins:'겨울·여름에 이 건물 전력 25% 절약',shade:'여름에 이 건물 전력 20% 절약',reuse:'친환경 설계와 재사용 약속에 반영'};

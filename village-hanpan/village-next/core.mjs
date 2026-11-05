@@ -1,10 +1,10 @@
-import {recordCozyMonth,validateCozyReview} from './cozy-review.mjs?v=review20261104';
-import {buildingSpec,cityPhase,premiumIncome} from './city-rules.mjs?v=balance1';
-export {buildingSpec} from './city-rules.mjs?v=balance1';
+import {recordCozyMonth,validateCozyReview} from './cozy-review.mjs?v=perf1';
+import {buildingSpec,cityPhase,premiumIncome} from './city-rules.mjs?v=perf1';
+export {buildingSpec} from './city-rules.mjs?v=perf1';
 // village-next B단계 경제 코어. public/core.mjs(village-40-v3) 기반 + 완공시각·재배치·월별 해금·텃밭·휴업. 렌더/DOM 접근 없음.
-import {naturalFeature,clearablePlot,isGarden,landscapeMetrics} from './landscape.mjs?v=balance1';
-import {VERSION,RULE,MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,TIERS,season,PLAY_SPEED,COZY_EFFECTS,POPULATION_UNLOCKS} from './data.mjs?v=balance1';
-import {PAINTABLE,validPaint} from './building-paint.mjs?v=paint1';
+import {naturalFeature,clearablePlot,isGarden,landscapeMetrics} from './landscape.mjs?v=perf1';
+import {VERSION,RULE,MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,TIERS,season,PLAY_SPEED,COZY_EFFECTS,POPULATION_UNLOCKS} from './data.mjs?v=perf1';
+import {PAINTABLE,validPaint} from './building-paint.mjs?v=perf1';
 export {MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,RULE,VERSION};
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 export const SCOPE={label:'B규칙'};
@@ -47,8 +47,8 @@ export function cozyEffects(s,pending=false){
  }
  return total;
 }
-export function network(s){const roads=new Set(s.buildings.filter(b=>b.progress>=1&&['road','bridge'].includes(b.type)).map(b=>`${b.x},${b.y}`)),seen=new Set(),q=s.cozyV===1&&!roads.has('5,3')?[...roads].slice(0,1):['5,3'];
- while(q.length){const k=q.pop();if(seen.has(k)||!roads.has(k))continue;seen.add(k);const[x,y]=k.split(',').map(Number);for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]])q.push(`${x+dx},${y+dy}`);}return seen;}
+import {network} from './roads.mjs?v=perf1';
+export {network} from './roads.mjs?v=perf1';
 export function connected(s,b,net=network(s)){return cells(b).some(([x,y])=>net.has(`${x},${y}`)||[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>net.has(`${x+dx},${y+dy}`)));}
 export function stage(s){return Math.max(s.stage,month(s)>=7||s.pop>=28?3:month(s)>=2||s.pop>=16?2:month(s)>=1||s.buildings.some(b=>b.type==='snack'&&b.progress>=1)?1:0);}
 // 해금: 정해진 달이 되었거나(9절) 주민 성과로 stage가 앞서면 열린다. 평가 시작은 달을 따르므로 빨리 열어도 벌점이 없다.

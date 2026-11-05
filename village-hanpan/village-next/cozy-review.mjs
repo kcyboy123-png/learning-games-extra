@@ -1,4 +1,4 @@
-import {MONTH,TIERS} from './data.mjs?v=balance1';
+import {MONTH,TIERS} from './data.mjs?v=perf1';
 
 // New towns opt in. Previous scores and towns without this record are never backfilled.
 export function startCozyReview(s){if(s.t===0&&!s.result&&!s.hist.length&&!s.cozyReview)s.cozyReview={v:1,months:[],seen:0};return s;}

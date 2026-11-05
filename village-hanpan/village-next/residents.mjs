@@ -1,19 +1,27 @@
-import {PLAYER_SPEED} from './move.mjs?v=balance1';
-import {TYPES,connected,network} from './core.mjs?v=balance1';
-import {origin,facing,entrance,toWorld,toCell,path} from './grid.mjs?v=balance1';
-import {growthStage} from './landscape.mjs?v=balance1';
+import {PLAYER_SPEED} from './move.mjs?v=perf1';
+import {TYPES,connected,network} from './core.mjs?v=perf1';
+import {origin,facing,entrance,toWorld,toCell,path,roadSet} from './grid.mjs?v=perf1';
+import {growthStage} from './landscape.mjs?v=perf1';
 
 // Positions match model doors and seat centres, in the model's local coordinates.
 const doors={chicken:[0,1.12],buffet:[0,2.5],police:[0,1.12],cinema:[0,2.5],animalFarm:[0,3.5],harbor:[0,2.6],rabbitTower:[0,3.5],skyTower:[0,1.94],largePark:[0,7.3],rosePark:[0,3.5],snack:[.85,1.105],western:[0,1.07],japanese:[.9,1.1],chinese:[0,1.07],convenience:[.9,1.1],supermarket:[2.4,2.32],clinic:[0,1.07],hospital:[0,1.17],kids:[0,1.07],amusement:[2,2.62],school:[0,1.12],library:[0,1.12]};
-export function visitPose(s,b){
- const angle=facing(s,b)*Math.PI/2,o=origin(b.type,b.x,b.y),rest=b.type==='bench'||b.type==='tree',sc=rest?.85:.6;
+export function visitPose(s,b,roads=roadSet(s)){
+ const angle=facing(s,b,roads)*Math.PI/2,o=origin(b.type,b.x,b.y),rest=b.type==='bench'||b.type==='tree',sc=rest?.85:.6;
  const [x,z]=rest?(b.type==='tree'?[.4,.65]:[0,-.2]):doors[b.type]||[0,1.13];
  const point=(x,z)=>({x:o.x+(x*Math.cos(angle)+z*Math.sin(angle))*sc,z:o.z+(-x*Math.sin(angle)+z*Math.cos(angle))*sc});
- return{rest,angle,at:point(x,z),front:point(x,z+.65),road:toWorld(entrance(s,b).gx,entrance(s,b).gy),key:`${b.x},${b.y},${angle}`};
+ return{rest,angle,at:point(x,z),front:point(x,z+.65),road:toWorld(entrance(s,b,roads).gx,entrance(s,b,roads).gy),key:`${b.x},${b.y},${angle}`};
 }
 export function availableVisit(s,b,net){const d=TYPES[b.type];return b.progress>=1&&!b.closed&&connected(s,b,net)&&(b.type==='bench'||b.type==='tree'&&growthStage(s,b)===2||!b.starter&&(d.food||d.health||d.education||d.leisure));}
-export function syncResidents(s,people,world){
- const net=network(s),homes=s.buildings.filter(b=>TYPES[b.type].cap&&b.progress>=1&&!b.closed&&connected(s,b,net));
+const residentCache=new WeakMap();
+export function residentContext(s){
+ const net=network(s),key=s.buildings.map(b=>`${b.id}:${b.type}:${b.x},${b.y}:${b.dir}:${b.progress>=1}:${!!b.closed}:${b.type==='tree'?growthStage(s,b):0}`).join('|');
+ let value=residentCache.get(s);
+ // File reload replaces the state; no cached building objects enter a different save.
+ if(!value||value.key!==key||value.net!==net||value.buildings!==s.buildings){value={key,net,buildings:s.buildings,roads:roadSet(s),roadSig:[...net].join('|'),byId:new Map(s.buildings.map(b=>[b.id,b])),homes:s.buildings.filter(b=>TYPES[b.type].cap&&b.progress>=1&&!b.closed&&connected(s,b,net)),destinations:s.buildings.filter(b=>availableVisit(s,b,net))};residentCache.set(s,value);}
+ return value;
+}
+export function syncResidents(s,people,world,context=residentContext(s)){
+ const {homes}=context;
  const count=homes.length?Math.min(24,Math.ceil(s.pop/2)):0;
  while(people.length>count)world.removePerson(people.pop().p);
  for(let i=0;i<count;i++){
@@ -51,14 +59,14 @@ export function advancePersonRoute(p,dt,people=[]){
  p.blockedFor=0;
  p.g.position.x=x;p.g.position.z=z;p.distance=(p.distance||0)+step;const target=Math.atan2(dx,dz),diff=Math.atan2(Math.sin(target-p.g.rotation.y),Math.cos(target-p.g.rotation.y));p.g.rotation.y+=diff*Math.min(1,dt*12);return 1;
 }
-export function tickResidents(s,people,dt,time,world){
+export function tickResidents(s,people,dt,time,world,context=residentContext(s)){
  if(s.paused||s.ended)return null;
- let bubble=null;const net=network(s),destinations=s.buildings.filter(b=>availableVisit(s,b,net)),roadSig=[...net].join('|');
+ let bubble=null;const {net,destinations,roadSig,byId,roads}=context;
  // Rotate visit priority so a few early residents cannot reserve the only shop forever.
  for(let slot=0;slot<people.length;slot++){
-  const i=(slot+Math.floor(time/8))%people.length,n=people[i],p=n.p,home=s.buildings.find(b=>b.id===n.home),target=s.buildings.find(b=>b.id===n.target);
+  const i=(slot+Math.floor(time/8))%people.length,n=people[i],p=n.p,home=byId.get(n.home),target=byId.get(n.target);
   const recover=()=>{p.g.visible=true;p.sitting=false;p.carry.visible=false;p.route=[];n.phase='home';n.target=null;n.pose=null;n.wait=2+i;const nearest=[...net].map(k=>k.split(',').map(Number)).sort((a,b)=>{const x=toWorld(...a),y=toWorld(...b);return Math.hypot(x.x-p.g.position.x,x.z-p.g.position.z)-Math.hypot(y.x-p.g.position.x,y.z-p.g.position.z);})[0]||[5,3];world.place(p,...nearest);};
-  if(n.target&&(!target||!availableVisit(s,target,net)||!n.pose||visitPose(s,target).key!==n.pose.key)){recover();continue;}
+  if(n.target&&(!target||!availableVisit(s,target,net)||!n.pose||visitPose(s,target,roads).key!==n.pose.key)){recover();continue;}
   if(n.roadSig!==roadSig){n.roadSig=roadSig;if(p.route.some(q=>{const c=toCell(q.x,q.z);return q.road&&!net.has(`${c.gx},${c.gy}`);})){recover();continue;}}
   if(p.route.length)continue;n.wait-=dt;if(n.wait>0)continue;
   if(n.phase==='home'){
@@ -67,7 +75,7 @@ export function tickResidents(s,people,dt,time,world){
     const b=destinations[(i+n.turn+j)%destinations.length];if(people.some(other=>other!==n&&other.target===b.id))continue;
     const e=entrance(s,b),from=toCell(p.g.position.x,p.g.position.z),r=roadRoute(s,from,e);
     if(!r.length&&(from.gx!==e.gx||from.gy!==e.gy))continue;
-    n.pose=visitPose(s,b);n.target=b.id;n.phase='approach';p.route=[...r,n.pose.front];n.wait=0;break;
+    n.pose=visitPose(s,b,roads);n.target=b.id;n.phase='approach';p.route=[...r,n.pose.front];n.wait=0;break;
    }
    if(!n.target){
     n.wait=3+i;const from=toCell(p.g.position.x,p.g.position.z),near=[...net].map(k=>{const[gx,gy]=k.split(',').map(Number);return{gx,gy,d:Math.abs(gx-from.gx)+Math.abs(gy-from.gy)};}).filter(q=>q.d>0&&q.d<=3);

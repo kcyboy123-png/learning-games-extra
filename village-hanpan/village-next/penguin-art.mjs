@@ -1,5 +1,5 @@
 import * as T from '../lib/three.module.min.js';
-import {rabbitView,rabbitPose} from './rabbit-art.mjs?v=balance1';
+import {rabbitView,rabbitPose} from './rabbit-art.mjs?v=perf1';
 import {penguinFrames,penguinAtlasSize} from './penguin-frames.mjs';
 
 let atlasEntry;

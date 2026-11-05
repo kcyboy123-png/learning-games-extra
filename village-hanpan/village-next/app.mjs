@@ -1,23 +1,24 @@
-import {createPaintUI} from './paint-ui.mjs?v=paint1';
-import {startCozyReview,cozyReviews,reviewSnapshot} from './cozy-review.mjs?v=review20261104';
-import {createWelcomeLife} from './welcome-life.mjs?v=friends20261104';
-import {VillageSound} from './sound.mjs?v=audio20261105';
-import {upgradeCards,UPGRADE_LOOKS} from './upgrade-ui.mjs?v=balance1';
-import {effectNumber,cozyEffectText,cozyPlacementText,calendarDay,incomePerMinute,catalogueStyle,cozyDescription,fundingAdvice,operatingPreviewText,placementBenefits,constructionText,catalogueBudget,buildBudget,guidedPlacement,buildingBenefit,completionMessage,incomeRate,starterChoices,incomePreviewText} from './economy-ui.mjs?v=review20261104';
-import {growthStatus,ratingName,gradeNote,tierRules,developmentSummary,shortageNote} from './grading-ui.mjs?v=balance1';
-import {tickResidents,syncResidents} from './residents.mjs?v=friends20261104';
+import {createPaintUI} from './paint-ui.mjs?v=perf1';
+import {startCozyReview,cozyReviews,reviewSnapshot} from './cozy-review.mjs?v=perf1';
+import {createWelcomeLife} from './welcome-life.mjs?v=perf1';
+import {VillageSound} from './sound.mjs?v=perf1';
+import {upgradeCards,UPGRADE_LOOKS} from './upgrade-ui.mjs?v=perf1';
+import {effectNumber,cozyEffectText,cozyPlacementText,calendarDay,incomePerMinute,catalogueStyle,cozyDescription,fundingAdvice,operatingPreviewText,placementBenefits,constructionText,catalogueBudget,buildBudget,guidedPlacement,buildingBenefit,completionMessage,incomeRate,starterChoices,incomePreviewText} from './economy-ui.mjs?v=perf1';
+import {growthStatus,ratingName,gradeNote,tierRules,developmentSummary,shortageNote} from './grading-ui.mjs?v=perf1';
+import {tickResidents,syncResidents,residentContext} from './residents.mjs?v=perf1';
 // village-next B단계 입력·안내·저장·루프. 경제는 core, 좌표는 grid, 표현은 world에만 맡긴다.
-import {World} from './world.mjs?v=paint1';
-import {villagePromises,promisePreview,newlyKeptPromises} from './promises.mjs?v=balance1';
-import {cozyEffects,enableCozy,cozyGrowth,buildingSpec,assessTier,economy,upkeepOf,annualReviews,YEAR,createState,build,demolish,rotatable,rotateBuilding,relocate,canRelocate,relocateLeft,advance,metrics,month,duration,calendarMonth,monthLabel,serialize,parseSave,continueFree,buildCost,clearingCost,canBuild,at,cells,network,connected,TYPES,OPTIONS,MONTH,RULE,SCOPE,unlocked,unlockMonth,unlockMessage,populationRequired,toggleClosed,harvest,upgrade,clearLandscape,HARVEST,HARVEST_SECONDS,demandMonth,UPGRADE_TYPES} from './core.mjs?v=paint1';
-import {toCell,toWorld,spots,placeInfo,facing,entrance,path,walkable,inside,CELL,perimeter,foot,roadSet} from './grid.mjs?v=balance1';
-import {groundVector,inputVector,step,stickVector,PLAYER_SPEED} from './move.mjs?v=balance1';
-import {naturalFeature,clearablePlot,growthStage,isGarden} from './landscape.mjs?v=balance1';
-import {COZY_EFFECTS,PLAY_SPEED,realSeconds,season,SEASONS,TABS,TIERS} from './data.mjs?v=balance1';
-import {KEY,BACKUP,OWNER,A_KEY} from './app-keys.mjs?v=balance1';
+import {World} from './world.mjs?v=perf1';
+import {villagePromises,promisePreview,newlyKeptPromises} from './promises.mjs?v=perf1';
+import {cozyEffects,enableCozy,cozyGrowth,buildingSpec,assessTier,economy,upkeepOf,annualReviews,YEAR,createState,build,demolish,rotatable,rotateBuilding,relocate,canRelocate,relocateLeft,advance,metrics,month,duration,calendarMonth,monthLabel,serialize,parseSave,continueFree,buildCost,clearingCost,canBuild,at,cells,network,connected,TYPES,OPTIONS,MONTH,RULE,SCOPE,unlocked,unlockMonth,unlockMessage,populationRequired,toggleClosed,harvest,upgrade,clearLandscape,HARVEST,HARVEST_SECONDS,demandMonth,UPGRADE_TYPES} from './core.mjs?v=perf1';
+import {toCell,toWorld,spots,placeInfo,facing,entrance,path,walkable,inside,CELL,perimeter,foot,roadSet} from './grid.mjs?v=perf1';
+import {groundVector,inputVector,step,stickVector,PLAYER_SPEED} from './move.mjs?v=perf1';
+import {naturalFeature,clearablePlot,growthStage,isGarden} from './landscape.mjs?v=perf1';
+import {COZY_EFFECTS,PLAY_SPEED,realSeconds,season,SEASONS,TABS,TIERS} from './data.mjs?v=perf1';
+import {KEY,BACKUP,OWNER,A_KEY} from './app-keys.mjs?v=perf1';
 const EARLY=['house','road','snack']; // 초반 강조. 나머지는 해금되면 탭에 나타난다.
 const SERVICE={health:['의료','clinic','hospital'],education:['교육','school','library'],leisure:['여가','kids','library']};
 const $=id=>document.getElementById(id);
+function panelHTML(id,html){const node=$(id);if(node._markup!==html){node.innerHTML=html;node._markup=html;}}
 let state,storageOK=true,fromSave=false,corrupt=null,raw=null;
 // localStorage 접근 자체가 막히면(SecurityError) 저장 기능 전체를 끈다. 읽을 수는 있지만 검증에 실패하면 손상 원본을 보존하고 덮어쓰지 않는다.
 try{raw=localStorage.getItem(KEY);}catch(e){storageOK=false;console.warn('저장소에 접근할 수 없어요',e);}
@@ -53,7 +54,7 @@ function ui(){sound.update(!document.hidden&&(!state.paused||!!world.entrance));
  $('pause').textContent=state.paused?'▶ 재개':'❚❚ 일시정지';$('pause').disabled=state.ended;world.season(season(calendarMonth(state)));const note=['❄ 눈 덮인 겨울 · 따뜻한 집을 준비해요','🌸 벚꽃 피는 봄 · 새로운 이웃을 맞아요','☀ 초록이 짙은 여름 · 시원한 그늘을 만들어요','🍂 단풍 드는 가을 · 마을의 결실을 살펴요'][season(calendarMonth(state))];if($('seasonNote').textContent!==note)$('seasonNote').textContent=note;
  const hb=$('navHarvest');hb.disabled=state.ended||state.harvestAt!==null;hb.textContent=state.harvestAt!==null?`🥬 돌보는 중 ${realSeconds(HARVEST_SECONDS-(state.t-state.harvestAt))}초`:state.harvested.includes(m)?'🥬 이번 달 완료':`🥬 텃밭 돌보기 +${HARVEST}`;
  $('reviewYears').textContent=state.result&&(state.runMonths??12)<36?'이전 규칙 기록':`성장 기록 · ${Math.min(3,(state.cozyReview?cozyReviews(state).years:annualReviews(state)).length)}/3`;
- refreshPlaceBudget();if($('buildPanel').classList.contains('open'))refreshCatalogueBudget();need(v);$('phoneGrowth').textContent=growth.name;$('phoneTask').textContent=$('needTitle').textContent+' ›';if($('promisesPanel').classList.contains('open'))promiseCards();if($('statusPanel').classList.contains('open'))status(v);if(infoId!==null)info();}
+ refreshPlaceBudget();if($('buildPanel').classList.contains('open'))refreshCatalogueBudget();need(v);$('phoneGrowth').textContent=growth.name;$('phoneTask').textContent=$('needTitle').textContent+' ›';if($('promisesPanel').classList.contains('open'))promiseCards();if($('statusPanel').classList.contains('open'))status(v);if(infoId!==null)info(v);}
 // ---- 현재 필요 카드: 진행 불가 → 생활 수요 → 기금 → 여유 ----
 function need(v){
  const b=$('needAction'),queue=state.buildings.filter(b=>b.progress<1);let title,why,action,label;
@@ -63,7 +64,7 @@ function need(v){
  else{title=v.energy<.9?'마을에 전기를 더 보내 볼까요?':'나만의 정원을 만들어 볼까요?';why=v.energy<.9?'태양광 설비를 길 옆에 지으면 전력과 친환경이 나아져요.':'꽃·나무·벤치를 집 가까이에 골고루 놓으면 친환경과 행복에 도움이 돼요.';action=()=>openBuild(v.energy<.9?'기반':'조경');label=v.energy<.9?'전력 시설 보기':'꾸미기 열기';}
  $('needTitle').textContent=title;$('needWhy').textContent=why;b.hidden=false;b.textContent=label;b.onclick=action;
 }
-function status(v){const g=cozyGrowth(state),r=reviewSnapshot(state,v);$('statusBody').innerHTML=`<p class="cozy-score"><span>마을성장</span><strong>${g.score}점</strong></p><p>마을성장은 다양한 집·가게·정원과 이웃이 늘고, 친환경 개선을 하면 올라요. 최대 1,000점이에요.</p><div><span>행복지수</span><b>${Math.round(state.sat)} / 100점</b></div><div><span>복지지수</span><b>${effectNumber(v.welfare)} / 100점</b></div><p class="dim">행복은 먹거리·놀이·정원으로 자라요. 친환경 상태가 나쁘면 행복 보너스가 많아도 만점이 되지 않아요. 복지는 병원·학교·안전 시설로 자라요.</p><div><span>친환경</span><b>${v.environment} / 100점</b></div><p class="dim">전력 충족 40점 + 주민 주변 녹지 15점 + 설계 개선 15점 + 조경 30점이에요. 만점 경쟁보다 부족한 부분을 하나씩 채워 봐요.</p><div><span>함께 사는 이웃</span><b>${state.pop}명</b></div><div><span>내가 가꾼 정원</span><b>${g.gardens}곳</b></div><div><span>내가 지은 건물</span><b>${g.buildings}동</b></div><p class="dim">같은 시설의 수입은 100% → 75% → 50% → 35% → 25% → 20%로 줄어요. 행복·복지는 100% → 60% → 35% → 20% → 10%예요. 기본 꽃밭·가로수·작은 정원·벤치는 4개까지 행복·복지를 모두 받아요. 집의 수용 인원과 전력·서비스 공급량은 그대로예요.</p>${state.cozyReview?`<p><b>현재 종합 평가 예상 ${r.score} / 1,000점</b><br>마을성장의 절반은 그대로, 나머지 절반은 친환경 20%·행복 20%·복지 10%의 충족률에 따라 반영해요. 메뉴의 성장 기록에서 연차 티어를 볼 수 있어요.</p>`:""}`;}
+function status(v){const g=cozyGrowth(state),r=reviewSnapshot(state,v);panelHTML('statusBody',`<p class="cozy-score"><span>마을성장</span><strong>${g.score}점</strong></p><p>마을성장은 다양한 집·가게·정원과 이웃이 늘고, 친환경 개선을 하면 올라요. 최대 1,000점이에요.</p><div><span>행복지수</span><b>${Math.round(state.sat)} / 100점</b></div><div><span>복지지수</span><b>${effectNumber(v.welfare)} / 100점</b></div><p class="dim">행복은 먹거리·놀이·정원으로 자라요. 친환경 상태가 나쁘면 행복 보너스가 많아도 만점이 되지 않아요. 복지는 병원·학교·안전 시설로 자라요.</p><div><span>친환경</span><b>${v.environment} / 100점</b></div><p class="dim">전력 충족 40점 + 주민 주변 녹지 15점 + 설계 개선 15점 + 조경 30점이에요. 만점 경쟁보다 부족한 부분을 하나씩 채워 봐요.</p><div><span>함께 사는 이웃</span><b>${state.pop}명</b></div><div><span>내가 가꾼 정원</span><b>${g.gardens}곳</b></div><div><span>내가 지은 건물</span><b>${g.buildings}동</b></div><p class="dim">같은 시설의 수입은 100% → 75% → 50% → 35% → 25% → 20%로 줄어요. 행복·복지는 100% → 60% → 35% → 20% → 10%예요. 기본 꽃밭·가로수·작은 정원·벤치는 4개까지 행복·복지를 모두 받아요. 집의 수용 인원과 전력·서비스 공급량은 그대로예요.</p>${state.cozyReview?`<p><b>현재 종합 평가 예상 ${r.score} / 1,000점</b><br>마을성장의 절반은 그대로, 나머지 절반은 친환경 20%·행복 20%·복지 10%의 충족률에 따라 반영해요. 메뉴의 성장 기록에서 연차 티어를 볼 수 있어요.</p>`:""}`);}
 // Recorded years are derived from existing month snapshots, without changing save files.
 function showGrowthReview(){$('reviewTitle').textContent=state.cozyReview?'우리 마을 성장 기록':'이전 마을 기록';const reviews=cozyReviews(state);if(state.cozyReview){const record=r=>`<article class="year-record"><strong>${r.year}년${r.year===3?" 최종":" 차"} · ${r.tier}</strong><p>${r.total}점 · ${r.title}</p><small>친환경 ${r.environment} · 행복 ${effectNumber(r.happiness)} · 복지 ${effectNumber(r.welfare)}</small></article>`;$('reviewBody').innerHTML=`<p>같은 3년, 실제 진행 80분의 기록이에요. 평가 창과 일시정지 중에는 시간이 멈춰요.</p><div class="year-records">${reviews.years.length?reviews.years.map(record).join(''):'<p>첫 1년을 가꾸면 첫 티어가 기록돼요.</p>'}</div>${reviews.final?`<h3>3년 최종 티어 · ${reviews.final.tier}</h3><p><b>${reviews.final.total}점 · ${reviews.final.title}</b></p><p>3년 기록은 확정됐어요. 이 마을을 계속 가꿀 수 있어요.</p>`:`<p>3년 최종 평가까지 ${mmss(realSeconds(36*MONTH-state.t))}</p>`}<p class="dim">각 연차는 해당 12개월의 평균 30%와 마지막 달 70%를 반영해요. 3년 차 평가가 최종 티어가 되며, 앞선 성장 기록은 따로 남아요. 친환경·행복·복지를 함께 챙길수록 같은 성장에서도 더 좋은 평가를 받아요.</p>`;$('closeReview').textContent=reviews.final?'이 마을 계속 가꾸기':'마을로 돌아가기';modal($('reviewDialog'));return;}const old=annualReviews(state);$('reviewBody').innerHTML=old.length?'<p>이전 방식으로 남긴 기록이에요. 지금의 꾸미기 점수와는 별개로 보관해요.</p>'+old.map(r=>`<p>${r.year}년 차 · ${r.total}점</p>`).join(''):'<p>아직 이전 기록이 없어요. 이 마을은 자유 꾸미기로 보존돼요. 새 마을을 만들면 1·2·3년 차 평가가 시작돼요.</p>';modal($('reviewDialog'));}
 $('reviewYears').onclick=showGrowthReview;
@@ -142,9 +143,9 @@ $('finishRemove').onclick=()=>{closePanels();$('navRemove').focus();};
 // ---- 시설 정보 ----
 let upgradeMarkup='',upgradeBuilding=null;
 const paintUI=createPaintUI({world,getState:()=>state,getBuilding:()=>state.buildings.find(b=>b.id===infoId),otherOwnerAlive,save,toast,refresh:ui});
-function info(){const b=state.buildings.find(b=>b.id===infoId);if(!b){closePanels();infoId=null;return;}const d=buildingSpec(state,b.type),v=metrics(state),live=b.progress>=1,con=connected(state,b,v.net),road=state.cozyV===1&&b.type==='road',removable=state.cozyV===1||!b.starter||isGarden(b);
+function info(v=metrics(state)){const b=state.buildings.find(b=>b.id===infoId);if(!b){closePanels();infoId=null;return;}const d=buildingSpec(state,b.type),live=b.progress>=1,con=connected(state,b,v.net),road=state.cozyV===1&&b.type==='road',removable=state.cozyV===1||!b.starter||isGarden(b);
  if(world.highlightBuilding(b))focusPlace(b.x+(foot(b.type)-1)/2,b.y+(foot(b.type)-1)/2);if(upgradeBuilding!==b)$('manageBuilding').open=road;$('manageBuilding').hidden=!removable;$('manageBuilding').querySelector('summary').textContent=road?'길 관리':'옮기기 · 휴업 · 철거';
- $('rotateBuilding').hidden=!rotatable(b.type);$('rotateBuilding').disabled=state.paused||state.ended;$('infoTitle').textContent=d.name+(b.starter?' (시작 시설)':'');$('infoBody').innerHTML=`<p>${cozyDescription(b.type)}</p><p class="facility-effects">${b.starter&&!d.cap?'시작 시설 · 추가 수입·행복·복지 +0':cozyEffectText(state,b.type,false,b)}</p><p class="facility-state">${live?b.closed?'휴업 중 · 재개하면 효과를 받아요':d.cap&&!con?'길을 이어야 새 이웃이 입주해요':(state.cozyV===1||con||isGarden(b))?'이용 중':'길과 연결하면 이용할 수 있어요':constructionText(state,b)}</p>`;
+ $('rotateBuilding').hidden=!rotatable(b.type);$('rotateBuilding').disabled=state.paused||state.ended;$('infoTitle').textContent=d.name+(b.starter?' (시작 시설)':'');panelHTML('infoBody',`<p>${cozyDescription(b.type)}</p><p class="facility-effects">${b.starter&&!d.cap?'시작 시설 · 추가 수입·행복·복지 +0':cozyEffectText(state,b.type,false,b)}</p><p class="facility-state">${live?b.closed?'휴업 중 · 재개하면 효과를 받아요':d.cap&&!con?'길을 이어야 새 이웃이 입주해요':(state.cozyV===1||con||isGarden(b))?'이용 중':'길과 연결하면 이용할 수 있어요':constructionText(state,b)}</p>`);
  paintUI.update();
  const ecoEligible=UPGRADE_TYPES.includes(b.type);
  $('upgradeSection').hidden=!ecoEligible;$('upgradeNote').textContent=b.opts.length>=2?'개선 2개 완료 · 건물의 새 모습을 살펴봐요.':`남은 개선 ${2-b.opts.length}개 · 효과를 비교해 골라요. 모습도 바뀌어요.`;const html=ecoEligible?upgradeCards(state,b):'';
@@ -236,8 +237,8 @@ function manualMove(dt){const keyboard=inputVector(keys),usingKeys=keyboard.ix||
 // 4. 새 마을·불러오기·이어받기 때 입력 모드·선택·정보창·플레이어 경로·말풍선·주민을 모두 초기화한다.
 function resetSession(){world.welcomeLife?.finish();world.welcomeLife=null;world.welcoming=false;world.welcomeView=null;celebratedPromises=new Set(villagePromises(state).filter(p=>p.done).map(p=>p.id));lastPromiseCheck=-2;fullCatalogue=false;lastIncomeMilestone=Math.floor(state.pop/4);stopStick();keys.clear();enableCozy(state);lesson=false;$('need').classList.add('hide');for(const n of npcs)world.removePerson(n.p);npcs=[];endPlace();closePanels();infoId=null;sel=null;mode=null;bubble=null;world.marker.visible=false;world.sync(state,false);world.place(world.player,5,6.5);resetView();reviewShown=Math.max(0,Math.floor(state.t/YEAR)-(state.t>0&&state.t%YEAR===0?1:0));npcHomes();lastMonth=month(state);}
 // ---- 시각 주민: 집에서 나와 가장 최근 완공한 가게로 길을 따라 걷고 돌아온다. 돈·만족을 바꾸지 않는다. ----
-function npcHomes(){const before=npcs.length;syncResidents(state,npcs,world);if(before>=4&&npcs.length>before&&!state.paused){const names={cat:'고양이',fox:'여우',panda:'판다',deer:'사슴',penguin:'펭귄',sheep:'양',elephant:'아기 코끼리'};toast(`마을이 자라 새 이웃이 왔어요! ${npcs.slice(before).map(n=>names[n.p.species]||'새로운').join('·')} 친구를 찾아보세요.`);}}
-function npcTick(dt){npcHomes();const next=tickResidents(state,npcs,dt,time,world);if(next&&(!bubble||time>=bubble.end))bubble=next;}
+function npcHomes(context){const before=npcs.length;syncResidents(state,npcs,world,context);if(before>=4&&npcs.length>before&&!state.paused){const names={cat:'고양이',fox:'여우',panda:'판다',deer:'사슴',penguin:'펭귄',sheep:'양',elephant:'아기 코끼리'};toast(`마을이 자라 새 이웃이 왔어요! ${npcs.slice(before).map(n=>names[n.p.species]||'새로운').join('·')} 친구를 찾아보세요.`);}}
+function npcTick(dt){const context=residentContext(state);npcHomes(context);const next=tickResidents(state,npcs,dt,time,world,context);if(next&&(!bubble||time>=bubble.end))bubble=next;}
 let lastIncomeMilestone=Math.floor(state.pop/4);
 // ---- 루프 ----
 // 시뮬레이션에는 실제 경과 시간의 1.5배를 준다(느린 기기에서 시간을 깎지 않음). 연출용 dt만 짧게 자른다.

@@ -1,7 +1,7 @@
 import * as T from '../lib/three.module.min.js';
-import {cells,SIZE,RIVER} from './core.mjs?v=balance1';
-import {toWorld,GROUND_Y} from './grid.mjs?v=balance1';
-import {naturalFeature} from './landscape.mjs?v=balance1';
+import {cells,SIZE,RIVER} from './core.mjs?v=perf1';
+import {toWorld,GROUND_Y} from './grid.mjs?v=perf1';
+import {naturalFeature} from './landscape.mjs?v=perf1';
 
 // Seasonal scenery never occupies a saved plot, road, cleared cell or construction site.
 export function seasonalSites(s){

@@ -1,20 +1,20 @@
-import {addNeighborDetails} from './neighbor-details.mjs?v=friends20261104';
+import {addNeighborDetails} from './neighbor-details.mjs?v=perf1';
 // village-next 표현 계층. pocket/world.mjs의 헬퍼·모델·배칭·주민 리그를 가져와 18×18 격자 위에 올린다.
 // 경제 값은 계산하지 않는다. sync(state)로 건물을 그리고 preview()로 배치 미리보기를 보여준다.
-import {paintPart,applyBuildingPaint,canPaint} from './building-paint.mjs?v=paint1';
+import {paintPart,applyBuildingPaint,canPaint} from './building-paint.mjs?v=perf1';
 import * as T from '../lib/three.module.min.js';
-import {expansionModels} from './expansion-models.mjs?v=paint1';
-import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=balance1';
-import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=balance1';
-import {naturalFeature,growthStage} from './landscape.mjs?v=balance1';
-import {advancePersonRoute} from './residents.mjs?v=friends20261104';
-import {townscapeSites} from './townscape.mjs?v=friends20261104';
-import {seasonalSites,createSeasonDetails,disposeSeasonDetails} from './season-details.mjs?v=friends20261104';
-import {surfaceOptions,surfaceTime,surfaceWinter} from './surfaces.mjs?v=scenario20261104';
-import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?v=friends20261104';
-import {createSunlight} from './sunlight.mjs?v=friends20261104';
-import {paintedTree,treeArtSeason,treeArtReady} from './tree-art.mjs?v=balance1';
-import {addRabbitArt,updateRabbitArt} from './rabbit-art.mjs?v=balance1';
+import {expansionModels} from './expansion-models.mjs?v=perf1';
+import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=perf1';
+import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=perf1';
+import {naturalFeature,growthStage} from './landscape.mjs?v=perf1';
+import {advancePersonRoute} from './residents.mjs?v=perf1';
+import {townscapeSites} from './townscape.mjs?v=perf1';
+import {seasonalSites,createSeasonDetails,disposeSeasonDetails} from './season-details.mjs?v=perf1';
+import {surfaceOptions,surfaceTime,surfaceWinter} from './surfaces.mjs?v=perf1';
+import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?v=perf1';
+import {createSunlight} from './sunlight.mjs?v=perf1';
+import {paintedTree,treeArtSeason,treeArtReady} from './tree-art.mjs?v=perf1';
+import {addRabbitArt,updateRabbitArt} from './rabbit-art.mjs?v=perf1';
 import {addPenguinArt,updatePenguinArt} from './penguin-art.mjs';
 
 const materials=new Map(),geometries=new Map();let ghostMode=false;
@@ -593,13 +593,14 @@ export class World{
   for(const c of ['#e59bb6','#e9a3b6','#e4a0b2','#edafb4','#edb1c5','#e9bf9b','#df8fa9','#f2b2c4','#e7a4bc','#eaa9bd','#e5a6bb','#e083a0','#f2b6c8'])palettes[c]=['#ecf0e8',c,c,c];
   for(const[k,m]of materials){const base=k.split('|')[0];if(palettes[base])m.color.set(palettes[base][se]);if(['#ddc990','#9cab83','#8fd1c7','#c1d9cb'].includes(base)){m.userData.windowGlow??={color:m.emissive.clone(),intensity:m.emissiveIntensity};m.emissive.copy(se===0?new T.Color('#ffbd65'):m.userData.windowGlow.color);m.emissiveIntensity=se===0?.42:m.userData.windowGlow.intensity;}if(base==='#9cbd6e'){const map=se===0?null:surfaceOptions(base).map;if(m.map!==map){m.map=map;m.needsUpdate=true;}}}
   this.scene.background.set(['#d9dfe9','#e6d5b6','#cfdbd3','#e8c7a7'][se]);this.sun.color.set(['#ffdbaf','#ffd49a','#ffe2b1','#ffca91'][se]);this.sun.intensity=[3.05,3.25,3.4,3.1][se];this.hemi.color.set(['#cbdaf2','#cbdff0','#cee5ed','#d3d9ed'][se]);this.hemi.groundColor.set(['#b9bacb','#c9b997','#b9c7a2','#c6ac91'][se]);this.hemi.intensity=[1.24,1.34,1.28,1.25][se];
+  const decorSig=se+JSON.stringify(this.seasonAnchors||[]);if(decorSig!==this.seasonDecorSig){this.seasonDecorSig=decorSig;
   if(this.seasonDecor)dispose(this.seasonDecor);this.seasonDecor=new T.Group();this.scene.add(this.seasonDecor);
   for(const p of this.seasonAnchors||[]){const g=this.seasonDecor,x=p.x+.65,z=p.z-.6;
    if(se===0){ball(g,'#f6f5eb',x,.35,z,.22,.25,.22);ball(g,'#f6f5eb',x,.65,z,.15,.16,.15);for(const a of[-1,1])dot(g,'#4f554e',x+a*.05,.69,z+.14,.018);const nose=cone(g,'#d99959',x,.64,z+.19,.025,.1);nose.rotation.x=Math.PI/2;cylinder(g,'#b97670',x,.53,z,.14,.045);}
    if(se===3){for(let i=0;i<3;i++){const px=x+(i-1)*.16;ball(g,'#d99a52',px,.22,z+i*.08,.14,.11,.13);cylinder(g,'#7b7951',px,.35,z+i*.08,.022,.07);}for(let i=0;i<3;i++){cylinder(g,'#e4cfab',x-.45,.2,z+i*.15,.018,.16);ball(g,'#b77b5c',x-.45,.29,z+i*.15,.08,.04,.08);}}
    if(se===2){clump(g,'#679f63',x,.25,z,.3,.22,.3);for(let i=0;i<9;i++){const t=i*2.4;ball(g,i%2?'#b4b8e0':'#9ebcdd',x+Math.sin(t)*.19,.43+(i%3)*.05,z+Math.cos(t)*.19,.09,.07,.09);}}
    if(se===1){flower(g,x,z,'#f0b1bb');flower(g,x+.18,z+.1,'#fff2ce');}
-  }batch(this.seasonDecor);
+  }batch(this.seasonDecor);}
   this.petals.material.color.set(['#fffef6','#ffe1eb','#f5dc84','#c57b40'][se]);
  }
 
@@ -642,8 +643,9 @@ export class World{
   }
  }
  frame(dt,time,reduced){if(this.followPlayer&&!this.paused&&this.player&&(this.player.route.length||this.player.moving>.01)){const p=this.player.g.position,k=reduced?1:1-Math.exp(-dt*5);this.center.x+=(p.x-this.center.x)*k;this.center.z+=(p.z-this.center.z)*k;}if(!this.treeArtSettled&&this.scene)this.treeArtSettled=treeArtReady(this.scene);this.zoom+=(this.targetZoom-this.zoom)*Math.min(1,dt*7);const span=this.span=(this.aspect<1?13:8.5)/this.zoom;this.unit=span*2/innerHeight;
-  this.camera.left=-span*this.aspect;this.camera.right=span*this.aspect;this.camera.top=span;this.camera.bottom=-span;this.camera.near=.1;this.camera.far=120;
-  this.camera.position.set(this.center.x+Math.sin(this.angle)*30,this.cameraHeight??26,this.center.z+Math.cos(this.angle)*30);this.camera.lookAt(this.center.x,this.lookHeight??.2,this.center.z);this.camera.updateProjectionMatrix();
+  if(this.projectionSpan!==span||this.projectionAspect!==this.aspect){this.projectionSpan=span;this.projectionAspect=this.aspect;
+  this.camera.left=-span*this.aspect;this.camera.right=span*this.aspect;this.camera.top=span;this.camera.bottom=-span;this.camera.near=.1;this.camera.far=120;this.camera.updateProjectionMatrix();}
+  this.camera.position.set(this.center.x+Math.sin(this.angle)*30,this.cameraHeight??26,this.center.z+Math.cos(this.angle)*30);this.camera.lookAt(this.center.x,this.lookHeight??.2,this.center.z);
   this.sun.position.set(this.center.x-14,11.8,this.center.z+8);this.sun.target.position.copy(this.center);
   const shadowSpan=Math.min(38,Math.max(18,span*this.aspect*.9)),sc=this.sun.shadow.camera;
   if(Math.abs(sc.right-shadowSpan)>.5){Object.assign(sc,{left:-shadowSpan,right:shadowSpan,top:shadowSpan,bottom:-shadowSpan,far:100});sc.updateProjectionMatrix();}
