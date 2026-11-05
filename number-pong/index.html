@@ -6,13 +6,15 @@
 <meta name="color-scheme" content="light">
 <title>번호퐁 친구들 · 교실 번호뽑기</title>
 <link rel="preload" href="assets/fonts/SUIT-Bold.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="style.css?v=9">
+<link rel="stylesheet" href="style.css?v=10">
 <link rel="stylesheet" href="effects.css?v=9">
 </head>
 <body>
 <main class="stage" id="stage" data-theme="hamster" data-phase="idle" aria-label="번호퐁 친구들">
 
   <h1 class="title" id="title">번호퐁 친구들</h1>
+
+  <button class="theme-button reset-button" id="resetButton" type="button" aria-label="뽑은 번호 초기화" disabled>초기화</button>
 
   <button class="theme-button" id="themeButton" type="button" aria-describedby="themeStatus">
     <span class="theme-dot" aria-hidden="true"></span>
@@ -48,6 +50,6 @@
   <p class="sr-only" id="live" aria-live="polite" aria-atomic="true"></p>
   <p class="sr-only" id="themeStatus" aria-live="polite" aria-atomic="true"></p>
 </main>
-<script type="module" src="app.mjs?v=11"></script>
+<script type="module" src="app.mjs?v=12"></script>
 </body>
 </html>

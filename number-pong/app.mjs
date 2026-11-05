@@ -8,7 +8,7 @@ import { createEffects, FX, PREPARE_MS } from './effects.mjs?v=7';
 
 const $ = id => document.getElementById(id);
 const el = {
-  stage: $('stage'), title: $('title'), themeButton: $('themeButton'), themeName: $('themeName'),
+  stage: $('stage'), title: $('title'), themeButton: $('themeButton'), themeName: $('themeName'), resetButton: $('resetButton'),
   themeStatus: $('themeStatus'), board: $('board'), actor: $('actor'), fx: $('fx'), result: $('result'),
   number: $('number'), caption: $('caption'), panel: $('panel'), total: $('total'),
   rangeHint: $('rangeHint'), fire: $('fire'), notice: $('notice'), live: $('live')
@@ -101,6 +101,7 @@ function render() {
   const last = state.history[state.history.length - 1];
   const number = last ? last.numbers[0] : null;
   const exhausted = !status.ok;
+  el.resetButton.disabled = !state.history.length;
 
   el.stage.dataset.phase = exhausted ? 'exhausted' : (last ? 'drawn' : 'idle');
   el.number.textContent = number ?? '?';
@@ -136,6 +137,21 @@ function popNumber() {
 }
 
 // ---------- 발사 ----------
+function resetRound() {
+  cancelReveal();
+  effects.clear();
+  el.result.classList.remove('pop');
+  busyUntil = 0;
+  spaceHeld = false;
+  state = resetHistory(state);
+  el.total.value = String(state.config.total);
+  clearRangeError();
+  persist();
+  render();
+  el.caption.textContent = `초기화했어요 · 1 ~ ${state.config.total}번 다시 뽑아요`;
+  announce(el.caption.textContent);
+}
+
 function fire() {
   const now = performance.now();
   if (now < busyUntil) return;
@@ -147,10 +163,7 @@ function fire() {
     if (status.reason !== 'exhausted') return;
     const yes = ask(`${state.config.total}번까지 모두 뽑았어요.\n새 판을 시작할까요? 지금까지의 기록은 지워져요.`);
     if (!yes) return;
-    state = resetHistory(state);
-    persist();
-    render();
-    announce(`새 판을 시작했어요. 1번부터 ${state.config.total}번까지 뽑아요.`);
+    resetRound();
     return;
   }
 
@@ -243,9 +256,14 @@ el.total.addEventListener('input', () => {
 el.total.addEventListener('focus', () => el.total.select());
 
 el.themeButton.addEventListener('click', cycleTheme);
+el.resetButton.addEventListener('click', () => {
+  if (!state.history.length) return;
+  if (ask(`지금까지 뽑은 ${state.history.length}개 번호를 초기화할까요?\n번호 범위와 친구는 그대로 유지돼요.`)) resetRound();
+});
 
 window.addEventListener('keydown', event => {
   if (event.code !== 'Space' && event.key !== ' ') return;
+  if (event.target === el.resetButton) return; // 초기화 버튼의 기본 키보드 동작을 사용한다.
   if (event.target === el.total) {                    // 입력칸에서는 Space로 값을 적용하고 발사
     event.preventDefault();
     if (event.repeat || spaceHeld) return;
