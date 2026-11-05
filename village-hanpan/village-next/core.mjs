@@ -4,6 +4,7 @@ export {buildingSpec} from './city-rules.mjs?v=balance1';
 // village-next B단계 경제 코어. public/core.mjs(village-40-v3) 기반 + 완공시각·재배치·월별 해금·텃밭·휴업. 렌더/DOM 접근 없음.
 import {naturalFeature,clearablePlot,isGarden,landscapeMetrics} from './landscape.mjs?v=balance1';
 import {VERSION,RULE,MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,TIERS,season,PLAY_SPEED,COZY_EFFECTS,POPULATION_UNLOCKS} from './data.mjs?v=balance1';
+import {PAINTABLE,validPaint} from './building-paint.mjs?v=paint1';
 export {MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,RULE,VERSION};
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 export const SCOPE={label:'B규칙'};
@@ -185,6 +186,7 @@ export function parseSave(text){if(typeof text!=='string'||text.length>500000)th
  for(const b of s.buildings)if(b?.plantedAt!==undefined&&(!isGarden(b)||!num(b.plantedAt,0,s.t)))throw Error('식물 성장 기록이 올바르지 않아요.');
  const occupied=new Set(),ids=new Set();for(const b of s.buildings){if(!b||!Object.hasOwn(TYPES,b.type)||!Number.isInteger(b.id)||b.id<1||ids.has(b.id)||!Number.isInteger(b.x)||!Number.isInteger(b.y)||!num(b.progress,0,1)||typeof b.starter!=='boolean'||!Array.isArray(b.opts)||b.opts.length>2||new Set(b.opts).size!==b.opts.length||b.opts.some(o=>!Object.hasOwn(OPTIONS,o)))throw Error('시설 정보가 올바르지 않아요.');
   if(b.paidCost!==undefined&&(!Number.isInteger(b.paidCost)||!num(b.paidCost,0,1e8)))throw Error('건설비 기록이 올바르지 않아요.');
+  if(b.paint!==undefined&&(!validPaint(b.paint)||!PAINTABLE.has(b.type)))throw Error('건물 색을 확인해 주세요.');
   if(b.dir!==undefined&&(!validDirection(b.dir)||!rotatable(b.type)))throw Error('시설 방향이 올바르지 않아요.');
   if(b.completedAt!==undefined&&(!Number.isInteger(b.completedAt)||!num(b.completedAt,0,Math.max(s.t,0))||b.progress<1))throw Error('완공 기록이 올바르지 않아요.');if(b.moved!==undefined&&(typeof b.moved!=='boolean'||b.starter))throw Error('재배치 기록이 올바르지 않아요.');if(b.closed!==undefined&&(b.closed!==true||b.progress<1))throw Error('휴업 기록이 올바르지 않아요.');
   ids.add(b.id);for(const[x,y]of cells(b)){const k=`${x},${y}`;if(x<0||y<0||x>=SIZE||y>=SIZE||occupied.has(k)||((x===RIVER)!==(b.type==='bridge'))||x<2)throw Error('시설 배치가 올바르지 않아요.');occupied.add(k);}}

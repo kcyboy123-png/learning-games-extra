@@ -1,8 +1,9 @@
 import {addNeighborDetails} from './neighbor-details.mjs?v=friends20261104';
 // village-next 표현 계층. pocket/world.mjs의 헬퍼·모델·배칭·주민 리그를 가져와 18×18 격자 위에 올린다.
 // 경제 값은 계산하지 않는다. sync(state)로 건물을 그리고 preview()로 배치 미리보기를 보여준다.
+import {paintPart,applyBuildingPaint,canPaint} from './building-paint.mjs?v=paint1';
 import * as T from '../lib/three.module.min.js';
-import {expansionModels} from './expansion-models.mjs?v=friends20261104';
+import {expansionModels} from './expansion-models.mjs?v=paint1';
 import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=balance1';
 import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=balance1';
 import {naturalFeature,growthStage} from './landscape.mjs?v=balance1';
@@ -83,9 +84,9 @@ function windowBox(g,x,y,z,w=.70){
 
 // ---- 건축 부품 (pocket 그대로) ----
 function roof(g,x,y,z,w,d,c,c2){const a=new T.Group();a.position.set(x,y,z);g.add(a);const W=w/2+.22,H=.78,N=6,D=d+.3;
- for(const side of[-1,1]){let px=W,py=0;for(let i=1;i<=N;i++){const t=i/N,nx=W*(1-t),ny=H*Math.pow(t,1.45);const cx=(px+nx)/2,cy=(py+ny)/2,len=Math.hypot(nx-px,ny-py),ang=Math.atan2(ny-py,px-nx);const seg=new T.Group();seg.position.set(side*cx,cy,0);seg.rotation.z=-side*ang;a.add(seg);box(seg,c,0,0,0,len+.03,.11,D);const n=Math.round(D/.23);for(let k=0;k<=n;k++){const r=cylinder(seg,c2,0,.07,-D/2+k*(D/n),.038,len+.02);r.rotation.z=Math.PI/2;}px=nx;py=ny;}
+ for(const side of[-1,1]){let px=W,py=0;for(let i=1;i<=N;i++){const t=i/N,nx=W*(1-t),ny=H*Math.pow(t,1.45);const cx=(px+nx)/2,cy=(py+ny)/2,len=Math.hypot(nx-px,ny-py),ang=Math.atan2(ny-py,px-nx);const seg=new T.Group();seg.position.set(side*cx,cy,0);seg.rotation.z=-side*ang;a.add(seg);paintPart(box(seg,c,0,0,0,len+.03,.11,D),'roof');const n=Math.round(D/.23);for(let k=0;k<=n;k++){const r=paintPart(cylinder(seg,c2,0,.07,-D/2+k*(D/n),.038,len+.02),'accent');r.rotation.z=Math.PI/2;}px=nx;py=ny;}
   const n=Math.round(D/.3);for(let k=0;k<=n;k++)box(a,'#8e6c4c',side*(W-.26),-.1,-D/2+.08+k*(D-.16)/n,.5,.07,.07);}
- box(a,'#324b50',0,H+.05,0,.26,.15,D+.14);for(const s of[-1,1])ball(a,'#324b50',0,H+.1,s*(D/2+.07),.14,.1,.12);return a;}
+ paintPart(box(a,'#324b50',0,H+.05,0,.26,.15,D+.14),'accent');for(const s of[-1,1])paintPart(ball(a,'#324b50',0,H+.1,s*(D/2+.07),.14,.1,.12),'accent');return a;}
 function curtains(g,x,y,z,w,h){
  const geo=geometry('tied-linen-curtain',()=>{const s=new T.Shape();s.moveTo(-.47,.9);s.lineTo(-.18,.9);s.bezierCurveTo(-.20,.63,-.35,.42,-.38,.28);s.quadraticCurveTo(-.25,.15,-.26,.03);s.lineTo(-.47,.03);s.closePath();const b=new T.ShapeGeometry(s,10),p=b.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,.003*Math.sin(p.getX(i)*74));b.computeVertexNormals();return b;});
  for(const side of[-1,1]){const m=mesh(g,geo,'#fff3d6',x,y,z,w*side,h,1,{side:T.DoubleSide,roughness:1});m.name='window-curtain';m.castShadow=false;}
@@ -118,15 +119,15 @@ function cottageRoof(g,y,w=3.42,d=2.62,power=false,wallW=2.88,wallD=2.38){
  const rise=z=>.60*Math.pow(1-Math.min(1,Math.abs(z)/half),1.62)+.15*Math.pow(Math.abs(z)/half,6);
  const tile=geometry(`cottage-tile:${w}:${d}`,()=>{const pos=[],uv=[],idx=[];for(let i=0;i<=32;i++){const z=-half+d*i/32;for(let j=0;j<=8;j++){const angle=j*Math.PI/8,lap=.022*Math.cos(i/32*Math.PI*12);pos.push(Math.cos(angle)*pitch*.48,rise(z)+Math.sin(angle)*(.115+lap),z);uv.push(j/8,i/32);}}for(let i=0;i<32;i++)for(let j=0;j<8;j++){const k=i*9+j;idx.push(k,k+1,k+9,k+1,k+10,k+9);}const b=new T.BufferGeometry();b.setAttribute('position',new T.Float32BufferAttribute(pos,3));b.setAttribute('uv',new T.Float32BufferAttribute(uv,2));b.setIndex(idx);b.computeVertexNormals();return b;});
  const underside=geometry(`cottage-soffit:${w}:${d}`,()=>{const s=new T.Shape();s.moveTo(-half,rise(-half)-.09);for(let i=0;i<=20;i++){const z=-half+d*i/20;s.lineTo(z,rise(z));}s.lineTo(half,rise(half)-.09);for(let i=20;i>=0;i--){const z=-half+d*i/20;s.lineTo(z,rise(z)-.09);}s.closePath();const b=new T.ExtrudeGeometry(s,{depth:w,bevelEnabled:false});b.rotateY(Math.PI/2);b.translate(-w/2,0,0);return b;});
- mesh(a,underside,'#385443',0,0,0);
- const gable=geometry(`cottage-gable:${d}:${wallW}:${wallD}`,()=>{const s=new T.Shape();s.moveTo(-wallD/2,-.09);s.lineTo(wallD/2,-.09);for(let i=0;i<=20;i++){const z=wallD/2-i*wallD/20;s.lineTo(z,rise(z)-.09);}s.closePath();const b=new T.ExtrudeGeometry(s,{depth:wallW,bevelEnabled:false});b.rotateY(Math.PI/2);b.translate(-wallW/2,0,0);return b;});mesh(a,gable,'#f1e3c3',0,0,0);
- for(let i=0;i<n;i++){const x=-w/2+(i+.5)*pitch,c=power?(i%4?'#4a6a70':'#3a5459'):(i%4?'#719784':'#6fa08a');mesh(a,tile,c,x,0,0,1,1,1,{side:T.DoubleSide,roughness:.72});for(const side of[-1,1]){ball(a,c,x,rise(half)+.025,side*(half+.006),pitch*.48,.095,.042);ball(a,'#80976b',x,rise(half)+.025,side*(half+.043),.045,.045,.009);const r=cylinder(a,'#d6bb8d',x,-.035,side*(half-.12),.044,.25);r.rotation.x=Math.PI/2;}}
- softBlock(a,'#4d7362',0,.70,0,w+.09,.17,.24,.055);for(const side of[-1,1]){const r=softBlock(a,'#5c8170',side*(w/2-.02),.76,0,.36,.17,.26,.045);r.rotation.z=side*.2;}
+ paintPart(mesh(a,underside,'#385443',0,0,0),'accent');
+ const gable=geometry(`cottage-gable:${d}:${wallW}:${wallD}`,()=>{const s=new T.Shape();s.moveTo(-wallD/2,-.09);s.lineTo(wallD/2,-.09);for(let i=0;i<=20;i++){const z=wallD/2-i*wallD/20;s.lineTo(z,rise(z)-.09);}s.closePath();const b=new T.ExtrudeGeometry(s,{depth:wallW,bevelEnabled:false});b.rotateY(Math.PI/2);b.translate(-wallW/2,0,0);return b;});paintPart(mesh(a,gable,'#f1e3c3',0,0,0),'wall');
+ for(let i=0;i<n;i++){const x=-w/2+(i+.5)*pitch,c=power?(i%4?'#4a6a70':'#3a5459'):(i%4?'#719784':'#6fa08a');paintPart(mesh(a,tile,c,x,0,0,1,1,1,{side:T.DoubleSide,roughness:.72}),'roof');for(const side of[-1,1]){paintPart(ball(a,c,x,rise(half)+.025,side*(half+.006),pitch*.48,.095,.042),'roof');ball(a,'#80976b',x,rise(half)+.025,side*(half+.043),.045,.045,.009);const r=cylinder(a,'#d6bb8d',x,-.035,side*(half-.12),.044,.25);r.rotation.x=Math.PI/2;}}
+ paintPart(softBlock(a,'#4d7362',0,.70,0,w+.09,.17,.24,.055),'accent');for(const side of[-1,1]){const r=paintPart(softBlock(a,'#5c8170',side*(w/2-.02),.76,0,.36,.17,.26,.045),'accent');r.rotation.z=side*.2;}
  return a;
 }
 function alignedCottage(a,type='house'){
  const power=type==='generator',shop=type==='snack',h=power?1.5:1.72,finish=[];
- shade(a,0,.021,.10,1.91);rounded(a,'#b8ac90',0,.01,.04,3.34,2.84,.035,.29);softBlock(a,'#c8b693',0,.16,-.15,2.98,.26,2.48,.075);softBlock(a,'#f1e3c3',0,.23+h/2,-.15,2.88,h,2.38,.10);const skirt=new T.Group();skirt.position.z=-.15;a.add(skirt);brickSkirt(skirt,2.88,2.38,.32);
+ shade(a,0,.021,.10,1.91);rounded(a,'#b8ac90',0,.01,.04,3.34,2.84,.035,.29);softBlock(a,'#c8b693',0,.16,-.15,2.98,.26,2.48,.075);paintPart(softBlock(a,'#f1e3c3',0,.23+h/2,-.15,2.88,h,2.38,.10),'wall');const skirt=new T.Group();skirt.position.z=-.15;a.add(skirt);brickSkirt(skirt,2.88,2.38,.32);
  for(const x of[-1.38,1.38])for(const z of[-1.32,1.02])softBlock(a,'#a9805a',x,1,z,.12,1.8,.12,.025);
  for(const z of[-1.36,1.06])softBlock(a,'#bd9869',0,h+.25,z,2.94,.12,.12,.025);
  const roofGroup=cottageRoof(a,h+.28,power?3.18:3.42,power?2.82:2.92,power);if(power)roofGroup.scale.y=.78;
@@ -183,11 +184,11 @@ function roadModel(a){
 }
 // ---- 공통 부품: 납작 지붕 상가/공공건물, 창 줄, 간판 ----
 function flat(a,w,h,d,wall,trim,base='#b8ac90',pitched=false){
- rounded(a,base,0,0,0,w+.7,d+.6,.12,.15);softBlock(a,'#9e8f78',0,.2,0,w+.08,.22,d+.08,.04);softBlock(a,wall,0,h/2+.2,0,w,h,d,.09);brickSkirt(a,w,d,.38);
- softBlock(a,'#bd9869',0,h+.13,0,w+.12,.10,d+.12,.025);softBlock(a,trim,0,h+.28,0,w+.32,.20,d+.32,.05);softBlock(a,'#f1dfb0',0,h+.39,0,w+.35,.045,d+.35,.015);
- if(!pitched){softBlock(a,'#d9d2c0',0,h+.4,0,w-.2,.1,d-.2,.025);
- for(const side of[-1,1])softBlock(a,trim,side*(w/2-.08),h+.52,0,.13,.20,d-.12,.03);
- softBlock(a,trim,0,h+.52,-d/2+.08,w-.12,.20,.13,.03);
+ rounded(a,base,0,0,0,w+.7,d+.6,.12,.15);softBlock(a,'#9e8f78',0,.2,0,w+.08,.22,d+.08,.04);paintPart(softBlock(a,wall,0,h/2+.2,0,w,h,d,.09),'wall');brickSkirt(a,w,d,.38);
+ softBlock(a,'#bd9869',0,h+.13,0,w+.12,.10,d+.12,.025);paintPart(softBlock(a,trim,0,h+.28,0,w+.32,.20,d+.32,.05),'accent');softBlock(a,'#f1dfb0',0,h+.39,0,w+.35,.045,d+.35,.015);
+ if(!pitched){paintPart(softBlock(a,'#d9d2c0',0,h+.4,0,w-.2,.1,d-.2,.025),'roof');
+ for(const side of[-1,1])paintPart(softBlock(a,trim,side*(w/2-.08),h+.52,0,.13,.20,d-.12,.03),'accent');
+ paintPart(softBlock(a,trim,0,h+.52,-d/2+.08,w-.12,.20,.13,.03),'accent');
  softBlock(a,'#8d9a9c',w/3,h+.62,-d/4,.45,.32,.40,.045);for(let i=0;i<4;i++)box(a,'#5b6660',w/3-.14+i*.09,h+.66,-d/4+.206,.035,.12,.012);}
  // Public facilities keep their own silhouettes but carry detail on every visible facade.
  const floors=h>3?3:h>2.25?2:1;
@@ -368,7 +369,7 @@ function ecoDetails(a,b){
   }
  }
 }
-const MODELS={...expansionModels({T,box,ball,dot,cylinder,taper,cone,rounded,softBlock,mesh,geometry,flat,roof,cottageRoof,casement,door,sign,label,flower,shrub,pot,bench,clump,amusementModel,GLASS,GLOW,WATER}),house:[a=>alignedCottage(a),.6],snack:[a=>alignedCottage(a,'snack'),.6],generator:[a=>alignedCottage(a,'generator'),.6],tree:[gardenModel,.85],road:[roadModel,1],apartment:[apartmentModel,.6],western:[westernModel,.6],japanese:[japaneseModel,.6],chinese:[chineseModel,.6],convenience:[convenienceModel,.6],supermarket:[supermarketModel,.6],clinic:[clinicModel,.6],hospital:[hospitalModel,.6],kids:[kidsModel,.6],amusement:[amusementModel,.6],school:[schoolModel,.6],library:[libraryModel,.6],fire:[fireModel,.6],drain:[drainModel,.6],workshop:[workshopModel,.6],solar:[solarModel,.6],bridge:[bridgeModel,1],flower:[flowerModel,.85],avenue:[avenueModel,.8],bench:[benchModel,.85]};
+const MODELS={...expansionModels({paintPart,T,box,ball,dot,cylinder,taper,cone,rounded,softBlock,mesh,geometry,flat,roof,cottageRoof,casement,door,sign,label,flower,shrub,pot,bench,clump,amusementModel,GLASS,GLOW,WATER}),house:[a=>alignedCottage(a),.6],snack:[a=>alignedCottage(a,'snack'),.6],generator:[a=>alignedCottage(a,'generator'),.6],tree:[gardenModel,.85],road:[roadModel,1],apartment:[apartmentModel,.6],western:[westernModel,.6],japanese:[japaneseModel,.6],chinese:[chineseModel,.6],convenience:[convenienceModel,.6],supermarket:[supermarketModel,.6],clinic:[clinicModel,.6],hospital:[hospitalModel,.6],kids:[kidsModel,.6],amusement:[amusementModel,.6],school:[schoolModel,.6],library:[libraryModel,.6],fire:[fireModel,.6],drain:[drainModel,.6],workshop:[workshopModel,.6],solar:[solarModel,.6],bridge:[bridgeModel,1],flower:[flowerModel,.85],avenue:[avenueModel,.8],bench:[benchModel,.85]};
 function scaffold(a,p,n=1){ // 공사 단계: 터 정비 → 골조 → 외장(모델) → 간판·개장. y스케일 늘이기 없음.
  const w=CELL*n*.86;rounded(a,'#9a7f5d',0,0,0,w,w,.06,.2);for(const[x,z]of[[-1,-1],[1,-1],[1,1],[-1,1]]){box(a,'#c2a579',x*w/2,.5,z*w/2,.09,1,.09);box(a,'#e2c981',x*w/2,.9,z*w/2,.17,.12,.14);}
  for(const z of[-1,1])box(a,'#e7cd7b',0,.72,z*w/2,w,.04,.04);for(const x of[-1,1])box(a,'#e7cd7b',x*w/2,.72,0,.04,.04,w);
@@ -547,19 +548,26 @@ export class World{
  // 건물 한 채: 원점 바닥 중앙, 문은 인접한 길 쪽. stage 1·2 터 정비/골조, 3 외장(간판 없음), 4 완공.
  model(parent,b,s,stage){const dir=facing(s,b,this.roads),g=new T.Group(),p=origin(b.type,b.x,b.y),n=foot(b.type);g.position.set(p.x,b.type==='bridge'?ROAD_Y-.03:GROUND_Y-.01,p.z);g.rotation.y=dir*Math.PI/2;parent.add(g);
   if(stage<3&&!['road','bridge'].includes(b.type)){scaffold(g,b.progress,n);this.rememberBuilding(b,g);return g;}const[make,sc]=MODELS[b.type]||[alignedCottage,.6];const m=new T.Group();m.scale.setScalar(sc);g.add(m);m.userData.palette=(b.x+b.y)%3;if(TYPES[b.type].cap||TYPES[b.type].food||TYPES[b.type].health||TYPES[b.type].education||TYPES[b.type].leisure)shade(m,0,.025,0,1.95*n);const finish=make(m,growthStage(s,b));finish.push(streetDetails(m,b.type),cottageYard(m,b.type));
-  if(stage===4)ecoDetails(m,b);
+  if(stage===4)ecoDetails(m,b);applyBuildingPaint(m,b);
   if(stage<4){for(const f of finish)f.visible=false;const w=CELL*n*.43;for(const[x,z]of[[-1,-1],[1,-1],[1,1],[-1,1]])box(g,'#c2a579',x*w,.5,z*w,.09,1,.09);for(const z of[-1,1])box(g,'#e7cd7b',0,.95,z*w,w*2,.04,.04);}this.rememberBuilding(b,g);return g;}
  rememberBuilding(b,g){this.buildingBounds??=new Map();g.updateWorldMatrix(true,true);this.buildingBounds.set(b.id,{id:b.id,box:new T.Box3().setFromObject(g)});}
  pickObject(px,py){this.ray.setFromCamera(new T.Vector2(px/innerWidth*2-1,1-py/innerHeight*2),this.camera);let nearest=null,distance=Infinity;const point=new T.Vector3();for(const item of [...(this.buildingBounds?.values()||[]),...(this.natureBounds||[])]){if(!this.ray.ray.intersectBox(item.box,point))continue;const d=point.distanceToSquared(this.ray.ray.origin);if(d<distance){distance=d;nearest=item;}}return nearest;}
  // 완공 건물은 한 묶음(배칭)으로, 공사 중 건물은 각각. 묶음은 구성·방향·성장단계가 바뀔 때만 다시 만든다.
  sync(s,animate=true){for(const id of this.buildingBounds?.keys()||[])if(!s.buildings.some(b=>b.id===id))this.buildingBounds.delete(id);this.seasonDetailSites=seasonalSites(s);this.roads=roadSet(s);this.syncTownscape(s);this.syncNature(s);this.seasonAnchors=s.buildings.filter(b=>b.progress>=1&&b.type==='tree').slice(0,6).map(b=>toWorld(b.x,b.y));
   const done=s.buildings.filter(b=>b.progress>=1),pending=s.buildings.filter(b=>b.progress<1);
-  const sig=done.map(b=>`${b.id}:${b.type}:${b.x},${b.y}:${facing(s,b,this.roads)}:${growthStage(s,b)}:${b.closed?1:0}:${b.opts.join(',')}`).join('|');
-  if(sig!==this.builtSig){if(this.built)dispose(this.built);const g=this.built=new T.Group();this.dynamic.add(g);for(const b of done)this.model(g,b,s,4);batch(g);this.rides=[];g.traverse(o=>{if(o.userData.ride)this.rides.push(o);});this.animateRides(0,true);
+  const sig=done.map(b=>`${b.id}:${b.type}:${b.x},${b.y}:${facing(s,b,this.roads)}:${growthStage(s,b)}:${b.closed?1:0}:${b.opts.join(',')}:${b.paint??0}`).join('|')+'|preview:'+(this.paintPreview?.id??'');
+  if(sig!==this.builtSig){if(this.built)dispose(this.built);const g=this.built=new T.Group();this.dynamic.add(g);for(const b of done)if(b.id!==this.paintPreview?.id)this.model(g,b,s,4);batch(g);this.rides=[];g.traverse(o=>{if(o.userData.ride)this.rides.push(o);});this.animateRides(0,true);
    if(animate&&this.builtIds)for(const b of done)if(!this.builtIds.has(b.id)&&!b.starter)this.sparkle(b.x,b.y);this.builtIds=new Set(done.map(b=>b.id));this.builtSig=sig;}
   const seen=new Set();for(const b of pending){const stage=b.progress>=.6?3:b.progress>=.25?2:1,psig=`${b.type}|${b.x},${b.y}|${facing(s,b,this.roads)}|${stage}`;seen.add(b.id);let e=this.groups.get(b.id);if(e&&e.sig!==psig){dispose(e.g);e=null;}
    if(!e){const g=this.model(this.dynamic,b,s,stage);batch(g);this.groups.set(b.id,{g,sig:psig});}}
   for(const[id,e]of this.groups)if(!seen.has(id)){dispose(e.g);this.groups.delete(id);}this.season(this.se??1,true);}
+ previewPaint(s,id,index){
+  const b=s.buildings.find(b=>b.id===id);if(!canPaint(b))return;
+  if(this.paintPreview?.id!==id){this.endPaintPreview(s);this.paintPreview={id};this.sync(s,false);}
+  if(this.paintGroup)dispose(this.paintGroup);
+  this.paintGroup=new T.Group();this.dynamic.add(this.paintGroup);this.model(this.paintGroup,{...b,paint:index},s,4);batch(this.paintGroup);
+ }
+ endPaintPreview(s){if(!this.paintPreview)return;this.paintPreview=null;if(this.paintGroup)dispose(this.paintGroup);this.paintGroup=null;this.sync(s,false);}
  sparkle(gx,gy){const g=new T.Group(),p=toWorld(gx,gy);g.position.set(p.x,GROUND_Y+.3,p.z);this.scene.add(g);for(let i=0;i<7;i++){const t=i*.9;const m=ball(g,'#fff2b3',Math.sin(t)*.9,i*.12,Math.cos(t)*.9,.12,.12,.12,GLOW);m.castShadow=false;}this.animations.push({g,t:0,rise:true});}
  // 배치 미리보기: 반투명 모델 + 바닥 테두리 + 출입구 화살표. ok=false면 붉은 테두리.
  preview(type,gx,gy,dir,ok){this.clearPreview();ghostMode=true;const g=this.ghost=new T.Group(),p=origin(type,gx,gy),W=CELL*foot(type);g.position.set(p.x,GROUND_Y,p.z);g.rotation.y=dir*Math.PI/2;this.scene.add(g);
