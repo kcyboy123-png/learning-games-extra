@@ -151,7 +151,7 @@ body.forest-mode:not(.forest-cinema) .workspace{max-width:1060px;margin-left:aut
 .workspace .piano .key:disabled{color:#7b8276;background:linear-gradient(#d8d4bb3d,transparent 25%),linear-gradient(90deg,#dfd9c6,#f4f1e4 8%,#f4f1e4 94%,#ddd4c0);box-shadow:inset 0 -4px #c9c0ac,inset 0 -6px #eee8d8}
 .workspace .piano .black-key{height:59%;border:1px solid #1d261e;border-radius:0 0 3px 3px;background:linear-gradient(90deg,#20261f,#40483a 12%,#2e372c 18%,#293227 80%,#182118);box-shadow:inset 0 -6px #161d16,inset 0 -8px #53604b,inset 1px 0 #90977d,1px 3px 3px #2c38294d}
 .workspace .piano .black-key::after{inset:3px 3px 9px;border-top-color:#afb69b80;background:linear-gradient(105deg,#d8dec016,transparent 38%);border-left:1px solid #b6bf9b18}
-.workspace .piano .key .dot{width:4px;height:4px;left:calc(50% - 2px);bottom:44px;background:#7b9661;box-shadow:none}
+.workspace .piano .key .dot{position:static;flex-shrink:0;width:4px;height:4px;margin:0 0 6px;background:#7b9661;box-shadow:none}
 .workspace .piano .key b{font-size:17px}.workspace .piano .key small{font-size:10px;color:#6c7961;line-height:1.3}
 .workspace .piano .key.pressing,.workspace .piano .key:active:not(:disabled){transform:translateY(2px);background:linear-gradient(#d7e2c1,#f6f6df 70%,#dce5c4);box-shadow:inset 0 -2px #bdc7a2}
 .workspace .outlined,.workspace .palette>button,body.forest-mode .head-actions>button{border-color:#bec8aa;color:#3b563e;background:linear-gradient(#fffef4,#f2eedc);border-radius:7px}
@@ -159,8 +159,8 @@ body.forest-mode:not(.forest-cinema) .workspace{max-width:1060px;margin-left:aut
 .workspace .sheet{max-height:none}.workspace[data-view=full] .sheet{max-height:none}
 .workspace .measure-select button{border-radius:7px 7px 3px 3px;background:linear-gradient(transparent 17%,#e0e5c9 17%,#e0e5c9 86%,transparent 86%)}
 .workspace .keyboard-panel .free-choice{color:#536746;min-height:44px}.workspace .free-choice input{accent-color:#648052;width:22px;height:22px}.workspace .free-choice strong{font-size:13px}.workspace .piano-hint{color:#69765b;font-size:12px}
-@media(min-width:700px) and (max-height:850px){.workspace .piano .key{height:124px;min-height:124px}.workspace .piano .key .dot{bottom:42px}}
-@media(max-width:600px){.workspace .piano .key{height:140px;min-height:140px}.workspace .piano .key .dot{bottom:47px}.workspace .piano-nav button{background:#e8ecd7;border-color:#c0caaa;color:#415c43}}
+@media(min-width:700px) and (max-height:850px){.workspace .piano .key{height:124px;min-height:124px}}
+@media(max-width:600px){.workspace .piano .key{height:140px;min-height:140px}.workspace .piano-nav button{background:#e8ecd7;border-color:#c0caaa;color:#415c43}}
 
 /* Small botanical corners sit on the binding, outside the notation and hit targets. */
 body.forest-mode:not(.forest-cinema) .workspace::before,body.forest-mode:not(.forest-cinema) .workspace::after{content:'';position:absolute;width:112px;height:96px;background:url('assets/ui/scorebook-corner.svg') center/contain no-repeat;pointer-events:none;z-index:3;filter:drop-shadow(0 2px 1px #5769401c)}
