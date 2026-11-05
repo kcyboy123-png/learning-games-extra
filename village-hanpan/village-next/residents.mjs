@@ -43,9 +43,10 @@ export function roadRoute(s,from,to){const points=path(s,from,to,true),start=toW
 // Keep opposite directions in separate lanes and yield only when closing the gap.
 export function advancePersonRoute(p,dt,people=[]){
  if(dt<=0)return 0;p.passTime=Math.max(0,(p.passTime||0)-dt);if(!p.route.length||(p.seatBlend||0)>=.08)return 0;
+ while(p.route.length&&Math.hypot(p.route[0].x-p.g.position.x,p.route[0].z-p.g.position.z)<1e-7)p.route.shift();
+ if(!p.route.length)return 0;
  const q=p.route[0],dx=q.x-p.g.position.x,dz=q.z-p.g.position.z,d=Math.hypot(dx,dz),step=Math.min(d,dt*(p.id==='player'?PLAYER_SPEED:1.6));
- if(d<.025){p.g.position.x=q.x;p.g.position.z=q.z;p.route.shift();return 0;}
- const x=p.g.position.x+dx/d*step,z=p.g.position.z+dz/d*step;
+ const x=p.g.position.x+dx/d*step,z=p.g.position.z+dz/d*step,arrived=d-step<1e-7;
  const blocker=!p.passTime&&p.id!=='player'&&people.find(o=>o!==p&&o.id!=='player'&&o.g.visible&&!o.sitting&&Math.hypot(x-o.g.position.x,z-o.g.position.z)<.44&&Math.hypot(x-o.g.position.x,z-o.g.position.z)<Math.hypot(p.g.position.x-o.g.position.x,p.g.position.z-o.g.position.z)-1e-5);
  if(blocker){p.blockedFor=(p.blockedFor||0)+dt;
   // shortcut: one brief soft pass breaks dense crowds; use local avoidance if the cast grows beyond 24.
@@ -57,7 +58,7 @@ export function advancePersonRoute(p,dt,people=[]){
   }return 0;
  }
  p.blockedFor=0;
- p.g.position.x=x;p.g.position.z=z;p.distance=(p.distance||0)+step;const target=Math.atan2(dx,dz),diff=Math.atan2(Math.sin(target-p.g.rotation.y),Math.cos(target-p.g.rotation.y));p.g.rotation.y+=diff*Math.min(1,dt*12);return 1;
+ p.g.position.x=arrived?q.x:x;p.g.position.z=arrived?q.z:z;if(arrived)p.route.shift();p.distance=(p.distance||0)+step;const target=Math.atan2(dx,dz),diff=Math.atan2(Math.sin(target-p.g.rotation.y),Math.cos(target-p.g.rotation.y));p.g.rotation.y+=diff*(1-Math.exp(-dt*12));return 1;
 }
 export function tickResidents(s,people,dt,time,world,context=residentContext(s)){
  if(s.paused||s.ended)return null;

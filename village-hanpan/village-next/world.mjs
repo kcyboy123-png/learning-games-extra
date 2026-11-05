@@ -7,7 +7,7 @@ import {expansionModels} from './expansion-models.mjs?v=perf1';
 import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=perf1';
 import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=perf1';
 import {naturalFeature,growthStage} from './landscape.mjs?v=perf1';
-import {advancePersonRoute} from './residents.mjs?v=perf1';
+import {advancePersonRoute} from './residents.mjs?v=motion1';
 import {townscapeSites} from './townscape.mjs?v=perf1';
 import {seasonalSites,createSeasonDetails,disposeSeasonDetails} from './season-details.mjs?v=perf1';
 import {surfaceOptions,surfaceTime,surfaceWinter} from './surfaces.mjs?v=perf1';
@@ -15,7 +15,7 @@ import {createMeadow,meadowSeason,disposeMeadow,gardenSites} from './meadow.mjs?
 import {createSunlight} from './sunlight.mjs?v=perf1';
 import {paintedTree,treeArtSeason,treeArtReady} from './tree-art.mjs?v=perf1';
 import {addRabbitArt,updateRabbitArt} from './rabbit-art.mjs?v=perf1';
-import {addResidentArt,updateResidentArt} from './resident-art.mjs?v=npc9';
+import {addResidentArt,updateResidentArt} from './resident-art.mjs?v=motion1';
 
 const materials=new Map(),geometries=new Map();let ghostMode=false;
 const GHOST={transparent:true,opacity:.5,depthWrite:false};
@@ -655,7 +655,13 @@ export class World{
   if(this.meadow)this.meadow.userData.wind.value=reduced?0:this.meadow.userData.wind.value+sceneryDt;
   this.welcomeLife?.tick(motionDt);
   for(const p of this.people){if(this.paused&&!welcomeMotion)continue;const speed=advancePersonRoute(p,motionDt,this.people);
-   p.moving+=(speed-p.moving)*Math.min(1,motionDt*12);p.seatBlend=(p.seatBlend||0)+((p.sitting?1:0)-(p.seatBlend||0))*Math.min(1,motionDt*7);const personality=p.id==='player'?0:(p.id.charCodeAt(0)-96)*1.37,localIdle=idleTime+personality,phase=p.distance*({bear:10.7,panda:10.9,cat:14.1,fox:13.5,deer:12.3,penguin:15.2,sheep:13.6,elephant:10.3}[p.species]||12.8);for(let k=0;k<2;k++){const wave=Math.sin(phase+k*Math.PI)*p.moving;p.limbs[k*2].rotation.x=wave*.55;p.limbs[k*2+1].rotation.x=-wave*.45;}
+   p.moving+=(speed-p.moving)*Math.min(1,motionDt*12);p.seatBlend=(p.seatBlend||0)+((p.sitting?1:0)-(p.seatBlend||0))*Math.min(1,motionDt*7);const personality=p.id==='player'?0:(p.id.charCodeAt(0)-96)*1.37,localIdle=idleTime+personality;
+   if(p.sitting&&Number.isFinite(p.seatAngle)){const diff=Math.atan2(Math.sin(p.seatAngle-p.g.rotation.y),Math.cos(p.seatAngle-p.g.rotation.y));p.g.rotation.y+=diff*Math.min(1,motionDt*7);}
+   const gx=Math.round(p.g.position.x/CELL+(SIZE-1)/2),gy=Math.round(p.g.position.z/CELL+(SIZE-1)/2);p.g.position.y=(this.roads.has(`${gx},${gy}`)?ROAD_Y:GROUND_Y)+p.seatBlend*.08;
+   if(p.wateringDrops){p.wateringDrops.visible=!!p.watering&&this.se!==0&&!reduced;if(p.wateringDrops.visible)for(let i=0;i<p.wateringDrops.children.length;i++)p.wateringDrops.children[i].position.y=.08+(1-((localIdle*1.7+i/5)%1))*.30;}
+   // The painted NPC owns the visible animation; do not animate its hidden fallback rig.
+   if(p.residentArt?.e.ready&&!p.residentArt.e.failed)continue;
+   const phase=p.distance*({bear:10.7,panda:10.9,cat:14.1,fox:13.5,deer:12.3,penguin:15.2,sheep:13.6,elephant:10.3}[p.species]||12.8);for(let k=0;k<2;k++){const wave=Math.sin(phase+k*Math.PI)*p.moving;p.limbs[k*2].rotation.x=wave*.55;p.limbs[k*2+1].rotation.x=-wave*.45;}
    p.body.position.y=reduced?0:Math.abs(Math.sin(phase))*.022*p.moving;p.body.rotation.z=reduced?0:Math.sin(phase)*.025*p.moving;
    if(p.head){const sway=reduced?0:Math.sin(phase*.5)*p.moving*.055;p.head.rotation.z=sway+(reduced?0:Math.sin(localIdle*.85)*.035*(1-p.moving));p.head.rotation.x=reduced?0:Math.sin(localIdle*1.2)*.022*(1-p.moving);p.head.rotation.y=reduced?0:Math.sin(localIdle*.7)*.045*(1-p.moving);for(let j=0;j<p.ears.length;j++){p.ears[j].rotation.z=(p.species==='rabbit'?(j===0?-.14:.14):(p.ears[j].userData.restZ||0))+sway*(j===0?1:-.8)+(reduced?0:Math.sin(localIdle*1.5+j)*.024);p.ears[j].rotation.x=reduced||p.species!=='rabbit'?0:Math.sin(phase+localIdle*1.7+j*.6)*(.018+p.moving*.045);}p.tail.rotation.y=p.sitting?.65:reduced?0:Math.sin(phase*.6+localIdle)*(p.species==='fox'?.22:p.species==='cat'?.18:.10);if(!reduced&&p.species==='cat'&&p.moving<.1){const twitch=localIdle%9;for(let j=0;j<p.ears.length;j++)if(twitch>6&&twitch<6.5)p.ears[j].rotation.z+=Math.sin((twitch-6)*Math.PI*2)*.12*(j?1:-1);}}
    if(!reduced&&p.species==='penguin'){p.body.rotation.z=Math.sin(phase)*.065*p.moving;for(let k=0;k<2;k++){p.limbs[k*2].rotation.x*=.72;p.limbs[k*2+1].rotation.z=(k?.12:-.12)*(1+p.moving);}}
@@ -665,15 +671,14 @@ export class World{
    if(p.scarf)p.scarf.visible=this.se===0;
    if(p.eyes){const blink=localIdle%(4.3+personality%1.7);p.eyes.scale.y=reduced?1:blink<.18?1-.92*Math.sin(blink/.18*Math.PI):1;}
    p.book.visible=p.seatBlend>.8&&p.species==='otter';
-   if(p.sitting&&Number.isFinite(p.seatAngle)){const diff=Math.atan2(Math.sin(p.seatAngle-p.g.rotation.y),Math.cos(p.seatAngle-p.g.rotation.y));p.g.rotation.y+=diff*Math.min(1,motionDt*7);}
    const sit=p.seatBlend;for(let k=0;k<2;k++){p.knees[k].rotation.x=(1-sit)*Math.max(0,-Math.sin(phase+k*Math.PI))*.25*p.moving+sit*1.35;p.limbs[k*2].rotation.x=p.limbs[k*2].rotation.x*(1-sit)-1.35*sit;p.limbs[k*2+1].rotation.x=p.limbs[k*2+1].rotation.x*(1-sit)-(p.book.visible?.7:.35)*sit;}p.body.rotation.z*=1-sit;p.body.position.y*=1-sit;
    if(p.id!=='player'){const resting=p.moving<.03&&!sit&&!p.carry.visible,envelope=!reduced&&resting&&localIdle%17>12&&localIdle%17<14?Math.sin((localIdle%17-12)*Math.PI/2):0;p.limbs[3].rotation.z=envelope*(.85+Math.sin(localIdle*6)*.12);if(!reduced&&resting)p.body.position.y+=Math.sin(localIdle*1.8)*.006;const player=this.player,near=player&&player!==p&&player.g.visible&&Math.hypot(player.g.position.x-p.g.position.x,player.g.position.z-p.g.position.z)<3.5;let look=0;if(!reduced&&resting&&near){const a=Math.atan2(player.g.position.x-p.g.position.x,player.g.position.z-p.g.position.z)-p.g.rotation.y;const relative=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(relative)<1.5)look=Math.max(-.35,Math.min(.35,relative));}p.lookAtPlayer=reduced?0:(p.lookAtPlayer||0)+(look-(p.lookAtPlayer||0))*Math.min(1,motionDt*4);if(p.head)p.head.rotation.y+=p.lookAtPlayer;}
    if(p.id==='player'&&p.moving<.01&&!sit&&!reduced){const greeting=idleTime%14,envelope=greeting>10&&greeting<12?Math.sin((greeting-10)*Math.PI/2):0;p.limbs[3].rotation.z=envelope*(.9+Math.sin(idleTime*7)*.13);p.body.position.y+=Math.sin(idleTime*2)*.006;}else if(p.id==='player')p.limbs[3].rotation.z=0;
-   if(p.wateringCan){p.wateringCan.visible=!!p.watering&&this.se!==0;p.broom.visible=!!p.watering&&this.se===0;p.wateringDrops.visible=!!p.watering&&this.se!==0&&!reduced;if(p.watering){p.limbs[3].rotation.x=this.se===0?-.15:-.55;p.limbs[3].rotation.z=this.se===0&&!reduced?Math.sin(localIdle*2)*.20:-.12;p.head.rotation.x=.12+(reduced?0:Math.sin(localIdle)*.03);p.wateringCan.rotation.x=.2+(reduced?0:Math.sin(localIdle*1.4)*.08);p.wateringDrops.children.forEach((drop,i)=>drop.position.y=.08+(1-((localIdle*1.7+i/5)%1))*.30);}}
-   const gx=Math.round(p.g.position.x/CELL+(SIZE-1)/2),gy=Math.round(p.g.position.z/CELL+(SIZE-1)/2);p.g.position.y=(this.roads.has(`${gx},${gy}`)?ROAD_Y:GROUND_Y)+sit*.08;}
+   if(p.wateringCan){p.wateringCan.visible=!!p.watering&&this.se!==0;p.broom.visible=!!p.watering&&this.se===0;if(p.watering){p.limbs[3].rotation.x=this.se===0?-.15:-.55;p.limbs[3].rotation.z=this.se===0&&!reduced?Math.sin(localIdle*2)*.20:-.12;p.head.rotation.x=.12+(reduced?0:Math.sin(localIdle)*.03);p.wateringCan.rotation.x=.2+(reduced?0:Math.sin(localIdle*1.4)*.08);}}
+  }
 
   updateRabbitArt(this.player,this.angle,idleTime,reduced);
-  for(const p of this.people)updateResidentArt(p,this.angle,idleTime,reduced,this.se===0);
+  for(const p of this.people)updateResidentArt(p,this.angle,idleTime,reduced,this.se===0,time);
   for(let i=this.animations.length-1;i>=0;i--){const a=this.animations[i];a.t+=motionDt;const u=Math.min(1,a.t/.9);a.g.position.y=GROUND_Y+.3+u*1.6;a.g.scale.setScalar(1-u*.8);if(u===1||reduced){dispose(a.g);this.animations.splice(i,1);}}
   this.petals.visible=!reduced;
   if(this.petals.visible){this.petals.count=Math.min(this.petals.instanceMatrix.count,[96,64,20,56][this.se??1]);for(let i=0;i<this.petals.count;i++){const o=this.petalPose,t=idleTime*.24+i*1.618,summer=this.se===2;o.position.set(this.center.x-9+(i*3.71%18)+Math.sin(t)*.55,summer?.7+Math.sin(t*1.4+i)*.32:.25+(5-((idleTime*(this.se===0?.23:.32)+i*.71)%5)),this.center.z-9+(i*2.37%18)+Math.cos(t*.7)*.6);o.rotation.set(t,i,t*.6);o.scale.set(this.se===0?.048:this.se===3?.085:.065,summer?.012+Math.abs(Math.sin(idleTime*7+i))*.04:.012,this.se===0?.048:summer?.065:.045);o.updateMatrix();this.petals.setMatrixAt(i,o.matrix);}this.petals.instanceMatrix.needsUpdate=true;}
