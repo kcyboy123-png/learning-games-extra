@@ -7,7 +7,7 @@ import {effectNumber,cozyEffectText,cozyPlacementText,calendarDay,incomePerMinut
 import {growthStatus,ratingName,gradeNote,tierRules,developmentSummary,shortageNote} from './grading-ui.mjs?v=perf1';
 import {tickResidents,syncResidents,residentContext} from './residents.mjs?v=perf1';
 // village-next B단계 입력·안내·저장·루프. 경제는 core, 좌표는 grid, 표현은 world에만 맡긴다.
-import {World} from './world.mjs?v=perf1';
+import {World} from './world.mjs?v=npc9';
 import {villagePromises,promisePreview,newlyKeptPromises} from './promises.mjs?v=perf1';
 import {cozyEffects,enableCozy,cozyGrowth,buildingSpec,assessTier,economy,upkeepOf,annualReviews,YEAR,createState,build,demolish,rotatable,rotateBuilding,relocate,canRelocate,relocateLeft,advance,metrics,month,duration,calendarMonth,monthLabel,serialize,parseSave,continueFree,buildCost,clearingCost,canBuild,at,cells,network,connected,TYPES,OPTIONS,MONTH,RULE,SCOPE,unlocked,unlockMonth,unlockMessage,populationRequired,toggleClosed,harvest,upgrade,clearLandscape,HARVEST,HARVEST_SECONDS,demandMonth,UPGRADE_TYPES} from './core.mjs?v=perf1';
 import {toCell,toWorld,spots,placeInfo,facing,entrance,path,walkable,inside,CELL,perimeter,foot,roadSet} from './grid.mjs?v=perf1';
