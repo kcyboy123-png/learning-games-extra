@@ -100,13 +100,15 @@ function startPlace(type,moving=null){
  const guided=!moving&&state.placementHintsShown<2,list=guided?spots(state,type,3):[];recommendedSpot=list[0]||null;world.showSpots(list,type);
  $('cancelPlace').textContent=moving?'취소':'시설 목록';$('placePanel').classList.add('open');$('placeTitle').textContent=buildingSpec(state,type).name+(moving?' 옮기기':' 자리 보기');
  $('placeHint').textContent=type==='bridge'?'개울 위를 눌러 양쪽 땅을 이어요.':type==='workshop'?'개울 건너 오래된 창고를 눌러요.':type==='harbor'?'개울 바로 옆의 빈 땅 2×2칸을 골라요. 물 쪽으로 자동으로 놓여요.':`${isGarden({type})?'꾸미고 싶은 빈 땅을 눌러요.':'지도에서 길 옆 빈 땅을 눌러요.'}${foot(type)>1?` ${foot(type)}×${foot(type)}칸이 필요해요.`:''}`;
- for(const id of ['placeCost','placeBudget','placeImpact','placeIncome','placeDecision','fundingAdvice'])$(id).textContent='';
+ for(const id of ['placeCost','placeBudget','placeImpact','placeIncome','placeDecision','placeQuick','fundingAdvice'])$(id).textContent='';
+ $('placeCost').textContent=moving?'옮길 자리를 누르면 정비비를 보여요.':`기본 비용 ${buildingSpec(state,type).cost.toLocaleString()}코인 · 정비비는 자리 선택 후 확인`;$('placeQuick').textContent=moving?'':cozyEffectText(state,type,true);
+ $('placeMore').hidden=true;$('placeMore').open=innerWidth>700&&innerHeight>480;
  $('rotatePlace').hidden=!rotatable(type);$('rotatePlace').disabled=true;$('confirm').hidden=true;$('placeHarvest').hidden=true;$('recommendSpot').hidden=!recommendedSpot;$('placeDetails').open=false;$('placeDetails').hidden=true;
  if(recommendedSpot){state.placementHintsShown++;save('자리 안내');$('recommendSpot').click();}else $('placeTitle').focus({preventScroll:true});
 }
-$('recommendSpot').onclick=()=>{if(!mode||!recommendedSpot)return;const{gx,gy}=recommendedSpot;pick(gx,gy);focusPlace(gx,gy);$('confirm').focus();};
+$('recommendSpot').onclick=()=>{if(!mode||!recommendedSpot)return;const{gx,gy}=recommendedSpot;pick(gx,gy);focusPlace(gx,gy);$('confirm').focus({preventScroll:true});};
 function pick(gx,gy){if(!mode)return;const{type,moving}=mode;sel={gx,gy};const err=moving?(canBuild(state,type,gx,gy,moving)):canBuild(state,type,gx,gy);const info=placeInfo(state,type,gx,gy);
- const price=moving?clearingCost(state,type,gx,gy):buildCost(state,type,gx,gy);const ok=!err&&state.money>=price;$('placeDetails').hidden=!!err;
+ const price=moving?clearingCost(state,type,gx,gy):buildCost(state,type,gx,gy);const ok=!err&&state.money>=price;$('placeDetails').hidden=!!err;$('placeMore').hidden=!!err;$('placeQuick').textContent=err?'':moving?cozyPlacementText(state,type,gx,gy,moving):cozyEffectText(state,type,true);
  const dir=facing(state,{type,x:gx,y:gy,dir:mode.dir});$('rotatePlace').disabled=!!err;
  world.preview(type,gx,gy,dir,ok);$('recommendSpot').hidden=ok||!recommendedSpot;$('confirm').hidden=false;$('confirm').disabled=!ok;$('confirm').textContent=moving?'여기로 옮기기':`${isGarden({type})?"여기에 꾸미기":"여기에 짓기"} · ${price.toLocaleString()} 사용`;$('placeTitle').textContent=(lesson&&recommendedSpot&&type==='snack'?'2 / 3 · ':'')+(moving?'옮길 자리 확인':buildingSpec(state,type).name+' 자리 확인');$('placeHint').textContent=ok?(['road','bridge'].includes(type)?'테두리가 놓일 자리예요. 아래 버튼으로 공사를 시작해요.':isGarden({type})?'테두리가 꾸밀 자리예요. 아래 버튼을 누르면 이곳에 놓아요.':recommendedSpot?'추천 자리를 보여 드렸어요. 다른 빈 땅을 눌러 바꿔도 돼요.':'고른 자리에 건물을 놓아요. 다른 빈 땅을 눌러 바꿔도 돼요.'):err?(recommendedSpot?'다른 빈 땅을 누르거나 추천 자리를 다시 골라 주세요.':'지도에서 다른 빈 땅을 골라 주세요.'):'기금이 부족해요. 수입이 모이면 이 자리에서 바로 지을 수 있어요. 텃밭 돌보기도 도움이 돼요.';
  $('placeCost').innerHTML=err?`<span class="bad">${err}</span>`:`${moving?`재배치 무료${price?` · 자연 정비비 ${price}`:''}`:`비용 ${price.toLocaleString()}`}${info.natural&&!moving?` (자연 정비 포함)`:''} · ${isGarden({type})?'꽃과 나무는 길에서 떨어져 있어도 괜찮아요.':info.connected?'<span class="good">길과 이어져요</span>':'<span class="bad">길을 이어 주면 이웃들이 찾아와요</span>'}`;
@@ -119,7 +121,7 @@ function refreshPlaceBudget(){
  const price=mode.moving?clearingCost(state,mode.type,sel.gx,sel.gy):buildCost(state,mode.type,sel.gx,sel.gy);
  $('placeBudget').textContent=buildBudget(state.money,price);$('placeBudget').classList.toggle('short',state.money<price);$('fundingAdvice').textContent=fundingAdvice(state,price);$('placeHarvest').hidden=state.money>=price||state.harvestAt!==null||state.harvested.includes(month(state));$('placeHarvest').disabled=state.paused||state.ended;
  if($('confirm').disabled!==(state.money<price))pick(sel.gx,sel.gy);
- else if(Math.floor(state.t/PLAY_SPEED)!==previewSecond){previewSecond=Math.floor(state.t/PLAY_SPEED);$('placeDecision').textContent=cozyPlacementText(state,mode.type,sel.gx,sel.gy,mode.moving);$('placeIncome').textContent=incomePreviewText(state,mode.type,sel.gx,sel.gy,mode.moving);}
+ else if(Math.floor(state.t/PLAY_SPEED)!==previewSecond){previewSecond=Math.floor(state.t/PLAY_SPEED);$('placeQuick').textContent=mode.moving?cozyPlacementText(state,mode.type,sel.gx,sel.gy,mode.moving):cozyEffectText(state,mode.type,true);$('placeDecision').textContent=cozyPlacementText(state,mode.type,sel.gx,sel.gy,mode.moving);$('placeIncome').textContent=incomePreviewText(state,mode.type,sel.gx,sel.gy,mode.moving);}
 }
 $('confirm').onclick=()=>{if(!mode||!sel)return;const{type,moving}=mode;const price=moving?0:buildCost(state,type,sel.gx,sel.gy);const r=moving?relocate(state,moving,sel.gx,sel.gy,mode.dir):build(state,type,sel.gx,sel.gy,[],mode.dir);if(r.error){toast(r.error);return;}
  world.sync(state,!reduced);save(moving?'재배치':'건설');toast(moving?`건물을 옮겼어요(재배치 무료${r.fee?` · 자연 정비비 ${r.fee} 지불`:''}).`:`${buildingSpec(state,type).name} 공사를 시작했어요. 비용 ${price}은 지금 사용됐어요.`);endPlace();ui();};

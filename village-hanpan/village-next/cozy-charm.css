@@ -68,3 +68,65 @@
 .maker-credit{display:flex!important;align-items:center;gap:7px;line-height:1.3}.maker-credit img{width:28px;height:28px;object-fit:contain;border-radius:50%;background:#fffdf4;flex:none}.village-sign .maker-credit{justify-content:flex-end;margin-top:5px}.village-sign .maker-credit span{font-size:12px;letter-spacing:0}.entrance-welcome .maker-credit img{width:32px;height:32px}
 
 .cozy.reviewing #left{display:block!important;font-size:11px;color:#5c6953;margin-top:2px}#reviewDialog{max-height:85dvh;overflow:auto}#reviewDialog .year-records{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}#reviewDialog .year-record p{font-size:14px;line-height:1.5}#reviewDialog .year-record small{display:block;line-height:1.6}@media(max-width:700px){#reviewDialog .year-records{grid-template-columns:1fr}}
+
+#placeQuick{display:none}.place-actions{display:contents}#placeMore summary{min-height:44px;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;cursor:pointer}#placeMore summary::before{content:'＋'}#placeMore[open] summary::before{content:'−'}
+/* On phones, keep the map clear and pin placement actions outside the scrolling details. */
+@media(max-width:700px), (max-height:480px) and (max-width:1000px){
+ .cozy:has(#buildPanel.open,#placePanel.open) #dpad,.cozy:has(#buildPanel.open,#placePanel.open) footer nav,.cozy:has(#buildPanel.open,#placePanel.open) .village-sign{display:none}
+ .cozy:has(#buildPanel.open,#placePanel.open) footer{left:auto;right:max(8px,env(safe-area-inset-right));bottom:auto;top:164px;width:auto;transform:none}
+ .cozy:has(#buildPanel.open,#placePanel.open) .zoom-controls{flex-direction:row;gap:8px}
+ .cozy #buildPanel,.cozy #buildPanel.open,.cozy #placePanel,.cozy #placePanel.open{left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));top:auto;bottom:calc(8px + env(safe-area-inset-bottom));width:auto;max-width:none;transform:none;max-height:52dvh;padding:8px 12px;border-radius:18px;box-sizing:border-box}
+ .cozy #buildPanel.open,.cozy #placePanel.open{display:flex;flex-direction:column;overflow:hidden}
+ .cozy #buildPanel>.row,.cozy #placePanel>.row{position:static;flex:none;margin:0;padding:0 0 6px;min-height:44px}
+ .cozy #buildPanel>.row b,.cozy #placePanel>.row b{font-size:16px}
+ .cozy #buildPanel .tabs{flex:none;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:4px 0;padding:0 0 6px}
+ .cozy #buildGuide{display:none}
+ .cozy #buildList{overflow:auto;overscroll-behavior:contain;min-height:0;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:max-content;align-content:start;gap:8px;margin:4px 0;padding-bottom:4px}
+ .cozy #buildList button{grid-template-columns:40px minmax(0,1fr);gap:4px 6px;padding:8px;min-width:0}
+ .cozy #buildList .build-thumb{width:40px;height:40px;align-self:start}
+ .cozy #buildList .build-head b{font-size:14px;line-height:1.35}
+ .cozy #buildList .build-price{font-size:14px;flex-wrap:wrap;white-space:normal}
+ .cozy #buildList .build-effects{font-size:12px;padding-top:4px;line-height:1.4}
+ .cozy #placePanel,.cozy #placePanel.open{height:min(320px,46dvh);max-height:46dvh;background:#fffaf0}
+ .cozy #placePanel:has(#placeMore[open]){height:46dvh}
+ .cozy #placePanel .place-body{flex:1;overflow:auto;overscroll-behavior:contain;min-height:0}
+ .cozy #placePanel #placeHint,.cozy #placePanel #placeCost{font-size:13px;line-height:1.4;margin:4px 0}
+ .cozy #placePanel #placeBudget{font-size:13px;margin:4px 0;padding:5px 8px}
+ .cozy #placeQuick{display:block;white-space:pre-line;font-size:14px;font-weight:700;line-height:1.5;margin:6px 0;color:#594219}
+ .cozy #placeMore summary{font-size:13px;color:#536c4b}
+ .cozy #placePanel #placeDecision,.cozy #placePanel #fundingAdvice{font-size:13px;line-height:1.5;padding:8px;margin:4px 0}
+ .cozy #placePanel #placeDecision::first-line{font-size:14px}
+ .cozy #placePanel .place-actions{display:flex;flex:none;gap:8px;padding-top:6px;background:#fffdf3}
+ .cozy #placePanel .place-actions button{min-height:48px;margin:0;padding:8px;font-size:14px}
+ .cozy #placePanel #rotatePlace{flex:0 0 auto}
+ .cozy #placePanel #confirm{position:static;flex:1;min-width:0;box-shadow:none}
+ .cozy #placePanel #confirm[hidden]{display:none}
+ .cozy #placePanel #cancelPlace{min-height:44px;padding:8px;font-size:14px}
+}
+@media(max-width:370px) and (min-height:481px){
+ .cozy #buildPanel,.cozy #placePanel{padding-inline:8px}
+ .cozy #buildList button{grid-template-columns:32px minmax(0,1fr);padding:6px;gap:4px}
+ .cozy #buildList .build-thumb{width:32px;height:32px}
+}
+@media(max-width:700px) and (min-height:481px){
+ .cozy:has(#buildPanel.open,#placePanel.open) footer{top:auto;bottom:calc(52dvh + 20px + env(safe-area-inset-bottom))}
+ .cozy:has(#placePanel.open) footer{bottom:calc(min(320px,46dvh) + 20px + env(safe-area-inset-bottom))}
+ .cozy:has(#placePanel.open #placeMore[open]) footer{bottom:calc(46dvh + 20px + env(safe-area-inset-bottom))}
+}
+@media(max-width:700px) and (min-height:481px) and (max-height:700px){
+ .cozy #buildPanel .tabs{display:flex;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior:contain;scroll-padding-inline:4px}
+ .cozy #buildPanel .tabs button{flex:0 0 23%;min-width:62px}
+}
+@media(max-height:480px) and (max-width:1000px){
+ .cozy #buildPanel,.cozy #buildPanel.open,.cozy #placePanel,.cozy #placePanel.open{left:auto;right:max(8px,env(safe-area-inset-right));top:8px;bottom:calc(8px + env(safe-area-inset-bottom));width:min(350px,48vw);height:auto;max-height:none}
+ .cozy #placePanel:has(#placeMore[open]){height:auto}
+ .cozy:has(#buildPanel.open,#placePanel.open) footer{top:auto;bottom:12px;right:calc(min(350px,48vw) + 20px)}
+ .cozy:has(#buildPanel.open,#placePanel.open) .zoom-controls{flex-direction:row}
+ .cozy:has(#buildPanel.open,#placePanel.open) header{right:calc(min(350px,48vw) + 20px);width:auto;flex-wrap:wrap;gap:8px}
+ .cozy:has(#buildPanel.open,#placePanel.open) .clock{padding:4px 8px;gap:6px}
+ .cozy:has(#buildPanel.open,#placePanel.open) .stats{flex-basis:100%;padding:5px;gap:0}
+ .cozy:has(#buildPanel.open,#placePanel.open) .stats .village-stat{flex:1;min-width:0;padding:3px}
+ .cozy:has(#buildPanel.open,#placePanel.open) .stats .village-stat b{font-size:15px}
+ .cozy:has(#buildPanel.open,#placePanel.open) .stats .village-stat small{font-size:11px}
+ .cozy:has(#buildPanel.open,#placePanel.open) .stats .money-pocket{flex:1.3;min-width:0;padding:4px}
+}
