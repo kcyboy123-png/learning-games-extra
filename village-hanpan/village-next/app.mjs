@@ -253,7 +253,7 @@ function npcTick(dt){const context=residentContext(state);npcHomes(context);cons
 let lastIncomeMilestone=Math.floor(state.pop/4);
 // ---- 루프 ----
 // 시뮬레이션에는 실제 경과 시간의 1.5배를 준다(느린 기기에서 시간을 깎지 않음). 연출용 dt만 짧게 자른다.
-function loop(now){const real=document.hidden?0:(now-last)/1000,dt=Math.min(.25,real);last=now;time+=dt;
+function loop(now){const real=document.hidden?0:Math.max(0,(now-last)/1000),dt=Math.min(.25,real);last=now;time+=dt;
  if(world.entrance){world.updateEntrance(dt);if(!world.entrance)finishEntrance();}
  const previousPopulation=state.populationPeak??state.pop,before=state.buildings.filter(b=>b.progress<1).map(b=>b.id);if(owned)advancePlay(Math.min(real,60));const done=before.filter(id=>{const b=state.buildings.find(b=>b.id===id);return b&&b.progress>=1;});
  if(!state.cozyV&&state.economyV===4&&!done.length&&month(state)===lastMonth&&Math.floor(state.pop/4)>lastIncomeMilestone){lastIncomeMilestone=Math.floor(state.pop/4);if(state.pop===12||state.pop===16)toast(`이웃 ${state.pop}명! 지금 순수입 ${incomeRate(metrics(state))} · 손님과 생활시설이 함께 늘면 수입도 자라요.`);}
