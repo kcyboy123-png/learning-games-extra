@@ -38,7 +38,7 @@ export const TYPES={
  cinema:{"name":"영화관","cost":12000,"time":180,"up":5,"e":-2,"unlock":0,"stage":0,"group":"여가","desc":"반짝이는 간판 아래 함께 영화를 보는 곳.","leisure":80,"foot":2},
  animalFarm:{"name":"동물농장","cost":18000,"time":270,"up":5,"e":-2,"unlock":0,"stage":0,"group":"여가","desc":"빨간 헛간과 울타리 안의 양·소·닭을 만나요.","leisure":64,"foot":2},
  rosePark:{"name":"장미공원","cost":12000,"time":180,"up":0,"e":0,"unlock":0,"stage":0,"group":"꾸미기","desc":"장미 아치와 분수, 벤치가 있는 꽃 공원.","garden":"flowers","leisure":48,"foot":2},
- harbor:{"name":"항구","cost":90000,"time":360,"up":5,"e":-2,"unlock":0,"stage":0,"group":"명소","desc":"개울 바로 옆 2×2칸에 지어요. 등대와 배가 물을 향해요.","leisure":80,"foot":2},
+ harbor:{"name":"항구","cost":500000,"time":360,"up":5,"e":-2,"unlock":0,"stage":0,"group":"명소","desc":"개울 입구의 항구 자리에 지어요. 완공하면 배를 타고 안개꽃섬을 꾸밀 수 있어요.","leisure":80,"foot":2},
  rabbitTower:{"name":"토끼탑","cost":150000,"time":450,"up":5,"e":-2,"unlock":0,"stage":0,"group":"명소","desc":"꽃 광장 위로 우뚝 선 마을의 커다란 토끼.","leisure":96,"foot":2},
  skyTower:{"name":"하늘빛 타워","cost":180000,"time":540,"up":5,"e":-2,"unlock":0,"stage":0,"group":"명소","desc":"하늘로 길게 뻗은 유리 전망대와 초록 광장.","leisure":120,"foot":2},
  largePark:{"name":"대형 놀이동산","cost":350000,"time":720,"up":5,"e":-2,"unlock":0,"stage":0,"group":"명소","desc":"4×4칸의 큰 명소. 대관람차·회전목마·기차와 동화 성!","leisure":240,"foot":4},

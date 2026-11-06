@@ -1,3 +1,4 @@
+import {allBuildings,totalPopulation,harborSite} from './islands.mjs';
 import {recordCozyMonth,validateCozyReview} from './cozy-review.mjs?v=perf1';
 import {buildingSpec,cityPhase,premiumIncome} from './city-rules.mjs?v=perf1';
 export {buildingSpec} from './city-rules.mjs?v=perf1';
@@ -24,11 +25,11 @@ export function createState(mode='run'){
  add('house',4,5,['ins']);add('house',6,5,['ins']);add('generator',4,7);add('tree',6,9);add('tree',4,10);return s;
 }
 // Relaxed decorating keeps past results intact and uses a separate current growth score.
-export function enableCozy(s){s.populationPeak=Math.max(s.populationPeak??s.pop,s.pop);if(s.cozyV!==1)s.money=Math.max(300,s.money);s.placementHintsShown??=Math.min(2,s.buildings.filter(b=>!b.starter).length);s.cozyV=1;s.mode='free';s.ended=false;return s;}
+export function enableCozy(s){s.populationPeak=Math.max(s.populationPeak??s.pop,totalPopulation(s));if(s.cozyV!==1)s.money=Math.max(300,s.money);s.placementHintsShown??=Math.min(2,s.buildings.filter(b=>!b.starter).length);s.cozyV=1;s.mode='free';s.ended=false;return s;}
 export function cozyGrowth(s){
- const made=s.buildings.filter(b=>!b.starter&&b.progress>=1&&!b.closed&&!['road','bridge'].includes(b.type));
+ const made=allBuildings(s).filter(b=>!b.starter&&b.progress>=1&&!b.closed&&!['road','bridge'].includes(b.type));
  const gardens=made.filter(isGarden).length,buildings=made.length-gardens,variety=new Set(made.map(b=>b.type)).size,details=made.reduce((n,b)=>n+b.opts.length,0);
- return {gardens,buildings,variety,score:Math.round(100+250*Math.min(1,gardens/24)+300*Math.min(1,variety/28)+150*Math.min(1,buildings/28)+100*Math.min(1,details/20)+100*Math.min(1,Math.max(0,s.pop-8)/232))};
+ return {gardens,buildings,variety,score:Math.round(100+250*Math.min(1,gardens/24)+300*Math.min(1,variety/28)+150*Math.min(1,buildings/28)+100*Math.min(1,details/20)+100*Math.min(1,Math.max(0,totalPopulation(s)-8)/232))};
 }
 const BASIC_GARDENS=new Set(['flower','avenue','tree','bench']);
 export function cozyRates(type,count){
@@ -39,7 +40,7 @@ export function cozyRates(type,count){
 // Stable IDs keep individual effects consistent after moving, reloading or reordering saves.
 export function cozyEffects(s,pending=false){
  const total={income:0,happiness:0,welfare:0,counts:{},effects:new Map()};
- for(const b of s.buildings.filter(b=>!b.starter&&!b.closed&&(pending||b.progress>=1)).sort((a,b)=>a.id-b.id)){
+ for(const b of allBuildings(s).filter(b=>!b.starter&&!b.closed&&(pending||b.progress>=1)).sort((a,b)=>a.id-b.id)){
   const count=total.counts[b.type]=(total.counts[b.type]||0)+1,rate=cozyRates(b.type,count),base=COZY_EFFECTS[b.type];
   const income=base.income*rate.income,happiness=Math.min(50-total.happiness,base.happiness*rate.care),welfare=Math.min(100-total.welfare,base.welfare*rate.care);
   total.effects.set(b.id,{count,rate,income,happiness,welfare,potentialHappiness:base.happiness*rate.care,potentialWelfare:base.welfare*rate.care,limited:happiness+1e-9<base.happiness*rate.care||welfare+1e-9<base.welfare*rate.care});
@@ -53,8 +54,8 @@ export function connected(s,b,net=network(s)){return cells(b).some(([x,y])=>net.
 export function stage(s){return Math.max(s.stage,month(s)>=7||s.pop>=28?3:month(s)>=2||s.pop>=16?2:month(s)>=1||s.buildings.some(b=>b.type==='snack'&&b.progress>=1)?1:0);}
 // 해금: 정해진 달이 되었거나(9절) 주민 성과로 stage가 앞서면 열린다. 평가 시작은 달을 따르므로 빨리 열어도 벌점이 없다.
 const STAGE_MONTH=[0,1,2,7];export const populationRequired=type=>POPULATION_UNLOCKS[type]??0;
-export function unlocked(s,type){const d=TYPES[type];return s.cozyV===1?Math.max(s.pop,s.populationPeak??s.pop)>=populationRequired(type):month(s)>=d.unlock||STAGE_MONTH[stage(s)]>=d.unlock;}
-export const unlockMessage=(s,type)=>s.cozyV===1?`주민 ${populationRequired(type)}명에 열려요 · 현재 ${s.pop}명`:`${monthLabel(s,TYPES[type].unlock)}에 열려요.`;
+export function unlocked(s,type){const d=TYPES[type];return s.cozyV===1?Math.max(totalPopulation(s),s.populationPeak??s.pop)>=populationRequired(type):month(s)>=d.unlock||STAGE_MONTH[stage(s)]>=d.unlock;}
+export const unlockMessage=(s,type)=>s.cozyV===1?`주민 ${populationRequired(type)}명에 열려요 · 현재 ${totalPopulation(s)}명`:`${monthLabel(s,TYPES[type].unlock)}에 열려요.`;
 export const unlockMonth=type=>TYPES[type].unlock;
 // Piers occupy the two adjacent river cells, so bridges and opposite ports cannot overlap.
 export function waterfrontError(s,type,x,y,ignoreId=0){
@@ -65,7 +66,7 @@ export function waterfrontError(s,type,x,y,ignoreId=0){
  return '';
 }
 export function canBuild(s,type,x,y,ignoreId=0){const d=TYPES[type];if(!d)return '알 수 없는 시설이에요.';if(s.paused||s.ended)return '시간을 재개한 뒤 지을 수 있어요.';if(!unlocked(s,type)&&!s.buildings.some(b=>b.id===ignoreId&&b.type===type))return unlockMessage(s,type);
- if(!Number.isInteger(x)||!Number.isInteger(y))return '땅을 골라 주세요.';
+ if(!Number.isInteger(x)||!Number.isInteger(y))return '땅을 골라 주세요.';if(type==='harbor'&&!harborSite(x,y)&&!s.buildings.some(b=>b.id===ignoreId&&b.type==='harbor'&&b.x===x&&b.y===y&&(b.paidCost===undefined||b.paidCost<500000)))return '항구는 개울 입구의 항구 자리 네 곳 중 빈 곳에 지어요.';
  for(const[cx,cy]of cells({type,x,y})){if(cx<0||cy<0||cx>=SIZE||cy>=SIZE)return '마을 경계 안에 놓아 주세요.';const o=at(s,cx,cy);if(o&&o.id!==ignoreId)return '이미 사용 중인 땅이에요.';if(cx<2)return '이 숲은 보전하는 구역이에요.';if(type==='bridge'?cx!==RIVER:cx===RIVER)return type==='bridge'?'다리는 개울 위에 놓아요.':'개울에는 다리를 놓아 주세요.';if(terrain(cx,cy)==='warehouse'&&type!=='workshop')return '오래된 창고는 재생 공간으로 고쳐 써요.';}
  if(type==='workshop'&&(x!==14||y!==7))return '강 건너 오래된 창고(14,7)에서 개조해요.';return waterfrontError(s,type,x,y,ignoreId);
 }
@@ -84,7 +85,7 @@ export const UPGRADE_TYPES=['house','apartment','duplex','gardenhouse','terraceh
 export function upgradeError(s,id,opt){const b=s.buildings.find(b=>b.id===id);if(s.paused||s.ended)return '재개한 뒤 개선할 수 있어요.';if(!b||b.progress<1||!Object.hasOwn(OPTIONS,opt)||b.opts.includes(opt)||b.opts.length>=2||!UPGRADE_TYPES.includes(b.type))return '이 설계는 적용할 수 없어요.';if(s.money<OPTIONS[opt].cost)return '건설비가 부족해요.';return ''; }
 export function upgrade(s,id,opt){const error=upgradeError(s,id,opt);if(error)return{error};const b=s.buildings.find(b=>b.id===id);s.money-=OPTIONS[opt].cost;b.opts.push(opt);return{};}
 // Refund the original construction price; older saves retain their pre-increase refund.
-export function demolish(s,id){const b=s.buildings.find(b=>b.id===id);if(!b)return{error:'철거할 시설을 다시 골라 주세요.'};if(b.starter&&!isGarden(b)&&s.cozyV!==1)return{error:'처음부터 있던 기반 시설은 보존해요.'};if(s.paused||s.ended)return{error:'재개한 뒤 변경할 수 있어요.'};const refund=b.progress<1?Math.min(1e8-s.money,Math.floor((b.paidCost??cost(b.type,b.opts,{...s,cozyV:undefined}))*(1-b.progress)*.65)):0;s.money+=refund;s.buildings=s.buildings.filter(x=>x.id!==id);if(s.cozyV===1){s.landscape??={version:1,cleared:[]};for(const[x,y]of cells(b))if(clearablePlot(x,y)&&!s.landscape.cleared.includes(`${x},${y}`))s.landscape.cleared.push(`${x},${y}`);}return{refund};}
+export function demolish(s,id){const b=s.buildings.find(b=>b.id===id);if(!b)return{error:'철거할 시설을 다시 골라 주세요.'};if(b.starter&&!isGarden(b)&&s.cozyV!==1)return{error:'처음부터 있던 기반 시설은 보존해요.'};if(s.paused||s.ended)return{error:'재개한 뒤 변경할 수 있어요.'};const refund=b.progress<1?Math.min(1e8-s.money,Math.floor((b.paidCost??(b.type==='harbor'?90000:cost(b.type,b.opts,{...s,cozyV:undefined})))*(1-b.progress)*.65)):0;s.money+=refund;s.buildings=s.buildings.filter(x=>x.id!==id);if(s.cozyV===1){s.landscape??={version:1,cleared:[]};for(const[x,y]of cells(b))if(clearablePlot(x,y)&&!s.landscape.cleared.includes(`${x},${y}`))s.landscape.cleared.push(`${x},${y}`);}return{refund};}
 // 휴업: 유지비와 효과가 모두 0. 순수입이 마이너스일 때의 구제 경로. 재개는 무료.
 export function toggleClosed(s,id){const b=s.buildings.find(b=>b.id===id);if(!b||b.progress<1||b.starter||['road','bridge'].includes(b.type))return{error:'이 시설은 휴업할 수 없어요.'};if(s.paused||s.ended)return{error:'재개한 뒤 바꿀 수 있어요.'};b.closed=!b.closed;if(!b.closed)delete b.closed;return{closed:!!b.closed};}
 // 텃밭 돌보기: 게임시간 15초 활동, 월 1회, +35. 시작은 즉시 기록하고 지급은 advance에서 15초 뒤에 한다(재접속·연타로 중복 불가).
@@ -97,7 +98,7 @@ export function relocate(s,id,x,y,dir){const b=s.buildings.find(b=>b.id===id);if
 // New towns grow through occupied homes and used services; v2 saves retain their annual multipliers.
 export const economy=s=>{const y=s.economyV===2?Math.min(2,Math.floor(month(s)/12)):0;return{income:[1,.6,.4][y],upkeep:[1,1.5,2][y]};};
 export const upkeepOf=(s,b)=>b.closed||b.progress<1?0:buildingSpec(s,b.type).up*economy(s).upkeep;
-export function metrics(s){const net=network(s),live=s.buildings.filter(b=>b.progress>=1&&!b.closed&&connected(s,b,net)),p=Math.max(1,s.pop),m=month(s),se=season(calendarMonth(s)),sum=k=>live.reduce((a,b)=>a+(buildingSpec(s,b.type)[k]||0),0);
+function localMetrics(s){const net=network(s),live=s.buildings.filter(b=>b.progress>=1&&!b.closed&&connected(s,b,net)),p=Math.max(1,s.pop),m=month(s),se=season(calendarMonth(s)),sum=k=>live.reduce((a,b)=>a+(buildingSpec(s,b.type)[k]||0),0);
  let production=0,use=0;for(const b of live){const d=buildingSpec(s,b.type);if(d.e>0)production+=d.e*(b.type==='solar'?[.7,1,1.2,.9][se]:1);else{let u=-d.e*(se===0||se===2?1.2:1);if(b.opts.includes('ins')&&(se===0||se===2))u*=.75;if(b.opts.includes('shade')&&se===2)u*=.8;use+=u;}}
  const energy=use?clamp(production/use):1,food=clamp(sum('food')/p),health=clamp(sum('health')/p),education=clamp(sum('education')/p),leisure=clamp(sum('leisure')/p),housing=sum('cap');
  // A규칙: 제공되지 않는 의료·교육·여가·안전 시설은 평가하지 않는다(회복 불가능한 감점 방지). B단계에서 월별 해금 평가로 복원.
@@ -121,7 +122,17 @@ export function metrics(s){const net=network(s),live=s.buildings.filter(b=>b.pro
  const Q=clamp(s.sat/100*.50+service*.30+energy*.15+clamp(housing/p)*.05);
  let welfare=0;
  if(s.cozyV===1){const effect=cozyEffects(s);welfare=effect.welfare;targetSat=Math.min(50+effect.happiness,80+20*clamp(env));income=upkeep+(90+effect.income)*MONTH/(60*PLAY_SPEED);}
- return{welfare,environment:Math.round(clamp(env)*100),landscaping,beautyPhase,premium,net,live,production,use,energy,food,health,education,leisure,housing,service,green,comfort,targetSat,income,upkeep,D,Q,score:s.cozyV===1?cozyGrowth(s).score:Math.round(1000*D*Q),demands,popGoal,fire,drain,optionRate,foodCap:sum('food'),healthCap:sum('health'),educationCap:sum('education'),leisureCap:sum('leisure')};
+ return{welfare,environmentRaw:clamp(env),environment:Math.round(clamp(env)*100),landscaping,beautyPhase,premium,net,live,production,use,energy,food,health,education,leisure,housing,service,green,comfort,targetSat,income,upkeep,D,Q,score:s.cozyV===1?cozyGrowth(s).score:Math.round(1000*D*Q),demands,popGoal,fire,drain,optionRate,foodCap:sum('food'),healthCap:sum('health'),educationCap:sum('education'),leisureCap:sum('leisure')};
+}
+// Evaluate inhabited regions together, so travelling cannot change shared happiness or grades.
+export function metrics(s){
+ const current=localMetrics(s);if(s.cozyV!==1||!s.otherIsland)return current;
+ const other=localMetrics({...s,...s.otherIsland,otherIsland:undefined}),population=totalPopulation(s);
+ const env=population?(current.environmentRaw*s.pop+other.environmentRaw*s.otherIsland.pop)/population:(current.environmentRaw+other.environmentRaw)/2;
+ current.environmentRaw=env;current.environment=Math.round(env*100);
+ current.targetSat=Math.min(50+cozyEffects(s).happiness,80+20*env);
+ current.upkeep+=other.upkeep;current.income+=other.upkeep;
+ return current;
 }
 export const DEMAND_MONTH={health:2,education:3,leisure:4};
 export const demandMonth=(s,key)=>DEMAND_MONTH[key]+(s.economyV===4?1:0);
@@ -151,16 +162,25 @@ export function annualReviews(s){return Object.freeze(Array.from({length:Math.fl
 }));}
 function end(s){const v=metrics(s),avg=s.hist.reduce((a,h)=>a+h.score,0)/Math.max(1,s.hist.length),raw=Math.round(.7*v.score+.3*avg),grade=s.scoringV===2?assessTier(s,raw,v):{total:raw},t=tier(grade.total);s.result={rule:RULE,scoring:s.scoringV===2?'next-b2':'next-b1',landscape:v.landscaping.score,...grade,tier:t[1],title:t[2],D:Math.round(v.D*100),Q:Math.round(v.Q*100),endScore:v.score,average:Math.round(avg),hist:structuredClone(s.hist),special:v.live.some(b=>b.type==='workshop')?'다시 쓰는 건축가':v.optionRate>.7?'햇살과 바람의 설계자':v.fire&&v.drain?'안전한 마을의 수호자':'우리 동네의 개척자'};s.ended=true;s.paused=true;}
 // 정수 초 단위 시뮬레이션: 프레임 간격이나 기기 속도가 경제에 영향을 주지 않는다.
+function advanceOtherIsland(s){
+ if(!s.otherIsland)return;
+ const other=s.otherIsland;
+ for(const b of other.buildings.filter(b=>b.progress<1).slice(0,2)){b.progress=Math.min(1,b.progress+1/buildingSpec(s,b.type).time);if(b.progress>=1-1e-9){b.progress=1;b.completedAt=s.t+1;}}
+}
 export function advance(s,dt){if(s.paused||s.ended||!Number.isFinite(dt)||dt<0)return;const total=s.carry+dt;let steps=Math.floor(total+1e-8);s.carry=Math.max(0,total-steps);steps=Math.min(steps,86400);
  for(let i=0;i<steps&&!s.ended;i++){if(s.mode==='run'&&s.t>=duration(s)){end(s);break;}
-  s.stage=stage(s);for(const b of s.buildings.filter(b=>b.progress<1).slice(0,2)){b.progress=Math.min(1,b.progress+1/buildingSpec(s,b.type).time);if(b.progress>=1-1e-9){b.progress=1;b.completedAt=s.t+1;}}
+  advanceOtherIsland(s);s.stage=stage(s);for(const b of s.buildings.filter(b=>b.progress<1).slice(0,2)){b.progress=Math.min(1,b.progress+1/buildingSpec(s,b.type).time);if(b.progress>=1-1e-9){b.progress=1;b.completedAt=s.t+1;}}
   if(s.harvestAt!==null&&s.t+1-s.harvestAt>=HARVEST_SECONDS){const hm=Math.floor(s.harvestAt/MONTH);s.harvestAt=null;if(!s.harvested.includes(hm)){s.harvested.push(hm);s.harvested=s.harvested.slice(-36);s.money+=HARVEST;}}
   const v=metrics(s),cashBefore=s.money;s.money=clamp(s.money+(v.income-v.upkeep)/MONTH,0,1e8);
   // A small harvest pauses the shortage clock; sustainable income or a month's reserve clears it.
   if(s.scoringV===2&&s.mode==='run'){const loss=v.upkeep-v.income;if(loss<=0||cashBefore>=loss||s.money>=loss)s.cashStress=0;else if(s.money===0)s.cashStress=Math.min(CASH_STRESS_LIMIT,s.cashStress+1);}
   const target=s.cozyV===1?v.targetSat:s.t<MONTH?Math.max(78,v.targetSat):v.targetSat;s.sat+=clamp(target-s.sat,-.12,.12);
-  if(s.t%12===11&&s.pop<v.housing&&(s.cozyV===1||s.sat>=55))s.pop++;
-  if(s.cozyV===1)s.populationPeak=Math.max(s.populationPeak??s.pop,s.pop);
+  if(s.t%12===11){
+   const arrivals=[{region:s,capacity:v.housing}];
+   if(s.otherIsland){const view={...s,...s.otherIsland,otherIsland:undefined},net=network(view),capacity=view.buildings.reduce((n,b)=>n+(b.progress>=1&&!b.closed&&connected(view,b,net)?buildingSpec(s,b.type).cap||0:0),0);const other={region:s.otherIsland,capacity};if(s.island==='mist')arrivals.unshift(other);else arrivals.push(other);}
+   for(const {region,capacity} of arrivals)if(totalPopulation(s)<10000&&region.pop<capacity&&(s.cozyV===1||s.sat>=55))region.pop++;
+  }
+  if(s.cozyV===1)s.populationPeak=Math.max(s.populationPeak??s.pop,totalPopulation(s));
   s.t++;if(s.t%MONTH===0){const atMonth={...s,t:s.t-1},snapshot=metrics(atMonth);recordCozyMonth(s,snapshot);if(s.mode==='run')s.hist.push({month:s.hist.length+1,score:snapshot.score,scoring:s.scoringV===2?'next-b2':'next-b1',...(s.scoringV===2?tierConditions(atMonth,snapshot):{}),D:Math.round(snapshot.D*100),Q:Math.round(snapshot.Q*100)});}
   if(s.mode==='run'&&s.t===duration(s))end(s);
  }if(s.ended)s.carry=0;
@@ -168,6 +188,7 @@ export function advance(s,dt){if(s.paused||s.ended||!Number.isFinite(dt)||dt<0)r
 export function continueFree(s){if(!s.result)return false;s.mode='free';s.ended=false;s.paused=false;return true;}
 export function serialize(s){return JSON.stringify(s);}
 export function parseSave(text){if(typeof text!=='string'||text.length>500000)throw Error('파일 크기를 확인해 주세요.');let s;try{s=JSON.parse(text);}catch{throw Error('작품 파일 형식이 아니에요.');}
+ if(s?.otherIsland){if(!['main','mist'].includes(s.island)||!s.otherIsland||typeof s.otherIsland!=='object'||Object.keys(s.otherIsland).some(k=>!['pop','buildings','landscape'].includes(k)))throw Error('섬 기록을 확인해 주세요.');const checked=parseSave(JSON.stringify({...s,...s.otherIsland,otherIsland:undefined,island:undefined}));const ids=new Set(s.buildings?.map(b=>b.id));if(checked.buildings.some(b=>ids.has(b.id)))throw Error('섬 시설 번호가 겹쳐요.');if(!Number.isInteger(s.pop)||s.pop+checked.pop>10000)throw Error('두 지역의 인구 기록을 확인해 주세요.');s.otherIsland={pop:checked.pop,buildings:checked.buildings,landscape:checked.landscape};}else if(s?.island!==undefined)throw Error('섬 연결 기록을 확인해 주세요.');
  const num=(v,a,b)=>typeof v==='number'&&Number.isFinite(v)&&v>=a&&v<=b;
  const validConditions=h=>h&&Array.isArray(h.reasons)&&h.reasons.length<=Object.keys(TIER_CAPS).length&&new Set(h.reasons).size===h.reasons.length&&h.reasons.every(k=>Object.hasOwn(TIER_CAPS,k)&&TIER_CAPS[k]===h.cap)&&h.cap===(h.reasons.length?TIER_CAPS[h.reasons[0]]:1000);
  if(!s||s.v!==VERSION||s.rule!==RULE||!['run','free'].includes(s.mode)||!num(s.t,0,s.mode==='run'?duration(s):1e8)||!Number.isInteger(s.t)||!num(s.carry,0,1)||!num(s.money,0,1e8)||!Number.isInteger(s.pop)||!num(s.pop,0,10000)||!num(s.sat,0,100)||!Number.isInteger(s.stage)||!num(s.stage,0,3)||typeof s.paused!=='boolean'||typeof s.ended!=='boolean'||!Array.isArray(s.buildings)||s.buildings.length>SIZE*SIZE||!Array.isArray(s.hist)||s.hist.length>(s.runMonths??12))throw Error('저장 내용이 올바르지 않아요.');
@@ -184,14 +205,14 @@ export function parseSave(text){if(typeof text!=='string'||text.length>500000)th
  if(!Array.isArray(s.harvested)||s.harvested.length>36||new Set(s.harvested).size!==s.harvested.length||s.harvested.some(m=>!Number.isInteger(m)||m<0||m>Math.floor(s.t/MONTH))||!(s.harvestAt===null||Number.isInteger(s.harvestAt)&&s.harvestAt>=0&&s.harvestAt<=s.t))throw Error('텃밭 기록이 올바르지 않아요.');
  if(!s.landscape||s.landscape.version!==1||!Array.isArray(s.landscape.cleared)||s.landscape.cleared.length>324||new Set(s.landscape.cleared).size!==s.landscape.cleared.length||s.landscape.cleared.some(k=>typeof k!=='string'||!/^\d{1,2},\d{1,2}$/.test(k)||!(s.cozyV===1?clearablePlot:naturalFeature)(...k.split(',').map(Number))||k!==k.split(',').map(Number).join(',')))throw Error('조경 기록이 올바르지 않아요.');
  for(const b of s.buildings)if(b?.plantedAt!==undefined&&(!isGarden(b)||!num(b.plantedAt,0,s.t)))throw Error('식물 성장 기록이 올바르지 않아요.');
- const occupied=new Set(),ids=new Set();for(const b of s.buildings){if(!b||!Object.hasOwn(TYPES,b.type)||!Number.isInteger(b.id)||b.id<1||ids.has(b.id)||!Number.isInteger(b.x)||!Number.isInteger(b.y)||!num(b.progress,0,1)||typeof b.starter!=='boolean'||!Array.isArray(b.opts)||b.opts.length>2||new Set(b.opts).size!==b.opts.length||b.opts.some(o=>!Object.hasOwn(OPTIONS,o)))throw Error('시설 정보가 올바르지 않아요.');
+ const occupied=new Set(),ids=new Set();for(const b of s.buildings){if(!b||!Object.hasOwn(TYPES,b.type)||!Number.isSafeInteger(b.id)||b.id<1||ids.has(b.id)||!Number.isInteger(b.x)||!Number.isInteger(b.y)||!num(b.progress,0,1)||typeof b.starter!=='boolean'||!Array.isArray(b.opts)||b.opts.length>2||new Set(b.opts).size!==b.opts.length||b.opts.some(o=>!Object.hasOwn(OPTIONS,o)))throw Error('시설 정보가 올바르지 않아요.');
   if(b.paidCost!==undefined&&(!Number.isInteger(b.paidCost)||!num(b.paidCost,0,1e8)))throw Error('건설비 기록이 올바르지 않아요.');
   if(b.paint!==undefined&&(!validPaint(b.paint)||!PAINTABLE.has(b.type)))throw Error('건물 색을 확인해 주세요.');
   if(b.dir!==undefined&&(!validDirection(b.dir)||!rotatable(b.type)))throw Error('시설 방향이 올바르지 않아요.');
   if(b.completedAt!==undefined&&(!Number.isInteger(b.completedAt)||!num(b.completedAt,0,Math.max(s.t,0))||b.progress<1))throw Error('완공 기록이 올바르지 않아요.');if(b.moved!==undefined&&(typeof b.moved!=='boolean'||b.starter))throw Error('재배치 기록이 올바르지 않아요.');if(b.closed!==undefined&&(b.closed!==true||b.progress<1))throw Error('휴업 기록이 올바르지 않아요.');
   ids.add(b.id);for(const[x,y]of cells(b)){const k=`${x},${y}`;if(x<0||y<0||x>=SIZE||y>=SIZE||occupied.has(k)||((x===RIVER)!==(b.type==='bridge'))||x<2)throw Error('시설 배치가 올바르지 않아요.');occupied.add(k);}}
  for(const b of s.buildings)if(waterfrontError(s,b.type,b.x,b.y,b.id))throw Error('항구와 다리의 위치를 확인해 주세요.');
- if(!Number.isInteger(s.nextId)||s.nextId<=Math.max(0,...ids))throw Error('시설 번호를 확인해 주세요.');
+ if(!Number.isSafeInteger(s.nextId)||s.nextId>=Number.MAX_SAFE_INTEGER||s.nextId<=Math.max(0,...ids))throw Error('시설 번호를 확인해 주세요.');
  for(let i=0;i<s.hist.length;i++){const h=s.hist[i];if(h.month!==i+1||!num(h.score,0,1000)||!num(h.D,0,100)||!num(h.Q,0,100))throw Error('월별 기록이 올바르지 않아요.');}
  const validHistoryGrade=h=>s.scoringV===2?h.scoring==='next-b2'&&validConditions(h):h.scoring!=='next-b2';
  if(!s.hist.every(validHistoryGrade))throw Error('월별 평가 조건을 확인해 주세요.');
