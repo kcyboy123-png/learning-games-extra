@@ -99,12 +99,22 @@ export function createIslandScenery(world){
   add(island,petal,'#e8d58d',x,.39,z,.055,.025,.055);
  }
  // Distant land is only a silhouette; it never simulates a second village.
- farIsland.position.set(0,-.1,-64);farIsland.scale.setScalar(.62);
- add(farIsland,leaf,'#8fab9a',0,-.9,0,16,1.3,10);
- add(farIsland,leaf,'#a8bd98',0,0,0,14,.6,9);
- add(farIsland,stem,'#ac9a8a',-3,2,0,.5,4,.5);
- for(let i=0;i<8;i++)add(farIsland,leaf,['#c0b8cd','#dbc8d8','#c9bfd2'][i%3],-3+Math.sin(i*2.4)*2.4,4.5+(i%3)*.2,Math.cos(i*2.4)*2.2,2,1.5,2);
- add(farIsland,rock,'#a5b8ae',8,1,-3,3,2.8,3);
+ farIsland.position.set(22,-.1,-35);farIsland.scale.setScalar(.85);
+ const farLand=geo(new T.SphereGeometry(1,40,12));
+ add(farIsland,farLand,'#a28e70',0,-.9,0,15.2,1.3,9.7);
+ add(farIsland,farLand,'#e1cfa6',0,-.15,0,14.6,.5,9.3);
+ add(farIsland,farLand,'#a5bf77',0,.08,0,14,.48,9);
+ artTree(farIsland,-3,-2,2.5,'#f3dce6');
+ for(const [x,z,size]of[[-8,2,1.4],[-6,-5,1.2],[0,4,1.3],[7,3,1.2],[10,-2,1.1]])artTree(farIsland,x,z,size,x<1?'#f3dce6':'#d3e4bb');
+ for(let i=0;i<4;i++){add(farIsland,rock,'#b0b8a3',7+i*.9,.7+(i%2)*.3,-5,1.4,1.3+i%2*.5,1.5,0,i*.6);add(farIsland,leaf,'#87a96b',7+i*.9,1.6+(i%2)*.5,-4.8,1,.16,.8);}
+ for(let i=0;i<8;i++)add(farIsland,leaf,'#8bcac1',4+Math.sin(i*.4)*.6,.56,-5+i*1.5,.52,.025,1.1);
+ for(let i=0;i<40;i++){const a=i*2.399,r=3+(i%7)*1.1,x=Math.cos(a)*r,z=Math.sin(a)*r*.68;add(farIsland,leaf,'#82a967',x,.47,z,.35,.13,.28);for(let j=0;j<3;j++)add(farIsland,petal,['#f7d7e2','#fff0c4','#d9c4ed'][i%3],x+Math.cos(j*2.1)*.18,.63,z+Math.sin(j*2.1)*.18,.15,.055,.14);}
+ const mist=new T.Group();mist.name='island-discovery-mist';farIsland.add(mist);
+ const pixels=new Uint8Array(64*64*4);
+ for(let y=0;y<64;y++)for(let x=0;x<64;x++){const i=(y*64+x)*4,r=Math.hypot((x-31.5)/31.5,(y-31.5)/31.5);pixels[i]=pixels[i+1]=pixels[i+2]=255;pixels[i+3]=Math.round(Math.max(0,1-r*r)**2*235);}
+ const mistTexture=new T.DataTexture(pixels,64,64);mistTexture.needsUpdate=true;
+ const mistMaterial=new T.SpriteMaterial({map:mistTexture,color:'#eff5eb',transparent:true,opacity:.94,depthWrite:false});ownedMaterial.add(mistMaterial);
+ for(let i=0;i<8;i++){const cloud=new T.Sprite(mistMaterial);cloud.position.set((i%4-1.5)*6,3+Math.floor(i/4)*2,3+Math.floor(i/4)*3);cloud.scale.set(20,10,1);mist.add(cloud);}
 
  // Ferry points along local +Z. Passenger anchor is separate from batched cabin geometry.
  const body=new T.Group();body.name='ferry-body';boat.add(body);
@@ -123,7 +133,8 @@ export function createIslandScenery(world){
  const passenger=new T.Group();passenger.name='ferry-passenger-anchor';passenger.position.set(0,.26,.2);body.add(passenger);boat.userData.passenger=passenger;
  const wake=new T.Mesh(geo(new T.RingGeometry(.7,1,28,1,0,Math.PI)),material({color:'#c5e9dc',transparent:true,opacity:.45,side:T.DoubleSide,depthWrite:false}));wake.rotation.set(-Math.PI/2,0,Math.PI);wake.position.set(0,-.48,-1.4);wake.scale.set(1.4,2.8,1);boat.add(wake);
  finish();
- let active=false,disposed=false,ferryPromise=null,ferryModel=null,ferryDisposer=null;
+ let active=false,disposed=false,ferryPromise=null,ferryModel=null,ferryDisposer=null,harborReady=false,mistAmount=1,lastMistTime=null;
+ function setHarborReady(ready,immediate=false){ready=!!ready;const discovered=ready&&!harborReady;harborReady=ready;if(immediate||!ready)mistAmount=ready?0:1;mist.visible=mistAmount>0;mistMaterial.opacity=mistAmount*.94;return discovered&&!immediate;}
  const fallbackParts=body.children.filter(o=>o!==passenger);
  // The 1.6 MB asset and official loader are fetched only after the travel UI requests them.
  function loadFerry(){
@@ -137,11 +148,15 @@ export function createIslandScenery(world){
  }
  function setIsland(value){active=!!value;island.visible=active;farIsland.visible=!active;}
  function tick(time,reduced=false){if(disposed)return;const t=reduced?0:time;
+  const dt=lastMistTime===null?0:Math.max(0,Math.min(.25,time-lastMistTime));lastMistTime=time;
+  if(harborReady)mistAmount=reduced?0:Math.max(0,mistAmount-dt/6);
+  mist.visible=mistAmount>0;mistMaterial.opacity=mistAmount*.94;
+  if(mist.visible){mist.position.x=reduced?0:Math.sin(t*.18)*.6;mist.scale.setScalar(1+(1-mistAmount)*.5);}
   for(const tree of artTrees)if(!tree.visible&&tree.material.map?.image?.complete)tree.visible=true;
   if(active)flow.opacity=.80+Math.sin(t*1.5)*.045;
   if(boat.visible){body.rotation.z=Math.sin(t*1.7)*.017;body.rotation.x=Math.sin(t*1.1)*.012;body.position.y=Math.sin(t*1.3)*.025;wake.material.opacity=reduced?.35:.35+Math.sin(t*2)*.08;}
  }
- function dispose(){if(disposed)return;disposed=true;ferryDisposer?.(ferryModel);ferryModel=null;group.removeFromParent();boat.removeFromParent();group.traverse(o=>{if(o.isInstancedMesh)o.dispose();});boat.traverse(o=>{if(o.isInstancedMesh)o.dispose();});for(const g of ownedGeometry)g.dispose();for(const m of ownedMaterial)m.dispose();}
+ function dispose(){if(disposed)return;disposed=true;ferryDisposer?.(ferryModel);ferryModel=null;group.removeFromParent();boat.removeFromParent();group.traverse(o=>{if(o.isInstancedMesh)o.dispose();});boat.traverse(o=>{if(o.isInstancedMesh)o.dispose();});for(const g of ownedGeometry)g.dispose();for(const m of ownedMaterial)m.dispose();mistTexture.dispose();}
  setIsland(false);
- return {group,island,farIsland,boat,passenger,falls,setIsland,tick,loadFerry,dispose};
+ return {group,island,farIsland,mist,boat,passenger,falls,setIsland,setHarborReady,tick,loadFerry,dispose};
 }
