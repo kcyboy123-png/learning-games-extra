@@ -1,5 +1,5 @@
 import {islandName,totalPopulation,hasPassage,switchIsland,harborSites,ferryMouth,ferryPose} from './islands.mjs';
-import {createIslandScenery} from './island-scenery.mjs';
+import {createIslandScenery} from './island-scenery.mjs?v=islands2';
 import {residentDialogue} from './resident-dialogue.mjs';
 import {createTownLibrary,readVisitHash} from './town-library.mjs';
 let sharedVisit=null,shareError='';try{sharedVisit=await readVisitHash();}catch(e){shareError=e.message;}

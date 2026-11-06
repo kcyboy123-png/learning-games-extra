@@ -84,10 +84,12 @@ export function createIslandScenery(world){
   for(let j=0;j<5;j++){const side=j%2?-1:1;add(island,petal,j%2?'#87a36c':'#b1c38c',x+side*.12+Math.sin(j*.8+i)*.1,y-j*.30,z+j*.06,.16,.23,.08,.1,side*.3,side*.5);}
  }
  const falls=[];
- for(const [x,y,z,w,h]of[[23.8,3.1,-24.8,1.25,5.8],[22.4,.75,-23.7,1.9,1.5]]){
+ for(const [x,y,z,w,h]of[[23.8,3.1,-22.8,1.25,5.8],[22.4,.75,-21.7,1.9,1.5]]){
   const m=new T.Mesh(geo(new T.PlaneGeometry(w,h,4,8)),flow);m.position.set(x,y,z);m.rotation.x=-.065;island.add(m);falls.push(m);
   add(island,leaf,'#e2f5e7',x,y-h/2+.07,z+.1,w*.65,.09,.4);
  }
+ add(island,leaf,'#77c5c0',24,.09,-22.5,3,.045,2);
+ add(island,leaf,'#e2f5e7',23.8,.16,-22.6,.85,.025,.32);
  // Flower banks are outside the buildable boundary, leaving the complete centre available.
  for(let i=0;i<120;i++){
   const a=i*2.399,{x,z}=coastline(a,-.6-(i%3)*.3);
