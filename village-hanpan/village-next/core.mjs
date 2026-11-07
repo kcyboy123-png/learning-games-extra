@@ -1,4 +1,4 @@
-import {allBuildings,totalPopulation,harborSite} from './islands.mjs';
+import {allBuildings,totalPopulation,harborSite,hasPassage} from './islands.mjs';
 import {recordCozyMonth,validateCozyReview} from './cozy-review.mjs?v=perf1';
 import {buildingSpec,cityPhase,premiumIncome} from './city-rules.mjs?v=perf1';
 export {buildingSpec} from './city-rules.mjs?v=perf1';
@@ -54,8 +54,8 @@ export function connected(s,b,net=network(s)){return cells(b).some(([x,y])=>net.
 export function stage(s){return Math.max(s.stage,month(s)>=7||s.pop>=28?3:month(s)>=2||s.pop>=16?2:month(s)>=1||s.buildings.some(b=>b.type==='snack'&&b.progress>=1)?1:0);}
 // 해금: 정해진 달이 되었거나(9절) 주민 성과로 stage가 앞서면 열린다. 평가 시작은 달을 따르므로 빨리 열어도 벌점이 없다.
 const STAGE_MONTH=[0,1,2,7];export const populationRequired=type=>POPULATION_UNLOCKS[type]??0;
-export function unlocked(s,type){const d=TYPES[type];return s.cozyV===1?Math.max(totalPopulation(s),s.populationPeak??s.pop)>=populationRequired(type):month(s)>=d.unlock||STAGE_MONTH[stage(s)]>=d.unlock;}
-export const unlockMessage=(s,type)=>s.cozyV===1?`주민 ${populationRequired(type)}명에 열려요 · 현재 ${totalPopulation(s)}명`:`${monthLabel(s,TYPES[type].unlock)}에 열려요.`;
+export function unlocked(s,type){const d=TYPES[type];if(!d)return false;if(d.island)return s.island===d.island&&hasPassage(s);return s.cozyV===1?Math.max(totalPopulation(s),s.populationPeak??s.pop)>=populationRequired(type):month(s)>=d.unlock||STAGE_MONTH[stage(s)]>=d.unlock;}
+export const unlockMessage=(s,type)=>TYPES[type]?.island?(hasPassage(s)?'안개꽃섬에서만 지을 수 있어요 · 배를 타고 이동해요':'항구 완공 후 새 섬에서 건설 가능'):s.cozyV===1?`주민 ${populationRequired(type)}명에 열려요 · 현재 ${totalPopulation(s)}명`:`${monthLabel(s,TYPES[type].unlock)}에 열려요.`;
 export const unlockMonth=type=>TYPES[type].unlock;
 // Piers occupy the two adjacent river cells, so bridges and opposite ports cannot overlap.
 export function waterfrontError(s,type,x,y,ignoreId=0){
@@ -65,7 +65,7 @@ export function waterfrontError(s,type,x,y,ignoreId=0){
  if(s.buildings.some(b=>b.id!==ignoreId&&(b.type==='harbor'&&rows.some(r=>r>=b.y&&r<b.y+2)||type==='harbor'&&b.type==='bridge'&&rows.includes(b.y))))return '다리나 다른 항구와 겹쳐요. 개울 옆 다른 자리를 골라 주세요.';
  return '';
 }
-export function canBuild(s,type,x,y,ignoreId=0){const d=TYPES[type];if(!d)return '알 수 없는 시설이에요.';if(s.paused||s.ended)return '시간을 재개한 뒤 지을 수 있어요.';if(!unlocked(s,type)&&!s.buildings.some(b=>b.id===ignoreId&&b.type===type))return unlockMessage(s,type);
+export function canBuild(s,type,x,y,ignoreId=0){const d=TYPES[type];if(!d)return '알 수 없는 시설이에요.';if(s.paused||s.ended)return '시간을 재개한 뒤 지을 수 있어요.';if(d.island&&s.island!==d.island)return unlockMessage(s,type);if(!unlocked(s,type)&&!s.buildings.some(b=>b.id===ignoreId&&b.type===type))return unlockMessage(s,type);
  if(!Number.isInteger(x)||!Number.isInteger(y))return '땅을 골라 주세요.';if(type==='harbor'&&!harborSite(x,y)&&!s.buildings.some(b=>b.id===ignoreId&&b.type==='harbor'&&b.x===x&&b.y===y&&(b.paidCost===undefined||b.paidCost<500000)))return '항구는 개울 입구의 항구 자리 네 곳 중 빈 곳에 지어요.';
  for(const[cx,cy]of cells({type,x,y})){if(cx<0||cy<0||cx>=SIZE||cy>=SIZE)return '마을 경계 안에 놓아 주세요.';const o=at(s,cx,cy);if(o&&o.id!==ignoreId)return '이미 사용 중인 땅이에요.';if(cx<2)return '이 숲은 보전하는 구역이에요.';if(type==='bridge'?cx!==RIVER:cx===RIVER)return type==='bridge'?'다리는 개울 위에 놓아요.':'개울에는 다리를 놓아 주세요.';if(terrain(cx,cy)==='warehouse'&&type!=='workshop')return '오래된 창고는 재생 공간으로 고쳐 써요.';}
  if(type==='workshop'&&(x!==14||y!==7))return '강 건너 오래된 창고(14,7)에서 개조해요.';return waterfrontError(s,type,x,y,ignoreId);

@@ -10,7 +10,8 @@ export const calendarDay=s=>1+Math.floor((s.t%MONTH)/MONTH*[31,28,31,30,31,30,31
 export const cataloguePictures=['road','house','snack','apartment','western','japanese','chinese','convenience','supermarket','clinic','hospital','kids','amusement','school','library','fire','drain','workshop','solar','generator','bridge','flower','avenue','tree','bench'];
 
 export const expansionPictures=["duplex", "gardenhouse", "terracehouse", "chicken", "buffet", "police", "cinema", "animalFarm", "rosePark", "harbor", "rabbitTower", "skyTower", "largePark", "lavender", "hydrangea", "fountain", "flowerArch", "moonGarden", "goldFountain", "starTree", "supermarket"];
-export function catalogueStyle(type){const next=expansionPictures.indexOf(type),i=next<0?cataloguePictures.indexOf(type):next;return `${next<0?'':"background-image:url('assets/expansion-catalogue.png');"}background-position:${i%5*25}% ${Math.floor(i/5)*25}%;`;}
+export const islandPictures=['mistHydrangea','fireflyPond','islandCafe','glassGarden','wishTree','cloudObservatory'];
+export function catalogueStyle(type){const island=islandPictures.indexOf(type);if(island>=0)return `background-image:url('assets/island-catalogue.png');background-size:300% 200%;background-position:${island%3*50}% ${Math.floor(island/3)*100}%;`;const next=expansionPictures.indexOf(type),i=next<0?cataloguePictures.indexOf(type):next;return `${next<0?'':"background-image:url('assets/expansion-catalogue.png');"}background-position:${i%5*25}% ${Math.floor(i/5)*25}%;`;}
 export const incomeRate=v=>`${netIncome(v)<0?'−':'+'}${(Math.abs(netIncome(v))*PLAY_SPEED/MONTH).toFixed(1)}/초`;
 
 export function buildingBenefit(s,type){

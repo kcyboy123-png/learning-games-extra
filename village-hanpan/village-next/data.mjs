@@ -50,15 +50,29 @@ export const TYPES={
  goldFountain:{"name":"황금 분수","cost":120000,"time":360,"up":0,"e":0,"unlock":0,"stage":0,"group":"레어","desc":"세 겹의 황금 물그릇과 에메랄드빛 연못.","garden":"rest","foot":2},
  starTree:{"name":"별빛 나무","cost":240000,"time":540,"up":0,"e":0,"unlock":0,"stage":0,"group":"레어","desc":"황금 가지에 별과 작은 등이 매달린 특별한 나무.","garden":"trees","foot":2}
 };
+Object.assign(TYPES,{
+ mistHydrangea:{name:'안개꽃 수국 정원',cost:8000,time:120,up:0,e:0,unlock:0,stage:0,group:'섬 전용',island:'mist',garden:'flowers',foot:2,desc:'안개꽃섬 전용. 파랑·보라 수국과 꽃 아치 사이로 산책해요.'},
+ fireflyPond:{name:'반딧불 연못',cost:18000,time:180,up:0,e:0,unlock:0,stage:0,group:'섬 전용',island:'mist',garden:'rest',foot:2,desc:'안개꽃섬 전용. 은은한 반딧불과 연꽃이 물가를 밝혀요.'},
+ islandCafe:{name:'물빛 찻집',cost:45000,time:240,up:0,e:-2,unlock:0,stage:0,group:'섬 전용',island:'mist',food:72,foot:2,desc:'안개꽃섬 전용. 청록 지붕과 물가 테라스에서 차를 나누어요. 수입 중심 시설이에요.'},
+ glassGarden:{name:'별빛 온실',cost:90000,time:360,up:0,e:-2,unlock:0,stage:0,group:'섬 전용',island:'mist',education:64,leisure:64,foot:2,desc:'안개꽃섬 전용. 별 장식의 유리 온실에서 꽃을 가꾸고 자연을 배워요.'},
+ wishTree:{name:'소원나무',cost:160000,time:480,up:0,e:0,unlock:0,stage:0,group:'섬 전용',island:'mist',garden:'trees',foot:2,desc:'안개꽃섬 전용. 연보라 가지에 소원 리본과 작은 별이 매달린 행복의 나무예요.'},
+ cloudObservatory:{name:'구름 전망대',cost:220000,time:600,up:0,e:-2,unlock:0,stage:0,group:'섬 전용',island:'mist',leisure:120,foot:2,desc:'안개꽃섬 전용. 나선 계단을 올라 바다와 두 마을을 바라보는 명소예요.'}
+});
 export const OPTIONS={ins:{name:'단열 보강',cost:45,desc:'겨울·여름 에너지 수요 25% 절약'},shade:{name:'차양 설치',cost:25,desc:'여름 냉방 수요 20% 절약'},reuse:{name:'재사용 자재',cost:20,desc:'자원 재사용 성과에 반영'}};
 export const TIERS=[[950,'레디언트','미래를 짓는 건축가'],[900,'이모탈','초록 도시의 거장'],[800,'다이아몬드','마을 설계의 달인'],[700,'플래티넘','빛나는 도시 설계자'],[600,'골드','든든한 마을 건축가'],[450,'실버','성장하는 건축단장'],[300,'브론즈','가능성을 짓는 설계자'],[0,'새싹','첫 마을의 개척자']];
 // 해금 달(0=1월). B규칙: 정해진 달 또는 주민 수 성과로 앞당겨진다. 에너지 시설은 부족 대응을 위해 처음부터 열려 있다.
-export const TABS={주거:['주거'],먹거리:['음식','장보기'],생활:['생활'],기반:['기반','에너지','안전'],여가:['여가'],명소:['명소'],조경:['꾸미기'],레어:['레어']};
+export const TABS={주거:['주거'],먹거리:['음식','장보기'],생활:['생활'],기반:['기반','에너지','안전'],여가:['여가'],명소:['명소'],조경:['꾸미기'],레어:['레어'],'섬 전용':['섬 전용']};
 export const SEASONS=['겨울','봄','여름','가을'];
 export const season=m=>m<2||m===11?0:m<5?1:m<8?2:3;
 
 // Cozy rewards are net coins per real playing minute; happiness is a target increase.
 export const COZY_EFFECTS={
+ mistHydrangea:{income:400,happiness:9,welfare:2},
+ fireflyPond:{income:1200,happiness:12,welfare:4},
+ islandCafe:{income:4500,happiness:8,welfare:2},
+ glassGarden:{income:7000,happiness:14,welfare:10},
+ wishTree:{income:9000,happiness:24,welfare:6},
+ cloudObservatory:{income:18000,happiness:18,welfare:8},
  road:{income:0,happiness:0,welfare:0},
  house:{income:0,happiness:0,welfare:0},
  apartment:{income:0,happiness:0,welfare:0},

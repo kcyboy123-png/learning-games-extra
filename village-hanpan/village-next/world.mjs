@@ -512,7 +512,7 @@ export class World{
   for(let i=0;i<38;i++){const z=-L/2+1+i*(L-2)/38,side=i%2?1:-1,x=rx+side*1.23;pebble(S,'#b8ac90',x,-.12,z,.23,.18,.34,WET);pebble(S,'#6f8858',x+.06,.02,z,.17,.05,.22);if(i%3===0){flower(S,x+side*.18,z+.2,'#fff2ce');flower(S,x+side*.28,z+.4,'#e9adba');clump(S,'#81b56c',x+side*.24,.11,z-.1,.23,.13,.26);tuft(S,x+side*.1,z-.28,.7);}}
   // 보전 숲 (0~1열) · 마을 입구 표지 · 흩어진 풀
   for(let gy=0;gy<SIZE;gy++)for(let gx=0;gx<2;gx++){const p=toWorld(gx,gy),h=hash(gx,gy);tree(S,p.x+(h%7-3)*.14,p.z+(h%5-2)*.18,1.05+(h%4)*.12,h%9===0);if(h%3===0)tuft(S,p.x+.9,p.z-.8,1.1);}
-  const gate=toWorld(5,3);for(const x of[-1,1]){cylinder(S,'#5b6660',gate.x+x*1.3,.95,gate.z-1.4,.055,1.75);box(S,'#fff0b5',gate.x+x*1.3,1.82,gate.z-1.4,.24,.3,.24,GLOW);cone(S,'#5b6660',gate.x+x*1.3,2.04,gate.z-1.4,.24,.16);}label(S,'동물의숲',gate.x,1.35,gate.z-1.9,2.2,.5,'#fff6de','#345347',76);
+  const gate=toWorld(5,3);for(const x of[-1,1]){cylinder(S,'#5b6660',gate.x+x*1.3,.95,gate.z-1.4,.055,1.75);box(S,'#fff0b5',gate.x+x*1.3,1.82,gate.z-1.4,.24,.3,.24,GLOW);cone(S,'#5b6660',gate.x+x*1.3,2.04,gate.z-1.4,.24,.16);}label(S,'도토리 마을',gate.x,1.35,gate.z-1.9,2.2,.5,'#fff6de','#345347',76);
  }
  syncTownscape(s){const sites=townscapeSites(s),sig=JSON.stringify(sites);if(sig===this.townscapeSig)return;this.townscapeSig=sig;if(this.townscape)dispose(this.townscape);const g=this.townscape=new T.Group();g.name='developed-streets';this.scene.add(g);
   const lamp=(a,x,z)=>{cylinder(a,'#547064',x,.73,z,.035,1.45);box(a,'#567367',x,.12,z,.17,.18,.17);box(a,'#ffe7a3',x,1.49,z,.18,.25,.18,GLOW);for(const dx of[-.1,.1])for(const dz of[-.1,.1])box(a,'#547064',x+dx,1.49,z+dz,.018,.28,.018);cone(a,'#547064',x,1.68,z,.18,.15);ball(a,'#d7bd7a',x,1.79,z,.032);};
