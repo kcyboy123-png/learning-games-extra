@@ -1,9 +1,12 @@
 // Only the active region is rendered. Funds, time, unlocks and history stay shared.
+export const ISLAND_OPEN=false;
+export const ISLAND_HOLD='독도 업데이트 준비 중이에요. 항구 건설과 섬 여행은 잠시 쉬어요.';
 export const islandName=s=>s.island==='mist'?'안개꽃섬':'우리 마을';
 export const totalPopulation=s=>s.pop+(s.otherIsland?.pop||0);
 export const allBuildings=s=>s.otherIsland?[...s.buildings,...s.otherIsland.buildings]:s.buildings;
 export const hasPassage=s=>!!s.otherIsland||s.buildings.some(b=>b.type==='harbor'&&b.progress>=1&&!b.closed);
 export function switchIsland(s){
+ if(!ISLAND_OPEN&&s.island!=='mist')return false;
  if(!hasPassage(s)||(!s.otherIsland&&(!Number.isSafeInteger(s.nextId)||s.nextId>Number.MAX_SAFE_INTEGER-7)))return false;
  const next=s.otherIsland||{pop:0,buildings:[],landscape:{version:1,cleared:[]}};
  if(!s.otherIsland){for(let y=3;y<=8;y++)next.buildings.push({id:s.nextId++,type:'road',x:5,y,opts:[],progress:1,starter:true,completedAt:s.t});}
