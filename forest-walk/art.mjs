@@ -139,6 +139,16 @@ for(const [name,outline,depth] of [
   tail.computeVertexNormals();tail.computeBoundingSphere();characterGeometry.ponytail=tail;
 }
 
+// G06: one shared hat crown for the cap and the beanie. A sphere narrowed below the hair's widest point, so the swept
+// locks cut through its rim and top; this dome keeps a vertical band for the lower 30% and an elliptical crown above,
+// sized by the caller to enclose the full lock lift. capProfile(y) is the unit-dome radius for y in [0,1] (shared with tests).
+export function capProfile(y){y=Math.max(0,Math.min(1,y));if(y<=.3)return 1-.012*Math.pow(1-y/.3,2);const t=(y-.3)/.7;return Math.sqrt(Math.max(0,1-t*t));}
+{
+  const points=[];
+  for(const y of [1,.995,.98,.955,.92,.875,.82,.76,.69,.61,.52,.43,.34,.3,.2,.1,0])points.push(new T.Vector2(y>=1?0:capProfile(y),y));
+  const g=new T.LatheGeometry(points.reverse(),28);g.computeBoundingSphere();characterGeometry.cap=g;
+}
+
 export function stoneStepGeometry(variant=0){
   const outline=new T.Shape();
   outline.moveTo(-.54,-.43);outline.quadraticCurveTo(-.69,-.39,-.64,-.20);
@@ -240,7 +250,7 @@ export function surfaceTexture(kind){
     ctx.fillStyle=kind==='fur'?(i%2?'#fff3d84a':'#7c583a42'):kind==='water'?(i%3?'#a2d6bf30':'#174e6026'):i%2?'#ffffff16':'#263b2e0a';
     if(kind==='fur'){
       const lean=(random()-.5)*3,len=3+r*9;ctx.strokeStyle=ctx.fillStyle;ctx.lineWidth=.35+r*.35;ctx.beginPath();ctx.moveTo(x,y);ctx.quadraticCurveTo(x+lean,y+len*.55,x+lean*.5,y+len);ctx.stroke();
-    }else{ctx.beginPath();ctx.ellipse(x,y,kind==='water'?2+r*8:1+r*4,kind==='water'?.5+r:1+r*2,kind==='water'?-.35:random()*6,0,Math.PI*2);ctx.fill();}
+    }else{ctx.beginPath();ctx.ellipse(x,y,kind==='water'?2+r*8:1+r*4,kind==='water'?.5+r:1+r*2,kind==='water'?-.35+(random()-.5)*1.1:random()*6,0,Math.PI*2);ctx.fill();}
   }
   const t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;t.colorSpace=T.SRGBColorSpace;t.anisotropy=4;
   return t;
@@ -294,18 +304,48 @@ export function creekFoamGeometry(){
   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(vertices,3));g.computeVertexNormals();return g;
 }
 
-export function broadleafGeometry(){
+// G04: the floated leaf. A small five-lobed (maple-like) blade lying in the XZ plane, tip towards -z and a short stem out of the
+// notch towards +z. Radial rings give interior vertices so the midrib and the five lobe veins are drawn with vertex colours
+// (no texture), and the blade curls up a little at the edges so it reads as a leaf resting on water, not a flat yellow egg.
+// Radius ≈.5 before scaling; ~500 triangles, one mesh.
+export function floatingLeafGeometry(){
+  const RINGS=4,N=80,positions=[],colors=[],uv=[],index=[]; // 4.5° steps land exactly on the five lobe directions (0, ±72°, ±144°)
+  const blade=new T.Color('#e2b24c'),rim=new T.Color('#c9883a'),vein=new T.Color('#9a6a2a'),stem=new T.Color('#8a5a2a'),c=new T.Color();
+  const radius=t=>.5*(.42+.58*Math.pow(Math.abs(Math.cos(2.5*t)),.55))*(.78+.22*Math.cos(t));
+  const push=(x,y,z,col)=>{positions.push(x,y,z);colors.push(col.r,col.g,col.b);uv.push(x+.5,z+.5);};
+  const at=(k,i)=>1+(k-1)*N+(i%N);
+  push(0,0,0,vein);
+  for(let k=1;k<=RINGS;k++)for(let i=0;i<N;i++){
+    const t=-Math.PI+i*2*Math.PI/N,rho=k/RINGS,r=radius(t)*rho,x=Math.sin(t)*r,z=-Math.cos(t)*r;
+    const lobe=Math.round(t/(Math.PI*.4))*Math.PI*.4,d=Math.abs(r*Math.sin(t-lobe)),veinMix=Math.cos(t-lobe)>0?Math.max(0,1-d/.018):0;
+    c.copy(blade).lerp(rim,Math.pow(rho,3)*.7).lerp(vein,veinMix*.8);
+    push(x,.12*x*x+.05*z*z,z,c);
+  }
+  for(let i=0;i<N;i++)index.push(0,at(1,i+1),at(1,i));
+  for(let k=1;k<RINGS;k++)for(let i=0;i<N;i++){const a=at(k,i),b=at(k,i+1),cc=at(k+1,i),d=at(k+1,i+1);index.push(a,b,cc,b,d,cc);}
+  const s0=positions.length/3;
+  push(-.008,.002,.10,stem);push(.008,.002,.10,stem);push(-.006,.004,.27,stem);push(.006,.004,.27,stem);
+  index.push(s0,s0+2,s0+1,s0+1,s0+2,s0+3);
+  const g=new T.BufferGeometry();
+  g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setAttribute('color',new T.Float32BufferAttribute(colors,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));
+  g.setIndex(index);g.computeVertexNormals();g.computeBoundingSphere();return g;
+}
+
+export function broadleafGeometry(detail=0){
   const positions=[],normals=[],colors=[],uv=[],c=new T.Color();
   // Smooth curved leaves, with a lit centre vein, replace flat triangular fans.
-  for(let i=0;i<32;i++){
+  // detail=1 is the shared low-poly shrub (18 slightly larger leaves, 3x2 patches: ~330 vs ~1150 triangles) used for
+  // small verge shrubs and far hillside drifts, which never cast shadows.
+  const low=detail>0,count=low?18:32,segT=low?3:5,segU=low?2:3,grow=low?1.18:1;
+  for(let i=0;i<count;i++){
     const a=i*2.399,r=.16+.43*Math.sqrt((i%9)/9),h=.17+(i%6)*.12+.075*Math.sin(i*1.9);
     const center=new T.Vector3(Math.cos(a)*r,h,Math.sin(a)*r),q=new T.Quaternion().setFromEuler(new T.Euler(.12+(i%5)*.18,a,.35*Math.sin(i)));
-    const length=.105+(i%4)*.019,width=length*(.43+.19*(.5+.5*Math.sin(i*2.1))),v=[],idx=[],shades=[],tex=[];
-    for(let j=0;j<=5;j++)for(let k=0;k<=3;k++){
-      const t=j/5,u=k/3*2-1,outline=Math.pow(Math.sin(Math.PI*t),.65),p=new T.Vector3(u*width*outline,.055*(1-u*u)*outline-.04*(t-.5)**2,(t-.5)*length*2);
-      p.applyQuaternion(q).add(center);v.push(p.x,p.y,p.z);tex.push(k/3,t);
+    const length=(.105+(i%4)*.019)*grow,width=length*(.43+.19*(.5+.5*Math.sin(i*2.1))),v=[],idx=[],shades=[],tex=[];
+    for(let j=0;j<=segT;j++)for(let k=0;k<=segU;k++){
+      const t=j/segT,u=k/segU*2-1,outline=Math.pow(Math.sin(Math.PI*t),.65),p=new T.Vector3(u*width*outline,.055*(1-u*u)*outline-.04*(t-.5)**2,(t-.5)*length*2);
+      p.applyQuaternion(q).add(center);v.push(p.x,p.y,p.z);tex.push(k/segU,t);
       c.set(['#537842','#739950','#8da65a','#53794e'][i%4]).multiplyScalar(.93+.13*(1-Math.abs(u))+.05*t);shades.push(c.r,c.g,c.b);
-      if(j<5&&k<3){const n=j*4+k;idx.push(n,n+4,n+1,n+1,n+4,n+5);}
+      if(j<segT&&k<segU){const n=j*(segU+1)+k,w=segU+1;idx.push(n,n+w,n+1,n+1,n+w,n+w+1);}
     }
     const leaf=new T.BufferGeometry();leaf.setAttribute('position',new T.Float32BufferAttribute(v,3));leaf.setAttribute('color',new T.Float32BufferAttribute(shades,3));leaf.setAttribute('uv',new T.Float32BufferAttribute(tex,2));leaf.setIndex(idx);leaf.computeVertexNormals();const flat=leaf.toNonIndexed();positions.push(...flat.attributes.position.array);normals.push(...flat.attributes.normal.array);colors.push(...flat.attributes.color.array);uv.push(...flat.attributes.uv.array);leaf.dispose();flat.dispose();
     const base=new T.Vector3(0,.06,0),direction=center.clone().sub(base),stem=new T.CylinderGeometry(.004,.007,direction.length(),3,1,true);

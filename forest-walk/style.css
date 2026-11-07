@@ -11,6 +11,10 @@
 @media(max-width:700px){#note{top:164px;bottom:auto;max-width:calc(100% - 32px)}}
 @media(max-height:520px){#note{top:80px;max-width:calc(100% - 420px)}}
 
+/* G07: while resting the journey card is inert anyway; hide it so the top-left card never covers the child's face
+   in the leaf (bridge) and valley look-back framings. It returns as soon as walking resumes. */
+body[data-mode=rest] #journey{visibility:hidden}
+
 /* Let the summit landscape remain the reward instead of covering it with a dialog. */
 .finish{top:auto;bottom:24px;left:50%;transform:translateX(-50%);width:min(580px,calc(100% - 32px));padding:21px 26px;text-align:left;display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
 .finish .eyebrow,.finish h2,.finish p{grid-column:1 / -1;margin:0}.finish h2{font-size:27px}.finish h2 br{display:none}.finish p{font-size:14px;line-height:1.5;margin-bottom:6px}.finish .primary,.finish .secondary{font-size:14px;padding:11px 15px;margin:0}.finish .eyebrow{font-size:12px}
@@ -33,6 +37,8 @@ header{left:0;right:0;top:0;padding:0 22px;height:50px;background:#173c35e8;colo
 .keyboard-hint{bottom:9px;font-size:11px}.location{width:164px;padding:10px 12px}.location>span{font-size:15px}.location small{font-size:11px}.location .trail-line{margin-top:7px}
 
 body[data-mode=rest] #note{display:none}
+/* Summit card up: the location box and (on portrait, where the group-photo row stands above the card) the note give the top-left back to the people. */
+body[data-mode=finished] #journey{visibility:hidden}@media(orientation:portrait){body[data-mode=finished] #note{display:none}}
 /* 2026-11: readable trail controls, with the landscape kept visible. */
 header{background:#173c35f0;box-shadow:0 2px 16px #112e2420}.location{background:#f8f6e9ed;border:1px solid #fff9;box-shadow:0 5px 24px #14372b14}.location>span{font-size:16px}.location small{font-size:12px}.location .trail-line{width:100%;height:4px}
 #pad{gap:7px;padding:9px;background:#173c3526;border:1px solid #fff5;border-radius:28px}#pad button{background:#f7f5e8ec;color:#234c3d;box-shadow:0 2px 5px #14372b18}#pad button:hover{background:#fffbea}#pad button.active{background:#e6c46f;box-shadow:inset 0 2px 4px #29443525}
@@ -48,18 +54,119 @@ header{padding-left:max(22px,env(safe-area-inset-left));padding-right:max(22px,e
 body[data-mode=rest] .location{opacity:.9}.tools button:disabled{opacity:.35;cursor:default}
 @media(max-width:360px){header{padding-inline:12px}.brand{font-size:13px}.tools button{font-size:11px;padding-inline:8px}.location{width:156px}.rest h2{font-size:18px}.rest{padding:16px}.finish h2{font-size:21px}}
 @media(prefers-reduced-motion:reduce){#pad button.active{transform:none}}
+@media(max-width:700px) and (orientation:portrait){.rest{bottom:auto;top:118px;transform:none;max-height:40dvh}}
+@media(max-height:520px) and (max-width:900px){.rest{left:auto;right:12px;width:min(320px,52vw)}}
 @media(max-height:520px){.intro h1{font-size:32px;margin:8px 0 12px}.intro h1 br{display:none}.rest{max-height:calc(100dvh - 80px)}}
 
 /* Observation choices and personal memories share the forest's existing palette. */
 .memory-symbols{position:absolute;width:0;height:0;overflow:hidden}
-.rest{display:flex;flex-direction:column;align-items:stretch;gap:10px;width:min(390px,calc(100% - 32px));max-height:calc(100dvh - 85px);padding:20px}
-.rest h2{font-size:21px}.rest #rest-text{font-size:13px;color:#526451}.rest .primary{width:100%;font-size:14px;min-height:46px}
-#observe-choices{display:flex;gap:8px;flex-wrap:wrap}#observe-choices button{flex:1 1 130px;min-height:46px;padding:10px 12px;border:1px solid #a2b79f;background:#eef1e3;border-radius:12px;color:#234c3d;font-size:14px;font-weight:600}
-#observe-choices button[aria-pressed=true]{background:#234c3d;color:#fffbea;border-color:#234c3d}
+.rest{display:flex;flex-direction:column;align-items:stretch;gap:8px;width:min(330px,calc(100% - 32px));max-height:calc(100dvh - 85px);padding:16px 18px}
+.rest h2{font-size:19px;margin:4px 0 2px}.rest #rest-text{display:block;font-size:12px;line-height:1.5;color:#526451;margin:0}.rest .eyebrow{font-size:12px}.rest .primary{width:100%;font-size:14px;min-height:46px}
+#observe-choices,#finish-choices{display:flex;gap:6px;flex-wrap:wrap}#observe-choices:empty,#finish-choices:empty{display:none}#observe-choices button,#finish-choices button{flex:1 1 110px;min-height:44px;padding:8px 10px;border:1px solid #a2b79f;background:#eef1e3;border-radius:12px;color:#234c3d;font-size:13px;font-weight:600}
+#finish-choices{grid-column:1/-1}
+/* Group-photo camera flash: one short white fade, nothing under reduced motion (app skips the class). */
+#flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none}#flash.on{animation:photo-flash .55s ease-out}@keyframes photo-flash{0%{opacity:.85}100%{opacity:0}}
+#classroom summary{cursor:pointer;font-size:15px;font-weight:600;color:#294435;padding:8px 0;list-style-position:inside}#classroom[open] summary{margin-bottom:6px}#classroom #teach{margin-top:10px}
+#observe-choices button[aria-pressed=true],#finish-choices button[aria-pressed=true]{background:#234c3d;color:#fffbea;border-color:#234c3d}
+/* One light question per place (rest card) and the summit feeling (finish card): same chip style as the look toggles, 44 px+ targets, full-width row in the finish grid. */
+.ask{display:flex;flex-direction:column;gap:6px;grid-column:1/-1;text-align:left}.ask .ask-prompt{font-size:14px;font-weight:600;color:#456647;margin:0;line-height:1.4}.ask-options{display:flex;gap:6px;flex-wrap:wrap}.ask-options button{flex:1 1 96px;min-height:44px;padding:8px 10px;border:1px solid #a2b79f;background:#eef1e3;border-radius:12px;color:#234c3d;font-size:13px;font-weight:600}.ask-options button[aria-pressed=true]{background:#234c3d;color:#fffbea;border-color:#234c3d}
+.intro #plan-note{margin:0 0 14px;font-weight:600;color:#456647}
 .rest #observe-feedback{font-size:15px;line-height:1.6;padding-left:12px;border-left:3px solid #88a67d;min-height:48px}.rest #observe-saved{font-size:12px;line-height:1.5;color:#526451;min-height:18px}
-.finish{width:min(420px,calc(100% - 32px));max-height:58dvh;gap:10px}.finish h2{margin:0}.finish>p{margin-bottom:0}.memory-page{grid-column:1/-1;border-top:1px solid #cad4bf;border-bottom:1px solid #cad4bf;padding:12px 0;text-align:left}.memory-page h3{font-size:14px;margin:0 0 10px;color:#456647}
-#memories{list-style:none;margin:0;padding:0;display:grid;gap:10px}#memories li{display:flex;gap:12px;align-items:center;font-size:14px;line-height:1.5}#memories svg{width:25px;height:25px;flex:none;fill:none;stroke:#557c57;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}.finish #memory-empty{font-size:13px;margin:0;color:#526451}
-@media(max-width:700px){.rest{left:16px;right:16px;transform:none;width:auto;max-height:47dvh;padding:16px;gap:8px}.rest h2{font-size:19px}.rest #rest-text{display:none}.finish{left:16px;right:16px;width:auto;max-height:55dvh}.rest #observe-feedback{font-size:14px;min-height:44px}}
-@media(max-height:520px) and (min-width:701px){.rest{width:350px;max-height:calc(100dvh - 78px);padding:14px;gap:7px}.rest #rest-text{display:none}.finish{max-height:calc(100dvh - 78px)}}
+.finish{width:min(420px,calc(100% - 32px));max-height:calc(100dvh - 100px);gap:10px}.finish h2{margin:0}.finish>p{margin-bottom:0}
+/* G09: portrait tablet (768 wide) — a slightly narrower card bottom-right leaves the left half of the deck for the child, whom the camera now frames on the left third. Buttons keep 44 px+. */
+@media(min-width:701px) and (orientation:portrait){.finish{width:min(390px,calc(100% - 32px));padding:20px}.finish p{margin-bottom:4px}}.memory-page{grid-column:1/-1;border-top:1px solid #cad4bf;border-bottom:1px solid #cad4bf;padding:4px 0;text-align:left}
+/* Memories fold under a 44 px summary and scroll inside their own box, so the photo / stay / restart buttons stay in view at 1024x768 and 768x1024. */
+.memory-page summary{font-size:14px;font-weight:600;color:#456647;min-height:44px;display:flex;align-items:center;cursor:pointer;list-style-position:inside}.memory-page summary:focus-visible{outline:3px solid #eec971;outline-offset:2px;border-radius:8px}.memory-page[open] summary{margin-bottom:6px}
+#memories{list-style:none;margin:0;padding:0 4px 8px 0;display:grid;gap:10px;max-height:min(24dvh,190px);overflow:auto}#memories li{display:flex;gap:12px;align-items:center;font-size:14px;line-height:1.5}#memories svg{width:25px;height:25px;flex:none;fill:none;stroke:#557c57;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}.finish #memory-empty{font-size:13px;margin:0;color:#526451}
+@media(max-width:700px){.rest{left:16px;right:16px;transform:none;width:auto;max-height:47dvh;padding:16px;gap:8px}.rest h2{font-size:19px}.finish{left:16px;right:16px;width:auto;max-height:calc(100dvh - 90px)}#memories{max-height:min(20dvh,150px)}.rest #observe-feedback{font-size:14px;min-height:44px}}
+@media(max-height:520px) and (min-width:701px){.rest{width:350px;max-height:calc(100dvh - 78px);padding:14px;gap:7px}.finish{max-height:calc(100dvh - 78px)}}
 
+/* 2026-11-04 full course: classroom entry, teacher lesson panel, follow button, summit photo. Student HUD stays small. */
+#look-row{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:13px;color:#55715b}#look-row .secondary{width:auto;margin:0;padding:0 14px;min-height:44px;font-size:13px}#look-row small{font-size:12px}
+#classroom{border-top:1px solid #cad4bf;padding-top:12px;margin-top:4px}#classroom h2{font-size:17px;margin:0 0 6px}#classroom .hint{margin:0 0 10px}#classroom .secondary{margin:0 0 8px;min-height:46px}
+#join-form{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}#join-form label{grid-column:1/-1;font-size:13px;color:#55715b}#join-code{font:inherit;font-size:20px;letter-spacing:.18em;text-transform:uppercase;min-height:46px;padding:0 12px;border:1px solid #a2b79f;border-radius:12px;background:#fff;color:#234c3d;width:100%}#join-code:focus-visible{outline:3px solid #eec971;outline-offset:2px}#join-form .secondary{margin:0;min-width:120px}
+#join-note{font-size:13px;color:#8a4b3c;margin:8px 0 0;min-height:18px}#solo-note{margin-top:6px}
+.location #room-status,.location #gather-status{margin-top:8px;padding-top:6px;border-top:1px solid #cad4bf;font-weight:600;color:#355545}.location #gather-status{color:#8a5a2b}
+.follow{position:fixed;left:50%;transform:translateX(-50%);bottom:max(30px,env(safe-area-inset-bottom));padding:0 20px;min-height:46px;border-radius:24px;background:#f7f5e8f0;color:#234c3d;font-weight:600;border:1px solid #fff8;box-shadow:0 4px 18px #14372b22}.follow[aria-pressed=true]{background:#e6c46f}
+.teacher{left:auto;right:16px;top:calc(60px + env(safe-area-inset-top));transform:none;width:min(360px,calc(100% - 32px));max-height:calc(100dvh - 90px);padding:18px}.teacher h2{font-size:18px;margin:0 0 8px}.teacher .hint{margin:0 0 10px}
+#lesson-list{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:6px}#lesson-list li{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;font-size:13px;line-height:1.4;padding:6px 8px;border-radius:10px;background:#eef1e3}#lesson-list li.current{background:#dfe9d0;outline:2px solid #88a67d}#lesson-list b{display:block;font-size:13px}#lesson-list small{display:block;color:#526451;font-size:11px}#lesson-list button{min-height:44px;min-width:70px;border-radius:10px;background:#234c3d;color:#fffbea;font-size:12px;font-weight:600;padding:0 10px}#lesson-list button[aria-pressed=true]{background:#e6c46f;color:#294435}
+.teacher .secondary{margin:0 0 8px}.tools #lesson{font-weight:600}
+.finish #photo{margin:0;border:1px solid #cdd8c9}
+body[data-mode=rest] #follow,body[data-mode=finished] #follow{visibility:hidden}
+@media(max-width:700px){.follow{bottom:92px;left:auto;right:16px;transform:none;font-size:13px}.teacher{left:16px;right:16px;width:auto;top:calc(56px + env(safe-area-inset-top))}}
+@media(max-height:520px){.follow{bottom:16px;left:auto;right:150px;transform:none}}
+@media(max-width:480px){header .brand span{display:none}}
+/* 2026-11-07 hiking life: header journal button, small pack toolbar (flask + thirst bar, litter), action rows in the rest and
+   summit cards, the journal dialog (world frozen while open) and the "today" summary lines. All targets 44 px+. */
+.tools #journal-open{display:inline-flex;align-items:center;gap:6px;font-weight:600}.tools #journal-open svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}.tools #journal-open.new span::after{content:'';display:inline-block;width:7px;height:7px;margin-left:5px;border-radius:50%;background:#e6c46f;vertical-align:middle}
+#pack{position:fixed;right:max(30px,env(safe-area-inset-right));bottom:max(100px,calc(env(safe-area-inset-bottom) + 80px));display:flex;gap:8px}
+#pack button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:56px;min-height:56px;padding:6px 10px;border-radius:18px;background:#f7f5e8ec;color:#234c3d;font-size:12px;font-weight:600;border:1px solid #fff8;box-shadow:0 4px 16px #14372b22}
+#pack button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}#pack button[aria-pressed=true]{background:#e6c46f}#pack #pick{background:#dfe9d0}
+#pack .thirst{display:block;width:34px;height:4px;border-radius:3px;background:#cad4bf;overflow:hidden}#pack .thirst b{display:block;height:100%;width:calc(var(--thirst,0) * 100%);background:#4c9596;transition:width .3s}
+body:not([data-mode=playing]) #pack{visibility:hidden}
+.life-actions{display:flex;flex-direction:column;gap:6px;border-top:1px dashed #cad4bf;padding-top:8px}.life-actions .life-line{font-size:13px;line-height:1.5;color:#456647;margin:0;font-weight:600}.life-buttons{display:flex;gap:6px;flex-wrap:wrap}.life-buttons:empty{display:none}
+.life-buttons button{flex:1 1 110px;min-height:44px;padding:8px 10px;border:1px solid #a2b79f;background:#eef1e3;border-radius:12px;color:#234c3d;font-size:13px;font-weight:600}.life-buttons button[disabled]{opacity:.6;cursor:default}.life-buttons button.working{background:#234c3d;color:#fffbea}
+#finish-life{grid-column:1/-1}
+.life-summary{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}.life-summary li{display:flex;gap:10px;align-items:center;font-size:13px;line-height:1.4;color:#355545}.life-summary svg{width:21px;height:21px;flex:none;fill:none;stroke:#557c57;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.finish #life-summary{border-top:1px dashed #cad4bf;padding-top:6px}
+.journal{left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 32px));max-height:calc(100dvh - 90px);padding:22px 24px;text-align:left}.journal h2{font-size:24px;margin:0 0 6px}.journal .hint{margin:0 0 12px}
+#journal-entries{list-style:none;margin:0 0 10px;padding:0;display:grid;gap:10px}#journal-entries li{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;background:#eef1e3;border-radius:14px;padding:8px}
+.journal-art{width:96px;height:96px;border-radius:12px;background-image:url('./assets/animal-journal.webp');background-size:300% 100%;background-repeat:no-repeat;background-color:#dfe6d3}
+.journal-art.unseen{filter:grayscale(1) blur(7px) opacity(.35)}#journal-entries h3{font-size:15px;margin:0 0 3px;color:#234c3d}#journal-entries p{font-size:13px;line-height:1.5;margin:0;color:#3e5747}#journal-entries li.unseen h3{color:#6b7d68}
+.journal #journal-close{margin-top:12px}body[data-mode=journal] #journey,body[data-mode=journal] #pack,body[data-mode=journal] .rest,body[data-mode=journal] .finish{visibility:hidden}
+@media(max-width:700px){#pack{right:16px;bottom:210px;flex-direction:column}#pack button{min-width:52px;min-height:52px}.journal{padding:18px}#journal-entries li{grid-template-columns:72px 1fr}.journal-art{width:72px;height:72px}}
+@media(max-height:520px){#pack{bottom:80px;right:16px}.journal{max-height:calc(100dvh - 60px)}#journal-entries li{grid-template-columns:60px 1fr}.journal-art{width:60px;height:60px}}
 #reset-view{width:44px;min-width:44px;padding:0;display:grid;place-items:center}#reset-view svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}body:is([data-mode=playing],[data-mode=rest],[data-mode=finished]) #forest{cursor:grab}body #forest.dragging{cursor:grabbing}
+
+/* Keep the food and friends visible while the child is eating; the ordinary observation choices remain available. */
+.rest.meal-active :is(#rest-text,#observe-feedback,#observe-saved,#observe-ask),.finish.meal-active :is(#finish-text,#finish-ask,#memory-page){display:none}
+
+/* One meal card, two actions: no observation/photo/restart controls compete while eating. */
+.rest.meal-active :is(.eyebrow,#observe-choices,#leave-rest),.finish.meal-active :is(.eyebrow,#finish-choices,#photo,#stay,#again){display:none}
+.dining-info{font-size:13px;line-height:1.5;color:#456647;margin:4px 0 10px}
+.meal-active .life-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.meal-active .life-buttons button{min-height:48px}
+@media(max-width:700px){.rest.meal-active,.finish.meal-active{top:auto;bottom:16px;left:16px;right:16px;width:auto;transform:none;max-height:36dvh}}
+
+/* Optional hands-on exploration keeps the world visible and the two main actions within thumb reach. */
+body[data-mode=explore] :is(#journey,#pack,#follow,#note){display:none!important}
+#explorer{position:fixed;inset:0;pointer-events:none;z-index:10}
+body[data-mode=paused] #explorer,body[data-mode=error] #explorer{visibility:hidden}
+.exp-card{pointer-events:auto;position:absolute;right:20px;bottom:20px;width:min(390px,calc(100% - 32px));padding:20px;background:#f7f3e5f5;border:1px solid #fff9;border-radius:22px;box-shadow:0 8px 30px #14372b22}
+.exp-card h2{font-size:22px;margin:5px 0 10px}.exp-card p{font-size:14px;line-height:1.65;margin:0 0 12px;color:#48634e}.exp-card label{display:flex;align-items:center;gap:12px;font-size:14px;margin:10px 0}
+.exp-card input[type=range]{width:100%;min-height:44px;accent-color:#3d6952}.exp-card select{min-height:44px;max-width:100%;font:inherit;padding:8px;border:1px solid #a2b79f;border-radius:10px;background:#fffdf5;color:#294435}
+.exp-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.exp-actions button{border-radius:12px;padding:10px;min-height:48px;background:#234c3d;color:#fffbea;font-weight:600}.exp-actions #exp-close{background:#e8ecdd;color:#294435}
+#exp-target{position:fixed;width:70px;height:70px;transform:translate(-50%,-50%);background:transparent;border-radius:50%;pointer-events:auto;border:2px solid transparent}
+#exp-target.hinted,#exp-target:focus-visible{border-color:#f4d47d;background:#f4d47d22;outline:2px solid #fff8;outline-offset:4px}
+#exp-frame{position:absolute;left:10%;top:12%;width:60%;aspect-ratio:4/3;max-height:65vh;border:2px solid #fffa;border-radius:8px;box-shadow:0 0 0 999px #18372d33}
+#exp-review img{display:block;width:100%;max-height:32dvh;object-fit:contain;border:7px solid #fffdf5;box-shadow:0 3px 10px #234c3d22;border-radius:4px}
+#exp-album{display:grid;grid-template-columns:1fr 1fr;gap:9px;max-height:42dvh;overflow:auto;padding:4px}.photo-card{padding:5px;background:#fffdf5;border:2px solid transparent;border-radius:9px;color:#294435;text-align:left}.photo-card[aria-pressed=true]{border-color:#557b56}.photo-card img{display:block;width:100%;aspect-ratio:4/3;object-fit:contain}.photo-card span{display:block;font-size:12px;line-height:1.4;padding:5px 2px}
+#explorer[data-kind=album] .exp-card,#explorer[data-stage=review] .exp-card{width:min(560px,calc(100% - 32px));left:50%;right:auto;top:50%;bottom:auto;transform:translate(-50%,-50%);max-height:calc(100dvh - 90px);overflow:auto}
+@media(max-width:700px){.exp-card{left:16px;right:16px;bottom:16px;width:auto;padding:16px;max-height:39dvh;overflow:auto}.exp-card h2{font-size:19px}.exp-card p{font-size:13px;line-height:1.5}#exp-frame{left:8%;top:17%;width:84%;max-height:40dvh}.exp-card .eyebrow{display:none}}
+@media(max-height:520px) and (min-width:701px){.exp-card{width:330px;padding:12px;bottom:10px;max-height:calc(100dvh - 70px);overflow:auto}#exp-frame{width:45%;top:18%}}
+#exp-frame{width:min(60vw,86.66dvh);max-height:none}
+#exp-range-label{white-space:nowrap}#exp-range{min-width:0}
+@media(max-width:700px){#exp-frame{left:50%;transform:translateX(-50%);width:min(84vw,53.33dvh);max-height:none}}
+@media(max-height:520px) and (min-width:701px){#exp-frame{width:min(45vw,86.66dvh)}}
+
+/* Optional reflection stays available without crowding the main activity. */
+.ask summary{cursor:pointer;min-height:44px;display:list-item;padding:12px 4px;color:#345b42;font-size:13px;font-weight:600;text-align:left}.ask summary:focus-visible{outline:2px solid #426c50;outline-offset:2px}.ask:not([open]){margin-bottom:8px}#next-experience{font-weight:600;color:#234c3d}
+
+/* Classroom entry retains the forest palette; QR stays plain black on white for scanning. */
+#classroom{margin-block:16px}#classroom-heading{font-size:21px}#teacher-entry{margin-block:12px}#join-note:empty{display:none}
+#join-note{font-size:14px;line-height:1.5}#intro #start{margin-top:12px}#intro:has(.room-share:not([hidden])){width:min(650px,calc(100% - 32px))}
+#intro:has(.room-share:not([hidden])) h1{font-size:32px;margin-block:8px}#intro:has(.room-share:not([hidden])) h1 br{display:none}
+.attendance{font-size:16px!important;font-weight:700;color:#234c3d;background:#e4eddb;padding:12px;border-radius:10px;line-height:1.5}
+.room-share h3{font-size:19px;margin:16px 0 8px}.share-layout{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;align-items:start}
+.share-layout img{display:block;background:white;width:200px;height:200px;border:1px solid #ccd5c7;border-radius:4px}.share-code{display:block;font-size:30px;letter-spacing:.15em;font-variant-numeric:tabular-nums}
+.share-layout input,.share-layout select{width:100%;min-width:0;min-height:44px;font:inherit;font-size:13px;padding:8px;border:1px solid #859a80;border-radius:8px;background:white;color:#234c3d}
+.share-layout button{margin-top:8px!important}.share-network{display:block;font-size:13px}.share-note{font-size:14px!important;line-height:1.6}.teacher:has(.room-share:not([hidden])){width:min(650px,calc(100% - 32px))}
+@media(max-width:550px){.share-layout{grid-template-columns:1fr}.share-layout img{width:200px;height:200px;margin-inline:auto}#join-form{grid-template-columns:1fr}#join-form label{grid-column:auto}#intro:has(.room-share:not([hidden])){padding:20px}.share-code{font-size:28px}}
+
+#intro:has(#classroom:not([hidden])) h1{font-size:38px;margin:10px 0 14px}#intro:has(#classroom:not([hidden])) h1 br{display:none}
+#intro:has(#classroom:not([hidden]))>p{font-size:15px;margin-bottom:12px}#intro:has(#classroom:not([hidden])) #plan-note{margin-block:8px;font-size:12px}
+#intro:has(.room-share:not([hidden]))>p,#intro:has(.room-share:not([hidden])) #look-row,#intro:has(.room-share:not([hidden])) #join-note,#classroom.joined>h2,#classroom.joined>.hint{display:none}
+#intro:has(.room-share:not([hidden])) #classroom{margin:0;padding:0;border:0}
+#intro .room-share>.attendance{display:none}#lobby-status{margin-block:8px}.room-share .hint{margin:8px 0;font-size:12px}
+
+.share-layout:has(img[hidden]){grid-template-columns:1fr}
