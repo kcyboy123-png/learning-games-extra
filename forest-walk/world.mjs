@@ -1,13 +1,17 @@
+import {loadLandscapePlants} from './landscape-plants.mjs';
+import {createWildlife} from './wildlife.mjs?v=cowork2-20261108';
+import {createAtmosphere} from './atmosphere.mjs?v=cowork2-20261108';
 import * as T from './vendor/three.module.js';
-import {footStep,STRIDE} from './lib/gait.mjs?v=forest-public-20261108';
-import {surfaceTexture,foliageGeometry,mossRockGeometry,fernGeometry,grassGeometry,broadleafGeometry,creekFoamGeometry,floatingLeafGeometry,characterGeometry,forestMaterials,woodlandTree,contactTexture,stoneStepGeometry,cascadeGeometry,squirrelTailGeometry} from './art.mjs?v=forest-public-20261108';
-import {pathX,pathSlope,elevation,grade,riverX,terrain,outcrop,browRim,worldAt,clamp,forkGap,halfWidth,BRIDGE,RIVER,FORK,SUMMIT,OUTCROPS,LENGTH,SCENIC,seats,stops} from './trail.mjs?v=forest-public-20261108';
-import {createBridge} from './bridge.mjs?v=forest-public-20261108';
-import {createMotion,setRoutine,stepMotion,placeMotion,holdAt,friendRoutines,yawBetween,worldXZ} from './lib/npcmotion.mjs?v=forest-public-20261108';
-import {ANIMALS,picnicLayout,NOODLE_SPOT} from './lib/life.mjs?v=forest-public-20261108';
+import {footStep,STRIDE} from './lib/gait.mjs?v=forest-full-qa-20261107';
+import {surfaceTexture,foliageGeometry,mossRockGeometry,fernGeometry,grassGeometry,broadleafGeometry,creekFoamGeometry,floatingLeafGeometry,characterGeometry,forestMaterials,woodlandTree,contactTexture,stoneStepGeometry,cascadeGeometry,squirrelTailGeometry} from './art.mjs?v=leaf-water10-20261108';
+import {pathX,pathSlope,elevation,grade,riverX,terrain,outcrop,browRim,worldAt,clamp,forkGap,halfWidth,BRIDGE,RIVER,FORK,SUMMIT,OUTCROPS,LENGTH,SCENIC,seats,stops} from './trail.mjs?v=forest-full-qa-20261107';
+import {loadFern} from './fern-prop.mjs?v=cowork2-20261108';
+import {createBridge,batchBridgeParts} from './bridge.mjs?v=leaf-water10-20261108';
+import {createMotion,setRoutine,stepMotion,placeMotion,holdAt,friendRoutines,yawBetween,worldXZ} from './lib/npcmotion.mjs?v=forest-full-qa-20261107';
+import {ANIMALS,ENCOUNTER_SITES,picnicLayout,NOODLE_SPOT} from './lib/life.mjs?v=cowork2-20261108';
 // npc.mjs (parent-owned Tripo teacher/friend models) is optional: if it or its assets are missing, the procedural createChild
 // characters below stay. Loaded lazily so a broken/missing module can never stop the world from opening.
-const npcModule=import('./npc.mjs?v=forest-public-20261108').catch(()=>null);
+const npcModule=import('./npc.mjs?v=cast4-20261109').catch(()=>null);
 // Tripo rigs know 'greet' (raised, waving hand) but not the procedural 'wave'; everything else passes through unchanged.
 export const actorActivity=(actor,activity)=>activity==='wave'&&actor?.root?.name?.startsWith('tripo')?'greet':activity;
 const mat=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.94,envMapIntensity:.22,...extra});
@@ -18,22 +22,26 @@ function softenMap(material,strength){material.onBeforeCompile=shader=>{shader.f
   diffuseColor*=mix(vec4(1.0),sampledDiffuseColor,${strength.toFixed(2)});
 #endif`);};material.customProgramCacheKey=()=>`soft-map-${strength}`;return material;}
 // Grain remains in world space so differently sized rocks keep a consistent texture scale.
-function mineralDetail(material){
+function mineralDetail(material,moss){
   const previous=material.onBeforeCompile,key=material.customProgramCacheKey();
   material.customProgramCacheKey=()=>key+'-mineral';
   material.onBeforeCompile=shader=>{
-    previous(shader);
-    shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vMineral;').replace('#include <begin_vertex>',`#include <begin_vertex>
+    previous(shader);shader.uniforms.uMoss={value:moss};
+    shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vMineral; varying float vStoneTop;').replace('#include <begin_vertex>',`#include <begin_vertex>
       vec4 mineralPosition=vec4(transformed,1.);
       #ifdef USE_INSTANCING
         mineralPosition=instanceMatrix*mineralPosition;
       #endif
-      vMineral=(modelMatrix*mineralPosition).xyz;`);
-    shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vMineral;').replace('#include <color_fragment>',`#include <color_fragment>
+      vMineral=(modelMatrix*mineralPosition).xyz;vStoneTop=normal.y;`);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vMineral; varying float vStoneTop; uniform sampler2D uMoss;').replace('#include <color_fragment>',`#include <color_fragment>
       float grain=sin(vMineral.x*49.+sin(vMineral.z*37.)*3.)*sin(vMineral.y*57.+vMineral.z*41.);
       float fissure=pow(1.-abs(sin(vMineral.x*3.3+vMineral.y*8.+sin(vMineral.z*4.)*.55)),20.);
       float mottling=sin(vMineral.x*6.1+sin(vMineral.z*4.3))*sin(vMineral.y*7.2-vMineral.z*3.7);
-      diffuseColor.rgb*=.95+grain*.08-fissure*.10+mottling*.08;
+      diffuseColor.rgb*=.91+grain*.045-fissure*.14+mottling*.12;
+      float cover=smoothstep(.08,.65,vStoneTop)*smoothstep(-.65,.40,sin(vMineral.x*2.1+sin(vMineral.z*1.7))*sin(vMineral.z*2.4));
+      vec3 mossColor=texture2D(uMoss,vMineral.xz*1.25).rgb;
+      mossColor=mix(vec3(.12,.18,.075),mossColor*vec3(.64,.78,.40),.62);
+      diffuseColor.rgb=mix(diffuseColor.rgb,mossColor,cover*.77);
     `);
   };
 }
@@ -50,28 +58,51 @@ let seed=9281;function rnd(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;retur
 const smoothstep=(s,a,b)=>T.MathUtils.smoothstep(s,a,b);
 // Colour keyframes along the trail: warm sunlit forest, cool creek, deep squirrel forest, ochre ridge, sunset summit.
 // Eased (smoothstep) blend between keyframes so light/fog never kink at a key while walking.
-function keyed(keys,s){let a=keys.at(-1),b=a,t=0;for(let i=1;i<keys.length;i++)if(s<=keys[i][0]){a=keys[i-1];b=keys[i];t=clamp((s-a[0])/(b[0]-a[0]),0,1);t=t*t*(3-2*t);break;}return a.map((v,j)=>typeof v==='number'?v+(b[j]-v)*t:new T.Color(v).lerp(new T.Color(b[j]),t));}
-const floorKeys=[[0,'#6d825e'],[115,'#889b5c'],[210,'#6a8668'],[300,'#728c5c'],[380,'#677f5e'],[450,'#7a9058'],[475,'#5b7750'],[580,'#9b9a62'],[712,'#a99f6c'],[722,'#a99f6c'],[732,'#7f905e'],[760,'#6f8456']];
+const colorKeys=new WeakMap();
+function keyed(keys,s,out=[]){let a=keys.at(-1),b=a,t=0;for(let i=1;i<keys.length;i++)if(s<=keys[i][0]){a=keys[i-1];b=keys[i];t=clamp((s-a[0])/(b[0]-a[0]),0,1);t=t*t*(3-2*t);break;}
+  for(const row of [a,b])if(!colorKeys.has(row))colorKeys.set(row,row.map(v=>typeof v==='number'?v:new T.Color(v)));
+  const ca=colorKeys.get(a),cb=colorKeys.get(b);
+  for(let j=0;j<a.length;j++)out[j]=typeof a[j]==='number'?a[j]+(b[j]-a[j])*t:(out[j]||new T.Color()).copy(ca[j]).lerp(cb[j],t);
+  return out;
+}
+const floorKeys=[[0,'#6d825e'],[115,'#889b5c'],[210,'#6a8668'],[300,'#728c5c'],[380,'#677f5e'],[450,'#7a9058'],[475,'#5b7750'],[580,'#87956f'],[712,'#a99f6c'],[722,'#a99f6c'],[732,'#7f905e'],[760,'#6f8456']];
 // A brief lighter keyframe at 450 (glade in the squirrel forest) breaks the long shelter→squirrel climb before the deep forest at 475.
 // [s, fog colour, fog density, sun colour, sun intensity, hemisphere sky, hemisphere ground, hemisphere intensity, fill colour, fill intensity, shade tint]
 // Sun peak lowered (5.1→4.6) and hemisphere bounce raised with a green/ochre floor colour so shaded undergrowth and skin keep
 // detail without raising exposure; fog is tinted per section (warm gold-green forest, soft teal creek, airy blue-grey ridge)
 // instead of near-white. Shade tint drives the contact shadows so grounding matches each section's ambient.
 export const moods=[
-  [0,'#cfd8c4',.0082,'#ffe6bc',4.3,'#d6e2d8','#7f8160',1.45,'#e3e6d6',1.0,'#3b4636'],
-  [115,'#d6dbb7',.0076,'#fff0c4',4.6,'#e2e6c9','#8c895a',1.5,'#efe6c9',.95,'#474a30'],
-  [210,'#c4d6d0',.0090,'#f3ecd8',4.0,'#cfe0dc','#6c7f6c',1.5,'#d6e5e4',1.05,'#2e4341'],
-  [300,'#cfd9c0',.0082,'#fdebc2',4.4,'#dbe3cf','#858559',1.45,'#e6e6d3',1.0,'#404733'],
-  [380,'#c9d6cb',.0088,'#f6ecd2',4.1,'#d5e0d8','#73806a',1.5,'#dbe6e0',1.05,'#33443f'],
-  [450,'#d6dcb8',.0078,'#fff0c4',4.6,'#e0e5c8','#8c895a',1.5,'#ebe6cf',.95,'#454a2e'],
-  [475,'#b9c8b4',.0100,'#eee6c4',3.9,'#c9d6c8','#66755a',1.55,'#d2dccf',1.05,'#2f3f33'],
-  [580,'#d7e0df',.0032,'#ffe3aa',4.5,'#d9e4ea','#9a9270',1.35,'#dde6ea',1.0,'#4a4a3b'],
-  [712,'#e6d9c4',.0036,'#ffd19a',4.0,'#e2d9cf','#9b8e6c',1.3,'#ead9c4',.95,'#4e4538']];
+  [0,'#cfd8c4',.0082,'#ffe6bc',3.8,'#d6e2d8','#7f8160',1.45,'#e3e6d6',1.0,'#3b4636'],
+  [115,'#bccfc5',.0118,'#ffefcf',4.0,'#e2e6c9','#8c895a',1.54,'#efe6c9',.98,'#474a30'],
+  [210,'#b3cbc4',.0135,'#ffedca',4.05,'#d9e5d7','#667b62',1.40,'#d6e5e4',.88,'#2e4341'],
+  [300,'#cfd9c0',.0082,'#fdebc2',3.9,'#dbe3cf','#858559',1.45,'#e6e6d3',1.0,'#404733'],
+  [380,'#c9d6cb',.0088,'#f6ecd2',3.6,'#d5e0d8','#73806a',1.5,'#dbe6e0',1.05,'#33443f'],
+  [450,'#d6dcb8',.0078,'#fff1d5',4.0,'#e0e5c8','#8c895a',1.5,'#ebe6cf',.95,'#454a2e'],
+  [475,'#adc5bf',.0092,'#f3eccf',3.5,'#c9d6c8','#66755a',1.55,'#d2dccf',1.05,'#2f3f33'],
+  [580,'#d7e0df',.0038,'#ffe9c5',3.9,'#d9e4ea','#9a9270',1.35,'#dde6ea',1.0,'#4a4a3b'],
+  [712,'#e6d9c4',.0036,'#ffd19a',3.6,'#e2d9cf','#9b8e6c',1.3,'#ead9c4',.95,'#4e4538']];
 export const moodAt=s=>keyed(moods,s);
-function barkTexture(){const c=document.createElement('canvas');c.width=128;c.height=256;const x=c.getContext('2d');x.fillStyle='#c8bca2';x.fillRect(0,0,128,256);for(let i=0;i<90;i++){x.strokeStyle=i%2?'#6a5d4940':'#eee3bd40';x.lineWidth=1+rnd()*3;let px=rnd()*128;x.beginPath();x.moveTo(px,0);for(let y=0;y<=256;y+=16){px+=(rnd()-.5)*6;x.lineTo(px,y);}x.stroke();}for(let i=0;i<180;i++){const y=i*1.5; x.strokeStyle=i%3?'#5e402155':'#fff0b34a';x.lineWidth=.5; x.beginPath();x.moveTo(0,y);x.bezierCurveTo(30,y+Math.sin(i)*3,90,y-2,128,y+Math.sin(i*.7)*2);x.stroke();}for(let k=0;k<3;k++)for(let r=2;r<14;r+=2){x.strokeStyle='#5e402165';x.beginPath();x.ellipse(27+k*39,45+k*72,r*1.8,r*.35,.1,0,Math.PI*2);x.stroke();}const t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(1,1);t.colorSpace=T.SRGBColorSpace;return t;}
+function barkTexture(){const c=document.createElement('canvas');c.width=128;c.height=256;const x=c.getContext('2d');x.fillStyle='#c8bca2';x.fillRect(0,0,128,256);for(let i=0;i<90;i++){x.strokeStyle=i%2?'#6a5d4940':'#eee3bd40';x.lineWidth=1+rnd()*3;let px=rnd()*128;x.beginPath();x.moveTo(px,0);for(let y=0;y<=256;y+=16){px+=(rnd()-.5)*6;x.lineTo(px,y);}x.stroke();}for(let i=0;i<180;i++){const y=i*1.5; x.strokeStyle=i%3?'#5e40212a':'#fff0b328';x.lineWidth=.5; x.beginPath();x.moveTo(0,y);x.bezierCurveTo(30,y+Math.sin(i)*3,90,y-2,128,y+Math.sin(i*.7)*2);x.stroke();}for(let k=0;k<3;k++)for(let r=2;r<14;r+=2){x.strokeStyle='#5e402165';x.beginPath();x.ellipse(27+k*39,45+k*72,r*1.8,r*.35,.1,0,Math.PI*2);x.stroke();}const t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(1,1);t.colorSpace=T.SRGBColorSpace;return t;}
 export async function createWorld(canvas){
   seed=9281;
-  const surfaces=await forestMaterials();
+  const [surfaces,fernProp,gardenPlants]=await Promise.all([forestMaterials(),loadFern(),loadLandscapePlants()]);
+  // Optional surface upgrade: keep the original atlas if a download fails.
+  // Optional material sets fall back together to the existing atlas.
+  async function materialSet(key,name){
+    const loaded=await Promise.allSettled(['','-normal','-rough'].map(suffix=>new T.TextureLoader().loadAsync(new URL('./assets/woodland-'+name+suffix+'.webp',import.meta.url).href)));
+    if(loaded.some(t=>t.status==='rejected')){for(const t of loaded)if(t.status==='fulfilled')t.value.dispose();return;}
+    const [map,normal,rough]=loaded.map(t=>t.value);
+    for(const t of [map,normal,rough]){t.wrapS=t.wrapT=T.RepeatWrapping;t.anisotropy=8;}
+    map.colorSpace=T.SRGBColorSpace;surfaces[key].dispose();surfaces[key]=map;surfaces[key+'Normal']=normal;surfaces[key+'Rough']=rough;
+  }
+  await Promise.all([materialSet('bark','bark'),materialSet('soil','soil'),materialSet('floor','moss')]);
+  function softenDistantRelief(material){
+    const previous=material.onBeforeCompile,key=material.customProgramCacheKey();
+    material.customProgramCacheKey=()=>key+'-distant-relief';
+    material.onBeforeCompile=shader=>{previous(shader);
+      shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>',T.ShaderChunk.normal_fragment_maps.replace('mapN.xy *= normalScale;','mapN.xy *= normalScale * mix(1.,.18,smoothstep(12.,65.,length(vViewPosition)));'));
+    };
+  }
   const waterTime={value:0};
   function caustics(material){
     const previous=material.onBeforeCompile,key=material.customProgramCacheKey();
@@ -86,23 +117,25 @@ export async function createWorld(canvas){
         vBed=(modelMatrix*bedWorld).xyz;vWet=max(0.,waterLevel-vBed.y);`);
       shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nuniform float uWaterTime; varying vec3 vBed; varying float vWet;').replace('#include <color_fragment>',`#include <color_fragment>
         if(vWet>.02){
-          float bend=sin(vBed.x*7.+uWaterTime*.9+sin(vBed.z*4.))+sin(vBed.z*8.-uWaterTime*.7+cos(vBed.x*3.));
-          float light=pow(1.-abs(sin(bend*1.5)),10.)*(1.-smoothstep(.5,1.5,vWet));
-          diffuseColor.rgb+=vec3(.10,.15,.11)*light;
+          diffuseColor.rgb*=mix(1.,.73,smoothstep(.02,.28,vWet));
+          float bend=sin(vBed.x*11.7+uWaterTime*.9+sin(vBed.z*6.1))+sin(vBed.z*13.3-uWaterTime*.7+vBed.x*2.3);
+          float light=smoothstep(.80,.98,1.-abs(sin(bend*1.5)))*(1.-smoothstep(.5,1.5,vWet))*(.25+.75*smoothstep(-.2,.65,sin(vBed.z*2.1-vBed.x*1.7)));
+          diffuseColor.rgb+=vec3(.035,.052,.04)*light;
         }`);
     };
   }
-  const foliage=await new T.TextureLoader().loadAsync(new URL('./assets/forest-foliage-v2.png',import.meta.url).href);foliage.colorSpace=T.SRGBColorSpace;foliage.anisotropy=4;
-  const renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.65));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.10;
+  const foliage=await new T.TextureLoader().loadAsync(new URL('./assets/forest-foliage-v2.png',import.meta.url).href);foliage.colorSpace=T.SRGBColorSpace;foliage.anisotropy=8;
+  const renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.65));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.04;
   const scene=new T.Scene();scene.userData.contactTexture=contactTexture();
-  const contactMat=new T.MeshBasicMaterial({map:scene.userData.contactTexture,color:'#29484b',transparent:true,opacity:.28,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1});
+  const contactMat=new T.MeshBasicMaterial({map:scene.userData.contactTexture,color:'#253e30',transparent:true,opacity:.36,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1});
   scene.userData.actorContact=contactMat.clone();scene.userData.actorContact.opacity=.32;
   const panorama=await new T.TextureLoader().loadAsync(new URL('./assets/summit-panorama-v4.png',import.meta.url).href);panorama.colorSpace=T.SRGBColorSpace;scene.background=panorama;scene.fog=new T.FogExp2('#d5e0d7',.009);
   const env=panorama.clone();env.mapping=T.EquirectangularReflectionMapping;env.needsUpdate=true;const pmrem=new T.PMREMGenerator(renderer);scene.environment=pmrem.fromEquirectangular(env).texture;env.dispose();pmrem.dispose();
   const camera=new T.PerspectiveCamera(52,1,.1,520);
   const fill=new T.DirectionalLight('#e3e6d6',1.0);scene.add(fill,fill.target);
   const hemi=new T.HemisphereLight('#d6e2d8','#7f8160',1.45);scene.add(hemi);scene.add(new T.AmbientLight('#fff0d6',.15));
-  const sun=new T.DirectionalLight('#ffe0a1',4.3);sun.position.set(-20,28,8);sun.castShadow=true;sun.shadow.mapSize.set(innerWidth<700?1024:2048,innerWidth<700?1024:2048);Object.assign(sun.shadow.camera,{left:-20,right:20,top:20,bottom:-20,near:1,far:90});sun.shadow.radius=3;sun.shadow.bias=-.00025;sun.shadow.normalBias=.025;scene.add(sun,sun.target);
+  const sun=new T.DirectionalLight('#ffe0a1',4.3);sun.position.set(-20,28,8);sun.castShadow=true;sun.shadow.mapSize.set(innerWidth<700?1024:2048,innerWidth<700?1024:2048);Object.assign(sun.shadow.camera,{left:-20,right:20,top:20,bottom:-20,near:1,far:90});sun.shadow.radius=2.0;sun.shadow.bias=-.00025;sun.shadow.normalBias=.025;scene.add(sun,sun.target);
+  const atmosphere=createAtmosphere(scene);
   const groups=new Map(),dummy=new T.Object3D(),windTime={value:0},gust={value:1};
   function breeze(material,amount=1){material.onBeforeCompile=shader=>{shader.uniforms.uWind=windTime;shader.uniforms.uGust=gust;shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nuniform float uWind;uniform float uGust;').replace('#include <begin_vertex>',`#include <begin_vertex>
     vec3 treeBase=(instanceMatrix*vec4(0.,0.,0.,1.)).xyz;
@@ -112,6 +145,7 @@ export async function createWorld(canvas){
   const smallLeaf=new T.SphereGeometry(1,6,4);
   const trees=[0,1,2].map(woodlandTree);
   const geos={tree0:trees[0].geometry,tree1:trees[1].geometry,tree2:trees[2].geometry,leaf:foliageGeometry(),rock:mossRockGeometry(),rock1:mossRockGeometry(1),rock2:mossRockGeometry(2),pebble:new T.IcosahedronGeometry(1,1),grass:grassGeometry(),fern:fernGeometry(),shrub:broadleafGeometry(),shrub1:broadleafGeometry(1),petal:smallLeaf,litter:smallLeaf,stem:cylinder};
+  if(fernProp)geos.fernDetail=fernProp.geometry;Object.assign(geos,gardenPlants);
   const CHUNK=40;
   function instance(kind,color,x,y,z,sx,sy,sz,ry=0,rz=0){if(kind==='rock'){const variant=Math.abs(Math.floor(x*7+z*3))%3;if(variant)kind='rock'+variant;}const key=kind+':'+Math.floor(-z/CHUNK);if(!groups.has(key))groups.set(key,{kind,items:[]});groups.get(key).items.push({color,x,y,z,sx,sy,sz,ry,rz});}
   const nearRiver=(x,s,w)=>s>RIVER.start-20&&s<RIVER.end+6&&Math.abs(x-riverX(s))<w;
@@ -126,23 +160,50 @@ export async function createWorld(canvas){
   const landLength=LENGTH+90,land=new T.PlaneGeometry(140,landLength,112,Math.round(landLength/1.5));land.rotateX(-Math.PI/2);land.translate(0,0,-(landLength/2-35));const ps=land.attributes.position,colors=[];
   // Ridge/summit mountain side and the brow beyond the rail: steeper ground turns to scree/rock colour, outcrops read as bare
   // stone and dry-grass patches wander at ~5 m scale, so the slope is no longer one flat green tint from the trail to the crest.
-  const loam=new T.Color('#93836a'),gladeTint=new T.Color('#a7b468'),scree=new T.Color('#a6a28a'),stone=new T.Color('#9d9b90'),dryGrass=new T.Color('#b6b078');
+  const loam=new T.Color('#756e52'),gladeTint=new T.Color('#a7b468'),scree=new T.Color('#a6a28a'),stone=new T.Color('#9d9b90'),dryGrass=new T.Color('#b6b078');
   const browGreen=new T.Color('#86985f');
   for(let i=0;i<ps.count;i++){const x=ps.getX(i);let s=-ps.getZ(i);
     // G08: behind the summit rail the mesh rows (1.5 m apart) are no longer straight lines in s: each vertex slides ±.75 m
     // along the trail with x (ramped in from LENGTH+.5, amplitude < row pitch so rows never fold). The brow silhouette seen from
     // the deck is therefore an uneven line instead of one vertex row. Nothing here is walkable; the deck rows (s <= LENGTH) are untouched.
     if(s>LENGTH+.5){s+=clamp((s-LENGTH-.5)/2.5,0,1)*(.45*Math.sin(x*.9+1)+.3*Math.sin(x*2.3+.5));ps.setZ(i,-s);}
-    ps.setY(i,terrain(x,s));const d=Math.abs(x-pathX(s)),side=x-pathX(s),beyond=s>LENGTH+.3;col.copy(keyed(floorKeys,s)[1]);if(nearRiver(x,s,2.1))col.set('#829691');else if(d<1.95&&!beyond)col.set('#b3a27b');if(d>2.8||beyond)col.lerp(loam,(.5+.5*Math.sin(x*.43+s*.61)*Math.sin(s*.17-x*.53))*(beyond?.09:.40));
+    ps.setY(i,terrain(x,s));const d=Math.abs(x-pathX(s)),side=x-pathX(s),beyond=s>LENGTH+.3;col.copy(keyed(floorKeys,s)[1]);if(nearRiver(x,s,2.1))col.set('#829691');else if(d<1.95&&!beyond)col.set('#b3a27b');if(d>2.8||beyond)col.lerp(loam,(.5+.5*Math.sin(x*.43+s*.61)*Math.sin(s*.17-x*.53))*(beyond?.09:.52));
     if(s>440&&(side>4||beyond)){const slope=Math.hypot(terrain(x+.7,s)-terrain(x-.7,s),terrain(x,s+.7)-terrain(x,s-.7))/1.4,knob=side>4&&!beyond?outcrop(d,s):0;
       // Beyond the rail: grassy hillside colour grows with the fall (continuous with the valley trees) and scree is kept faint, so the
       // brow is not a brown/grey plate under the railing.
       col.lerp(dryGrass,(.5+.5*Math.sin(x*1.3+s*.9)*Math.sin(s*2.1-x*.7))*.35).lerp(scree,smoothstep(slope,.6,1.3)*(beyond?.18:.5)).lerp(stone,clamp(knob/.9,0,.85));
       if(beyond)col.lerp(browGreen,.34+.40*clamp((elevation(LENGTH)-terrain(x,s))/6,0,1));} // G10: less bare-earth right behind the rail
-    if(inGlade(x,s))col.lerp(gladeTint,.55);col.multiplyScalar(.84+.15*Math.sin(x*.4+s*.31)+rnd()*.09);colors.push(col.r,col.g,col.b);}land.setAttribute('color',new T.Float32BufferAttribute(colors,3));land.computeVertexNormals();const turf=surfaces.floor;turf.repeat.set(40,240);const ground=new T.Mesh(land,softenMap(mat('#ffffff',{vertexColors:true,map:turf,bumpMap:turf,bumpScale:.045}),.75));ground.receiveShadow=true;scene.add(ground);
-  land.setAttribute('waterLevel',new T.Float32BufferAttribute(Array.from({length:ps.count},(_,i)=>{const s=-ps.getZ(i);return nearRiver(ps.getX(i),s,2.5)&&s<RIVER.end-8?elevation(s)-.74:-999;}),1));caustics(ground.material);
+    if(inGlade(x,s))col.lerp(gladeTint,.55);col.multiplyScalar(.84+.15*Math.sin(x*.4+s*.31)+rnd()*.09);colors.push(col.r,col.g,col.b);}land.setAttribute('color',new T.Float32BufferAttribute(colors,3));land.computeVertexNormals();const turf=surfaces.floor;turf.repeat.set(48,286);for(const t of [surfaces.floorNormal,surfaces.floorRough])if(t)t.repeat.copy(turf.repeat);const ground=new T.Mesh(land,softenMap(mat('#ffffff',{vertexColors:true,map:turf,normalMap:surfaces.floorNormal,normalScale:new T.Vector2(.5,.5),roughnessMap:surfaces.floorRough}),.75));ground.receiveShadow=true;scene.add(ground);
+  const floorShader=ground.material.onBeforeCompile;
+  ground.material.customProgramCacheKey=()=> 'woodland-floor-patches-v1';
+  ground.material.onBeforeCompile=shader=>{floorShader(shader);
+    shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vForestFloor;').replace('#include <begin_vertex>','#include <begin_vertex>\nvForestFloor=position;');
+    shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vForestFloor;').replace('#include <color_fragment>',`#include <color_fragment>
+      float floorPatch=sin(vForestFloor.x*.73+sin(vForestFloor.z*.34))*sin(vForestFloor.z*.57-vForestFloor.x*.21);
+      float loam=smoothstep(.12,.72,floorPatch);
+      diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(1.20,.85,.61),loam*.65);
+      vec2 litterCell=floor(vForestFloor.xz*5.);
+      float litterSeed=fract(sin(dot(litterCell,vec2(127.1,311.7)))*43758.5453);
+      vec2 litterUV=fract(vForestFloor.xz*5.)-.5;
+      float litter=(1.-smoothstep(.10,.21,length(litterUV*vec2(1.,2.4))))*step(.86,litterSeed)*loam;
+      diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.28,.20,.095),litter*.55);
+    `);
+  };
+  land.setAttribute('waterLevel',new T.Float32BufferAttribute(Array.from({length:ps.count},(_,i)=>{const s=-ps.getZ(i);return nearRiver(ps.getX(i),s,2.5)&&s<RIVER.end-8?elevation(s)-.74:-999;}),1));caustics(ground.material);softenDistantRelief(ground.material);
   function ribbon(center,width,yfun,start,end,steps,material){const v=[],uv=[],ind=[];for(let i=0;i<=steps;i++){const s=start+(end-start)*i/steps;for(const side of [-1,1]){const x=center(s)+side*(width+.24*Math.sin(s*.41)+.13*Math.cos(s*.91));v.push(x,yfun(s,x),-s);uv.push((side+1)/2,i/steps);}}for(let i=0;i<steps;i++){const k=i*2;ind.push(k,k+2,k+1,k+1,k+2,k+3);}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(v,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));g.setIndex(ind);g.computeVertexNormals();const m=new T.Mesh(g,material);m.receiveShadow=true;scene.add(m);return m;}
-  const soil=surfaces.soil;soil.repeat.set(.85,150);const pathMat=softenMap(mat('#ffffff',{map:soil,bumpMap:soil,bumpScale:.045,vertexColors:true,side:T.DoubleSide}),.88);
+  const soil=surfaces.soil;soil.repeat.set(1.25,206);for(const t of [surfaces.soilNormal,surfaces.soilRough])if(t)t.repeat.copy(soil.repeat);const pathMat=softenMap(mat('#ffffff',{map:soil,normalMap:surfaces.soilNormal,normalScale:new T.Vector2(.40,.40),roughnessMap:surfaces.soilRough,vertexColors:true,side:T.DoubleSide}),.92);
+  // Broad damp patches and foot-worn centre interrupt the uniform soil ribbon.
+  const soilShader=pathMat.onBeforeCompile;
+  pathMat.customProgramCacheKey=()=> 'trail-damp-patches-v1';
+  pathMat.onBeforeCompile=shader=>{soilShader(shader);
+    shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vTrailSoil;').replace('#include <begin_vertex>','#include <begin_vertex>\nvTrailSoil=position;');
+    shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vTrailSoil;').replace('#include <color_fragment>',`#include <color_fragment>
+      float drift=sin(vTrailSoil.x*2.3+sin(vTrailSoil.z*.65))*sin(vTrailSoil.z*1.1+vTrailSoil.x*.4);
+      float damp=smoothstep(.15,.75,drift);
+      float grit=sin(vTrailSoil.x*83.+sin(vTrailSoil.z*27.))*sin(vTrailSoil.z*91.);
+      diffuseColor.rgb*=1.-damp*.12+grit*.012;
+    `);};
+  softenDistantRelief(pathMat);
   // Trail surface widens into two lanes at the fork and is cut away over the bridge span and the fork island.
   {const pathV=[],pathUV=[],pathC=[],pathI=[],COLS=14,ROWS=Math.round((LENGTH+6)/.35);const vergeA=new T.Color('#718264'),vergeB=new T.Color('#8a8a5e'),dampA=new T.Color('#d8c49c'),dampB=new T.Color('#cfc09a');
     for(let i=0;i<=ROWS;i++){const s=-5+i*(LENGTH+6)/ROWS,w=1.88+(halfWidth(s)-2.35)*1.3+.10*Math.sin(s*2.2)+.06*Math.sin(s*5.8),gap=forkGap(s);
@@ -151,7 +212,7 @@ export async function createWorld(canvas){
       // a faint damp/dusty drift (≤.22) at 4~9 m scale. Geometry width/collision are unchanged (visual mesh only).
       for(let j=0;j<=COLS;j++){const u=(j-COLS/2)/(COLS/2),fray=smoothstep(Math.abs(u),.6,1)*(.12*Math.sin(s*1.7+u*3.1)+.06*Math.sin(s*4.3-u*2)),x=pathX(s)+u*(w+fray),edge=smoothstep(Math.abs(u),.65,1);pathV.push(x,T.MathUtils.lerp(elevation(s)+.065,terrain(x,s)+.018,edge),-s);pathUV.push(j/COLS,i/ROWS);
         const verge=.13*Math.sin(s*1.3+u)*Math.cos(s*.47+u*2.3)+.07*Math.sin(s*3.7),drift=.5+.5*Math.sin(s*.23+u*.8)*Math.cos(s*.11+1.3);
-        col.set(s>520?'#ebdcb6':'#f3e0bd').lerp(s>520?dampB:dampA,drift*.22*(1-smoothstep(Math.abs(u),.5,.9))).lerp(s>520?vergeB:vergeA,smoothstep(Math.abs(u)+verge,.64,.98));col.multiplyScalar(.93+.07*Math.sin(s*.8+j*1.7));pathC.push(col.r,col.g,col.b);
+        col.set(s>520?'#ded5b7':'#e7d9bc').lerp(s>520?dampB:dampA,drift*.22*(1-smoothstep(Math.abs(u),.5,.9))).lerp(s>520?vergeB:vergeA,smoothstep(Math.abs(u)+verge,.64,.98));col.multiplyScalar(.93+.07*Math.sin(s*.8+j*1.7));pathC.push(col.r,col.g,col.b);
         if(i<ROWS&&j<COLS&&!(s>BRIDGE.from+.8&&s<BRIDGE.to-.8)&&!(gap>0&&Math.abs((j+.5-COLS/2)/(COLS/2)*w)<gap-.1)){const k=i*(COLS+1)+j;pathI.push(k,k+COLS+1,k+1,k+1,k+COLS+1,k+COLS+2);}}}
     const pathGeo=new T.BufferGeometry();pathGeo.setAttribute('position',new T.Float32BufferAttribute(pathV,3));pathGeo.setAttribute('uv',new T.Float32BufferAttribute(pathUV,2));pathGeo.setAttribute('color',new T.Float32BufferAttribute(pathC,3));pathGeo.setIndex(pathI);pathGeo.computeVertexNormals();const pathMesh=new T.Mesh(pathGeo,pathMat);pathMesh.receiveShadow=true;scene.add(pathMesh);}
   // Fork island: a soil-and-grass mound with flowers on the flower-lane side and ferns on the fern-lane side.
@@ -162,20 +223,20 @@ export async function createWorld(canvas){
   // islandHeight() are untouched, so collision, lane width and the camera clamp are exactly as before.
   {const iv=[],ic=[],iuv=[],ii=[];let rows=0;const COLS=10;const wander=(x,s)=>Math.sin(x*2.3+s*1.1)*Math.cos(s*.7-x*1.7)*.5+Math.sin(x*5.1+s*2.9)*.5;
     const cluster=(x,s)=>Math.sin(s*.31+x*.9)*Math.cos(s*.17-x*.5)+.6*Math.sin(s*.73+x*2.1);
-    const soil=new T.Color('#8a7352'),soilLight=new T.Color('#a08a62'),gravel=new T.Color('#aea893'),lane=new T.Color('#b3a27b'),moss=new T.Color('#62804a'),litterTint=new T.Color('#9c7d50'),grassL=new T.Color('#7f9450'),grassR=new T.Color('#5d7d47');
+    const soil=new T.Color('#76805b'),soilLight=new T.Color('#9a986e'),gravel=new T.Color('#aea893'),lane=new T.Color('#b3a27b'),moss=new T.Color('#62804a'),litterTint=new T.Color('#9c7d50'),grassL=new T.Color('#7f9450'),grassR=new T.Color('#5d7d47');
     for(let s=FORK.from+.5;s<=FORK.to-.49;s+=.5,rows++){const gap=forkGap(s),bulge=Math.max(0,Math.sin(s*.9)*Math.sin(s*.37+1))*.3*clamp(gap/FORK.gap,0,1);
       for(let j=0;j<=COLS;j++){const u=(j-COLS/2)/(COLS/2),hw=gap+.10+bulge*(u<0?.5+.5*Math.sin(s*.5):.5-.5*Math.sin(s*.5)),x=pathX(s)+u*hw,c=cluster(x,s);
-        // Saddles: the crest drops up to 18 cm where the cluster noise is high, only toward the middle so lane edges keep their height.
-        const dip=.18*smoothstep(c,.45,1.3)*(1-Math.abs(u))+.04*Math.sin(s*2.3+x*1.7)*(1-Math.abs(u)),y=Math.max(terrain(x,s)+.02-dip,elevation(s)+.08);iv.push(x,y,-s);iuv.push((x+70)/140,s/810);
+        // Keep the decorative island above the shared terrain so the two meshes cannot cut through one another.
+        const y=Math.max(terrain(x,s)+.045,elevation(s)+.08);iv.push(x,y,-s);iuv.push((x+70)/140,s/810);
         const n=wander(x,s),grassPatch=smoothstep(n+Math.abs(u)*.3,-.1,.45)*smoothstep(-c,-.4,.6),edgeMix=smoothstep(Math.abs(u)+n*.14,.72,1.02);
-        col.copy(soil).lerp(soilLight,.5+.5*Math.sin(x*3.7+s*1.3)).lerp(u<0?grassL:grassR,grassPatch*.85).lerp(moss,smoothstep(c,.5,1.4)*.7).lerp(litterTint,smoothstep(-c,.4,1.2)*.55).lerp(gravel,Math.max(0,Math.sin(x*7.3+s*4.1)*Math.cos(s*1.9))*.3).lerp(lane,edgeMix*.6);
+        col.copy(soil).lerp(soilLight,.5+.5*Math.sin(x*3.7+s*1.3)).lerp(u<0?grassL:grassR,grassPatch*.95).lerp(moss,smoothstep(c,.5,1.4)*.7).lerp(litterTint,smoothstep(-c,.4,1.2)*.55).lerp(gravel,Math.max(0,Math.sin(x*7.3+s*4.1)*Math.cos(s*1.9))*.3).lerp(lane,edgeMix*.6);
         col.multiplyScalar(.86+.14*Math.sin(s*2.7+x*3.1)*Math.cos(s*.9));ic.push(col.r,col.g,col.b);}}
     for(let r=0;r<rows-1;r++)for(let j=0;j<COLS;j++){const k=r*(COLS+1)+j;ii.push(k,k+COLS+1,k+1,k+1,k+COLS+1,k+COLS+2);}
-    const ig=new T.BufferGeometry();ig.setAttribute('position',new T.Float32BufferAttribute(iv,3));ig.setAttribute('color',new T.Float32BufferAttribute(ic,3));ig.setAttribute('uv',new T.Float32BufferAttribute(iuv,2));ig.setIndex(ii);ig.computeVertexNormals();const island=new T.Mesh(ig,softenMap(mat('#ffffff',{vertexColors:true,side:T.DoubleSide,map:turf,bumpMap:turf,bumpScale:.045}),.6));island.receiveShadow=true;scene.add(island);
+    const ig=new T.BufferGeometry();ig.setAttribute('position',new T.Float32BufferAttribute(iv,3));ig.setAttribute('color',new T.Float32BufferAttribute(ic,3));ig.setAttribute('uv',new T.Float32BufferAttribute(iuv,2));ig.setIndex(ii);ig.computeVertexNormals();const island=new T.Mesh(ig,softenMap(mat('#ffffff',{vertexColors:true,side:T.DoubleSide,map:turf,bumpMap:turf,bumpScale:.025}),.35));island.receiveShadow=true;scene.add(island);
     const onIsland=(u,s)=>{const g=forkGap(s);if(g<1)return null;const x=pathX(s)+u*g;return {x,y:Math.max(terrain(x,s),elevation(s)+.08)};};
     // Loose layer in drifts: ~18 litter/gravel pockets (6~12 pieces each) instead of an even sprinkle, so the mound shows
     // bare soil between pockets. The saddle dip is visual only, so sit the pieces a little lower where the crest was lowered.
-    const visY=(p,s)=>p.y-.18*smoothstep(cluster(p.x,s),.45,1.3)*(1-Math.abs(p.x-pathX(s))/Math.max(.3,forkGap(s)));
+    const visY=p=>p.y+.025;
     for(let k=0;k<18;k++){const cs=FORK.from+3+rnd()*(FORK.to-FORK.from-6),cu=(rnd()-.5)*1.5,n=6+Math.floor(rnd()*7),leafy=rnd()<.5;
       for(let i=0;i<n;i++){const s=cs+(rnd()-.5)*2.2,u=clamp(cu+(rnd()-.5)*.8,-.96,.96),p=onIsland(u,s);if(!p)continue;const y=Math.max(visY(p,s),elevation(s)+.08);
         if(leafy?i%4===0:i%3)instance('pebble',i%2?'#a89c84':'#c2b69d',p.x,y+.02,-s,.04+rnd()*.07,.02+rnd()*.03,.05+rnd()*.09,rnd()*6);
@@ -193,7 +254,14 @@ export async function createWorld(canvas){
         else{const r=.5+rnd()*.5;instance('fern',i%3?'#7fa25a':'#93b068',p.x,p.y,-s,r,r,r,rnd()*6);if(i===0)instance('rock','#aab3a0',p.x+.2,p.y-.05,-s+.2,.3,.2,.3,c);}}}
     // Shrub + stone pairs at irregular spacings and offsets (was every 9 m dead centre), sizes varied so no two read alike.
     for(const [s,off,sc] of [[270,-.35,.8],[279,.4,1.0],[291,-.5,.7],[298,.2,1.05],[309,-.3,.9],[317,.45,.75]]){const x=pathX(s)+off,y=Math.max(terrain(x,s),elevation(s)+.08);instance('shrub','#c9d9a8',x,y,-s,.9*sc,.8*sc,.9*sc,s);instance('rock','#c3c8b4',x-off*1.6,y-.05,-s+.4,.55*sc,.35*sc,.5*sc,s);}}
-  const flow=surfaceTexture('water');flow.repeat.set(1,60);const waterMat=new T.MeshPhysicalMaterial({color:'#72b2b1',bumpMap:flow,bumpScale:.009,roughness:.22,metalness:0,envMapIntensity:.38,clearcoat:.35,clearcoatRoughness:.18,transparent:true,opacity:.88,depthWrite:false,side:T.DoubleSide});
+  const flow=surfaceTexture('water');flow.repeat.set(1,60);const waterMat=new T.MeshPhysicalMaterial({color:'#72aca3',bumpMap:flow,bumpScale:.003,roughness:.18,metalness:0,envMapIntensity:1.10,clearcoat:.58,clearcoatRoughness:.16,transparent:true,opacity:.88,depthWrite:false,side:T.DoubleSide});
+  // shortcut: baked creek surroundings omit moving people and parallax; use live reflection only with a measured GPU budget.
+  waterMat.name='creek-reflection-water';
+  try{
+    const cube=await new T.CubeTextureLoader().loadAsync(['px','nx','py','ny','pz','nz'].map(face=>new URL('./assets/creek-reflection-'+face+'.webp',import.meta.url).href));
+    cube.colorSpace=T.SRGBColorSpace;
+    const filter=new T.PMREMGenerator(renderer);waterMat.envMap=filter.fromCubemap(cube).texture;cube.dispose();filter.dispose();
+  }catch{/* The existing panorama reflection remains available when the optional capture is missing. */}
   const water=ribbon(riverX,2.2,s=>elevation(s)-.74,RIVER.start-5,RIVER.end-6,Math.round((RIVER.end-RIVER.start)*2),waterMat);
   waterMat.onBeforeCompile=shader=>{
     shader.uniforms.uFlow=waterTime;
@@ -212,17 +280,21 @@ export async function createWorld(canvas){
       float ckAlong=dot(ckP,ckDir),ckAcross=dot(ckP,vec2(ckDir.y,-ckDir.x));
       float ckBreak=smoothstep(.05,.75,sin(ckU*6.3+ckM*2.1)*sin(ckM*1.3-ckU*2.7)+.3*sin(ckM*4.9+ckU*1.4));
       float ckW=sin(ckAlong*7.5+sin(ckAcross*3.1+ckM*.4)*1.4-uFlow*(1.2+ckSpeed*1.6))*.6+sin(ckAlong*12.+ckAcross*4.5+sin(ckM*.7)*1.5-uFlow*(.9+ckSpeed*1.2))*.4;
-      float ckGlint=pow(max(0.,ckW),9.)*ckBreak*ckStrength;
-      float ckDepth=clamp((1.4*exp(-pow(abs(ckU),4.))-.74)/.66,0.,1.)*(.74+.26*(1.-ckRun));
+      float glintAA=max(.025,fwidth(ckW));
+      float ckGlint=smoothstep(.80-glintAA,.98+glintAA,ckW)*ckBreak*ckStrength;
+      float ckDepth=(1.-smoothstep(.25,.98,abs(ckU)))*(.68+.32*(1.-ckRun));
       float ckMargin=smoothstep(.55,1.,abs(ckU)),ckLine=smoothstep(.78,.92,abs(ckU))*(1.-smoothstep(.92,1.,abs(ckU)));
-      diffuseColor.rgb=mix(vec3(.33,.45,.39),vec3(.03,.13,.14),ckDepth)*(.92+.08*sin(ckM*.9+ckU*2.+sin(ckM*.3)*2.));
+      diffuseColor.rgb=mix(vec3(.35,.46,.34),vec3(.025,.22,.225),ckDepth)*(.92+.08*sin(ckM*.9+ckU*2.+sin(ckM*.3)*2.));
       diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.30,.38,.36),ckMargin*.55)*(1.-ckLine*.22);
-      diffuseColor.a*=mix(.24,.86,ckDepth)*(1.-smoothstep(.9,1.,abs(ckU))*.45);
-      diffuseColor.rgb+=vec3(.11,.13,.12)*ckGlint;`).replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
-      float ckN=.4+.6*ckStrength;
-      normal=normalize(normal+vec3(sin(ckAlong*9.+sin(ckAcross*2.7)*1.5+uFlow*(1.+ckSpeed*1.3))*.03*ckN,cos(ckAcross*5.+ckAlong*3.-uFlow*1.8)*.02*ckN,0.));
+      diffuseColor.a*=mix(.10,.68,ckDepth)*(1.-smoothstep(.9,1.,abs(ckU))*.45);
+      diffuseColor.rgb+=vec3(.20,.27,.25)*ckGlint;`).replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+      roughnessFactor=clamp(roughnessFactor-.05+.16*ckStrength+.09*ckMargin,.11,.34);
+    `).replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
+      float ckN=.25+.65*ckStrength;
+      normal=normalize(normal+vec3(sin(ckAlong*9.+sin(ckAcross*2.7)*1.5+uFlow*(1.+ckSpeed*1.3))*.010*ckN,cos(ckAcross*5.+ckAlong*3.-uFlow*1.8)*.008*ckN,0.));
       float grazing=pow(1.-max(0.,dot(normal,normalize(vViewPosition))),3.);
-      diffuseColor.rgb+=vec3(.07,.09,.09)*grazing*(1.-ckMargin*.5);`);
+      diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.23,.37,.39),grazing*.10*(1.-ckMargin*.5));
+      diffuseColor.a=mix(diffuseColor.a,.82,grazing*.52*(1.-ckMargin*.7));`);
   };
   // Broken whitewater follows the creek slope; the clear pool remains visible between crests.
   const riffleMat=new T.ShaderMaterial({transparent:true,depthWrite:false,side:T.DoubleSide,
@@ -230,13 +302,14 @@ export async function createWorld(canvas){
     vertexShader:'varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
     fragmentShader:`uniform float uTime; varying vec2 vUv;
       void main(){
-        vec2 q=vec2(vUv.x*22.,vUv.y*360.+uTime*.8);
+        vec2 q=vec2(vUv.x*14.,vUv.y*240.+uTime*.62);
         float bend=sin(q.x*2.2+q.y*.7)+.45*sin(q.x*5.1-q.y*1.3);
         float streak=sin(q.y*3.+bend*1.5);
         float breakup=sin(q.x*4.7+q.y*1.8)+.5*sin(q.x*9.1-q.y*3.2);
-        float crest=smoothstep(.56,.94,streak)*smoothstep(-.2,.65,breakup);
+        float crestAA=max(.025,fwidth(streak));
+        float crest=smoothstep(.76-crestAA,.98+crestAA,streak)*smoothstep(.0,.75,breakup);
         float bank=smoothstep(0.,.12,vUv.x)*(1.-smoothstep(.88,1.,vUv.x));
-        gl_FragColor=vec4(.80,.94,.88,crest*bank*.32);
+        gl_FragColor=vec4(.88,.96,.92,crest*bank*(.08+.14*smoothstep(-.4,.6,bend)));
       }`});
   for(const [start,end] of [[150,175],[196,215],[228,262],[285,318],[340,372],[395,425]])ribbon(riverX,1.9,s=>elevation(s)-.713,start,end,80,riffleMat).renderOrder=2;
   const cascadeMat=new T.MeshPhysicalMaterial({color:'#a3ccc1',roughness:.25,transparent:true,opacity:.94,depthWrite:false,side:T.DoubleSide,envMapIntensity:.35});
@@ -244,11 +317,11 @@ export async function createWorld(canvas){
     shader.uniforms.uFlow=waterTime;
     shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vCascade;').replace('#include <begin_vertex>','#include <begin_vertex>\nvCascade=uv;');
     shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nuniform float uFlow; varying vec2 vCascade;').replace('#include <color_fragment>',`#include <color_fragment>
-      float strand=pow(max(0.,sin(vCascade.x*83.+sin(vCascade.x*23.)*2.+vCascade.y*7.-uFlow*3.)),5.);
+      float strand=smoothstep(.38,.94,sin(vCascade.x*61.+sin(vCascade.x*23.)*2.+vCascade.y*7.-uFlow*3.));
       float base=smoothstep(.64,.98,vCascade.y);
       float broken=smoothstep(-.2,.7,sin(vCascade.x*37.+vCascade.y*42.-uFlow*2.)+.5*sin(vCascade.x*91.-vCascade.y*28.));
-      diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.94,1.,.96),strand*.58+base*broken*.42);
-      diffuseColor.a*=smoothstep(0.,.09,vCascade.x)*(1.-smoothstep(.91,1.,vCascade.x))*(.10+strand*broken*.36+base*broken*.52);`);
+      diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.94,1.,.96),strand*.48+base*broken*.52);
+      diffuseColor.a*=smoothstep(0.,.09,vCascade.x)*(1.-smoothstep(.91,1.,vCascade.x))*(.06+strand*broken*.42+base*broken*.68);`);
   };
   const fallingWater=cascadeGeometry();
   for(const s of [152,165,178,192,201,224,232,241,249,258,270,286,301,316,331,346,356,373,391,406,419,433,444]){
@@ -259,6 +332,7 @@ export async function createWorld(canvas){
   // The spring: the creek rises among stones at the top of the shelter valley.
   for(let i=0;i<12;i++){const s=RIVER.end-7+(i%4)*.7,x=riverX(s)-2.6+(i%6)*.95;part(scene,geos.rock,softenMap(mat('#c5ccbe',{vertexColors:true,map:surfaces.stone}),.72),[x,elevation(s)-.72,-s],[.9,.8+(i%3)*.2,1.15]);}
   const ripples=[];const rippleMat=new T.MeshBasicMaterial({color:'#ddfff0',transparent:true,opacity:.09,depthWrite:false,side:T.DoubleSide});
+  rippleMat.forceSinglePass=true;
   for(let i=0;i<180;i++){const s=RIVER.start+rnd()*(RIVER.end-RIVER.start-12),x=riverX(s)+(rnd()-.5)*3.6;const o=new T.Mesh(new T.TorusGeometry(.22+rnd()*.4,.012,3,14,Math.PI*(.4+rnd())),rippleMat);o.rotation.x=-Math.PI/2;o.rotation.z=rnd()*6;o.position.set(x,elevation(s)-.71,-s);o.userData={s,phase:rnd()*7};scene.add(o);ripples.push(o);}
   // Clearings keep each stop readable: bird side, creek view, shelter, squirrel approach, lookout and summit deck.
   const clearing=(x,s)=>{const side=x-pathX(s);
@@ -266,21 +340,23 @@ export async function createWorld(canvas){
   function plantTree(s,x,size,barkColor,leafColors,opts={}){
     const y=terrain(x,s),angle=rnd()*Math.PI*2,tree=trees[Math.floor(rnd()*3)],variant=trees.indexOf(tree),tall=size*(.88+rnd()*.26);
     col.set(barkColor).lerp(new T.Color(rnd()<.5?'#b8a88c':'#ece3cf'),rnd()*.4);
-    instance('tree'+variant,'#'+col.getHexString(),x,y,-s,size,tall,size,angle,(rnd()-.5)*.06);
+    instance('tree'+variant,'#'+col.getHexString(),x,y,-s,size,tall,size,angle,(rnd()-.5)*.10);
     for(const [j,crown] of tree.crowns.entries()){
       if(opts.sparse&&j%2)continue;
       // G03: full canopies drop a few side crowns at random and jitter crown size, so light gaps and uneven crowns replace
       // identical domes (fewer leaf cards too).
       if(!opts.sparse&&j%4===3&&rnd()<.45)continue;
       const cx=x+(crown.x*Math.cos(angle)+crown.z*Math.sin(angle))*size,cz=-s+(-crown.x*Math.sin(angle)+crown.z*Math.cos(angle))*size,r=crown.size*size*(.86+rnd()*.28);
-      instance('leaf',leafColors[j%leafColors.length],cx,y+crown.y*tall,cz,r*(opts.leafScale||1.4),r*.82,r*1.2,angle+j*.72,.13*Math.sin(j));
+      // Vary the existing crown lobes within their footprint; gaps admit light without more overlapping cards.
+      const lobe=Math.sin(j*2.4+angle),breadth=.84+.16*lobe;
+      instance('leaf',leafColors[j%leafColors.length],cx,y+crown.y*tall+r*.12*lobe,cz,r*(opts.leafScale||1.4)*(1+.12*Math.sin(j*3.4+variant))*breadth,r*(.76+.22*Math.sin(j+angle)**2),r*1.2*breadth,angle+j*.92,.32*Math.sin(j+angle));
     }
   }
   // Zone forests: counts, distances, sizes and leaf palettes change with the section mood.
   const zoneTrees=[
     {from:-20,to:75,count:70,near:4.5,spread:30,size:[.8,1.2],leaf:['#dfe5c8','#cfdcbb','#e9e3c4','#bfd2b7'],bark:'#dcd2bb'},
-    {from:70,to:165,count:125,near:4.8,spread:34,size:[.95,1.35],leaf:['#eee9c4','#e3e6b6','#f1ebc9','#d6e0b2'],bark:'#e3d8bf'},
-    {from:160,to:255,count:110,near:4.5,spread:30,size:[.8,1.2],leaf:['#d3dec6','#c4d6c0','#dbe3cb','#b8cfb6'],bark:'#d9d2bf'},
+    {from:70,to:165,count:125,near:4.8,spread:34,size:[.95,1.35],leaf:['#d9dfb4','#c5d7a6','#e6e0ac','#b5c9a1'],bark:'#e3d8bf'},
+    {from:160,to:255,count:110,near:4.5,spread:30,size:[.8,1.2],leaf:['#c5d7b2','#a7c5ad','#dce1b4','#a2bda0'],bark:'#d9d2bf'},
     {from:250,to:345,count:95,near:5.5,spread:30,size:[.75,1.15],leaf:['#dde6c2','#d0dcb8','#e4e5c4','#c6d6b3'],bark:'#ddd3bc'},
     {from:340,to:435,count:100,near:4.8,spread:30,size:[.85,1.25],leaf:['#d6e0c2','#c7d6bd','#dfe3c6','#bdd0b4'],bark:'#dbd2bd'},
     {from:430,to:525,count:140,near:4.6,spread:28,size:[.9,1.3],leaf:['#c2d3aa','#b4c9a4','#cbd7ad','#a9c29c'],bark:'#cfc4ab'},
@@ -332,9 +408,9 @@ export async function createWorld(canvas){
   for(let i=0;i<320;i++){
     const s=18+rnd()*622,side=i%2?1:-1,x=pathX(s)+side*(5.4+rnd()*10);
     if(nearRiver(x,s,3.4)||clearing(x,s)||side<0&&s>515)continue;
-    plantTree(s,x,.27+rnd()*.17,'#cbbd94',['#d3e2b5','#c9d9ad'],{leafScale:1.3});
+    plantTree(s,x,.27+rnd()*.17,'#cbbd94',['#b9d3a2','#c1d4a5'],{leafScale:1.3});
   }
-  const flowerPalette=s=>s<160?['#fff3cf','#f9e6a6']:s<340?['#f2b9c9','#fff2cf','#d9b8e6']:s<520?['#d7b7d4','#f9f0cf']:['#f7d57a','#fff0c5'];
+  const flowerPalette=s=>s<160?['#fff3cf','#f9e6a6']:s<340?['#e5d3d7','#f5eed8','#d2cedb']:s<520?['#d7b7d4','#f9f0cf']:['#f7d57a','#fff0c5'];
   // G03: layered verges. Offsets start at the real trail edge (halfWidth, so fork lanes stay clear). Grass hugs the edge,
   // ferns begin ~.6 m further out and stay below knee height near the trail, small shrubs (shared low-poly geometry, no
   // shadow) only from 1.3 m out and at a quarter of the old count. gapNoise leaves bare pockets within 4.5 m of the trail
@@ -363,6 +439,19 @@ export async function createWorld(canvas){
     const size=1.1+rnd()*.9;
     instance(Math.abs(x-pathX(s))>12?'shrub1':'shrub',s>520?'#d4d8a8':'#dce5ce',x,terrain(x,s),-s,size,size*1.2,size,i*2.4);
   }
+  // Garden-room models form small drifts outside the walkable edge, not a continuous hedge.
+  const gardenBeds=[96,124,190,202,214,222,282,350,386,455,490,548,610,675];
+  for(const [bed,center] of gardenBeds.entries())for(const side of [-1,1])for(let j=0;j<5;j++){
+    const s=center+(j-2)*.92+.75*Math.sin(bed*7+j),edge=halfWidth(s),off=edge+.85+(j%3)*.55+.4*Math.sin(s*.61)**2,x=pathX(s)+side*(onBridge(s)?Math.max(4.8,off):off);
+    if(nearRiver(x,s,2.9)||onDeck(x,s)||Math.abs(s-475)<12||Math.abs(s-578)<12)continue;
+    let kind='liriope',scale=.56+.12*(.5+.5*Math.sin(s*.7+side));
+    if(j===1){kind='daisy';scale=.62+.18*Math.sin(bed*2)**2;}
+    if(j===3&&s<510){kind='hydrangea';scale=.38+.17*Math.cos(bed)**2;}
+    if(j===4&&bed%2===0){kind='maple';scale=.44+.14*Math.sin(bed)**2;}
+    if(!geos['garden_'+kind])continue;
+    instance('garden_'+kind,kind==='maple'?'#b4d3a3':kind==='hydrangea'?'#e0e1cd':'#f0ebd3',x,terrain(x,s)-.015,-s,scale,scale,scale,bed*.77+j*1.9);
+    if(j===0&&bed%2===0){const rx=x+side*.5;instance('rock','#9fae91',rx,terrain(rx,s)-.06,-s-.3,.48,.23,.39,s);instance('fern','#a1ba84',x-side*.2,terrain(x-side*.2,s+.6),-s-.6,.64,.54,.64,s*.5);}
+  }
   const benchSpots=[[115,-3],[200,-4],[seats[0].s,seats[0].offset],[seats[1].s,seats[1].offset],[372,-3.1],[708,-3.2]];
   // G03: the 2.7 m verge row was a continuous wall (1.2 m shrub + fern + 1.7 m shrub every step, both sides). clumpN now
   // skips ~a third of the steps, the inner shrub is the low-poly kind sitting ~.9 m outside the trail edge with a shorter
@@ -381,9 +470,12 @@ export async function createWorld(canvas){
   for(let s=RIVER.start+1;s<RIVER.end-8;s+=1.35)for(const side of [-1,1]){
     const x=riverX(s)+side*(2.25+.28*Math.sin(s*1.7)),r=.65+rnd()*.55;
     if(Math.abs(x-pathX(s))<2.65)continue;
-    instance('rock','#e5e7d7',x,elevation(s)-.40,-s,r,.45+rnd()*.58,r*(.70+rnd()*.40),s);
-    const leafX=x+side*.55;
-    instance('fern','#d0daac',leafX,terrain(leafX,s),-s,.8,.8,.8,s);
+    // Offset the existing stones into uneven clusters without changing the seeded forest or the trail clearance.
+    const shiftedS=s+.38*Math.sin(s*.73+side),candidate=riverX(shiftedS)+(x-riverX(s))+side*.24*Math.sin(s*.43);
+    const clear=Math.abs(candidate-pathX(shiftedS))>=2.65,bankS=clear?shiftedS:s,bankX=clear?candidate:x,cluster=.82+.26*Math.sin(s*.43+side);
+    instance(side>0?'rock1':'rock2','#d1d9c5',bankX,elevation(bankS)-.44,-bankS,r*cluster,(.45+rnd()*.58)*(.82+.18*Math.cos(s*.43+side)),r*(.70+rnd()*.40)*cluster,s+.35*Math.sin(s));
+    const leafX=bankX+side*.55;
+    instance('fern','#d0daac',leafX,terrain(leafX,bankS),-bankS,.8,.8,.8,s);
   }
   for(let i=0;i<760;i++){
     const s=RIVER.start+rnd()*(RIVER.end-RIVER.start-10),x=riverX(s)+(rnd()-.5)*3.7,r=.16+rnd()*.40;
@@ -460,7 +552,7 @@ export async function createWorld(canvas){
     const x=pathX(s)+offset,y=terrain(x,s),tree=trees[1];instance('tree1','#e0d5bf',x,y,-s,size,size,size);
     for(const c of tree.crowns){const r=c.size*size;instance('leaf','#dce6bc',x+c.x*size,y+c.y*size,-s+c.z*size,r*1.35,r*.8,r*1.2);}
   }
-  const foamGeo=creekFoamGeometry(),foamMat=new T.MeshBasicMaterial({color:'#d8eee6',transparent:true,opacity:.30,depthWrite:false,side:T.DoubleSide});
+  const foamGeo=creekFoamGeometry(),foamMat=new T.MeshBasicMaterial({color:'#d8eee6',transparent:true,opacity:.34,depthWrite:false,side:T.DoubleSide,forceSinglePass:true});
   for(let i=0;i<150;i++){
     const s=RIVER.start+4+i*2.55,x=riverX(s)+Math.sin(i*3)*1.1;if(s>RIVER.end-10||Math.abs(x-pathX(s))<2.9)continue;
     const r=.35+(i%4)*.14;instance('rock','#cfd7d3',x,elevation(s)-.70,-s,r,r*.6,r*.8,i);
@@ -477,14 +569,14 @@ export async function createWorld(canvas){
     if(onBridge(s)||onDeck(x,s)||nearRiver(x,s,2.6)||Math.abs(s-475)<6&&side>0)continue;
     const y=terrain(x,s),scale=.55+rnd()*.55;
     instance('grass',s>520?'#d6d49a':'#ced8a4',x,y,-s,scale,scale,scale,i);
-    if(i%6===0){const h=.22+rnd()*.18;instance('stem','#56773e',x,y+h/2,-s,.008,h,.008);for(let j=0;j<5;j++){const a=j*1.256;instance('petal',i%12?'#c1b7dc':'#fff3d2',x+Math.cos(a)*.07,y+h,-s+Math.sin(a)*.07,.075,.028,.045,a);}instance('petal','#d6a73c',x,y+h+.01,-s,.03,.02,.03);}
+    if(i%6===0){const h=.16+rnd()*.18;instance('stem','#56773e',x,y+h/2,-s,.008,h,.008);for(let j=0;j<5;j++){const a=j*1.256;instance('petal',i%12?'#d7d8bd':'#fff3d2',x+Math.cos(a)*.07,y+h,-s+Math.sin(a)*.07,.075,.028,.045,a);}instance('petal','#d6a73c',x,y+h+.01,-s,.03,.02,.03);}
   }
   // Broken outcrops sit on the exposed slopes beside the creek and along the ridge.
   for(const s of [196,203,228,236,244,252,345,352,372,386,402,420,540,556,572,600,618,660,690,700]){
     for(let j=0;j<3;j++){
       const x=s<RIVER.end?riverX(s)-3.6-j*.75:pathX(s)-(s>690?6.7:4.4)-j*.8,ss=s+j*.8,y=terrain(x,ss),r=.85+j*.28;
       if(Math.abs(x-pathX(ss))<r*1.4+(s>690?4.6:2.2))continue;
-      instance('rock','#b7c0ac',x,y-.15,-ss,r*1.15,r*.70,r,s+j);
+      instance(j%2?'rock1':'rock2','#b7c0ac',x,y-.20,-ss,r*(1.05+.18*Math.sin(s)),r*(.52+.14*Math.cos(s+j)**2),r,s+j);
       instance('fern','#c2d497',x+.5,y+.2,-ss+.3,.75,.75,.75,j);
     }
   }
@@ -508,6 +600,28 @@ export async function createWorld(canvas){
   }
   // Clear every bench and seat footprint so resting places are readable from the path.
   for(const group of groups.values())if(['grass','fern','shrub','shrub1','stem','petal'].includes(group.kind))group.items=group.items.filter(p=>!benchSpots.some(([bs,bo])=>Math.abs(p.z+bs)<2.1&&Math.abs(p.x-(pathX(bs)+bo))<1.9));
+  // Keep the fork island green enough to distinguish it from the two sandy walking lanes.
+  for(let s=FORK.from+4;s<FORK.to-4;s+=1.9){const gap=forkGap(s);if(gap<1)continue;
+    for(const side of [-1,1]){const x=pathX(s)+side*gap*(.35+.18*Math.sin(s*1.3)),y=Math.max(terrain(x,s),elevation(s)+.08);
+      instance('grass','#b5c48b',x,y,-s,.75,.75,.75,s);
+      if(Math.sin(s*.43+side)>.1)instance('fern','#b5c894',x+.14,y,-s+.25,.5,.46,.5,s*.3);
+    }
+  }
+  // Close the bare creek hillside with staggered groves; the trail and observation corridor stay open.
+  {const savedSeed=seed;
+    for(const [s,off,size] of [[222,15,.9],[230,19,1.05],[239,13,.85],[244,24,1.15],[252,17,1],[259,26,.9],[226,29,1.05],[247,33,1.1]]){
+      const x=pathX(s)+off;plantTree(s,x,size,'#d2c9ad',['#cad4ac','#e0dfb1','#b7c9a6'],{leafScale:1.65});
+      for(let j=0;j<5;j++){const fs=s+Math.sin(j*2.4)*2.2,fx=x+Math.cos(j*2.4)*2.2;instance('shrub1','#d0dcad',fx,terrain(fx,fs),-fs,1.8,1.5,1.8,j);}
+    }
+    seed=savedSeed;
+    for(const [s,side] of [[204,-1],[216,1],[221,-1]]){const x=riverX(s)+side*3.0;
+      if(Math.abs(x-pathX(s))<3.4)continue;
+      for(let j=0;j<7;j++){const fs=s+Math.sin(j*2.4)*1.25,fx=x+Math.cos(j*2.4)*1.25,sc=.9+(j%3)*.17;
+        if(Math.abs(fx-pathX(fs))<2.9)continue;
+        instance(j%3?'fern':'shrub1',j%3?'#c4d39a':'#c0d0a2',fx,terrain(fx,fs),-fs,sc,sc*.85,sc,j*.7);
+      }
+    }
+  }
   // 폭포 view corridor: between the shelter stop and the waterfall ledge (s 376–393, creek side of the trail) no trunk, crown or
   // tall shrub stands in the line of sight. Filtered after placement so every rnd() draw (and every other placement the parent
   // reviewed) stays exactly where it was; grass, ferns and rocks remain.
@@ -516,20 +630,100 @@ export async function createWorld(canvas){
     if(group.kind.startsWith('tree')||group.kind==='shrub'||group.kind==='shrub1')group.items=group.items.filter(p=>!fallsCorridor(p.x,-p.z,0));
     else if(group.kind==='leaf')group.items=group.items.filter(p=>!fallsCorridor(p.x,-p.z,.4));
   }
-  for(const {kind,items} of groups.values()){const stone=surfaces.stone;const m=mat('#ffffff',kind.startsWith('tree')?{map:surfaces.bark,bumpMap:surfaces.bark,bumpScale:.08}:kind==='leaf'?{map:foliage,alphaTest:.43,vertexColors:true,side:T.DoubleSide,emissive:'#273b18',emissiveIntensity:.07,roughness:.76}:['grass','fern','shrub','shrub1'].includes(kind)?{vertexColors:true,side:T.DoubleSide}:kind.startsWith('rock')?{vertexColors:true,map:stone,bumpMap:stone,bumpScale:.065}:{});const inst=new T.InstancedMesh(kind.startsWith('rock')?geos[kind].clone():geos[kind],m,items.length);for(let i=0;i<items.length;i++){const p=items[i];dummy.position.set(p.x,p.y,p.z);dummy.scale.set(p.sx,p.sy,p.sz);dummy.rotation.set(0,p.ry,p.rz);dummy.updateMatrix();inst.setMatrixAt(i,dummy.matrix);col.set(p.color);if(kind.startsWith('shrub'))col.lerp(new T.Color('#779987'),.18);else if(kind==='fern')col.lerp(new T.Color('#98a76e'),.12);if(['leaf','shrub','shrub1','fern'].includes(kind)){const warm=.5+.5*Math.sin(p.x*.7+p.z*.23);col.lerp(new T.Color('#bdc774'),warm*.18);col.multiplyScalar(.84+.25*warm);}inst.setColorAt(i,col);}if(kind==='leaf'){m.alphaToCoverage=true;inst.customDepthMaterial=new T.MeshDepthMaterial({depthPacking:T.RGBADepthPacking,map:foliage,alphaTest:.43,side:T.DoubleSide});breeze(m);breeze(inst.customDepthMaterial);}if(kind==='grass'||kind==='fern'){breeze(m,kind==='grass'?.9:.6);}if(kind.startsWith('rock')){softenMap(m,.72);mineralDetail(m);inst.geometry.setAttribute('waterLevel',new T.InstancedBufferAttribute(new Float32Array(items.map(p=>{const s=-p.z;return nearRiver(p.x,s,2.5)&&s<RIVER.end-8?elevation(s)-.74:-999;})),1));caustics(m);}if(kind.startsWith('shrub'))m.onBeforeCompile=shader=>{
+  // Low, clustered understory keeps the walkable path and activity sightlines open.
+  for(let s=16;s<520;s+=2.3){
+    for(const side of [-1,1]){
+      const patch=.5+.5*Math.sin(s*.19+side*2.1);if(patch<.25)continue;
+      for(let j=0;j<5;j++){
+        const ss=s+Math.sin(j*2.4+s)*1.3,x=pathX(ss)+side*(3.2+j*.72+.45*Math.sin(s*.7+j));
+        if(nearRiver(x,ss,2.75)||(clearing(x,ss)&&!(ss>186&&ss<244))||onBridge(ss)||fallsCorridor(x,ss,0))continue;
+        const y=terrain(x,ss),sc=.45+.45*patch;
+        instance(j%3===0?'fern':'shrub1',j%2?'#b2c295':'#96ae83',x,y,-ss,sc,sc*.8,sc,s+j);
+        if(j===0)instance('rock','#c4c8b0',x+side*.55,y-.1,-ss+.4,.35,.22,.45,s);
+      }
+    }
+  }
+  // Small islands of vegetation between creek boulders frame the bridge without covering the deck.
+  for(let i=0;i<85;i++){
+    const s=188+i*.55,side=i%2?1:-1,x=riverX(s)+side*(2.8+.8*Math.sin(i*2.4));
+    if(Math.abs(x-pathX(s))<2.65||nearRiver(x,s,2.5))continue;
+    const sc=.55+.35*(.5+.5*Math.sin(i*1.3));
+    instance('shrub1','#bdcda2',x,terrain(x,s),-s,sc,sc*.75,sc,i*2.4);
+  }
+  if(fernProp){
+    // High-detail accents are limited to the near banks and stop approaches, not the entire forest.
+    for(const [a,b] of [[102,124],[186,244],[345,360],[400,420],[456,488]]){
+      for(let s=a;s<b;s+=2.4)for(const side of [-1,1]){
+        const x=pathX(s)+side*(3.15+1.0*(.5+.5*Math.sin(s*1.7)));
+        if(nearRiver(x,s,2.65)||onBridge(s)||(clearing(x,s)&&!(s>186&&s<244))||fallsCorridor(x,s,0))continue;
+        const sc=.55+.47*(.5+.5*Math.sin(s*2.3));
+        instance('fernDetail','#c5cdb4',x,terrain(x,s)-.02,-s,sc,sc*.85,sc,s*2.4);
+      }
+    }
+    for(let i=0;i<24;i++){
+      const s=197+i*.9,side=i%2?1:-1,x=riverX(s)+side*(3.0+.4*Math.sin(i));
+      if(Math.abs(x-pathX(s))<2.5)continue;
+      const sc=.72+.50*Math.sin(i*2.3)**2;instance('fernDetail','#b8c69d',x,terrain(x,s)-.02,-s,sc,sc*(.68+.25*Math.cos(i)**2),sc,i*2.4);
+    }
+  }
+  // Small submerged stones, clustered instead of a uniformly tiled creek bed.
+  for(let i=0;i<220;i++){
+    const s=184+i*.25,x=riverX(s)+Math.sin(i*2.399)*1.65,y=terrain(x,s);
+    if(y>elevation(s)-.84||Math.abs(x-pathX(s))<1.8)continue;
+    const r=.09+.10*(.5+.5*Math.sin(i*1.71));
+    instance(i%2?'rock1':'rock2',['#afb6a2','#bcb093','#879d95'][i%3],x,y+.025,-s,r*1.65,r*.46,r,i);
+  }
+  // Low flowers gather in a few bank pockets; activity targets and the deck stay clear.
+  for(let k=0;k<16;k++){
+    const s=190+k*3.1,x=pathX(s)+(k%2?1:-1)*(3.5+.5*Math.sin(k*1.7));
+    if(nearRiver(x,s,2.6)||onBridge(s))continue;
+    for(let j=0;j<3;j++){
+      const px=x+.26*Math.cos(j*2.4+k),ss=s+.28*Math.sin(j*2.4+k),y=terrain(px,ss),h=.15+j*.025;
+      instance('stem','#64804d',px,y+h/2,-ss,.009,h,.009);
+      for(let n=0;n<6;n++){const a=n*Math.PI/3;instance('petal','#f2eed9',px+Math.cos(a)*.055,y+h,-ss+Math.sin(a)*.055,.052,.016,.035,a);}
+      instance('petal','#cbaa4e',px,y+h+.008,-ss,.027,.018,.027);
+    }
+  }
+  // Redistribute existing low plants into pockets; keep the path and activity clearings open.
+  for(const {kind,items} of groups.values())if(['grass','fern','shrub','shrub1'].includes(kind)){
+    for(const p of items){const s=-p.z,side=Math.sign(p.x-pathX(s)),distance=Math.abs(p.x-pathX(s));
+      if(distance<2.8||distance>9||onBridge(s)||clearing(p.x,s))continue;
+      const pocket=2.9+1.25*(.5+.5*Math.sin(Math.floor(s/5)*2.399+side));
+      const nx=pathX(s)+side*(distance*.35+pocket*.65);
+      if(nearRiver(nx,s,2.8)||fallsCorridor(nx,s,.4))continue;
+      p.y+=terrain(nx,s)-terrain(p.x,s);p.x=nx;const scale=.72+.48*(.5+.5*Math.sin(s*.57+side));p.sx*=scale;p.sy*=scale;p.sz*=scale;
+    }
+  }
+  // Small clearings keep generated rocks and shrubs from piercing the animals.
+  const animalClearings=Object.entries(ENCOUNTER_SITES).flatMap(([id,sites])=>sites.map(s=>({...worldAt(s,ANIMALS.find(a=>a.id===id).offset),radius:id==='deer'?2:1.2}))).concat([{...worldAt(475,3.6),radius:1.1}]);
+  for(const group of groups.values())group.items=group.items.filter(p=>!animalClearings.some(c=>Math.hypot(p.x-c.x,p.z-c.z)<c.radius+Math.min(1,Math.max(p.sx,p.sz)*.35)));
+  const forestChunks=[],forestMaterialsByKind=new Map(),forestDepthByKind=new Map();
+  for(const {kind,items} of groups.values()){if(!items.length)continue;const stone=surfaces.stone;const m=mat('#ffffff',kind.startsWith('garden_')?{vertexColors:true,side:T.DoubleSide,roughness:.86}:kind==='fernDetail'?{map:fernProp.map,side:T.DoubleSide,roughness:.95,bumpMap:fernProp.map,bumpScale:.008}:kind.startsWith('tree')?{vertexColors:true,color:'#e1cfb4',map:surfaces.bark,normalMap:surfaces.barkNormal,normalScale:new T.Vector2(.56,.56),roughnessMap:surfaces.barkRough}:kind==='leaf'?{map:foliage,alphaTest:.44,vertexColors:true,side:T.DoubleSide,emissive:'#53613a',emissiveIntensity:.025,roughness:.78}:['grass','fern','shrub','shrub1'].includes(kind)?{vertexColors:true,side:T.DoubleSide}:kind.startsWith('rock')?{vertexColors:true,map:stone,bumpMap:stone,bumpScale:.065}:{});const inst=new T.InstancedMesh(kind.startsWith('rock')?geos[kind].clone():geos[kind],m,items.length);for(let i=0;i<items.length;i++){const p=items[i];dummy.position.set(p.x,p.y,p.z);dummy.scale.set(p.sx,p.sy*(kind==='shrub'?.76:1),p.sz);dummy.rotation.set(0,p.ry,p.rz);dummy.updateMatrix();inst.setMatrixAt(i,dummy.matrix);col.set(p.color);if(kind.startsWith('shrub'))col.lerp(new T.Color('#779987'),.18);else if(kind==='fern')col.lerp(new T.Color('#98a76e'),.12);if(['leaf','shrub','shrub1','fern'].includes(kind)){const warm=.5+.5*Math.sin(p.x*.7+p.z*.23);col.lerp(new T.Color('#c7d29b'),warm*.12);col.multiplyScalar(.88+.12*warm);}inst.setColorAt(i,col);}if(kind==='leaf'){m.alphaToCoverage=true;inst.customDepthMaterial=new T.MeshDepthMaterial({depthPacking:T.RGBADepthPacking,map:foliage,alphaTest:.44,side:T.DoubleSide});breeze(m);breeze(inst.customDepthMaterial);
+      const leafWind=m.onBeforeCompile;m.onBeforeCompile=shader=>{leafWind(shader);shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+        vec3 leafSide=gl_FrontFacing?vec3(1.):vec3(1.10,1.14,.94);
+        diffuseColor.rgb*=leafSide;
+      `).replace('#include <map_fragment>',`#include <map_fragment>
+        // Recover the existing leaf veins without another texture lookup.
+        float leafTone=dot(sampledDiffuseColor.rgb,vec3(.21,.72,.07));
+        diffuseColor.rgb*=mix(.90,1.16,smoothstep(.10,.62,leafTone));
+      `);};m.customProgramCacheKey=()=> 'canopy-detail-v2';}if(kind==='grass'||kind==='fern'||kind==='fernDetail'){breeze(m,kind==='grass'?.9:.6);}if(kind.startsWith('rock')){softenMap(m,.72);mineralDetail(m,surfaces.floor);inst.geometry.setAttribute('waterLevel',new T.InstancedBufferAttribute(new Float32Array(items.map(p=>{const s=-p.z;return nearRiver(p.x,s,2.5)&&s<RIVER.end-8?elevation(s)-.74:-999;})),1));caustics(m);}if(kind.startsWith('shrub'))m.onBeforeCompile=shader=>{
       shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vLeaf;').replace('#include <begin_vertex>','#include <begin_vertex>\nvLeaf=uv;');
       shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 vLeaf;').replace('#include <color_fragment>',`#include <color_fragment>
         float mid=1.-smoothstep(.015,.045,abs(vLeaf.x-.5));
-        float branches=pow(max(0.,cos((vLeaf.y-abs(vLeaf.x-.5)*.65)*39.)),22.)*(1.-smoothstep(.30,.49,abs(vLeaf.x-.5)));
-        diffuseColor.rgb*=.94+.10*mid+.055*branches;`);
+        float veinPhase=(vLeaf.y-abs(vLeaf.x-.5)*.65)*39.;
+        float branches=pow(max(0.,cos(veinPhase)),18.)*(1.-smoothstep(.30,.49,abs(vLeaf.x-.5)))*(1.-smoothstep(.35,1.2,fwidth(veinPhase)));
+        float edge=smoothstep(.27,.49,abs(vLeaf.x-.5));
+        diffuseColor.rgb*=.94+.11*mid+.10*branches;
+        diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(1.12,1.08,.91),edge*.48);
+        if(!gl_FrontFacing)diffuseColor.rgb*=vec3(.94,1.02,.92);`).replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
+        roughnessFactor=clamp(.79+.12*abs(vLeaf.x-.5)*2.,.79,.91);`);
     };if(kind.startsWith('tree')){
-      softenMap(m,.96);const original=m.onBeforeCompile;
-      m.customProgramCacheKey=()=> 'bark-furrows';
-      m.onBeforeCompile=shader=>{original(shader);shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
-        float furrow=abs(sin(vMapUv.x*57.+sin(vMapUv.y*8.)*.8+sin(vMapUv.y*17.+vMapUv.x*12.)*.3));
-        diffuseColor.rgb*=.74+.32*smoothstep(.03,.50,furrow);
-      `);};
-    }inst.castShadow=kind.startsWith('tree')||kind==='leaf'||kind==='shrub'||kind.startsWith('rock');inst.receiveShadow=true;inst.computeBoundingSphere();scene.add(inst);}
+      softenMap(m,.96);softenDistantRelief(m);
+    }
+    // Chunks vary by instance data, not material; share identical shader state across the trail.
+    if(forestMaterialsByKind.has(kind)){m.dispose();inst.material=forestMaterialsByKind.get(kind);}else forestMaterialsByKind.set(kind,m);
+    if(inst.customDepthMaterial){if(forestDepthByKind.has(kind)){inst.customDepthMaterial.dispose();inst.customDepthMaterial=forestDepthByKind.get(kind);}else forestDepthByKind.set(kind,inst.customDepthMaterial);}
+    inst.castShadow=kind.startsWith('tree')||kind==='leaf'||kind==='shrub'||kind.startsWith('rock');inst.receiveShadow=true;inst.computeBoundingSphere();inst.updateMatrix();inst.matrixAutoUpdate=false;scene.add(inst);forestChunks.push({mesh:inst,kind,from:Math.min(...items.map(p=>-p.z)),to:Math.max(...items.map(p=>-p.z)),shadow:inst.castShadow});}
   const contacts=[];
   for(const {kind,items} of groups.values())if(kind.startsWith('tree')||kind.startsWith('rock')||kind==='shrub')for(const p of items){
     const s=-p.z;if(nearRiver(p.x,s,2.5)||kind==='shrub'&&p.sy<1.1||kind.startsWith('rock')&&p.sx<.4)continue;
@@ -543,22 +737,31 @@ export async function createWorld(canvas){
   // offset, so grain runs along the timber instead of a single stretched tile across it and adjacent planks don't repeat knots.
   const woodGrain=barkTexture();woodGrain.repeat.set(1,1);
   const grainAlong=(offset=0,repeat=3)=>{const t=woodGrain.clone();t.center.set(.5,.5);t.rotation=Math.PI/2;t.repeat.set(repeat,1);t.offset.set(offset,0);t.needsUpdate=true;return t;};
-  const plankGrain=grainAlong(0,3),wood=mat('#ae8b60',{map:plankGrain,bumpMap:plankGrain,bumpScale:.018}),darkWood=mat('#8e7859',{map:woodGrain}),darkPlank=mat('#8e7859',{map:grainAlong(.37,2.6),bumpMap:plankGrain,bumpScale:.02});
+  const plankGrain=grainAlong(0,3),wood=mat('#b4a184',{map:plankGrain,bumpMap:plankGrain,bumpScale:.018}),darkWood=mat('#8d806c',{map:woodGrain}),darkPlank=mat('#8d806c',{map:grainAlong(.37,2.6),bumpMap:plankGrain,bumpScale:.02});
   // Creek bridge: the miniature-styled timber bridge from bridge.mjs (rounded planks/posts/rails, wood + moss + rock assets)
   // over BRIDGE.from-1 .. BRIDGE.to+1. The previous box/bag-geometry bridge that stood here was removed with it, so only one
   // bridge is drawn; trail collision (halfWidth) is unchanged. Missing textures/JSON fall back inside createBridge.
   const bridge=await createBridge(scene,BRIDGE);
+  // Reuse the approved cedar texture for the shelter and summit instead of drawn stripes.
+  const cedar=bridge.children.find(m=>m.material?.map)?.material.map;
+  if(cedar){for(const [material,repeat] of [[wood,3],[darkPlank,2.6]]){const t=cedar.clone();t.rotation=Math.PI/2;t.repeat.set(repeat,.7);t.offset.set(.17,0);material.map=material.bumpMap=t;material.bumpScale=.022;material.roughness=.96;material.needsUpdate=true;}}
   // Stone steps through the fork lanes and up to the shelter.
   const stoneSteps=[0,1,2].map(stoneStepGeometry),stepMat=softenMap(mat('#ffffff',{map:surfaces.stone,bumpMap:surfaces.stone,bumpScale:.035,vertexColors:true}),.65);
   // G02: stride 0.95~1.55 m, lane positions drift slowly, ~14% of slabs missing, wider size/turn range and a slight settle
   // tilt (≤.04 rad ≈ 2.6 cm over a slab) so the run reads as laid stones, not a stair generator. Top stays within clearance.
+  const stepChunks=new Map();
   for(let s=256;s<344;s+=1.25+.3*Math.sin(s*1.7)+.12*Math.sin(s*.4)){
     const p=worldAt(s),steps=new T.Group();steps.position.set(p.x,p.y-.07,p.z);steps.rotation.y=-Math.atan(pathSlope(s));scene.add(steps);
     const gap=forkGap(s),lanes=gap>0?[-(gap+halfWidth(s))/2,(gap+halfWidth(s))/2]:[-1.25,0,1.25];
     for(const [k,lane] of lanes.entries()){if(rnd()<.14)continue;const sc=.78+.3*rnd();
       const slab=part(steps,stoneSteps[(k+Math.floor(s))%3],stepMat,[lane+.24*Math.sin(s*.6+k*2)+.1*Math.sin(s*2.9+k),.035-.02*rnd(),.34*Math.sin(k+s)+.12*(rnd()-.5)],[sc*(.89+.16*Math.sin(s+k*3)),.95,sc*(.70+.24*Math.sin(s+k))]);
       slab.rotation.y=.28*Math.sin(s*1.3+k*2);slab.rotation.z=.04*Math.sin(s*2.1+k);slab.rotation.x=.03*Math.cos(s*1.7+k*3);}
+    const key=Math.floor(s/20);if(!stepChunks.has(key)){const chunk=new T.Group();chunk.name='trail-stones';scene.add(chunk);stepChunks.set(key,chunk);}
+    const chunk=stepChunks.get(key);steps.updateMatrixWorld(true);
+    for(const slab of [...steps.children])chunk.attach(slab);scene.remove(steps);
   }
+  // Keep the same stones and transforms, but submit nearby copies together.
+  for(const chunk of stepChunks.values()){batchBridgeParts(chunk);for(const mesh of chunk.children)mesh.name='trail-stone-batch';}
   // Low timber waterbars and stone edging read as an ascending mountain trail.
   for(const [a,b] of [[125,160],[222,250],[430,468],[486,520],[584,625],[652,690]])for(let s=a;s<=b;s+=3.2+Math.sin(s)*.45){
     const p=worldAt(s),g=new T.Group();g.position.set(p.x,p.y-.05,p.z);g.rotation.y=-Math.atan(pathSlope(s));scene.add(g);
@@ -611,7 +814,7 @@ export async function createWorld(canvas){
   // Summit platform: timber deck, end railing and side rails.
   // G08: five plank materials with grain along the board, each with its own tile offset/count and a slight warm/cool and
   // roughness drift; joints follow a 4-row stagger instead of a 2-row zigzag. Heights unchanged (deck stays level and flush).
-  const deckWoods=[['#b39a7a',3.1,.93],['#c0aa8a',2.6,.96],['#a48c70',3.4,.92],['#b9a58a',2.8,.95],['#ad967c',3.2,.94]].map(([color,rep,rough],i)=>{const g=grainAlong(i*.21,rep);return mat(color,{map:g,bumpMap:g,bumpScale:.055,roughness:rough});});
+  const deckWoods=[['#bfb49e',3.1,.93],['#cec4ae',2.6,.96],['#aea58f',3.4,.92],['#c4baa7',2.8,.95],['#b8ae99',3.2,.94]].map(([color,rep,rough],i)=>{const g=cedar?cedar.clone():grainAlong(i*.21,rep);if(cedar){g.rotation=Math.PI/2;g.repeat.set(1.3,.7);g.offset.set(i*.17,0);}return mat(color,{map:g,bumpMap:g,bumpScale:.028,roughness:rough});});
   const nails=new T.InstancedMesh(cylinder,mat('#665844'),160);let nailIndex=0;
   for(let row=0;row<=36;row++){const s=SUMMIT.from+2+row*.5,p=worldAt(s),joint=[1.2,-1.2,2.6,-.4][row%4];
     for(const [left,right] of [[-4.5,joint],[joint,4.5]])part(scene,box,deckWoods[(row*3+(left<joint?0:2))%5],[p.x+(left+right)/2,p.y-.025,p.z],[right-left-.018,.12,.46]);
@@ -632,13 +835,27 @@ export async function createWorld(canvas){
   // Lookout rock on the ridge: a flat slab where the child can turn and look down the valley.
   {const p=worldAt(578,-3.3);part(scene,geos.rock1,softenMap(mat('#c9ccba',{vertexColors:true,map:surfaces.stone}),.7),[p.x,terrain(p.x,578)+.05,p.z],[1.9,.55,1.5]);}
   sign(714,'바람봉',3.35);
-  function bird(){const g=new T.Group();const gray=mat('#5b6b67'),white=mat('#f1e8d1');part(g,sphere,gray,[0,0,0],[.16,.19,.23]);part(g,sphere,white,[0,-.02,.14],[.12,.14,.11]);part(g,sphere,gray,[0,.2,.1],[.13,.12,.13]);part(g,cone,mat('#bd9653'),[0,.18,.27],[.045,.1,.045]).rotation.x=Math.PI/2;for(const x of [-.085,.085])part(g,sphere,mat('#202c29'),[x,.22,.19],[.018,.018,.018]);return g;}
+  function bird(){
+    const g=new T.Group(),back=mat('#697574'),cream=mat('#e5d5ac'),dark=mat('#293733'),wing=mat('#4c5c59');
+    part(g,sphere,back,[0,0,0],[.15,.18,.25]);part(g,sphere,cream,[0,-.035,.12],[.125,.14,.15]);
+    const head=new T.Group();head.position.set(0,.19,.13);g.add(head);g.userData.head=head;
+    part(head,sphere,dark,[0,0,0],[.12,.115,.13]);
+    for(const side of [-1,1]){part(head,sphere,cream,[side*.098,-.025,.04],[.03,.055,.07]);
+      part(head,sphere,mat('#171f1c'),[side*.105,.02,.082],[.019,.022,.014]);part(head,sphere,mat('#fff9dc'),[side*.114,.027,.091],[.006,.007,.005]);
+      const w=part(g,sphere,wing,[side*.12,.015,-.035],[.06,.14,.21]);w.rotation.z=side*.18;
+      const stripe=part(g,sphere,cream,[side*.158,.018,.01],[.012,.022,.13]);stripe.rotation.x=-.25;
+      const foot=part(g,cylinder,mat('#8b7760'),[side*.07,-.19,.02],[.012,.11,.012]);foot.rotation.x=-.2;
+      part(g,sphere,dark,[side*.07,-.24,.065],[.035,.012,.06]);}
+    const beak=part(head,cone,mat('#736249'),[0,-.008,.165],[.04,.105,.028]);beak.rotation.x=Math.PI/2;
+    for(const side of [-1,0,1]){const tail=part(g,sphere,wing,[side*.038,-.025,-.285],[.032,.025,.15]);tail.rotation.x=-.22;tail.rotation.y=side*.12;}
+    return g;
+  }
   const birdBark=softenMap(mat('#ded4ba',{map:surfaces.bark,bumpMap:surfaces.bark,bumpScale:.04}),.78);
   // A perch is a swaying branch group: the sway is the silent cue that something sits there.
   function perch(s,offset,phase){const bp=worldAt(s,offset),g=new T.Group();g.position.set(bp.x+1.45,bp.y+1.8,bp.z);scene.add(g);
     const branch=new T.CatmullRomCurve3([new T.Vector3(0,0,.05),new T.Vector3(-.65,-.25,0),new T.Vector3(-1.75,-.24,-.1)]);g.add(new T.Mesh(new T.TubeGeometry(branch,12,.065,7,false),birdBark));
     const songbird=bird();songbird.position.set(-1.45,0,0);g.add(songbird);
-    part(scene,geos.tree0,birdBark,[bp.x+1.45,terrain(bp.x+1.45,s),bp.z],[.68,.68,.68]);for(let j=0;j<6;j++)part(scene,geos.leaf,mat(j%2?'#d8e0bd':'#c4d5ae',{map:foliage,alphaTest:.43,side:T.DoubleSide,vertexColors:true}),[bp.x+1.45+Math.cos(j)*1.1,bp.y+5.8+(j%2)*.6,bp.z+Math.sin(j)*1.1],[1.4,1,1.4]).customDepthMaterial=new T.MeshDepthMaterial({depthPacking:T.RGBADepthPacking,map:foliage,alphaTest:.43,side:T.DoubleSide});
+    part(scene,geos.tree0,birdBark,[bp.x+1.45,terrain(bp.x+1.45,s),bp.z],[.68,.68,.68]);for(let j=0;j<6;j++)part(scene,geos.leaf,mat(j%2?'#d8e0bd':'#c4d5ae',{map:foliage,alphaTest:.44,side:T.DoubleSide,vertexColors:true}),[bp.x+1.45+Math.cos(j)*1.1,bp.y+5.8+(j%2)*.6,bp.z+Math.sin(j)*1.1],[1.4,1,1.4]).customDepthMaterial=new T.MeshDepthMaterial({depthPacking:T.RGBADepthPacking,map:foliage,alphaTest:.44,side:T.DoubleSide});
     return {group:g,bird:songbird,base:bp,phase};}
   const perches=[perch(115,2.8,0),perch(142,2.6,2.1)];const songbird=perches[0].bird,bp=perches[0].base;
   const furMap=surfaceTexture('fur');furMap.repeat.set(2,2);const squirrel=new T.Group(),fur=softenMap(new T.MeshPhysicalMaterial({color:'#a56830',map:furMap,bumpMap:furMap,bumpScale:.012,roughness:.92,sheen:.75,sheenColor:'#eab76e',sheenRoughness:.75,side:T.DoubleSide}),.66),belly=mat('#efd7af');part(squirrel,sphere,fur,[0,.28,0],[.18,.29,.22]);part(squirrel,sphere,belly,[0,.28,.15],[.12,.21,.1]);const sqHead=new T.Group();sqHead.position.set(0,.53,.1);squirrel.add(sqHead);part(sqHead,sphere,fur,[0,0,0],[.18,.17,.20]);for(const x of [-.13,.13]){part(sqHead,sphere,fur,[x,.16,-.01],[.07,.11,.05]);part(sqHead,sphere,mat('#211d1a'),[x*.78,.025,.16],[.025,.03,.019]);}part(sqHead,sphere,belly,[0,-.04,.175],[.086,.063,.085]);part(sqHead,sphere,mat('#32251e'),[0,-.02,.248],[.024,.021,.02]);for(const x of [-.10,.10])part(squirrel,sphere,fur,[x,.27,.21],[.043,.08,.048]);part(squirrel,sphere,mat('#bd9860'),[0,.29,.25],[.049,.066,.045]);const tail=new T.Group();tail.position.set(0,.16,-.17);squirrel.add(tail);
@@ -648,14 +865,21 @@ export async function createWorld(canvas){
   const tailFur=fur.clone();tailFur.vertexColors=true;tailFur.onBeforeCompile=fur.onBeforeCompile;const tailMesh=part(tail,tailGeo,tailFur,[0,0,0],[1,1,1]);tailMesh.receiveShadow=false;tail.rotation.x=-.20;
   for(const x of [-.13,.13]){part(sqHead,sphere,mat('#fff1cc'),[x*.78-.007,.035,.177],[.008,.009,.006]);part(sqHead,sphere,mat('#c49b70'),[x,.165,.027],[.037,.068,.015]);}
   for(const x of [-.12,.12])part(squirrel,sphere,fur,[x,.065,.12],[.085,.06,.14]);scene.add(squirrel);
+  const wildlife=createWildlife(scene,squirrel);
   const sp=worldAt(475,3.6);
   // The squirrel's bush and climbing tree: the bush shakes as a silent cue, the trunk is where it climbs.
   const rustleBush=part(scene,geos.shrub,mat('#9fbd7c',{vertexColors:true,side:T.DoubleSide}),[sp.x+1.5,terrain(sp.x+1.5,476),-476],[1.3,1.1,1.3]);
   const climbTree=worldAt(478.5,5.6);climbTree.y=terrain(climbTree.x,478.5);part(scene,geos.tree0,birdBark,[climbTree.x,climbTree.y,climbTree.z],[.8,.8,.8]);
-  for(let j=0;j<6;j++)part(scene,geos.leaf,mat(j%2?'#c9d8ae':'#b5c99e',{map:foliage,alphaTest:.43,side:T.DoubleSide,vertexColors:true}),[climbTree.x+Math.cos(j)*1.3,climbTree.y+6.8+(j%2)*.7,climbTree.z+Math.sin(j)*1.3],[1.6,1.1,1.6]).customDepthMaterial=new T.MeshDepthMaterial({depthPacking:T.RGBADepthPacking,map:foliage,alphaTest:.43,side:T.DoubleSide});
+  for(let j=0;j<6;j++)part(scene,geos.leaf,mat(j%2?'#c9d8ae':'#b5c99e',{map:foliage,alphaTest:.44,side:T.DoubleSide,vertexColors:true}),[climbTree.x+Math.cos(j)*1.3,climbTree.y+6.8+(j%2)*.7,climbTree.z+Math.sin(j)*1.3],[1.6,1.1,1.6]).customDepthMaterial=new T.MeshDepthMaterial({depthPacking:T.RGBADepthPacking,map:foliage,alphaTest:.44,side:T.DoubleSide});
   // Flower-lane butterfly (life.mjs ANIMALS 'butterfly'): flutters over the flowers of the left lane and settles on one while the
   // child looks at it for the journal. A thin body between the two wings so it reads at a couple of metres.
-  const butterfly=new T.Group(),wings=[];for(const side of [-1,1]){const w=part(butterfly,sphere,mat('#edc85f'),[side*.12,0,0],[.15,.02,.2]);wings.push(w);}
+  const butterfly=new T.Group(),wings=[];
+  const wingShape=new T.Shape();wingShape.moveTo(0,0);wingShape.bezierCurveTo(.09,.24,.32,.25,.28,.06);wingShape.bezierCurveTo(.23,-.01,.26,-.12,.13,-.16);wingShape.bezierCurveTo(.04,-.18,.02,-.07,0,0);
+  const wingGeo=new T.ShapeGeometry(wingShape,10);wingGeo.rotateX(-Math.PI/2);
+  for(const side of [-1,1]){const w=new T.Group();w.scale.x=side;butterfly.add(w);wings.push(w);const membrane=new T.Mesh(wingGeo,mat('#e7cb63',{side:T.DoubleSide}));w.add(membrane);
+    for(const [x,z,r] of [[.19,-.12,.027],[.16,.085,.018]]){const spot=new T.Mesh(new T.CircleGeometry(r,14).rotateX(-Math.PI/2),mat('#876e3c',{side:T.DoubleSide}));spot.position.set(x,.002,z);w.add(spot);}}
+  for(const side of [-1,1]){const antenna=part(butterfly,cylinder,mat('#57452e'),[side*.025,.025,.085],[.004,.08,.004]);antenna.rotation.z=side*.4;}
+
   part(butterfly,sphere,mat('#4a3a2a'),[0,0,0],[.018,.012,.07]);scene.add(butterfly);
   const butterflySpot=ANIMALS.find(a=>a.id==='butterfly'),butterflyHome=worldAt(butterflySpot.s,butterflySpot.offset);butterflyHome.y=terrain(butterflyHome.x,butterflySpot.s);
   const observationSignals=[];
@@ -687,9 +911,17 @@ export async function createWorld(canvas){
   {const sheet=new T.Mesh(fallingWater,cascadeMat);sheet.position.set(fallsX,fallsTop,-fallsS);sheet.scale.set(1.15,fallsTop-poolY,1.35);sheet.renderOrder=3;scene.add(sheet);
     const lip=new T.Mesh(new T.CircleGeometry(1.5,18).rotateX(-Math.PI/2),new T.MeshPhysicalMaterial({color:'#78b3b1',roughness:.2,transparent:true,opacity:.86,clearcoat:.3,depthWrite:false}));lip.position.set(fallsX,fallsTop+.02,-(fallsS+1.3));lip.scale.z=.8;scene.add(lip);
     for(let i=0;i<4;i++){const ring=new T.Mesh(foamGeo,foamMat);const r=.9+i*.25;ring.scale.set(r,1,r);ring.position.set(fallsX-.9+i*.6,poolY+.015,-(fallsS-1.4-i*.35));scene.add(ring);ripples.push(ring);ring.userData={s:fallsS-1.4-i*.35,phase:i*1.7,radius:r,foam:true};}}
-  const spray=Array.from({length:8},(_,i)=>{const m=new T.Mesh(sphere,new T.MeshBasicMaterial({color:'#f2fbf7',transparent:true,opacity:0,depthWrite:false}));m.userData.i=i;m.castShadow=m.receiveShadow=false;scene.add(m);return m;});
+  // A shared soft alpha mask gives spray a vapor edge instead of visible spheres.
+  const sprayCanvas=document.createElement('canvas');sprayCanvas.width=sprayCanvas.height=64;
+  const sprayCtx=sprayCanvas.getContext('2d'),sprayFade=sprayCtx.createRadialGradient(32,32,0,32,32,32);
+  sprayFade.addColorStop(0,'rgba(255,255,255,.7)');sprayFade.addColorStop(.4,'rgba(255,255,255,.35)');sprayFade.addColorStop(1,'rgba(255,255,255,0)');sprayCtx.fillStyle=sprayFade;sprayCtx.fillRect(0,0,64,64);
+  const sprayMap=new T.CanvasTexture(sprayCanvas);
+  const spray=Array.from({length:8},(_,i)=>{const m=new T.Sprite(new T.SpriteMaterial({map:sprayMap,color:'#e4f1ec',transparent:true,opacity:0,depthWrite:false}));m.userData.i=i;scene.add(m);return m;});
   const rainbow=new T.Group();rainbow.position.set(fallsX+.5,poolY+.75,-(fallsS-1.7));rainbow.rotation.y=-.35;scene.add(rainbow);
-  ['#ff7b7b','#ffb65c','#ffe878','#8fd99a','#73b9ff','#b79bff'].forEach((color,i)=>{const arc=new T.Mesh(new T.TorusGeometry(2.05-i*.11,.055,4,40,Math.PI),new T.MeshBasicMaterial({color,transparent:true,opacity:0,depthWrite:false,side:T.DoubleSide}));arc.castShadow=arc.receiveShadow=false;rainbow.add(arc);});
+  ['#ff7b7b','#ffb65c','#ffe878','#8fd99a','#73b9ff','#b79bff'].forEach((color,i)=>{const arc=new T.Mesh(new T.RingGeometry(2.00-i*.11,2.11-i*.11,64,1,0,Math.PI),new T.MeshBasicMaterial({color,transparent:true,opacity:0,depthWrite:false,side:T.DoubleSide}));arc.material.onBeforeCompile=shader=>{shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vBow;').replace('#include <begin_vertex>','#include <begin_vertex>\nvBow=position.xy;');shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 vBow;').replace('#include <color_fragment>',`#include <color_fragment>
+        float edge=(length(vBow)-${(2.00-i*.11).toFixed(2)})/.11;
+        diffuseColor.a*=smoothstep(0.,.28,edge)*(1.-smoothstep(.72,1.,edge))*smoothstep(0.,.65,vBow.y);
+      `);};arc.material.customProgramCacheKey=()=> 'mist-bow-'+i;arc.castShadow=arc.receiveShadow=false;rainbow.add(arc);});
   rainbow.visible=false;
   // 전망대: a timber viewing rail on the valley edge of the lookout rock and a fingerpost naming the two directions.
   const labelTexture=(label,px=46)=>{const c=document.createElement('canvas');c.width=512;c.height=128;const ctx=c.getContext('2d');ctx.fillStyle='#765231';ctx.fillRect(0,0,512,128);for(let i=0;i<18;i++){ctx.strokeStyle=i%2?'#d4b88355':'#33281550';ctx.lineWidth=1+i%3;ctx.beginPath();ctx.moveTo(0,i*7);ctx.bezierCurveTo(140,i*7-8,350,i*7+10,512,i*7-2);ctx.stroke();}ctx.strokeStyle='#4f3824';ctx.lineWidth=9;ctx.strokeRect(5,5,502,118);ctx.fillStyle='#fff0cd';ctx.font=`600 ${px}px SUIT, sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,256,64);const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;return tex;};
@@ -728,8 +960,11 @@ export async function createWorld(canvas){
     scatter.instanceMatrix.needsUpdate=true;}
   placeLeaves(0,true);scatter.computeBoundingSphere();
   const woodlandFog=new T.Color('#d5e0d7');
-  const photoSlot=new T.Vector3();
-  return {renderer,scene,camera,panorama,sun,posts,squirrel,songbird,bp,butterfly,creekBench:seatGroups[0],seatGroups,rustleBush,climbTree,piles,bridge,falls,leaf:driftingLeaf,lookoutFlag,friends,upgrades,
+  // The scene root and these stone chunks never move; animated children keep their own updates.
+  scene.updateMatrix();scene.matrixAutoUpdate=false;
+  for(const chunk of stepChunks.values())chunk.traverse(o=>{o.updateMatrix();o.matrixAutoUpdate=false;});
+  const photoSlot=new T.Vector3(),frameMood=[];
+  return {renderer,scene,camera,wildlife,fernProp,panorama,sun,posts,squirrel,songbird,bp,butterfly,creekBench:seatGroups[0],seatGroups,rustleBush,climbTree,piles,bridge,falls,leaf:driftingLeaf,lookoutFlag,friends,upgrades,
     photoPosed:()=>photoMemo.posed,fallsSeen:()=>fallsMemo.seen,leafRested:()=>leafMemo.rested,
     resetWildlife(){squirrelMemo.revealed=false;squirrelMemo.climbed=false;leafMemo.rested=false;fallsMemo.seen=false;photoMemo.posed=false;photoMemo.sliding=false;greetMemo.shelter=false;greetMemo.until=-1;
       for(const key of Object.keys(friends)){const h=friendRoutines[key].home;Object.assign(motions[key],{s:h.s,offset:h.offset,yaw:h.yaw,activity:h.activity,moving:false,arrived:true,routine:null,index:0,elapsed:0});settle(key);}},
@@ -737,6 +972,11 @@ export async function createWorld(canvas){
     // `life` (optional, from app.mjs) describes the hiking-life activities this frame: {focus:'bird'|'butterfly'|'chipmunk'|null,
     // focusT:0..1, picnic:{active,seat,eating}, noodle:{active,eating}, cheerUntil:time}. Null keeps the previous behaviour.
     update(time,s,idle,reduced,observation=null,hero=null,life=null){
+      // Fog hides distant fine plants; retain all ridge trees so valley views and photos keep their silhouette.
+      for(const chunk of forestChunks){const distance=Math.max(chunk.from-s,s-chunk.to,0),vista=s>515&&(chunk.kind==='leaf'||chunk.kind.startsWith('tree')||chunk.kind.startsWith('rock'));
+        chunk.mesh.visible=vista||distance<(chunk.kind.startsWith('garden_')?65:180);chunk.mesh.castShadow=chunk.shadow&&distance<50;
+      }
+      atmosphere.update(s);
       const events={leafKick:false};
       const pose=(actor,activity)=>actor.pose(0,false,time,true,reduced,0,actorActivity(actor,activity));
       // 정상 단체 사진: while the child takes the group photo (and afterwards, as long as they stay on the deck) the summit
@@ -780,10 +1020,10 @@ export async function createWorld(canvas){
         settle(key);
         actor.pose(m.traveled,m.moving,time,!m.moving,reduced,m.moving?grade(m.s)*-Math.cos(m.yaw):0,actorActivity(actor,m.moving?'look':m.activity));
       }
-      const mood=keyed(moods,s);scene.fog.color.copy(mood[1]);scene.fog.density=mood[2]+(observation?.spot===578?-.0008:0);sun.color.copy(mood[3]);sun.intensity=mood[4];
-      hemi.color.copy(mood[5]);hemi.groundColor.copy(mood[6]);hemi.intensity=mood[7];fill.color.copy(mood[8]);fill.intensity=mood[9];
+      const mood=keyed(moods,s,frameMood);scene.fog.color.copy(mood[1]);scene.fog.density=mood[2]*.68+(observation?.spot===578?-.0008:0);sun.color.copy(mood[3]);sun.intensity=mood[4]*1.12;
+      hemi.color.copy(mood[5]);hemi.groundColor.copy(mood[6]);hemi.intensity=mood[7]*.90*.90;fill.color.copy(mood[8]);fill.intensity=mood[9]*.82;
       // Contact shadows take the section's shade tint and firm up slightly under stronger sun (no extra lights or passes).
-      const contactStrength=.22+.08*clamp((mood[4]-3.9)/.7,0,1);contactMat.color.copy(mood[10]);contactMat.opacity=contactStrength;scene.userData.actorContact.color.copy(mood[10]);scene.userData.actorContact.opacity=contactStrength+.05;
+      const contactStrength=.30+.08*clamp((mood[4]-3.9)/.7,0,1);contactMat.color.copy(mood[10]);contactMat.opacity=contactStrength;scene.userData.actorContact.color.copy(mood[10]);scene.userData.actorContact.opacity=contactStrength+.05;
       gust.value=1+1.6*smoothstep(s,505,560)*(1-.25*smoothstep(s,650,712));
       waterTime.value=reduced?0:time;windTime.value=reduced?0:time;
       flow.offset.y=reduced?0:-time*.018;flow.offset.x=reduced?0:Math.sin(time*.13)*.018;
@@ -810,9 +1050,10 @@ export async function createWorld(canvas){
       tail.rotation.x=-.20+(wild?settled*(observation.id==='wait'?.16:.42):drawn?.3*focusT:Math.sin(ambientTime*2)*.045);
       // Sitting up for the journal: the body tips back a little (nut held to the mouth), nothing else moves.
       squirrel.rotation.x+=drawn?-.35*focusT:0;
+      wildlife.update(time,s,reduced,life,hero);
       const shake=near&&!(wild&&observation.done)&&!drawn&&!reduced?Math.sin(time*9)*Math.sin(time*2.3)*.06*(1+peek):0;rustleBush.scale.set(1.3*(1+shake),1.1*(1-shake*.5),1.3*(1+shake));rustleBush.rotation.y=shake*.5;
       const birdWatching=observation?.spot===115,waterWatching=[210,362].includes(observation?.spot),age=reduced?1.5:(observation?.elapsed||0);
-      for(const p of perches)p.group.rotation.z=reduced?0:Math.sin(time*1.1+p.phase)*.035+Math.sin(time*3.7+p.phase)*.008;
+      for(const p of perches){p.group.rotation.z=reduced?0:Math.sin(time*1.1+p.phase)*.035+Math.sin(time*3.7+p.phase)*.008;p.bird.userData.head.rotation.y=reduced?0:Math.sin(time*.9+p.phase)*.32;p.bird.userData.head.rotation.z=reduced?0:Math.sin(time*.65+p.phase)*.08;}
       const birdDrawn=focus==='bird';
       songbird.position.y=birdDrawn?(reduced?0:Math.max(0,Math.sin(focusT*Math.PI*2))*.09):(birdWatching&&observation.id==='watch'&&!reduced?Math.sin(Math.min(age/2.5,1)*Math.PI)*.12:0);
       perches[1].bird.rotation.y=Math.sin(ambientTime*.6+1)*.3;
@@ -858,10 +1099,10 @@ export async function createWorld(canvas){
       {const watching=observation?.spot===SCENIC.waterfall.stop&&observation.id==='falls',near=Math.abs(s-fallsS)<60;
         if(watching&&(reduced||observation.elapsed>1.6))fallsMemo.seen=true;
         const bow=watching?(reduced?1:clamp((observation.elapsed-1.6)/1.4,0,1)):fallsMemo.seen&&Math.abs(s-fallsS)<50?.75:0;
-        rainbow.visible=bow>0;if(rainbow.visible)rainbow.children.forEach((arc,i)=>arc.material.opacity=.62*bow*(1-i*.04));
+        rainbow.visible=bow>0;if(rainbow.visible)rainbow.children.forEach((arc,i)=>arc.material.opacity=.26*bow*(1-i*.04));
         for(const m of spray){const i=m.userData.i,ph=reduced?(i*.37)%1:(time*.45+i*.37)%1;m.visible=near;if(!near)continue;
           m.position.set(fallsX-1.1+(i%4)*.7+(reduced?0:Math.sin(time*.8+i)*.18),poolY+.25+ph*2.4,-(fallsS-1.0)+Math.sin(i*2.1)*.5+ph*1.1);
-          m.scale.setScalar(.22+ph*.55);m.material.opacity=(.07+(watching?.13:0))*(1-ph)*Math.min(1,ph*4);}}
+          m.scale.set(1.1+ph*1.5,1.2+ph*1.8,1);m.material.opacity=(.16+(watching?.20:0))*(1-ph)*Math.min(1,ph*4);}}
       if(flag)flag.rotation.y=reduced?0:Math.sin(time*2.6)*.12+Math.sin(time*.9)*.08;
       if(marker)marker.rotation.y=reduced?0:Math.sin(time*2.9+1)*.14+Math.sin(time*.8)*.08;
       if(hero){for(const pile of piles){if(hero.moving&&Math.hypot(hero.x-pile.x,hero.z-pile.z)<1.25&&time-pile.kick>2.2){pile.kick=time;events.leafKick=true;}}}
@@ -1019,3 +1260,10 @@ export function createChild(scene,bagColor='#d6ad47',teacher=false,variant=0,hat
     if(activity==='pour'){for(let i=0;i<2;i++){arms[i].rotation.x=-1.25*restBlend;arms[i].rotation.z=(i?-1:1)*.14*restBlend;elbows[i].rotation.x=-.55*restBlend;hands[i].rotation.set(-.2*restBlend,(i?1:-1)*.5,0);}head.rotation.x=.26*restBlend;head.rotation.y=0;}
   }};
 }
+
+
+
+
+
+
+

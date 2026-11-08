@@ -14,7 +14,7 @@ const num=(v,min,max)=>typeof v==='number'&&Number.isFinite(v)?Math.max(min,Math
 export function validateLook(raw){
   const o=raw&&typeof raw==='object'?raw:{};
   const variant=num(o.variant,0,LOOK.variants-1),hat=num(o.hat,0,LOOK.hats-1),bag=num(o.bag,0,LOOK.bags.length-1);
-  return {variant:Math.round(variant??0),hat:Math.round(hat??0),bag:Math.round(bag??0)};
+  return {variant:Math.round(variant??0),hat:Math.round(hat??0),bag:Math.round(bag??0),...(['girl-a','girl-b','boy-a','boy-b'].includes(o.character)?{character:o.character}:{})};
 }
 // Trail coordinates only: lateral offset, distance along the trail, gaze, pose and seat index.
 export function validateState(raw,length){

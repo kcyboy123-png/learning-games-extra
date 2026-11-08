@@ -3,8 +3,8 @@
 // update() only moves/scales/shows existing objects (no geometry or texture work per frame). Hand-held items are placed at
 // the world positions app.mjs reads from the rigs each frame, so Tripo and procedural characters work the same way.
 import * as T from './vendor/three.module.js';
-import {worldAt,elevation,pathSlope} from './trail.mjs?v=forest-public-20261108';
-import {LITTER,litterById,picnicLayout,NOODLE_SPOT,MEALS} from './lib/life.mjs?v=forest-public-20261108';
+import {worldAt,elevation,pathSlope} from './trail.mjs?v=forest-full-qa-20261107';
+import {LITTER,litterById,picnicLayout,NOODLE_SPOT,MEALS} from './lib/life.mjs?v=forest-full-qa-20261107';
 const std=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.86,metalness:0,...extra});
 const sphere=new T.SphereGeometry(1,12,9),box=new T.BoxGeometry(1,1,1),cyl=new T.CylinderGeometry(1,1,1,14),disc=new T.CircleGeometry(1,16).rotateX(-Math.PI/2);
 function part(parent,geo,m,p,s,shadow=true){const o=new T.Mesh(geo,m);o.position.set(...p);o.scale.set(...s);o.castShadow=shadow;o.receiveShadow=shadow;parent.add(o);return o;}

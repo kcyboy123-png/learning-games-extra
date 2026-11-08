@@ -1,8 +1,8 @@
 // Pure course helpers shared by the app and node:test. No DOM, no three.js.
 import {sections,sectionAt,sectionIndex,LENGTH,SPEED,elevation,stops,SUMMIT} from '../trail.mjs';
-import {ANIMALS} from './life.mjs';
-const experiences=[...stops,...ANIMALS.filter(a=>!stops.some(p=>p.s===a.s)).map(a=>({...a,name:a.label}))].sort((a,b)=>a.s-b.s);
-export function nextExperience(s){const p=experiences.find(p=>s<p.s+p.r);return p?(Math.abs(s-p.s)<p.r?'여기서 · ':'다음 · ')+p.name+(Math.abs(s-p.s)<p.r?'':' '+Math.ceil(p.s-s)+' m'):'정상에 도착했어요';}
+import {ANIMALS,ENCOUNTER_SITES,animalNear} from './life.mjs';
+const experiences=[...stops,...ANIMALS.filter(a=>!ENCOUNTER_SITES[a.id]&&!stops.some(p=>p.s===a.s)).map(a=>({...a,name:a.label}))].sort((a,b)=>a.s-b.s);
+export function nextExperience(s,life){const animal=life&&animalNear(s,life);if(animal&&ENCOUNTER_SITES[animal.id])return '여기서 · '+animal.label;const p=experiences.find(p=>s<p.s+p.r);return p?(Math.abs(s-p.s)<p.r?'여기서 · ':'다음 · ')+p.name+(Math.abs(s-p.s)<p.r?'':' '+Math.ceil(p.s-s)+' m'):'정상에 도착했어요';}
 // Where the solo teacher character waits for the child; the guide stays ahead until the summit.
 export const guideSpots=[
   {s:36,offset:-2.2,activity:'look',yaw:Math.PI*.72},

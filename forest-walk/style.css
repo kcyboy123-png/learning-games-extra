@@ -170,3 +170,19 @@ body[data-mode=paused] #explorer,body[data-mode=error] #explorer{visibility:hidd
 #intro .room-share>.attendance{display:none}#lobby-status{margin-block:8px}.room-share .hint{margin:8px 0;font-size:12px}
 
 .share-layout:has(img[hidden]){grid-template-columns:1fr}
+
+/* Thumb joystick on touch devices; keyboard and optional directional buttons remain available. */
+#joystick-wrap,#control-mode{display:none}body.touch-controls:not(.button-controls) #pad{display:none}
+body.touch-controls:not(.button-controls) #joystick-wrap{display:flex;flex-direction:column;align-items:center;gap:7px;position:fixed;left:max(18px,env(safe-area-inset-left));bottom:max(70px,calc(env(safe-area-inset-bottom) + 56px));width:144px;user-select:none;-webkit-user-select:none}
+#joystick{width:132px;height:132px;position:relative;display:grid;place-items:center;touch-action:none;border:2px solid #f6f4e5dc;border-radius:50%;background:radial-gradient(circle,#ecedd466 30%,#244c4699 75%);box-shadow:0 3px 14px #133d4230,inset 0 0 0 17px #fff2}
+#joystick-knob{width:56px;height:56px;min-height:56px;border-radius:50%;background:#f5edc9;border:2px solid #fffdf1;box-shadow:0 3px 8px #14382e55;touch-action:none;padding:0}
+#joystick.active #joystick-knob{background:#f0d279}#joystick-hint{font-size:12px;color:#234c3d;background:#f7f5e8eb;padding:4px 8px;border-radius:8px;white-space:nowrap}.stick-north{position:absolute;top:8px;color:#fffdf1;font-size:13px;font-weight:600;pointer-events:none}
+body.touch-controls #control-mode{display:block;position:fixed;left:max(18px,env(safe-area-inset-left));bottom:max(16px,env(safe-area-inset-bottom));width:144px;min-height:44px;border-radius:24px;color:#234c3d;background:#f7f5e8e8;font-size:13px}
+body.touch-controls.button-controls #pad{bottom:max(70px,calc(env(safe-area-inset-bottom) + 56px))}
+body:not([data-mode=playing]) #joystick-wrap,body:not([data-mode=playing]) #control-mode{visibility:hidden}
+@media(max-height:520px){body.touch-controls:not(.button-controls) #joystick-wrap{bottom:60px;width:126px}#joystick{width:112px;height:112px}#joystick-knob{width:50px;height:50px;min-height:50px}body.touch-controls #control-mode{width:126px;bottom:10px}#joystick-hint{font-size:11px}}
+
+body.touch-controls .keyboard-hint{display:none}
+
+/* Keep departure visible while optional observation content scrolls. */
+.rest{overflow:hidden}.rest-content{display:flex;flex-direction:column;gap:8px;min-height:0;overflow:auto;overscroll-behavior:contain}.rest #leave-rest{flex-shrink:0}

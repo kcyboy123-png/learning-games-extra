@@ -1,0 +1,82 @@
+/* Trailhead sign, compact hiking tools, and a safe pause menu. */
+body{--paper:#fffdf8;--forest:#254f40}button{transition:background .15s,transform .15s}button:active{transform:translateY(1px)}
+body header{background:none;border:0;box-shadow:none;inset:18px 22px auto;height:auto;padding:0;pointer-events:none}
+header .brand{background:#fffdf8ee;color:#244d3e;border-radius:5px;padding:10px 14px;font-size:16px;box-shadow:0 2px 9px #17382a20;border-left:5px solid #e5b649}
+header .brand svg{display:none}header .tools{gap:10px}header .tools button{height:48px;border-radius:7px;background:#fffdf8f5;color:#254c3f;border:1px solid #dbe1d0;min-width:48px;box-shadow:0 2px 7px #142a2720}
+header .tools #pause{width:auto;display:flex;align-items:center;gap:8px;padding:0 15px;font-size:23px}header #pause span{font-size:14px;font-weight:700}header #journal-open svg{width:21px;height:21px}
+body[data-mode=intro] header{display:none}
+body #intro.sheet{left:6vw;right:auto;top:50%;bottom:auto;transform:translateY(-50%);width:410px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 40px);padding:26px 30px;background:#fffdf8f5;border:0;border-radius:9px;box-shadow:0 15px 55px #183c3330;backdrop-filter:blur(4px);border-top:7px solid #e5b649}
+#intro .trail-badge{display:inline-block;color:#57705d;font-size:13px;font-weight:700}
+#intro.sheet #welcome{font-size:52px;line-height:1.05;letter-spacing:-.065em;margin:12px 0 16px;font-weight:850;color:#244c3b}
+#intro .intro-line{font-size:16px;line-height:1.65;margin:0}#intro .route-art{width:100%;height:108px;display:block;margin:8px 0}
+#intro #plan-note{font-size:13px;margin:6px 0 18px;color:#536552;line-height:1.5}
+.entry-tabs{display:flex;gap:0;margin-bottom:14px;border-bottom:2px solid #e1e6da}.entry-tabs button{flex:1;background:none;border-radius:0;font-size:15px;color:#677366;font-weight:700;border-bottom:3px solid transparent;margin-bottom:-2px}.entry-tabs button[aria-pressed=true]{color:#234c3d;border-color:#234c3d}
+#intro #start{background:#e5b649;color:#24382b;border-radius:7px;min-height:54px;font-size:18px;letter-spacing:0;margin:14px 0 0;box-shadow:0 3px 0 #b68c30}
+#intro #look-row{margin:17px 0 0;padding:0;border:0;gap:8px;flex-wrap:wrap;font-size:12px}#intro #look-next{font-size:12px;border:0;text-decoration:underline;padding:0 8px;min-height:44px;background:none;margin:0;width:auto}
+#intro #control-help{font-size:12px;margin:10px 0 0;line-height:1.6;color:#637160}#intro #classroom{border:0;margin:0;padding:0}#intro #classroom h2{display:none}#intro #classroom .hint{font-size:13px;margin:6px 0 12px}
+#intro #join-form{display:grid;grid-template-columns:1fr;gap:9px}#intro #join-code{font-size:24px;letter-spacing:.22em;border-radius:5px;background:white}#intro #join{background:#e5b649;color:#263b2c;border:0;border-radius:5px;font-weight:700;font-size:16px;margin:0}#teacher-entry{margin-top:14px;font-size:13px}#join-note:empty{display:none}#intro:has(.room-share:not([hidden])) .route-art{display:none}
+body #paused.sheet{width:380px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 40px);padding:28px;background:#fffdf8;border-radius:10px;border:0;box-shadow:0 0 0 100vmax #0f281d66,0 20px 70px #10281955;text-align:left;z-index:30;top:50%;left:50%;bottom:auto;transform:translate(-50%,-50%)}
+.menu-kicker{font-size:12px;color:#6c7b65;font-weight:700}#paused h2{font-size:30px;margin:7px 0 10px}#paused>p{font-size:14px;color:#64705f;margin:0 0 22px}.menu-row{display:block;width:100%;text-align:left;padding:13px 14px;background:#eef2e8;color:#2c4b3b;border-radius:6px;margin:8px 0;font-size:15px;font-weight:650}.menu-row[aria-pressed=true]::after{content:'●';float:right;color:#42815a}.menu-row[aria-pressed=false]::after{content:'○';float:right}
+.menu-help{padding:12px 0;margin-bottom:12px;border-bottom:1px solid #e1e5da}.menu-help summary{font-size:14px;min-height:44px;cursor:pointer;display:flex;align-items:center}.menu-help summary::before{content:'＋';margin-right:9px}.menu-help[open] summary::before{content:'−'}.menu-help p{font-size:13px;line-height:1.8;margin:4px 0 12px}
+body #paused #control-mode{position:static;display:block;visibility:visible;width:100%;border-radius:6px;background:#e4e9dc;font-size:13px;padding:10px;min-height:44px}#paused #resume{background:#e5b649;color:#263b2c;border-radius:6px;font-size:17px}
+body .location{top:84px;left:22px;background:#fffdf8eb;border-radius:5px;border-left:3px solid #71946c;box-shadow:none;width:178px;padding:10px 12px}body .location #height{display:none}
+body #note{border-radius:6px;background:#fffdf8ed;font-size:14px;box-shadow:0 2px 8px #23472b18}
+body.touch-controls:not(.button-controls) #joystick-wrap{bottom:max(24px,env(safe-area-inset-bottom));left:22px;gap:7px;width:128px}
+#joystick{width:118px;height:118px;background:#2b4c4352;border:1px solid #fff9;box-shadow:inset 0 0 0 12px #fff1,0 3px 18px #152e2630}#joystick-knob{width:52px;height:52px;min-height:52px;background:#fffdf0;border:3px solid #f1d488;box-shadow:0 3px 9px #173b3355}#joystick-hint{background:none;text-shadow:0 1px 5px #163829,0 1px 5px #163829;color:white;font-size:11px;padding:0}
+body.touch-controls.button-controls #pad{bottom:25px}body .action,body #pack button{border-radius:8px}body .action{background:#254f40;color:white;border:1px solid #fff7}body #pack button{background:#fffdf8f2}
+@media(max-width:700px){body header{inset:12px 12px auto}header .brand{font-size:13px;padding:10px}.brand span{display:inline!important}header .tools #pause{padding:0 11px}header #pause span{display:none}header #journal-open span{display:none}header .tools{gap:7px}body .location{top:76px;left:12px;width:166px}body #note{top:166px;left:16px;right:16px;width:auto;max-width:none;transform:none;font-size:12px}body #intro.sheet{left:16px;max-height:calc(100dvh - 24px);padding:22px 24px;width:calc(100% - 32px)}#intro.sheet #welcome{font-size:43px;line-height:1.05;margin:10px 0 14px}#intro .route-art{height:94px}body.touch-controls:not(.button-controls) #joystick-wrap{left:16px;bottom:max(20px,env(safe-area-inset-bottom))}body #paused.sheet{padding:24px}body .action{bottom:145px}}
+@media(max-height:540px){body #intro.sheet{width:480px;left:24px;padding:20px 24px;max-height:calc(100dvh - 24px)}#intro.sheet #welcome{font-size:34px}#intro .trail-heading{display:flex;align-items:center;gap:18px}#intro .trail-badge{display:none}#intro .intro-line{font-size:13px}#intro .route-art{height:65px;margin:0}#intro #plan-note{display:none}#intro #look-row{margin:5px 0}#intro #control-help{display:none}body.touch-controls:not(.button-controls) #joystick-wrap{bottom:16px;width:110px}#joystick{width:96px;height:96px}#joystick-knob{width:46px;height:46px;min-height:46px}#joystick-hint{display:none}}
+@media(prefers-reduced-motion:reduce){button{transition:none}}
+
+/* Second pass: a shorter trail sign, with departure at the end of the choice. */
+#intro.sheet #welcome{font-size:41px;letter-spacing:-.065em;white-space:nowrap}#intro #look-row{margin:8px 0}#intro #control-help{font-size:12px;line-height:1.5}#intro .route-art{height:96px}#intro .trail-heading{border-left:4px solid #e5b649;padding-left:15px}#intro #start{margin-top:16px}#intro .intro-line{font-size:15px}
+@media(max-width:700px){#intro.sheet #welcome{font-size:36px}#intro .route-art{height:84px}#intro #plan-note{margin-bottom:12px}#intro .intro-line{font-size:14px}}
+@media(max-height:540px){#intro.sheet #welcome{font-size:30px}#intro .route-art{height:58px}.entry-tabs button{min-height:44px}#intro #start{margin-top:8px}}
+
+/* Third pass: the trail name reads as a real forest sign; choices stay on the light surface. */
+body #intro.sheet{border-radius:5px;padding-top:0;overflow-x:hidden}
+#intro .trail-heading{margin:0 -30px 16px;padding:22px 30px 20px;background:#234e3d;border:0;color:#fffdf2}
+#intro .trail-heading #welcome{color:#fffdf2;margin:8px 0 12px;font-weight:800}
+#intro .trail-badge{color:#edd38e;font-weight:650}#intro .intro-line{color:#e0e9d8}
+#intro #look-row{min-height:44px;align-items:center}#look-name{background:#edf0e4;padding:5px 9px;border-radius:4px;color:#4d634c}
+#intro #look-next{color:#284e3d;text-underline-offset:4px}
+@media(max-width:700px){#intro .trail-heading{margin:0 -24px 14px;padding:20px 24px 18px}body #intro.sheet{padding-top:0}}
+@media(max-height:540px){#intro .trail-heading{margin:0 -24px 10px;padding:12px 24px;display:flex;gap:20px}#intro .trail-heading #welcome{font-size:28px;margin:0}#intro .intro-line{font-size:12px}body #intro.sheet{padding-top:0}}
+
+#menu-shade{display:none}body[data-mode=paused] #menu-shade{display:block;position:fixed;inset:0;background:#102a225e;z-index:29}body #paused.sheet{box-shadow:0 20px 70px #10281955}
+
+#joystick{cursor:grab}#joystick.active{cursor:grabbing}
+
+/* Match the timber trail sign while keeping all controls readable and unobstructed. */
+header .brand{background:#d4c1a0 url('./assets/target-cedar.webp') center/180px;border:1px solid #ab9370;border-left:0;box-shadow:0 3px 9px #172e3550;border-radius:9px 6px 8px 4px;color:#23452f;text-shadow:0 1px #f7edcc;font-weight:800}
+header .tools button{border-radius:18px;background:#fffdf2f2}
+/* Keep the portrait landscape visible above the scrollable observation card. */
+@media(max-width:700px) and (orientation:portrait){#rest{top:auto;bottom:max(12px,env(safe-area-inset-bottom));max-height:38dvh}}
+/* Overhaul UI 1: one trail marker, leaving the centre of the view clear. */
+body header .brand{position:relative;width:208px;min-height:44px;border-radius:9px;padding:10px 14px;border-bottom:2px solid #9e8056}
+body header .brand::before,body header .brand::after{content:'';position:absolute;top:-22px;width:4px;height:28px;background:repeating-linear-gradient(30deg,#8c704b 0 2px,#c0a578 2px 4px);border-radius:3px;pointer-events:none}
+body header .brand::before{left:22px}body header .brand::after{right:22px}
+body .location{top:70px;left:22px;width:190px;border:1px solid #d9e2cb44;border-radius:7px;background:#203d32eb;color:#fff8e4;padding:7px 11px;backdrop-filter:none}
+body .location>span{font-size:14px;font-weight:750}body .location small{font-size:11px;color:#e1e8d3}body .location .trail-line{height:3px;margin-top:5px;background:#ffffff26}
+body .location #next-experience,body .location #room-status{color:#e1e8d3}
+body .location #gather-status{color:#ffe1a0}
+body #note{top:18px;font-size:13px;max-width:calc(100% - 640px);padding:10px 15px;background:#fffdf1ed;border:1px solid #fff8}
+@media(max-width:700px){body header .brand{width:176px;min-height:42px;font-size:13px}body .location{top:62px;left:12px;width:176px;padding:6px 10px}body #note{top:148px;left:16px;right:16px;max-width:none;font-size:12px}}
+@media(max-height:540px) and (min-width:701px){body #note{top:18px;max-width:calc(100% - 480px)}}
+/* Overhaul UI 2: field notes with a clear action, instead of stacked cards. */
+body #rest{background:#fffaf0f5;border:1px solid #e1d5b8;border-radius:10px;padding:20px 22px;box-shadow:0 8px 28px #15312530;backdrop-filter:none}
+#rest .eyebrow{font-size:11px;letter-spacing:.09em;color:#7e7154;font-weight:750}#rest h2{font-size:25px;letter-spacing:-.04em;margin:5px 0 10px}
+#rest .life-actions{border-top:1px solid #dcd7c6;padding-top:12px;margin-top:14px}#rest .life-buttons{gap:8px}#rest .life-buttons button{border:1px solid #b9c4ac;background:#edf2e6;border-radius:7px;min-height:46px}
+#rest #leave-rest{background:#244d3d;border-radius:7px;min-height:48px;margin-top:12px}
+body .action.animal-near{background:#efd18a;color:#263f2d;border:2px solid #fff5cf;box-shadow:0 4px 15px #17302044;font-weight:800}
+body #journal{background:#fffaf0;border-radius:9px;border:1px solid #d7cdb2;padding:25px;backdrop-filter:none}
+#journal-entries li{border-bottom:1px solid #ded7c7;padding:14px 0;gap:18px}#journal-entries .journal-art{background-color:#e5eadb;border-radius:50%;box-shadow:inset 0 0 0 1px #b4c0a7}
+#journal h2{font-size:28px;margin:0 0 12px}#journal .hint{font-size:13px;line-height:1.6}#journal #journal-close{position:sticky;bottom:0;box-shadow:0 -8px 14px #fffaf0}
+@media(max-width:700px){body #rest{padding:15px 17px}#rest h2{font-size:21px}body #journal{padding:18px}#journal-entries li{gap:12px}.action.animal-near kbd{display:none}}
+/* Overhaul UI 3: show the actual wildlife before departure; pause explains where to resume. */
+.wildlife-peek{display:flex;align-items:center;gap:4px;border-block:1px solid #e1d9c5;padding:7px 0;margin:4px 0 9px}.wildlife-peek img{width:59px;height:59px;object-fit:contain}.wildlife-peek span{font-size:12px;line-height:1.6;color:#5d6b53;margin-left:auto}.wildlife-peek b{color:#2f4e37;font-size:13px}
+#intro .route-art{height:72px;margin:0}#intro #plan-note{font-size:12px;margin:4px 0 12px}#intro .entry-tabs button[aria-selected=true]{background:#e8d79f;color:#294b35}
+body #paused.sheet{border-top:5px solid #d5b66d;border-radius:8px}#paused .menu-row{background:#eef0e6;border:1px solid #dae0cd}#paused #resume{box-shadow:0 3px 0 #b59b53}
+@media(max-width:700px){.wildlife-peek img{width:49px;height:49px}#intro .route-art{height:60px}.wildlife-peek span{font-size:11px}.wildlife-peek b{font-size:12px}}
+@media(max-height:540px){.wildlife-peek{display:none}#intro .route-art{height:50px}}
+@media(max-width:700px){body:has(#room-status:not([hidden])) #note{top:196px}body:has(#gather-status:not([hidden])) #note{top:226px}}

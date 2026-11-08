@@ -219,24 +219,40 @@ export function contactTexture(){
 
 export function woodlandTree(variant=0){
   const positions=[],normals=[],uv=[],crowns=[];
-  const trunk=new T.CatmullRomCurve3([[0,0,0],[.12-variant*.18,2,.04+variant*.10],[-.45+variant*.38,5,.25],[.35-variant*.35,7.4,-.12],[.16+variant*.2,10,.3]].map(p=>new T.Vector3(...p)));
+  const trunk=new T.CatmullRomCurve3([[0,0,0],[.32-variant*.48,2,.12+variant*.18],[-.85+variant*.82,5,.55-variant*.25],[.65-variant*.72,7.4,-.36],[.3+variant*.35,10,.55]].map(p=>new T.Vector3(...p)));
   function limb(curve,start,end,steps=10,sides=7){
     const g=new T.TubeGeometry(curve,steps,1,sides,false),p=g.attributes.position;
     for(let i=0;i<p.count;i++){const t=Math.floor(i/(sides+1))/steps,center=curve.getPointAt(t),r=end+(start-end)*Math.pow(1-t,.8),v=new T.Vector3().fromBufferAttribute(p,i).sub(center).multiplyScalar(r).add(center);p.setXYZ(i,v.x,v.y,v.z);}
-    const tex=g.attributes.uv;for(let i=0;i<tex.count;i++){const along=tex.getX(i),around=tex.getY(i);tex.setXY(i,around,along*curve.getLength()/2.8);}
+    const tex=g.attributes.uv;for(let i=0;i<tex.count;i++){const along=tex.getX(i),around=tex.getY(i);tex.setXY(i,around*1.35,along*curve.getLength()/1.95);}
     g.computeVertexNormals();const flat=g.toNonIndexed();positions.push(...flat.attributes.position.array);normals.push(...flat.attributes.normal.array);uv.push(...flat.attributes.uv.array);flat.dispose();g.dispose();
   }
   limb(trunk,.48+variant*.11,.07+variant*.02,18,10);
   for(let i=0;i<7;i++){
-    const t=[.43,.52,.57,.67,.71,.80,.85][i]+Math.sin(i*2+variant)*.018,start=trunk.getPointAt(t),a=i*2.399+variant*.75,len=1.65+(i%3)*.72+Math.sin(i+variant)*.35;
-    const mid=start.clone().add(new T.Vector3(Math.cos(a)*len*.55,.35,Math.sin(a)*len*.55));
-    const end=start.clone().add(new T.Vector3(Math.cos(a)*len,1.45+(i%2)*.5,Math.sin(a)*len));
-    limb(new T.CatmullRomCurve3([start,mid,end]),.19-i*.012,.035,8,6);crowns.push({x:end.x,y:end.y,z:end.z,size:1.4+(i%3)*.28});
-    if(i%2===0){const fork=mid.clone().add(new T.Vector3(Math.cos(a+.65)*len*.6,.85,Math.sin(a+.65)*len*.6));limb(new T.CatmullRomCurve3([mid,mid.clone().lerp(fork,.5),fork]),.09,.015,5,5);crowns.push({x:fork.x,y:fork.y,z:fork.z,size:1.2});}
+    const t=[.43,.52,.57,.67,.71,.80,.85][i]+Math.sin(i*2+variant)*.018,start=trunk.getPointAt(t),a=i*2.399+variant*.75+Math.sin(i*3.1+variant)*.42,len=1.5+(i%3)*.95+Math.sin(i+variant)*.5;
+    const mid=start.clone().add(new T.Vector3(Math.cos(a)*len*.48,.30+Math.sin(i+variant)*.28,Math.sin(a)*len*.48));
+    const end=start.clone().add(new T.Vector3(Math.cos(a)*len,.85+(i%3)*.38,Math.sin(a)*len));
+    limb(new T.CatmullRomCurve3([start,mid,end]),.17-i*.011,.022,8,6);crowns.push({x:end.x,y:end.y,z:end.z,size:1.22+(i%3)*.34});
+    if(i%2===0){const fork=mid.clone().add(new T.Vector3(Math.cos(a+.48+variant*.12)*len*.72,.46+(i%3)*.18,Math.sin(a+.48+variant*.12)*len*.72));limb(new T.CatmullRomCurve3([mid,mid.clone().lerp(fork,.5),fork]),.09,.015,5,5);crowns.push({x:fork.x,y:fork.y,z:fork.z,size:1.02+.14*Math.sin(i+variant)**2});}
   }
   crowns.push({x:.2,y:10.3,z:.3,size:1.8});
-  for(let i=0;i<5;i++){const a=i*1.256+variant*.4;limb(new T.CatmullRomCurve3([new T.Vector3(0,.38,0),new T.Vector3(Math.cos(a)*.6,.12,Math.sin(a)*.6),new T.Vector3(Math.cos(a)*1.45,-.07,Math.sin(a)*1.45)]),.25,.025,6,5);}
-  const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));geometry.setAttribute('normal',new T.Float32BufferAttribute(normals,3));geometry.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geometry.computeBoundingSphere();return {geometry,crowns};
+  for(let i=0;i<5;i++){const a=i*1.256+variant*.4;limb(new T.CatmullRomCurve3([new T.Vector3(0,.38,0),new T.Vector3(Math.cos(a)*(.7+variant*.12),.18,Math.sin(a)*(.7+variant*.12)),new T.Vector3(Math.cos(a)*(1.65+.25*Math.sin(i*3+variant)),-.07,Math.sin(a)*(1.65+.25*Math.sin(i*3+variant)))]),.25,.025,6,5);}
+  const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.Float32BufferAttribute(positions,3));geometry.setAttribute('normal',new T.Float32BufferAttribute(normals,3));geometry.setAttribute('uv',new T.Float32BufferAttribute(uv,2));// Broad buttress roots anchor mature trunks without adding polygons.
+  const roots=geometry.attributes.position;
+  for(let i=0;i<roots.count;i++){const y=roots.getY(i),x=roots.getX(i),z=roots.getZ(i),a=Math.atan2(z,x),flare=Math.exp(-Math.max(0,y)*2.1)*(.22+.10*Math.cos(a*5+variant));roots.setXYZ(i,x*(1+flare),y,z*(1+flare));}
+  geometry.computeVertexNormals();
+  // Root deformation needs new normals, but unindexed triangles must still share smooth bark lighting.
+  const treeNormals=geometry.attributes.normal,treeSums=new Map(),treeKeys=[];
+  for(let i=0;i<roots.count;i++){
+    const key=[roots.getX(i),roots.getY(i),roots.getZ(i)].map(v=>v.toFixed(5)).join(',');treeKeys.push(key);
+    if(!treeSums.has(key))treeSums.set(key,new T.Vector3());
+    treeSums.get(key).add(new T.Vector3().fromBufferAttribute(treeNormals,i));
+  }
+  for(let i=0;i<roots.count;i++){const n=treeSums.get(treeKeys[i]).clone().normalize();treeNormals.setXYZ(i,n.x,n.y,n.z);}
+  // Root shade and sun-facing bark variation are baked once into the shared tree geometry.
+  const barkColors=[];
+  for(let i=0;i<roots.count;i++){const y=roots.getY(i),x=roots.getX(i),z=roots.getZ(i),base=.82+.18*T.MathUtils.smoothstep(y,0,2.4),patch=.5+.5*Math.sin(x*5+z*4+variant);barkColors.push(base*(.94+.06*patch),base,base*(.92+.04*patch));}
+  geometry.setAttribute('color',new T.Float32BufferAttribute(barkColors,3));
+  geometry.computeBoundingSphere();return {geometry,crowns};
 }
 
 // Shared small procedural assets: no downloads and one draw call per instanced family.
@@ -258,14 +274,14 @@ export function surfaceTexture(kind){
 
 export function foliageGeometry(){
   const positions=[],normals=[],colors=[],uv=[];
-  const card=new T.PlaneGeometry(1.85,1.5,3,2).toNonIndexed(),p=card.attributes.position;
+  const card=new T.PlaneGeometry(2.05,1.6,3,2).toNonIndexed(),p=card.attributes.position;
   // Curved, intersecting textured branches hold their silhouette from multiple angles.
-  for(let i=0;i<5;i++){
-    const q=new T.Quaternion().setFromEuler(new T.Euler(i===4?-Math.PI/2:.15*Math.sin(i),i*Math.PI/2.5,i===4?0:.22*Math.cos(i)));
+  for(let i=0;i<3;i++){
+    const q=new T.Quaternion().setFromEuler(new T.Euler(-.28-i*.43,i*2.399,.26*Math.cos(i)));
     for(let j=0;j<p.count;j++){
-      const v=new T.Vector3(p.getX(j),p.getY(j),.16*(1-p.getX(j)**2));v.applyQuaternion(q);v.y+=i===4?.25:0;
-      positions.push(v.x,v.y,v.z);const n=v.clone().setY(v.y+.6).normalize();normals.push(n.x,n.y,n.z);
-      const shade=.88+i*.025;colors.push(shade,shade,shade);uv.push(card.attributes.uv.getX(j),card.attributes.uv.getY(j));
+      const v=new T.Vector3(p.getX(j),p.getY(j),.16*(1-p.getX(j)**2));v.x*=.86+.14*Math.cos(p.getY(j)*2.+i);v.applyQuaternion(q);v.x+=Math.cos(i*2.399)*.24;v.z+=Math.sin(i*2.399)*.24;v.y+=.12*Math.sin(i*1.7);
+      positions.push(v.x,v.y,v.z);const n=v.clone().multiply(new T.Vector3(.78,1,.78)).setY(v.y+.88).normalize();normals.push(n.x,n.y,n.z);
+      const shade=.86+i*.025+.07*T.MathUtils.smoothstep(v.y,-.6,.65);colors.push(shade,shade,shade);uv.push(i%2?1-card.attributes.uv.getX(j):card.attributes.uv.getX(j),card.attributes.uv.getY(j));
     }
   }
   card.dispose();const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(positions,3));g.setAttribute('normal',new T.Float32BufferAttribute(normals,3));g.setAttribute('color',new T.Float32BufferAttribute(colors,3));g.setAttribute('uv',new T.Float32BufferAttribute(uv,2));return g;
@@ -275,6 +291,8 @@ export function mossRockGeometry(variant=0){
   const shape=riverStones[variant%3],g=new T.BufferGeometry();
   for(const [name,size] of [['position',3],['normal',3],['uv',2]])g.setAttribute(name,new T.Float32BufferAttribute(shape[name],size));
   const p=g.attributes.position,colors=[],c=new T.Color();
+  for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i);p.setXYZ(i,x*(1+.14*Math.sin(z*2.1+variant)),Math.min(y,.64+variant*.07)+.10*x-.07*z,z*(1+.12*Math.cos(x*2.7+variant)));}
+  g.computeVertexNormals();
   for(let i=0;i<p.count;i++){
     const x=p.getX(i),y=p.getY(i),z=p.getZ(i),n=Math.sin(x*9+z*5)*Math.sin(y*8-z*9);
     const moss=T.MathUtils.smoothstep(y+n*.32+Math.sin(x*8-z*6)*.15,.32,.83)*Math.max(0,g.attributes.normal.getY(i));
@@ -294,10 +312,10 @@ export function creekFoamGeometry(){
   for(let strand=0;strand<3;strand++)for(let i=0;i<32;i++){
     if((i+strand*5)%9<4)continue;
     const at=(t,side)=>{
-      const a=-Math.PI*.18+t*Math.PI*1.35,width=(.006+.016*Math.sin(t*Math.PI))*(.8+.2*Math.sin(t*41+strand));
+      const a=-Math.PI*.12+t*Math.PI*1.18,width=(.005+.012*Math.sin(t*Math.PI))*(.8+.2*Math.sin(t*41+strand));
       if(strand===0){const r=.90+.07*Math.sin(t*17)+side*width;return [Math.cos(a)*r,0,Math.sin(a)*r*.8];}
       const sign=strand===1?-1:1,x=sign*(.86-.43*t+.10*Math.sin(t*7+strand));
-      return [x+side*width*(1-t*.7),0,.12+t*1.9+.07*Math.sin(t*13+strand)];
+      return [x+side*width*(1-t*.7),0,.12+t*2.25+.09*Math.sin(t*13+strand)];
     };
     for(const [t,d] of [[i/32,-1],[(i+1)/32,-1],[i/32,1],[i/32,1],[(i+1)/32,-1],[(i+1)/32,1]])vertices.push(...at(t,d));
   }
@@ -342,7 +360,7 @@ export function broadleafGeometry(detail=0){
     const center=new T.Vector3(Math.cos(a)*r,h,Math.sin(a)*r),q=new T.Quaternion().setFromEuler(new T.Euler(.12+(i%5)*.18,a,.35*Math.sin(i)));
     const length=(.105+(i%4)*.019)*grow,width=length*(.43+.19*(.5+.5*Math.sin(i*2.1))),v=[],idx=[],shades=[],tex=[];
     for(let j=0;j<=segT;j++)for(let k=0;k<=segU;k++){
-      const t=j/segT,u=k/segU*2-1,outline=Math.pow(Math.sin(Math.PI*t),.65),p=new T.Vector3(u*width*outline,.055*(1-u*u)*outline-.04*(t-.5)**2,(t-.5)*length*2);
+      const t=j/segT,u=k/segU*2-1,outline=Math.pow(Math.sin(Math.PI*t),.82),p=new T.Vector3(u*width*outline,.045*(1-u*u)*outline-.065*(t-.5)**2,(t-.5)*length*2);
       p.applyQuaternion(q).add(center);v.push(p.x,p.y,p.z);tex.push(k/segU,t);
       c.set(['#537842','#739950','#8da65a','#53794e'][i%4]).multiplyScalar(.93+.13*(1-Math.abs(u))+.05*t);shades.push(c.r,c.g,c.b);
       if(j<segT&&k<segU){const n=j*(segU+1)+k,w=segU+1;idx.push(n,n+w,n+1,n+1,n+w,n+w+1);}

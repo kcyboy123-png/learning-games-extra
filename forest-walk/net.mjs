@@ -1,5 +1,5 @@
 // Classroom client: same-origin JSON + SSE over fetch (so the token travels in a header, never in the URL).
-import {parseSSE,LIMITS} from './lib/protocol.mjs?v=forest-public-20261108';
+import {parseSSE,LIMITS} from './lib/protocol.mjs?v=forest-full-qa-20261107';
 export class Classroom extends EventTarget{
   constructor(base='api/'){super();this.base=base;this.token=null;this.id=null;this.role=null;this.code=null;this.start=null;this.mealSlot=-1;this.connected=false;this.abort=null;this.retry=0;this.lastSent=0;this.lastState='';this.closed=true;}
   emit(type,detail={}){this.dispatchEvent(new CustomEvent(type,{detail}));}

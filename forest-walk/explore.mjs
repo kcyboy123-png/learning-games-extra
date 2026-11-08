@@ -2,7 +2,7 @@ import * as T from './vendor/three.module.js';
 import {worldAt,terrain,elevation,riverX,place} from './trail.mjs';
 import {TRACKS,CAPTIONS,PHOTO_LIMIT,LEAF_SECONDS,createExploration,noteClue,linkAnimal,leafCourse,noteLeaf} from './lib/exploration.mjs';
 
-export function createExplorer({world,canvas,enter,leave,running,animalAt,observe,getPeers,getS}){
+export function createExplorer({world,canvas,enter,leave,running,animalAt,observe,getPeers,getS,onCapture=()=>{}}){
  const {scene,camera,renderer}=world,$=id=>document.getElementById(id);
  let records=createExploration(),active=null,stage='',animal=null,photos=[],selected=0,pending=null,busy=false,generation=0;
  let yaw=0,pitch=0,zoom=1,leafPan=204,travel=null,seq=0,drag=null,clueHint=false;
@@ -60,7 +60,7 @@ export function createExplorer({world,canvas,enter,leave,running,animalAt,observ
    renderer.render(scene,camera);const r=$('exp-frame').getBoundingClientRect(),c=canvas.getBoundingClientRect(),image=document.createElement('canvas');image.width=960;image.height=720;
    image.getContext('2d').drawImage(canvas,(r.x-c.x)*canvas.width/c.width,(r.y-c.y)*canvas.height/c.height,r.width*canvas.width/c.width,r.height*canvas.height/c.height,0,0,960,720);
    image.toBlob(blob=>{if(ticket!==generation)return;busy=false;$('exp-main').disabled=false;if(!blob){$('exp-help').textContent='사진을 만들지 못했어요. 다시 눌러 주세요.';return;}
-     pending={url:URL.createObjectURL(blob),where:place(getS()),caption:CAPTIONS[0]};$('exp-preview').src=pending.url;$('exp-caption').value=CAPTIONS[0];stage='review';text('사진에 마음을 담아요','사진은 이 기기 안에만 보관돼요. 새 산책 전에 저장해 주세요.','수첩에 담기');controls();
+     onCapture();pending={url:URL.createObjectURL(blob),where:place(getS()),caption:CAPTIONS[0]};$('exp-preview').src=pending.url;$('exp-caption').value=CAPTIONS[0];stage='review';text('사진에 마음을 담아요','사진은 이 기기 안에만 보관돼요. 새 산책 전에 저장해 주세요.','수첩에 담기');controls();
    },'image/png');
    }catch{busy=false;$('exp-main').disabled=false;$('exp-help').textContent='사진을 만들지 못했어요. 다시 눌러 주세요.';}
  }
@@ -84,7 +84,7 @@ export function createExplorer({world,canvas,enter,leave,running,animalAt,observ
    if(!running())return;
    if(active==='track'){yaw=pitch=0;const p=stage==='clue'?clues.get(animal).position:animalAt(animal);baseAim.copy(p);clueHint=true;}
    if(active==='leaf'){
-     if(!travel){seq++;travel={lane:Number($('exp-lane').value),elapsed:0,seq,recorded:false};$('exp-lane').disabled=true;text('금빛 테두리가 내 잎이에요','드래그·↑↓로 물길을 따라가요. 친구의 잎은 같은 모둠 것만 보여요.','내 잎 찾기');}
+     if(!travel){seq++;travel={lane:Number($('exp-lane').value),elapsed:0,seq,recorded:false};$('exp-lane').disabled=true;text('금빛 테두리가 내 잎이에요','드래그·↑↓로 물길을 따라가요. 내가 띄운 잎을 따라 천천히 둘러봐요.','내 잎 찾기');}
      else if(travel.recorded){travel=null;leafPan=204;$('exp-lane').disabled=false;text('다른 물길도 볼까요?',records.leafRoutes.length+'가지 출발 자리에서 여행했어요. 순위는 없어요.','잎 띄우기');}
      else leafPan=leafCourse(travel.lane,travel.elapsed).s;
    }

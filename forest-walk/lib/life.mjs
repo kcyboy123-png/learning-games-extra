@@ -16,10 +16,13 @@ export const ANIMALS=[
     where:'햇살 숲의 가지 위',entry:'가지 위에서 노래하던 작은 새예요. 어떤 새인지는 가까이서 오래 봐야 알 수 있어요. 깃 색과 노랫소리를 기억해 둬요.'},
   {id:'butterfly',name:'노란 나비',s:290,r:7,offset:-2.7,tile:2,label:'나비 살펴보기',hint:'꽃길의 나비가 꽃에 앉을 때까지 가만히 봐요. 날개를 천천히 접어요.',duration:3,
     where:'두 갈래 숲길의 꽃길',entry:'꽃길에서 꽃을 찾아 날던 노란 나비예요. 날개를 접고 쉴 때 가만히 보면 무늬가 보여요. 손으로 잡지 않고 눈으로만 봐요.'},
-  {id:'chipmunk',name:'다람쥐',s:475,r:10,offset:3.6,tile:1,label:'다람쥐를 수첩에 그리기',hint:'거리를 두고 다람쥐가 하는 일을 지켜봐요. 앞발로 열매를 쥐고 고개를 들어요.',duration:3,
-    where:'다람쥐 숲의 수풀',entry:'땅과 나무를 오가며 열매를 모으던 다람쥐예요. 조용히 거리를 두면 더 오래 볼 수 있어요. 먹이는 주지 않아요.'}];
+  {id:'chipmunk',image:'wild-chipmunk-icon.webp',name:'다람쥐',s:475,r:10,offset:3.6,tile:1,label:'다람쥐를 수첩에 그리기',hint:'거리를 두고 다람쥐가 하는 일을 지켜봐요. 앞발로 열매를 쥐고 고개를 들어요.',duration:3,
+    where:'다람쥐 숲의 수풀',entry:'땅과 나무를 오가며 열매를 모으던 다람쥐예요. 조용히 거리를 두면 더 오래 볼 수 있어요. 먹이는 주지 않아요.'},
+  {id:'rabbit',name:'산토끼',s:155,r:9,offset:-3.1,image:'wild-rabbit-icon.webp',label:'토끼 조용히 살펴보기',hint:'잠깐 멈춰 볼까요? 토끼가 귀를 세우고 주변 소리를 들어요.',duration:3,where:'풀숲이 있는 산길',entry:'긴 귀를 세우고 풀숲에 앉아 있던 토끼예요. 가까이 쫓아가지 않고 거리를 두면 움직이는 코와 귀를 볼 수 있어요.'},
+  {id:'deer',name:'사슴',s:650,r:11,offset:2.9,image:'wild-deer-icon.webp',label:'사슴 조용히 살펴보기',hint:'사슴이 우리 쪽을 바라봐요. 멀찍이 멈춰서 눈으로 인사해요.',duration:3,where:'능선 옆 조용한 숲',entry:'숲 가장자리에서 만난 사슴이에요. 긴 다리와 작은 발굽, 움직이는 귀를 관찰해 봐요. 먹이를 주거나 뒤따라가지 않아요.'}];
+export const ENCOUNTER_SITES={rabbit:[80,155,435],deer:[545,610,650]};
 export const animalById=id=>ANIMALS.find(a=>a.id===id)||null;
-export const animalNear=s=>ANIMALS.find(a=>Math.abs(a.s-s)<a.r)||null;
+export const animalNear=(s,life)=>ANIMALS.find(a=>Math.abs((life?.encounters?.[a.id]??a.s)-s)<a.r)||null;
 export const journalEntries=life=>ANIMALS.map(a=>({...a,seen:life.journal.includes(a.id)}));
 // Looking at an animal for its entry: a short animal-focused reaction (camera + animal), then the entry opens once.
 // Looking again is allowed (same reaction) but never duplicates the entry; walking away before the end records nothing.
@@ -31,6 +34,13 @@ export function stepFocus(life,dt){
   life.focus=null;return {id:f.id,fresh};
 }
 export const cancelFocus=life=>{life.focus=null;};
+// Cowork R2: label and action of the one animal button on a stop card. Once the animal is already in the journal, the card
+// offers the quick look again (never the clue game a second time); the clue game is only the first-time path for animals that
+// have a trace (bird, chipmunk). Pure, so node:test covers every state.
+export function lookButton(animal,{seen=false,busy=false,hasTrack=false}={}){
+  if(!animal)return null;if(busy)return {label:'살펴보는 중…',action:'wait'};if(seen)return {label:'다시 살펴보기',action:'focus'};
+  return hasTrack?{label:'흔적 찾아보기',action:'track'}:{label:animal.label,action:'focus'};
+}
 export const focusProgress=life=>life.focus?clamp(life.focus.elapsed/life.focus.duration,0,1):0;
 
 // ---- Litter -----------------------------------------------------------------------------------------------------------
@@ -134,8 +144,9 @@ export const picnicLayout=i=>picnicLayouts[i]||picnicLayouts[0];
 export const NOODLE_SPOT={mat:{s:707,offset:2.4,yaw:0},cup:{s:707,offset:2.25},seat:{s:707,offset:1.45,yaw:Math.PI/2},teacher:{s:707,offset:3.05,yaw:-Math.PI/2},friend:{s:708.3,offset:2.9,yaw:'face'}};
 
 // ---- Whole-walk state -----------------------------------------------------------------------------------------------------
-export function createLife(){
-  return {journal:[],focus:null,
+export function createLife(random=Math.random){
+  const pick=values=>values[Math.min(values.length-1,Math.max(0,Math.floor(random()*values.length)))];
+  return {journal:[],focus:null,encounters:{rabbit:pick(ENCOUNTER_SITES.rabbit),deer:pick(ENCOUNTER_SITES.deer)},
     litter:{left:LITTER.map(l=>l.id),picked:[],pickup:null,lastPickedAt:-99},
     water:{since:0,walked:0,drinks:0,cued:[],drink:null},
     meals:Object.fromEntries(MEAL_KINDS.map(k=>[k,{stage:'none',bites:0,action:null,completed:false}]))};

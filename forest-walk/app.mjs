@@ -1,48 +1,59 @@
-import {setupLobby} from './lobby.mjs?v=forest-public-20261108';
+import {createJoystick} from './lib/joystick.mjs?v=forest-astra-20261108';
+import {setupLobby} from './lobby.mjs?v=forest-lan-20261107';
 import * as T from './vendor/three.module.js';
-import {createWorld,createChild,actorActivity} from './world.mjs?v=forest-public-20261108';
-import {advance,worldAt,pathSlope,elevation,grade,terrain,riverX,place,nearby,LENGTH,SPEED,clamp,BRIDGE,SUMMIT,SCENIC,sections,sectionIndex,laneName,forkGap,seats,seatFor} from './trail.mjs?v=forest-public-20261108';
-import {ForestSound} from './sound.mjs?v=forest-public-20261108';
-import {turnView,sightTarget} from './lib/look.mjs?v=forest-public-20261108';
-import {observations,reflections,beginObservation,advanceObservation,availableChoices,reflect,chosenNote,memoryLine,resultText} from './lib/observations.mjs?v=forest-public-20261108';
-import {guideSpot,guideSpots,nextExperience,distanceText,heightText,groupTarget,autoWalkInput,gatherText,gatherSpot,followLabel,followStartText,arrivedText,companionText,startText,sectionSpan,paceText,planText,stayText} from './lib/course.mjs?v=forest-public-20261108';
-import {Classroom} from './net.mjs?v=forest-public-20261108';
+import {observationInvitation,summitInvitation} from './lib/trail-invitations.mjs';
+import {createWorld,createChild,actorActivity} from './world.mjs?v=stutter-fix-20261109';
+import {advance,worldAt,pathSlope,elevation,grade,terrain,riverX,place,nearby,LENGTH,SPEED,clamp,BRIDGE,SUMMIT,SCENIC,sections,sectionIndex,laneName,forkGap,seats,seatFor} from './trail.mjs?v=forest-full-qa-20261107';
+import {ForestSound} from './sound.mjs?v=leaf-water10-20261108';
+import {turnView,sightTarget} from './lib/look.mjs?v=forest-full-qa-20261107';
+import {observations,reflections,beginObservation,advanceObservation,availableChoices,reflect,chosenNote,memoryLine,resultText} from './lib/observations.mjs?v=forest-full-qa-20261107';
+import {guideSpot,guideSpots,nextExperience,distanceText,heightText,groupTarget,autoWalkInput,gatherText,gatherSpot,followLabel,followStartText,arrivedText,companionText,startText,sectionSpan,paceText,planText,stayText} from './lib/course.mjs?v=cowork2-20261108';
+import {Classroom} from './net.mjs?v=forest-full-qa-20261107';
 import {groupOf} from './lib/mealgroup.mjs';
-import {createExplorer} from './explore.mjs';
+import {createExplorer} from './explore.mjs?v=leaf-water10-20261108';
 import {TRACKS} from './lib/exploration.mjs';
 import {createDining} from './dining.mjs';
-import {LOOK} from './lib/protocol.mjs?v=forest-public-20261108';
-import {createLead,stepLead} from './lib/npcmotion.mjs?v=forest-public-20261108';
-import {ANIMALS,animalById,animalNear,journalEntries,startFocus,stepFocus,focusProgress,nearestLitter,startPickup,stepPickup,litterById,walk,thirst,startDrink,stepDrink,MEALS,MEAL_KINDS,mealActions,mealLabel,startMeal,stepMeal,mealActive,mealLine,picnicLayout,NOODLE_SPOT,createLife,cancelFree,cancelCard,cancelFocus,netPose,lifePose,lifeSnapshot,summaryLines} from './lib/life.mjs?v=forest-public-20261108';
+import {LOOK} from './lib/protocol.mjs?v=forest-full-qa-20261107';
+import {createLead,stepLead} from './lib/npcmotion.mjs?v=forest-full-qa-20261107';
+import {ANIMALS,animalById,animalNear,journalEntries,startFocus,stepFocus,focusProgress,nearestLitter,startPickup,stepPickup,litterById,walk,thirst,startDrink,stepDrink,MEALS,MEAL_KINDS,mealActions,mealLabel,startMeal,stepMeal,mealActive,mealLine,picnicLayout,NOODLE_SPOT,createLife,cancelFree,cancelCard,cancelFocus,lookButton,netPose,lifePose,lifeSnapshot,summaryLines} from './lib/life.mjs?v=cowork2-20261108';
 const $=id=>document.getElementById(id),canvas=$('forest');
-$('plan-note').textContent=planText();
+
 await document.fonts.load('600 16px SUIT');
 let world;try{world=await createWorld(canvas);}catch(e){$('intro').hidden=true;$('error').hidden=false;throw e;}
 const {scene,renderer,camera,panorama}=world;
 // Hiking-life props (props.mjs): litter, bag, flask, picnic and cup noodles. Optional: if the module or its cloth texture fails,
 // the walk still opens and every activity keeps working with its state, text and poses (props simply stay absent).
-let props=null;try{props=await import('./props.mjs?v=forest-public-20261108').then(m=>m.createLifeProps(scene));}catch(e){console.warn('life props unavailable',e);props=null;}
+let props=null;try{props=await import('./props.mjs?v=forest-full-qa-20261107').then(m=>m.createLifeProps(scene));}catch(e){console.warn('life props unavailable',e);props=null;}
 const dining=createDining(scene,props?.mealTemplates);
-// Look presets: limited bag / hair / hat variation so classmates are told apart from behind.
-const looks=[{variant:0,hat:0,bag:0,name:'노란 배낭'},{variant:1,hat:1,bag:1,name:'파란 배낭 · 모자'},{variant:2,hat:0,bag:2,name:'주황 배낭'},{variant:3,hat:2,bag:3,name:'초록 배낭 · 털모자'},{variant:0,hat:1,bag:4,name:'보라 배낭 · 모자'},{variant:1,hat:0,bag:5,name:'귤색 배낭'},{variant:2,hat:2,bag:1,name:'파란 배낭 · 털모자'},{variant:3,hat:0,bag:0,name:'노란 배낭 · 머리끈'}];
-let lookIndex=0,hero=createChild(scene,LOOK.bags[0],false,0,0);
-// hero.mjs (parent-owned Tripo "yellow backpack" child) stands in for look 0 when it loads; every other look, and any load
-// failure, keeps the procedural createChild. Loaded lazily so a missing module never blocks the walk.
-let tripoHero=null;
-const heroReady=import('./hero.mjs?v=forest-public-20261108').then(m=>m.loadHero(scene)).then(h=>{tripoHero=h;h.root.visible=false;applyLook();return h;}).catch(()=>null);
-function applyLook(){const look=looks[lookIndex];if(hero!==tripoHero)scene.remove(hero.root);else hero.root.visible=false;
-  if(lookIndex===0&&tripoHero){hero=tripoHero;if(!hero.root.parent)scene.add(hero.root);hero.root.visible=true;}else hero=createChild(scene,LOOK.bags[look.bag],false,look.variant,look.hat);
-  $('look-name').textContent=look.name;position(true);}
-$('look-next').onclick=()=>{lookIndex=(lookIndex+1)%looks.length;applyLook();};
+const looks=[{id:'girl-a',variant:0,hat:0,bag:0,name:'여자 A'},{id:'girl-b',variant:1,hat:0,bag:3,name:'여자 B'},{id:'boy-a',variant:2,hat:0,bag:3,name:'남자 A'},{id:'boy-b',variant:3,hat:0,bag:2,name:'남자 B'}];
+let lookIndex=0;try{const saved=localStorage.getItem('forest-character-v1');const i=looks.findIndex(x=>x.id===saved);if(i>=0)lookIndex=i;}catch{}
+let hero=createChild(scene,LOOK.bags[looks[lookIndex].bag],false,looks[lookIndex].variant,0),characterBusy=false,forestReady=false,classroomAvailable=false;
+const heroModule=import('./hero.mjs?v=cast4-20261109'),heroActors=new Map();
+async function applyLook(){
+  if(characterBusy)return;characterBusy=true;$('start').disabled=true;$('join').disabled=true;$('teach').disabled=true;
+  const index=lookIndex,look=looks[index];$('character-status').textContent=look.name+' 준비 중…';
+  try{
+    let next=heroActors.get(look.id);
+    if(!next){next=await (await heroModule).loadHero(scene,look.id);next.root.visible=false;heroActors.set(look.id,next);await renderer.compileAsync(next.root,camera,scene);}renderer.initTexture(next.mesh.material.map);
+    const old=hero;if(old!==next)old.mesh?.material.map?.dispose();old.root.visible=false;hero=next;hero.root.visible=true;hero.root.position.copy(old.root.position);hero.root.rotation.copy(old.root.rotation);
+    if(![...heroActors.values()].includes(old))scene.remove(old.root);
+    $('character-status').textContent='';try{localStorage.setItem('forest-character-v1',look.id);}catch{}
+  }catch(error){const previous=looks.findIndex(x=>'tripo-'+x.id===hero.root.name);if(previous>=0)lookIndex=previous;$('character-status').textContent='캐릭터를 불러오지 못했어요. 다시 선택해 주세요.';console.warn('character unavailable',error);}
+  finally{characterBusy=false;$('look-name').textContent=looks[lookIndex].name;$('start').disabled=!forestReady;$('join').disabled=!classroomAvailable;$('teach').disabled=!classroomAvailable;for(const button of $('character-picker').children)button.setAttribute('aria-pressed',String(Number(button.dataset.index)===lookIndex));}
+}
+const heroReady=applyLook();
+for(const [i,look] of looks.entries()){const b=document.createElement('button');b.type='button';b.dataset.index=i;b.setAttribute('aria-pressed',String(i===lookIndex));const img=document.createElement('img');img.src='./assets/'+look.id+'-portrait.webp';img.alt='';img.width=180;img.height=240;const label=document.createElement('span');label.textContent=look.name;b.append(img,label);b.onclick=async()=>{if(characterBusy||classroom.token)return;lookIndex=i;await applyLook();};$('character-picker').append(b);}
+$('look-next').onclick=()=>{const open=$('character-picker').hidden;$('character-picker').hidden=!open;$('look-next').setAttribute('aria-expanded',String(open));};
 // Solo teacher: procedural at once, swapped for the Tripo teacher (npc.mjs, parent-owned) when its asset exists.
 let guide=createChild(scene,'#bba366',true);
-const npcModule=import('./npc.mjs?v=forest-public-20261108').catch(()=>null);
+const npcModule=import('./npc.mjs?v=cast4-20261109').catch(()=>null);
 // Solo teacher motion state (lib/npcmotion.mjs): walks ahead of the child in trail coordinates; feet follow the metres the
 // placed root actually moves (guideTraveled), so the summit photo glide and the lead walk share one cadence.
 let lead=createLead(guideSpots[0]),leadSnap=true,guideTraveled=0,heroSpeed=0;const guidePrev=new T.Vector3();
 const guideReady=npcModule.then(m=>m&&m.loadNPC(scene,'teacher')).then(t=>{if(!t)return null;t.root.position.copy(guide.root.position);t.root.rotation.copy(guide.root.rotation);t.root.visible=guide.root.visible;scene.remove(guide.root);guide=t;return t;}).catch(()=>null);
 const memories=new Map();let observation=null;
-const sound=new ForestSound(),keys=new Set(),touch=new Set();let state={x:0,y:0},mode='intro',time=0,last=performance.now(),idle=0,traveled=0,reached=false,lastPlace='',noteUntil=8,pulse=null,pauseFrom='playing',waveUntil=0,autoWalk=null,lastSection=-1,forkNoted=false,lookNoted=false;
+const sound=new ForestSound(),keys=new Set(),touch=new Set();let state={x:0,y:0},mode='intro',time=0,last=performance.now(),idle=0,traveled=0,reached=false,lastPlace='',noteUntil=8,pulse=null,pauseFrom='playing',waveUntil=0,autoWalk=null,lastSection=-1,forkNoted=false,lookNoted=false;let movementLearned=false,openingNote='';
+let joystick=null;
 const motionQuery=matchMedia('(prefers-reduced-motion:reduce)');let reduced=motionQuery.matches;motionQuery.addEventListener('change',e=>reduced=e.matches);
 // Hiking life (lib/life.mjs): journal, litter, water, meals. `journal` is a dialog mode of its own: the world is frozen like
 // pause, and closing returns to the mode (and the control) it was opened from. Hand positions are read from the rigs once a
@@ -75,25 +86,26 @@ const view={yaw:0,pitch:0};let lookDrag=null;
 const canLook=()=>['playing','rest','finished'].includes(mode);
 function resetView(){view.yaw=0;view.pitch=0;}
 function endLookDrag(){const pointer=lookDrag?.id;lookDrag=null;canvas.classList.remove('dragging');if(pointer!==undefined&&canvas.hasPointerCapture(pointer))canvas.releasePointerCapture(pointer);}
-function modeTo(next){if(next==='finished'&&mode!=='paused')resetView();mode=next;document.body.dataset.mode=next;for(const id of ['intro','paused','rest','finish','error'])$(id).hidden=true;if(next==='intro')$('intro').hidden=false;if(next==='paused')$('paused').hidden=false;if(next==='rest')$('rest').hidden=false;if(next==='finished')$('finish').hidden=false;if(next==='error')$('error').hidden=false;$('journey').hidden=next==='intro'||next==='error';$('journey').inert=next!=='playing';canvas.tabIndex=canLook()?0:-1;$('reset-view').disabled=!canLook();document.querySelector('header').inert=next==='paused'||next==='error';$('pause').disabled=next==='intro';$('journal-open').disabled=next==='intro'||next==='error'||next==='explore';$('lesson').hidden=!(classroom.role==='teacher'&&next!=='intro'&&next!=='error');if(next!=='playing')closeTeacher();clearInput();}
-function clearInput(){keys.clear();touch.clear();pulse=null;autoWalk=null;$('follow').setAttribute('aria-pressed','false');endLookDrag();document.querySelectorAll('#pad button').forEach(b=>b.classList.remove('active'));}
+function modeTo(next){if(next==='finished'&&mode!=='paused')resetView();mode=next;document.body.dataset.mode=next;for(const id of ['intro','paused','rest','finish','error'])$(id).hidden=true;if(next==='intro')$('intro').hidden=false;if(next==='paused')$('paused').hidden=false;if(next==='rest')$('rest').hidden=false;if(next==='finished')$('finish').hidden=false;if(next==='error')$('error').hidden=false;$('journey').hidden=next==='intro'||next==='error';$('journey').inert=next!=='playing';canvas.tabIndex=canLook()?0:-1;document.querySelector('header').inert=next==='paused'||next==='error';$('pause').disabled=next==='intro';$('journal-open').disabled=next==='intro'||next==='error'||next==='explore';$('lesson').hidden=!(classroom.role==='teacher'&&next!=='intro'&&next!=='error');if(next!=='playing')closeTeacher();clearInput();}
+function clearInput(){joystick?.reset();keys.clear();touch.clear();pulse=null;autoWalk=null;$('follow').setAttribute('aria-pressed','false');endLookDrag();document.querySelectorAll('#pad button').forEach(b=>b.classList.remove('active'));}
 function focusGame(){canvas.focus({preventScroll:true});}
-function announce(text,seconds=6){$('note').textContent=text;noteUntil=time+seconds;}
-async function audioStart(){try{await sound.start();}catch{sound.enabled=false;updateSound();announce('소리를 켜려면 오른쪽 위 소리 버튼을 눌러 주세요.');}}
-function updateSound(){$('sound').textContent=sound.enabled?'소리 켜짐':'소리 꺼짐';$('sound').setAttribute('aria-pressed',String(sound.enabled));$('sound').setAttribute('aria-label',sound.enabled?'자연 소리 끄기':'자연 소리 켜기');}
-function reset(){explorer.reset();closeJournal(true);resetView();memories.clear();observation=null;hideAsks();life=createLife();departAfterMeal=false;mealSeq++;props?.reset();$('journal-open').classList.remove('new');lastThirst=-1;renderLifeRows();$('observe-choices').replaceChildren();$('finish-choices').replaceChildren();world.resetWildlife();renderMemories();state=startState();idle=0;traveled=0;reached=false;time=0;lastPlace='';lastSection=-1;forkNoted=false;lookNoted=false;waveUntil=0;sound.nextBird=4;sound.lastStep=null;modeTo('playing');leadSnap=true;position(true);announce(startText(looks[lookIndex].name),9);audioStart();focusGame();}
+function announce(text,seconds=6){$('note').textContent=document.body.classList.contains('touch-controls')?text.replace('위쪽 방향키를 눌러',document.body.classList.contains('button-controls')?'위쪽 방향 버튼을 눌러':'조이스틱을 위로 밀어').replace('화면을 드래그하거나 I J K L로','오른쪽 화면을 드래그해'):text;noteUntil=time+seconds;}
+async function audioStart(){try{await sound.start();}catch{sound.enabled=false;updateSound();announce('소리를 켜려면 메뉴의 자연 소리 버튼을 눌러 주세요.');}}
+function updateSound(){$('sound').textContent=sound.enabled?'자연 소리 켜짐':'자연 소리 꺼짐';$('sound').setAttribute('aria-pressed',String(sound.enabled));$('sound').setAttribute('aria-label',sound.enabled?'자연 소리 끄기':'자연 소리 켜기');}
+function reset(){explorer.reset();closeJournal(true);resetView();memories.clear();observation=null;hideAsks();life=createLife();departAfterMeal=false;mealSeq++;props?.reset();$('journal-open').classList.remove('new');lastThirst=-1;renderLifeRows();$('observe-choices').replaceChildren();$('finish-choices').replaceChildren();world.resetWildlife();renderMemories();state=startState();idle=0;traveled=0;reached=false;time=0;lastPlace='';lastSection=-1;forkNoted=false;lookNoted=false;waveUntil=0;movementLearned=false;sound.nextBird=4;sound.lastStep=null;modeTo('playing');leadSnap=true;position(true);announce(startText(looks[lookIndex].name),9);openingNote=$('note').textContent;audioStart();focusGame();}
 // Solo walk starts at the gate itself; in a classroom the server hands each member its own gate slot (a few metres apart) so nobody spawns inside the teacher.
 function startState(){return classroom.token&&classroom.start?{x:classroom.start.x,y:classroom.start.y}:{x:0,y:0};}
-$('start').disabled=false;$('start').textContent='산책 시작';$('start').onclick=reset;
-$('reset-view').onclick=()=>{resetView();if(canLook())focusGame();};
+$('start').onclick=reset;$('look-next').disabled=true;
 $('sound').onclick=async()=>{try{await sound.toggle();updateSound();}catch{announce('브라우저에서 소리를 허용한 뒤 다시 눌러 주세요.');}if(mode==='paused')sound.pause();else if(mode==='playing')focusGame();};
 // Pausing from the journal closes it first and remembers the mode underneath, so "계속 걷기" returns there (not to the journal).
-function pause(){if(mode==='intro'||mode==='paused'||mode==='error')return;if(mode==='journal')closeJournal(true);pauseFrom=mode;modeTo('paused');sound.pause();$('resume').focus();}
+function pause(){if(mode==='intro'||mode==='paused'||mode==='error')return;if(mode==='journal')closeJournal(true);pauseFrom=mode;$('paused').querySelector('p').textContent=$('place').textContent+' · '+Math.round(state.y)+' m 걸었어요. 이어서 출발할 수 있어요.';$('menu-journal').disabled=pauseFrom==='explore';modeTo('paused');sound.pause();$('resume').focus();}
 function resume(){modeTo(pauseFrom);last=performance.now();audioStart();classroom.resume();if(pauseFrom==='rest')$('leave-rest').focus();else if(pauseFrom==='finished')$('stay').focus();else focusGame();}
-$('pause').onclick=()=>mode==='paused'?resume():pause();$('resume').onclick=resume;$('restart').onclick=reset;$('again').onclick=reset;
+$('pause').onclick=()=>mode==='paused'?resume():pause();$('resume').onclick=resume;$('menu-journal').onclick=()=>{resume();openJournal($('journal-open'));};
 // "풍경 더 보기" returns to free walking at the summit; the child may also walk back down and look at any place again (E),
-// and "처음부터 걷기" restarts with empty memories.
+// Restart is deliberately absent from the menu to protect the current walk.
 $('stay').onclick=()=>{cancelCard(life);renderLifeRows();modeTo('playing');announce('바람을 느끼며 더 머물러도 좋아요. 길을 되짚어 내려가 폭포나 전망대를 다시 봐도 되고, E로 정상 카드를 다시 열 수 있어요.',8);focusGame();};
+$('summit-animals').onclick=()=>openJournal($('summit-animals'));
+$('summit-camera').onclick=()=>openAdventure('photo');
 function renderMemories(){
   $('memories').replaceChildren();
   for(const entry of memories.values()){
@@ -103,7 +115,7 @@ function renderMemories(){
   }
   // The list folds (details) so the photo / stay / restart buttons never scroll out of the sheet; the count stays visible.
   $('memory-title').textContent=memories.size?'오늘 마음에 남은 것 · '+memories.size:'나만의 속도로 걸었어요';
-  $('memory-empty').hidden=memories.size>0;$('memory-page').open=memories.size<=3;
+  $('memory-empty').hidden=memories.size>0;$('memory-page').open=false;
   renderSummary($('life-summary'));
 }
 // ---- Hiking life UI: summary lines (summit card + journal), journal dialog, action rows in the rest/summit cards ----------
@@ -119,7 +131,7 @@ function renderJournal(){
   const list=$('journal-entries');list.replaceChildren();
   for(const e of journalEntries(life)){
     const li=document.createElement('li');li.className=e.seen?'seen':'unseen';
-    const art=document.createElement('div');art.className='journal-art '+(e.seen?'seen':'unseen');art.style.backgroundPosition=(e.tile*50)+'% 0';art.setAttribute('role','img');art.setAttribute('aria-label',e.seen?e.name+' 그림':'아직 만나지 못한 동물의 흐린 그림자');
+    const art=document.createElement('div');art.className='journal-art '+(e.seen?'seen':'unseen');if(e.image){art.style.backgroundImage=`url(./assets/${e.image})`;art.style.backgroundSize='cover';art.style.backgroundPosition='center';}else art.style.backgroundPosition=(e.tile*50)+'% 0';art.setAttribute('role','img');art.setAttribute('aria-label',e.seen?e.name+' 그림':'아직 만나지 못한 동물의 흐린 그림자');
     const text=document.createElement('div'),h=document.createElement('h3'),p=document.createElement('p');
     h.textContent=e.seen?e.name:'아직 만나지 못했어요';p.textContent=e.seen?e.entry:e.where+' 근처에서 조용히 살펴보면 만날 수 있어요.';
     text.append(h,p);li.append(art,text);list.append(li);
@@ -130,12 +142,12 @@ function openJournal(opener=null){
   if(!['playing','rest','finished'].includes(mode))return;
   journalFrom=mode;journalOpener=opener||document.activeElement;renderJournal();
   mode='journal';document.body.dataset.mode='journal';$('journal').hidden=false;for(const id of ['journey','rest','finish'])$(id).inert=true;
-  $('journal-open').setAttribute('aria-expanded','true');$('journal-open').classList.remove('new');canvas.tabIndex=-1;$('reset-view').disabled=true;clearInput();closeTeacher();sound.pause();$('journal-close').focus();
+  $('journal-open').setAttribute('aria-expanded','true');$('journal-open').classList.remove('new');canvas.tabIndex=-1;clearInput();closeTeacher();sound.pause();$('journal-close').focus();
 }
 function closeJournal(silent=false){
   if(mode!=='journal')return;
   $('journal').hidden=true;for(const id of ['rest','finish'])$(id).inert=false;mode=journalFrom;journalFrom=null;document.body.dataset.mode=mode;$('journey').inert=mode!=='playing';
-  $('journal-open').setAttribute('aria-expanded','false');canvas.tabIndex=canLook()?0:-1;$('reset-view').disabled=!canLook();
+  $('journal-open').setAttribute('aria-expanded','false');canvas.tabIndex=canLook()?0:-1;
   const opener=journalOpener;journalOpener=null;if(silent)return;audioStart();
   if(opener&&opener.isConnected&&!opener.hidden&&!opener.disabled&&!opener.closest('[inert]'))opener.focus();else if(mode==='rest')$('leave-rest').focus();else if(mode==='finished')$('stay').focus();else focusGame();
 }
@@ -147,7 +159,7 @@ function fillLifeRow(host,spot){
   const items=[];let text='';
   const animal=ANIMALS.find(a=>a.s===spot);
   if(animal){const seen=life.journal.includes(animal.id),busy=life.focus?.id===animal.id;text=seen?animal.name+' 그림이 수첩에 있어요.':'조용히 살펴보면 '+animal.name+' 그림을 수첩에 담을 수 있어요.';
-    items.push({label:busy?'살펴보는 중…':TRACKS[animal.id]?'흔적 찾아보기':seen?'다시 살펴보기':animal.label,disabled:!!life.focus,working:busy,on:()=>TRACKS[animal.id]?openAdventure('track',animal.id):beginFocus(animal.id)});}
+    const look=lookButton(animal,{seen,busy,hasTrack:!!TRACKS[animal.id]});items.push({label:look.label,disabled:!!life.focus,working:busy,on:()=>look.action==='track'?openAdventure('track',animal.id):beginFocus(animal.id)});}
   const kind=MEAL_KINDS.find(k=>MEALS[k].stop===spot);
   if(kind){text=(text?text+' ':'')+mealLine(life,kind);const act=life.meals[kind].action;
     if(mealActive(life,kind)){
@@ -155,8 +167,11 @@ function fillLifeRow(host,spot){
       items.push({label:'정리하고 출발',disabled:act?.id==='pack',on:()=>packAndLeave(kind)});
     }else for(const id of mealActions(life,kind))items.push({label:kind==='picnic'?'도시락 먹기':'컵라면 먹기',disabled:false,on:()=>beginMeal(kind,id)});}
   if(spot===210){text='출발 자리를 골라 나뭇잎의 물길을 따라가 볼까요?';items.push({label:'나뭇잎 여행',on:()=>openAdventure('leaf')});}
-  if(!kind||!mealActive(life,kind))items.push({label:'사진 찍기',on:()=>openAdventure('photo')});
+  if(spot!==SUMMIT.platform&&(!kind||!mealActive(life,kind)))items.push({label:'사진 찍기',on:()=>openAdventure('photo')});
   if(!items.length&&!text){host.hidden=true;return;}
+  const invited=!!observation?.done&&observation.spot===spot&&(!kind||!mealActive(life,kind));host.classList.toggle('invited',invited);
+  if(invited&&spot!==SUMMIT.platform)text=observationInvitation(spot);
+  if(spot===SUMMIT.platform){$('summit-extra').hidden=!!diningKind();$('summit-invitation').textContent=summitInvitation(life.journal);}
   line.textContent=text;host.querySelector('.dining-info')?.remove();if(kind&&mealActive(life,kind)){const info=document.createElement('p');info.className='dining-info';info.textContent='내 자리에 앉았어요. 친구를 기다리지 않아도 돼요.';line.after(info);}
   for(const it of items){const b=document.createElement('button');b.type='button';b.textContent=it.label;b.disabled=it.disabled;b.classList.toggle('working',!!it.working);b.onclick=it.on;buttons.append(b);}
   host.hidden=false;
@@ -165,11 +180,15 @@ function fillLifeRow(host,spot){
 function beginFocus(id){
   if(life.focus)return;if(mode==='playing'){cancelFree(life);stopAutoWalk();}else cancelCard(life);
   const a=animalById(id);if(!a||!startFocus(life,id))return;
+  // Cowork R1: a life framing aims the camera at the animal, but sightTarget() still adds the child's leftover drag/IJKL gaze.
+  // The stop cards reset it in interact(); the free-walk encounters (rabbit, deer, butterfly) did not, so a child who had looked
+  // around could watch 3 s of grass while the toast described the animal. Start every look from the neutral gaze.
+  resetView();
   announce(a.hint,5);if(id==='bird')sound.chirp();if(id==='chipmunk')sound.rustle(.5);renderLifeRows();
 }
 function beginMeal(kind,id){
   if(kind==='picnic'){if(mode!=='rest'||nearby(state.y)?.s!==MEALS.picnic.stop)return;if(observation?.id!=='sit'){seatIndex=seatFor(state.x,state.y);chooseObservation(MEALS.picnic.stop,'sit');}}
-  if(kind==='noodle'){if(mode!=='finished')return;if(observation&&!observation.done){observation=null;for(const b of $('finish-choices').children)b.setAttribute('aria-pressed','false');}state={x:NOODLE_SPOT.seat.offset,y:NOODLE_SPOT.seat.s};}
+  if(kind==='noodle'){if(mode!=='finished')return;$('summit-play').open=true;if(observation&&!observation.done){observation=null;for(const b of $('finish-choices').children)b.setAttribute('aria-pressed','false');}state={x:NOODLE_SPOT.seat.offset,y:NOODLE_SPOT.seat.s};}
   cancelFocus(life);if(!startMeal(life,kind,id))return;mealSeq++;
   if(id==='pour')sound.pour(2.2);if(id==='open')sound.rustle(.3);renderLifeRows();
 }
@@ -185,8 +204,8 @@ function mealEvent(ev){
     else{announce(ev.completed?'빈 컵을 가방에 챙겼어요. 정상 컵라면 기억을 수첩에 남겼어요.':'빈 컵을 가방에 챙겼어요.',6);if(mode==='finished')renderMemories();}
   }
 }
-function pickLitter(){if(mode!=='playing'||life.litter.pickup)return;cancelFree(life);stopAutoWalk();const p=startPickup(life,{s:state.y,x:state.x});if(!p)return;announce('허리를 굽혀 '+litterById(p.id).name+'을 집어요. 방향키를 누르면 그만둬요.',4);}
-function drinkWater(){if(mode!=='playing'||life.water.drink)return;cancelFree(life);stopAutoWalk();if(!startDrink(life))return;announce('물병을 꺼내 한 모금 마셔요.',3);}
+function pickLitter(){if(mode!=='playing'||life.litter.pickup)return;cancelFree(life);stopAutoWalk();const p=startPickup(life,{s:state.y,x:state.x});if(!p)return;resetView();announce('허리를 굽혀 '+litterById(p.id).name+'을 집어요. 방향키를 누르면 그만둬요.',4);}
+function drinkWater(){if(mode!=='playing'||life.water.drink)return;cancelFree(life);stopAutoWalk();if(!startDrink(life))return;resetView();announce('물병을 꺼내 한 모금 마셔요.',3);}
 $('flask').onclick=()=>{drinkWater();focusGame();};$('pick').onclick=()=>{pickLitter();focusGame();};
 // Steps every life action with the world clock (never while paused, in the journal or hidden) and turns completions into text,
 // sound and card updates. Unfinished actions record nothing.
@@ -200,7 +219,7 @@ function stepLife(dt){
   if(seen){explorer.onAnimal(seen.id);const a=animalById(seen.id);announce(seen.fresh?'숲 수첩에 '+a.name+' 그림을 담았어요. 위의 수첩(N)에서 볼 수 있어요.':a.name+'을 다시 살펴봤어요. 수첩에는 이미 있어요.',6);if(seen.fresh)$('journal-open').classList.add('new');renderLifeRows();}
   for(const kind of MEAL_KINDS){const ev=stepMeal(life,kind,dt);if(ev){mealEvent(ev);if(ev.id==='pack'&&departAfterMeal)departMeal();renderLifeRows();}}
 }
-function animalWorld(id){if(id==='bird')return world.songbird.getWorldPosition(animalPos);if(id==='butterfly')return animalPos.copy(world.butterfly.position);return animalPos.copy(world.squirrel.position).add({x:0,y:.3,z:0});}
+function animalWorld(id){if(world.wildlife?.roots[id]){world.wildlife.roots[id].getWorldPosition(animalPos);animalPos.y+=id==='deer'?.8:.3;return animalPos;}if(id==='bird')return world.songbird.getWorldPosition(animalPos);if(id==='butterfly')return animalPos.copy(world.butterfly.position);return animalPos.copy(world.squirrel.position).add({x:0,y:.3,z:0});}
 function readHands(){
   hands.heroForward.set(Math.sin(hero.root.rotation.y),0,Math.cos(hero.root.rotation.y));hands.teacherForward.set(Math.sin(guide.root.rotation.y),0,Math.cos(guide.root.rotation.y));
   const hl=hero.sides?hero.sides[0].hand.bone:hero.hands?.[0],hr=hero.sides?hero.sides[1].hand.bone:hero.hands?.[1],tr=guide.sides?guide.sides[1].hand.bone:guide.hands?.[1];
@@ -250,7 +269,7 @@ function interact(){
   // At a stop the stop keeps E; litter there is reached from the pack button instead.
   if(!spot){
     if(nearestLitter(life,{s:state.y,x:state.x})){pickLitter();return;}
-    const animal=animalNear(state.y);if(animal){beginFocus(animal.id);return;}
+    const animal=animalNear(state.y,life);if(animal){beginFocus(animal.id);return;}
     if(peersNear().length){sendWave();waveUntil=time+2.5;announce('친구에게 손을 흔들었어요.',3);}return;}
   cancelFree(life);
   // Summit card: the view starts at once; "다 같이 사진 찍기" is the second toggle. The intro line shows the current action
@@ -262,11 +281,11 @@ function interact(){
 }
 $('action').onclick=interact;$('leave-rest').onclick=()=>{cancelCard(life);observation=null;resetView();modeTo('playing');renderLifeRows();focusGame();};
 // Camera flash for the group photo (CSS animation; skipped under reduced motion).
-function flash(){if(reduced)return;const f=$('flash');f.classList.remove('on');void f.offsetWidth;f.classList.add('on');}
+function flash(){sound.shutter();if(reduced)return;const f=$('flash');f.classList.remove('on');void f.offsetWidth;f.classList.add('on');}
 window.addEventListener('keydown',e=>{
   if(mode==='explore')return;
   if(e.code==='KeyC'&&!e.repeat&&!e.target.matches('input,textarea,select')){openAdventure('photo');return;}
-  if(mode==='paused'&&e.code==='Tab'){const first=$('resume'),last=$('restart');if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}return;}
+  if(mode==='paused'&&e.code==='Tab'){const list=[...$('paused').querySelectorAll('button,summary')].filter(el=>el.getClientRects().length&&!el.disabled),first=list[0],last=list.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}return;}
   // Journal dialog: its only control is the close button (Tab stays there); Esc or J closes it and focus returns to the opener.
   if(mode==='journal'){if(e.code==='Tab'){e.preventDefault();const bs=[$('album-open'),$('journal-close')],i=bs.indexOf(document.activeElement);bs[(i+(e.shiftKey?-1:1)+bs.length)%bs.length].focus();}else if(e.code==='Escape'||e.code==='KeyN'){e.preventDefault();closeJournal();}return;}
   if(e.code==='Escape'){e.preventDefault();if(mode==='paused')resume();else if(mode==='rest'){$('leave-rest').click();}else if(!$('teacher').hidden)closeTeacher();else pause();return;}
@@ -285,6 +304,18 @@ window.addEventListener('keydown',e=>{
 });window.addEventListener('keyup',e=>keys.delete(e.code));
 window.addEventListener('blur',()=>{clearInput();if(mode!=='intro'&&mode!=='paused')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();pause();sound.pause();}else classroom.resume();});
 for(const b of document.querySelectorAll('#pad button')){b.onpointerdown=e=>{if(mode!=='playing')return;e.preventDefault();b.setPointerCapture(e.pointerId);touch.add(b.dataset.dir);b.classList.add('active');stopAutoWalk();cancelFree(life);};const release=()=>{touch.delete(b.dataset.dir);b.classList.remove('active');};b.onpointerup=release;b.onpointercancel=release;b.onlostpointercapture=release;b.onclick=e=>{if(e.detail===0&&mode==='playing'){pulse={dir:b.dataset.dir,until:time+.22};stopAutoWalk();}};}
+joystick=createJoystick($('joystick'),$('joystick-knob'),{enabled:()=>mode==='playing',onStart:()=>{keys.clear();touch.clear();stopAutoWalk();cancelFree(life);}});
+const touchQuery=matchMedia('(any-pointer: coarse)');
+function controlHelp(){
+ const touchDevice=document.body.classList.contains('touch-controls'),buttons=document.body.classList.contains('button-controls');
+ const movement=touchDevice?(buttons?'왼쪽 방향 버튼으로 걷기':'왼쪽 조이스틱을 밀어 걷고 놓으면 멈추기'):'방향키 또는 W A S D로 걷기';
+ const help=movement+' · 화면을 끌어 둘러보기';
+ canvas.setAttribute('aria-label','입체 숲길. '+help);$('control-help').textContent=help;
+}
+function touchControls(){clearInput();document.body.classList.add('touch-controls');controlHelp();}
+touchQuery.addEventListener('change',touchControls);touchControls();
+$('control-mode').onclick=()=>{clearInput();const buttons=document.body.classList.toggle('button-controls');$('control-mode').textContent=buttons?'조이스틱으로':'방향 버튼으로';$('control-mode').setAttribute('aria-pressed',String(buttons));controlHelp();};
+window.addEventListener('resize',()=>joystick?.reset());
 canvas.addEventListener('pointerdown',e=>{
   if(!canLook()||lookDrag||e.button!==0)return;e.preventDefault();focusGame();
   lookDrag={id:e.pointerId,x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);canvas.classList.add('dragging');
@@ -297,19 +328,21 @@ canvas.addEventListener('pointermove',e=>{
 });
 for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,e=>{if(e.pointerId===lookDrag?.id)endLookDrag();});
 canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();modeTo('error');sound.pause();$('error-text').textContent='3D 화면 연결이 끊어졌어요. 다시 열면 처음부터 시작해요.';$('error').querySelector('button').focus();});
-function input(){const has=(dir,...codes)=>touch.has(dir)||(pulse?.dir===dir&&time<pulse.until)||codes.some(c=>keys.has(c));return {x:Number(has('right','ArrowRight','KeyD'))-Number(has('left','ArrowLeft','KeyA')),y:Number(has('up','ArrowUp','KeyW'))-Number(has('down','ArrowDown','KeyS'))};}
+function input(){const has=(dir,...codes)=>touch.has(dir)||(pulse?.dir===dir&&time<pulse.until)||codes.some(c=>keys.has(c));const v={x:Number(has('right','ArrowRight','KeyD'))-Number(has('left','ArrowLeft','KeyA')),y:Number(has('up','ArrowUp','KeyW'))-Number(has('down','ArrowDown','KeyS'))};return v.x||v.y?v:(joystick?.value||v);}
 // ---- Classroom (only when the same origin runs server.mjs; static hosting keeps the solo walk) ----
 const classroom=new Classroom('api/'),peers=new Map();let gather=null,teacherPeer=null,roomClosedNote='';
 const lobby=setupLobby(classroom,peers);
 window.addEventListener('offline',()=>classroom.abort?.abort());
 window.addEventListener('online',()=>classroom.resume());
-classroom.detect().then(ok=>{$('classroom').hidden=!ok;$('solo-note').hidden=ok;if(ok){$('classroom').after($('start'));$('start').textContent='혼자 먼저 둘러보기';}});
+function entryTab(group){$('classroom').hidden=!group;$('solo-tab').setAttribute('aria-pressed',String(!group));$('class-tab').setAttribute('aria-pressed',String(group));$('start').hidden=group&&!classroom.token;$('look-row').hidden=false;$('control-help').hidden=group;}
+$('solo-tab').onclick=()=>entryTab(false);$('class-tab').onclick=()=>entryTab(true);
+classroom.detect().then(ok=>{classroomAvailable=ok;$('class-tab').hidden=false;$('solo-note').hidden=true;if(!ok){$('join').disabled=true;$('teach').disabled=true;$('join-note').textContent='우리 반 입장은 선생님 PC의 교실 주소에서 열어 주세요.';}entryTab(ok&&new URLSearchParams(location.hash.slice(1)).has('room'));});
 $('teach').onclick=async()=>{$('teach').disabled=true;$('join').disabled=true;try{const r=await classroom.create();adoptRoom(r);$('join-note').textContent='방 코드 '+r.code+' · 학생에게 이 코드를 알려 주세요.';}catch(e){$('join-note').textContent='방을 만들지 못했어요 ('+e.message+'). 잠시 후 다시 시도해 주세요.';}$('teach').disabled=false;$('join').disabled=false;};
-$('join-form').onsubmit=async e=>{e.preventDefault();const code=$('join-code').value.trim().toUpperCase();$('join').disabled=true;$('teach').disabled=true;try{const look=looks[lookIndex];const r=await classroom.join(code,{variant:look.variant,hat:look.hat,bag:look.bag});adoptRoom(r);$('join-note').textContent='방 '+r.code+'에 들어왔어요. 산책 시작을 눌러요.';}catch(e){$('join-note').textContent={'no-room':'그 코드의 방이 없어요. 다시 확인해 주세요.','bad-code':'코드는 여섯 글자예요.','room-full':'방이 가득 찼어요 (30명).','too-many-attempts':'잠시 후 다시 시도해 주세요.'}[e.message]||'들어가지 못했어요 ('+e.message+').';}$('join').disabled=false;$('teach').disabled=false;};
-function adoptRoom(r){lobby.adopt();$('teach').hidden=true;$('join-form').hidden=true;$('look-next').disabled=true;$('room-status').hidden=false;updateRoomStatus();if(r.role==='teacher'){buildLessonList();$('teacher-code').textContent=r.code;}}
+$('join-form').onsubmit=async e=>{e.preventDefault();const code=$('join-code').value.trim().toUpperCase();$('join').disabled=true;$('teach').disabled=true;try{const look=looks[lookIndex];const r=await classroom.join(code,{variant:look.variant,hat:look.hat,bag:look.bag,character:look.id});adoptRoom(r);$('join-note').textContent='방 '+r.code+'에 들어왔어요. 산책 시작을 눌러요.';}catch(e){$('join-note').textContent={'no-room':'그 코드의 방이 없어요. 다시 확인해 주세요.','bad-code':'코드는 여섯 글자예요.','room-full':'방이 가득 찼어요 (30명).','too-many-attempts':'잠시 후 다시 시도해 주세요.'}[e.message]||'들어가지 못했어요 ('+e.message+').';}$('join').disabled=false;$('teach').disabled=false;};
+function adoptRoom(r){lobby.adopt();$('start').hidden=false;$('solo-tab').hidden=true;$('teach').hidden=true;$('join-form').hidden=true;$('look-next').disabled=true;$('character-picker').hidden=true;$('room-status').hidden=false;updateRoomStatus();if(r.role==='teacher'){buildLessonList();$('teacher-code').textContent=r.code;}}
 function updateRoomStatus(){lobby.update();if(!classroom.token||classroom.closed)return;const n=[...peers.values()].filter(p=>p.online).length;$('room-status').textContent=companionText(classroom.role,classroom.code,n)+(classroom.connected?'':' · 연결 중…');}
 // Peers stay procedural (look variants tell classmates apart); a real teacher is upgraded to the Tripo teacher when available.
-function addPeer(m){if(m.id===classroom.id||peers.has(m.id))return;const teacher=m.role==='teacher';const child=teacher?createChild(scene,'#bba366',true):createChild(scene,LOOK.bags[m.look?.bag||0],false,m.look?.variant||0,m.look?.hat||0);const s=m.state||{x:0,y:0,yaw:0,pitch:0,pose:'stand',seat:-1};const peer={id:m.id,role:m.role,mealSlot:m.mealSlot??-1,mealAt:time,leafAt:time,child,cur:{x:s.x,y:s.y},target:{...s},yaw:Math.PI,traveled:0,waveUntil:0,online:m.online!==false,moving:false};peers.set(m.id,peer);if(teacher){teacherPeer=peer;guide.root.visible=false;npcModule.then(n=>n&&n.loadNPC(scene,'teacher')).then(t=>{if(!t)return;if(peers.get(m.id)!==peer){scene.remove(t.root);return;}t.root.position.copy(child.root.position);t.root.rotation.copy(child.root.rotation);scene.remove(child.root);peer.child=t;}).catch(()=>{});}updateRoomStatus();}
+function addPeer(m){if(m.id===classroom.id||peers.has(m.id))return;const teacher=m.role==='teacher';const child=teacher?createChild(scene,'#bba366',true):createChild(scene,LOOK.bags[m.look?.bag||0],false,m.look?.variant||0,m.look?.hat||0);const s=m.state||{x:0,y:0,yaw:0,pitch:0,pose:'stand',seat:-1};const peer={id:m.id,role:m.role,mealSlot:m.mealSlot??-1,mealAt:time,leafAt:time,child,cur:{x:s.x,y:s.y},target:{...s},yaw:Math.PI,traveled:0,waveUntil:0,online:m.online!==false,moving:false};peers.set(m.id,peer);if(!teacher&&m.look?.character){heroModule.then(n=>n.loadHero(scene,m.look.character,true)).then(t=>{if(peers.get(m.id)!==peer){scene.remove(t.root);return;}t.root.position.copy(child.root.position);t.root.rotation.copy(child.root.rotation);scene.remove(child.root);peer.child=t;}).catch(()=>{});}if(teacher){teacherPeer=peer;guide.root.visible=false;npcModule.then(n=>n&&n.loadNPC(scene,'teacher')).then(t=>{if(!t)return;if(peers.get(m.id)!==peer){scene.remove(t.root);return;}t.root.position.copy(child.root.position);t.root.rotation.copy(child.root.rotation);scene.remove(child.root);peer.child=t;}).catch(()=>{});}updateRoomStatus();}
 function removePeer(id){const p=peers.get(id);if(!p)return;scene.remove(p.child.root);peers.delete(id);if(teacherPeer===p){teacherPeer=null;guide.root.visible=true;}updateRoomStatus();}
 classroom.addEventListener('hello',e=>{for(const id of [...peers.keys()])if(!e.detail.members.some(m=>m.id===id))removePeer(id);for(const m of e.detail.members)addPeer(m);for(const m of e.detail.members){const p=peers.get(m.id);if(p){p.online=m.online!==false;p.target={...m.state};}}gather=e.detail.gather;showGather();updateRoomStatus();});
 classroom.addEventListener('joined',e=>{addPeer(e.detail.member);if(mode==='playing')announce('친구가 숲에 들어왔어요.',3);});
@@ -342,7 +375,7 @@ let seatIndex=0;
 const groupPhotoActive=()=>!noodleShown()&&(mode==='finished'&&observation?.id==='group'||mode!=='rest'&&world.photoPosed()&&state.y>SUMMIT.from+4);
 function currentPose(moving){const spot=nearby(state.y)?.s;if(mode==='rest'&&observation?.id==='sit')return 'sit';if(time<waveUntil||mode==='rest'&&spot===30||mode==='finished'&&observation?.id==='group')return 'wave';if(mode==='rest'&&(spot===475||observation?.id==='falls'))return 'observe';if(moving)return 'walk';return 'stand';}
 function position(snap=false,dt=.016,moving=false){
-  hero.root.visible=mode!=='explore';
+  hero.root.visible=mode!=='explore'&&!life.focus;
   const p=worldAt(state.y,state.x),slope=pathSlope(state.y),angle=Math.atan2(slope,-1);hero.root.position.set(p.x,p.y,p.z);
   const noodling=noodleShown(),diningNow=diningKind();guide.root.visible=diningNow?(diningNow==='noodle'&&life.meals.noodle.action?.id==='pour'):!teacherPeer;
   const spot=nearby(state.y)?.s,wildlife=mode==='rest'&&spot===475,falls=mode==='rest'&&observation?.id==='falls',followLeaf=mode==='rest'&&observation?.id==='follow',lookAhead=mode==='rest'&&spot===578&&observation?.id==='ahead',groupPhoto=mode==='finished'&&observation?.id==='group'&&!noodling;
@@ -379,8 +412,8 @@ function position(snap=false,dt=.016,moving=false){
   guide.pose(guideTraveled,guideMoving,time,!guideMoving,reduced,guideMoving?grade(lead.s)*-Math.cos(guide.root.rotation.y):0,actorActivity(guide,teacherAct));
   readHands();
   const creekView=clamp((state.y-184)/12,0,1)*(1-clamp((state.y-218)/16,0,1));
-  const ahead=worldAt(Math.min(LENGTH+6,state.y+5+creekView*2.5),0),back=worldAt(state.y-5.4+creekView*.30,state.x*.2);
-  desired.set(back.x+(camera.aspect<1?.25:.55)-creekView*2.3,p.y+2.55-creekView*.15,back.z);
+  const ahead=worldAt(Math.min(LENGTH+6,state.y+5+creekView*2.5),0),back=worldAt(state.y-5.4+creekView*.65,state.x*.2);
+  desired.set(back.x+(camera.aspect<1?.25:.55)-creekView*2.3,p.y+2.55-creekView*.05,back.z);
   const target=new T.Vector3(p.x+(ahead.x-p.x)*(.45+creekView*.30)+(camera.aspect<1?0:.15+creekView*.65),p.y+1.5-creekView*.12+Math.min(.65,(ahead.y-p.y)*.25),ahead.z);
   const creekShelf=T.MathUtils.smoothstep(state.y,335,345)*(1-T.MathUtils.smoothstep(state.y,425,435));
   desired.x-=creekShelf*.35;target.x-=creekShelf*.65;
@@ -452,10 +485,9 @@ function position(snap=false,dt=.016,moving=false){
   // ---- Hiking-life framings (after the place cameras, so they win while an action runs) ----
   {const h=hero.root.position,yawH=hero.root.rotation.y,fx=Math.sin(yawH),fz=Math.cos(yawH),rx=fz,rz=-fx,portrait=camera.aspect<1;
     if(focusAnimal){
-      // Over the shoulder toward the animal: camera behind the child on the side away from the animal, aim between head and animal.
-      const a=focusAnimal,sideSign=Math.sign((a.x-h.x)*rx+(a.z-h.z)*rz)||1;
-      desired.set(h.x-fx*2.3-rx*sideSign*1.3,h.y+1.8+(portrait?.6:0),h.z-fz*2.3-rz*sideSign*1.3+(portrait?.8:0));
-      target.set(h.x+(a.x-h.x)*.7,h.y+1.35+(a.y-(h.y+1.35))*.7,h.z+(a.z-h.z)*.7);
+      const a=focusAnimal,dx=h.x-a.x,dz=h.z-a.z,length=Math.hypot(dx,dz)||1,distance=life.focus.id==='deer'?(portrait?4.2:3.1):life.focus.id==='bird'?(portrait?2.4:1.8):(portrait?2.8:2.0);
+      desired.set(a.x+dx/length*distance-dz/length*.35,a.y+(portrait?.75:.48),a.z+dz/length*distance+dx/length*.35);
+      target.copy(a);
     }else if(pickTarget){
       desired.set(h.x-fx*2.0+rx*1.4,h.y+1.8+(portrait?.6:0),h.z-fz*2.0+rz*1.4);target.set(pickTarget.x,pickTarget.y+.15,pickTarget.z);
     }else if(drinking){
@@ -502,11 +534,21 @@ function placePeers(dt){
     if(!sit){p.child.head.rotation.y-=clamp(t.yaw||0,-1,1)*.55;p.child.head.rotation.x-=clamp(t.pitch||0,-.6,.6)*.5;}
   }
 }
-const explorer=createExplorer({world,canvas,enter:()=>modeTo('explore'),leave:()=>{modeTo(exploreFrom);renderLifeRows();if(mode==='finished')renderSummary($('life-summary'));position(true);focusGame();},running:()=>mode==='explore',animalAt:animalWorld,observe:beginFocus,getS:()=>state.y,
- getPeers:()=>classroom.connected?[...peers.values()].filter(p=>p.online&&p.target.leaf&&groupOf(p.mealSlot)===groupOf(classroom.mealSlot)).slice(0,4).map(p=>({...p.target.leaf,age:Math.min(18,p.target.leaf.age+Math.min(1.1,time-p.leafAt))})):[]});
+const explorer=createExplorer({world,canvas,onCapture:()=>sound.shutter(),enter:()=>modeTo('explore'),leave:()=>{modeTo(exploreFrom);renderLifeRows();if(mode==='finished')renderSummary($('life-summary'));position(true);focusGame();},running:()=>mode==='explore',animalAt:animalWorld,observe:beginFocus,getS:()=>state.y,
+ getPeers:()=>[]});
 $('camera-tool').onclick=()=>openAdventure('photo');$('album-open').onclick=()=>openAdventure('album');
 function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w<h?65:45;camera.updateProjectionMatrix();const ratio=(panorama.image.width/panorama.image.height)/camera.aspect;panorama.repeat.set(Math.min(1,1/ratio),Math.min(1,ratio));panorama.offset.set((1-panorama.repeat.x)/2,(1-panorama.repeat.y)/2);}window.addEventListener('resize',resize);resize();position(true);
+// Cowork R2 (가설 A): on narrow screens the toast sits under the trail sign at a fixed CSS top. The sign grows when the next-experience
+// line wraps ("다음 · 전망대에서 바라보기 93 m" at 11 px exceeds the 156 px column) or when the room/gather lines appear, so the toast
+// now follows the sign's actual bottom edge. Wide screens keep the CSS position (the inline top is cleared there).
+{const sign=document.querySelector('.location'),note=$('note');const fitNote=()=>{if(innerWidth>700){note.style.top='';return;}const r=sign.getBoundingClientRect();if(r.height>0)note.style.top=Math.ceil(r.bottom+8)+'px';};
+ if('ResizeObserver' in window)new ResizeObserver(fitNote).observe(sign);window.addEventListener('resize',fitNote);fitNote();}
+let lastIdlePaint=0,lastPaintMode='';
+for(const event of ['click','keydown','resize'])window.addEventListener(event,()=>{lastIdlePaint=0;},{passive:true});
 function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.05);last=now;if(document.hidden||mode==='error')return;
+  // The intro and paused world are still; repaint promptly on input, without redrawing them 60 times a second.
+  if((mode==='intro'||frozen())&&mode===lastPaintMode&&now-lastIdlePaint<200)return;
+  lastIdlePaint=now;lastPaintMode=mode;
   let moving=false;heroSpeed=0;if(!frozen()&&mode!=='intro'){time+=dt;if(mode==='playing'){const before=state,walked=traveled;let dir=input();let scale=1;if(autoWalk){const auto=autoWalkInput({s:state.y},autoWalk);if(auto&&!dir.x&&!dir.y){dir=auto;scale=1.45;}else if(!auto){const reason=autoWalk.reason;stopAutoWalk();announce(arrivedText(reason),4);}}
       if(dir.x||dir.y)cancelFree(life);
       else if(life.litter.pickup){const item=litterById(life.litter.pickup.id),dx=item.offset-state.x,dy=item.s-state.y,d=Math.hypot(dx,dy);if(d>.7)dir={x:dx/d,y:dy/d};}
@@ -516,31 +558,32 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/10
     const section=sectionIndex(state.y);if(section!==lastSection&&mode==='playing'){const first=lastSection<0;lastSection=section;if(!first)announce(sections[section].guide,7);if(section===5)sound.rustle(.5);if(classroom.role==='teacher')markLesson();}
     if(!forkNoted&&forkGap(state.y+6)>0){forkNoted=true;announce('왼쪽은 꽃길, 오른쪽은 고사리길. 어느 쪽이든 같은 쉼터에서 만나요.',8);}
     if(!lookNoted&&traveled>8&&mode==='playing'){lookNoted=true;announce('화면을 드래그하거나 I J K L로 주위를 둘러봐요.',7);}
-    const next=nextExperience(state.y);if($('next-experience').textContent!==next)$('next-experience').textContent=next;
+    const next=nextExperience(state.y,life);if($('next-experience').textContent!==next)$('next-experience').textContent=next;
     const remaining=distanceText(state.y),height=heightText(state.y);
     if($('distance').textContent!==remaining)$('distance').textContent=remaining;
     if($('height').textContent!==height)$('height').textContent=height;
-    $('progress').value=state.y;
-    const spot=nearby(state.y),reachable=mode==='playing'?nearestLitter(life,{s:state.y,x:state.x}):null,litterHere=!spot&&reachable,animalHere=!spot&&!litterHere&&mode==='playing'?animalNear(state.y):null,near=!spot&&!litterHere&&!animalHere&&classroom.connected&&peersNear().length>0;
-    $('action').hidden=!(spot||litterHere||animalHere||near)||mode!=='playing';const label=spot?spot.name:litterHere?'쓰레기 줍기':animalHere?animalHere.label:'손 흔들기';if($('action').dataset.spot!==label){$('action').dataset.spot=label;$('action').innerHTML=label+' <kbd>E</kbd>';}
+    if($('progress').value!==state.y)$('progress').value=state.y;
+    const spot=nearby(state.y),reachable=mode==='playing'?nearestLitter(life,{s:state.y,x:state.x}):null,litterHere=!spot&&reachable,animalHere=!spot&&!litterHere&&mode==='playing'?animalNear(state.y,life):null,near=!spot&&!litterHere&&!animalHere&&classroom.connected&&peersNear().length>0;
+    if($('action').classList.contains('animal-near')!==!!animalHere)$('action').classList.toggle('animal-near',!!animalHere);const actionHidden=!(spot||litterHere||animalHere||near)||mode!=='playing';if($('action').hidden!==actionHidden)$('action').hidden=actionHidden;const label=spot?spot.name:litterHere?'쓰레기 줍기':animalHere?animalHere.label:'손 흔들기';if($('action').dataset.spot!==label){$('action').dataset.spot=label;$('action').innerHTML=label+' <kbd>E</kbd>';}
     const pickable=!!reachable&&!life.litter.pickup;if($('pick').hidden===pickable)$('pick').hidden=!pickable;
     const th=Math.round(thirst(life)*100);if(th!==lastThirst){lastThirst=th;$('flask').style.setProperty('--thirst',String(th/100));$('flask').title='물 마시기 (F) · 걸은 만큼 목이 말라요 '+th+'%';}
     const drinkFlag=!!life.water.drink;if(drinkFlag!==lastDrinkFlag){lastDrinkFlag=drinkFlag;$('flask').setAttribute('aria-pressed',String(drinkFlag));}
     if(spot?.s===362&&mode==='playing')seatIndex=seatFor(state.x,state.y);
-    const followable=mode==='playing'&&classroom.connected&&(autoWalk||followTarget());$('follow').hidden=!followable;if(followable&&!autoWalk){const t=followTarget();$('follow').textContent=followLabel(t.reason);}else if(autoWalk)$('follow').textContent='멈추기';
-    if(time>noteUntil)$('note').textContent='';
+    const followable=mode==='playing'&&classroom.connected&&(autoWalk||followTarget());if($('follow').hidden!==!followable)$('follow').hidden=!followable;if(followable&&!autoWalk){const t=followTarget();$('follow').textContent=followLabel(t.reason);}else if(autoWalk)$('follow').textContent='멈추기';
+    if(time>noteUntil&&$('note').textContent)$('note').textContent='';
     if((mode==='rest'||mode==='finished')&&advanceObservation(observation,dt,memories)){
       if(mode==='rest'){$('observe-feedback').textContent=observation.memory;$('observe-saved').textContent=observation.note?'이 장면과 고른 한 줄을 산책 기억에 남겼어요.':'이 장면을 산책 기억에 남겼어요.';}
-      else{renderMemories();$('finish-text').textContent=resultText(observation,stayText(SUMMIT.platform));if(observation.id==='group'){flash();sound.chirp();}}
-      renderChoices(observation.spot);showAsk();
+      else{renderMemories();$('finish-text').textContent=resultText(observation,'발아래 숲을 보고, 친구들과 사진을 남겨요.');if(observation.id==='group'){flash();}}
+      renderChoices(observation.spot);showAsk();renderLifeRows();
     }
     stepLife(dt);
     if(state.y>SUMMIT.platform-2&&!reached){reached=true;announce('바람봉 정상이에요. 전망 자리에서 E를 눌러 풍경을 보고, 다 같이 사진도 찍어요. 선생님 보온병의 컵라면도 있어요.',10);}
-    sound.tick(time,state.y,moving,traveled);
-    if(classroom.connected)classroom.sendState({x:state.x,y:state.y,yaw:view.yaw,pitch:view.pitch,leaf:explorer.packet(),meal:sharedMeal(),pose:netPose(heroActivity),seat:mode==='rest'&&observation?.id==='sit'?seatIndex:-1},now);
+    if(moving&&!movementLearned&&traveled>2.5){movementLearned=true;if($('note').textContent===openingNote)noteUntil=time;}
+    sound.tick(time,state.y,moving,traveled,view.yaw);
+    if(classroom.connected)classroom.sendState({x:state.x,y:state.y,yaw:view.yaw,pitch:view.pitch,leaf:null,meal:sharedMeal(),pose:netPose(heroActivity),seat:mode==='rest'&&observation?.id==='sit'?seatIndex:-1},now);
   }
   if(!frozen()){
-    lifeView.focus=explorer.focus||life.focus?.id||null;lifeView.focusT=focusProgress(life);lifeView.picnic.active=picnicShown();lifeView.picnic.seat=seatIndex;lifeView.picnic.eating=life.meals.picnic.action?.id==='bite';
+    lifeView.encounters=life.encounters;lifeView.focus=explorer.focus||life.focus?.id||null;lifeView.focusT=focusProgress(life);lifeView.picnic.active=picnicShown();lifeView.picnic.seat=seatIndex;lifeView.picnic.eating=life.meals.picnic.action?.id==='bite';
     lifeView.noodle.active=noodleShown();lifeView.noodle.eating=life.meals.noodle.action?.id==='bite';lifeView.cheerUntil=life.litter.lastPickedAt+3.2;
     startDiningFrame();
     const events=world.update(time,state.y,idle,reduced,(mode==='rest'||mode==='finished')?observation:null,{x:hero.root.position.x,z:hero.root.position.z,moving},lifeView);if(events.leafKick)sound.rustle(.6);position(false,dt,moving);placePeers(dt);
@@ -551,13 +594,36 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/10
     if(diningNow)dining.update(time,hands,life.meals[diningNow],reduced);
     explorer.update(dt,time,reduced);
   }renderer.render(scene,camera);
-}requestAnimationFrame(frame);
+}
+// Warm real assets and shaders behind the intro; do not spend the child's first steps building them.
+async function prepareStart(){
+  $('start').textContent='캐릭터와 숲을 준비하고 있어요';
+  await Promise.allSettled([heroReady,guideReady,world.upgrades,world.wildlife.ready,sound.prepare()]);
+  const textures=new Set([scene.background].filter(t=>t?.isTexture));
+  scene.traverse(o=>{if(o.isSkinnedMesh){if(!o.skeleton.boneTexture)o.skeleton.computeBoneTexture();textures.add(o.skeleton.boneTexture);}
+    for(const material of [o.material,o.customDepthMaterial].flat().filter(Boolean)){
+    for(const value of Object.values(material))if(value?.isTexture)textures.add(value);
+    for(const uniform of Object.values(material.uniforms||{}))if(uniform.value?.isTexture)textures.add(uniform.value);
+  }});
+  // Decode image pixels asynchronously before the synchronous GPU upload, then yield by elapsed work.
+  await Promise.all([...new Set([...textures].map(t=>t.image).filter(image=>typeof image?.decode==='function'))].map(image=>image.decode().catch(()=>{})));
+  let uploadSlice=performance.now();for(const texture of textures){renderer.initTexture(texture);if(performance.now()-uploadSlice>=8){await new Promise(resolve=>requestAnimationFrame(resolve));uploadSlice=performance.now();}}
+  try{await renderer.compileAsync(scene,camera);}catch(error){console.warn('Forest shader warmup unavailable',error);}
+  renderer.render(scene,camera);
+  await new Promise(resolve=>requestAnimationFrame(resolve));
+  renderer.render(scene,camera);
+  $('start').disabled=false;$('start').textContent=classroom.token?(classroom.role==='teacher'?'학생들과 산책 시작':'함께 산책 시작'):'산책 시작';
+  forestReady=true;$('look-next').disabled=!!classroom.token;last=performance.now();requestAnimationFrame(frame);
+}
+prepareStart().catch(error=>{modeTo('error');console.error(error);});
 // ---- QA hooks: only on localhost with ?qa=1 (parent's browser checks inject their own helper; nothing in the UI uses them) ----
 if(['localhost','127.0.0.1','[::1]'].includes(location.hostname)&&new URLSearchParams(location.search).get('qa')==='1')window.forestQA={
+  animals:()=>world.wildlife.snapshot(),
+  graphics:()=>({fern:!!world.fernProp,calls:world.renderer.info.render.calls,triangles:world.renderer.info.render.triangles,geometries:world.renderer.info.memory.geometries,textures:world.renderer.info.memory.textures}),
   state:()=>({mode,s:state.y,x:state.x,observation:observation&&{spot:observation.spot,id:observation.id,elapsed:observation.elapsed,done:observation.done},memories:[...memories.entries()],photoPosed:world.photoPosed(),fallsSeen:world.fallsSeen(),leafRested:world.leafRested(),bridgeAssets:world.bridge.userData.assets,bridgeSpan:world.bridge.userData.span,hero:hero.root.name,guide:guide.root.name,friends:Object.fromEntries(Object.entries(world.friends).map(([k,v])=>[k,v.root.name]))}),
   goto(s,x=0){if(mode==='intro')reset();closeJournal(true);if(mode!=='playing'){cancelCard(life);observation=null;modeTo('playing');renderLifeRows();}state={x,y:clamp(s,0,LENGTH)};leadSnap=true;position(true);},
   interact,choose:id=>{const spot=nearby(state.y);if(spot&&mode!=='playing')chooseObservation(spot.s,id);},
-  ready:()=>Promise.all([heroReady,guideReady,world.upgrades]),scenic:SCENIC,falls:world.falls,
+  ready:()=>Promise.all([heroReady,guideReady,world.upgrades,world.wildlife.ready]),scenic:SCENIC,falls:world.falls,
   // Read-only hiking-life snapshot: pure state (life.mjs), prop visibility/positions (props.mjs), journal dialog state and the
   // pose currently applied to the hero. Nothing here changes state; actions go through the real buttons/keys (or `life` helpers below).
   life:()=>({state:lifeSnapshot(life),pose:heroActivity,journal:{open:mode==='journal',from:journalFrom},hands:Object.fromEntries(Object.entries(hands).map(([k,v])=>[k,v?{x:+v.x.toFixed(2),y:+v.y.toFixed(2),z:+v.z.toFixed(2)}:null])),props:props?props.snapshot():null,litterSpots:props?props.litterSpots():null}),
@@ -565,4 +631,11 @@ if(['localhost','127.0.0.1','[::1]'].includes(location.hostname)&&new URLSearchP
   exploration:()=>explorer.snapshot(),
   lifeDo:{drink:drinkWater,pick:pickLitter,focus:beginFocus,meal:beginMeal,journal:()=>mode==='journal'?closeJournal():openJournal()}
 };
+
+
+
+
+
+
+
 
