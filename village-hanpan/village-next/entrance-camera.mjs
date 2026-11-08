@@ -1,11 +1,11 @@
 const ease=t=>{t=Math.max(0,Math.min(1,t));return t*t*t*(t*(t*6-15)+10);};
-// Camera-only staging: saved positions and the walk graph never move.
+// Lower opening, rabbit close-up, short hold, then the normal play framing. Saves and paths stay untouched.
 export function entrancePose(progress,region,player,aspect){
- const dokdo=region==='mist',u=ease(dokdo?progress:Math.max(0,(progress-.06)/.94)),portrait=aspect<.8;
- const startZoom=Math.min(dokdo?.29:.30,aspect*.42),endZoom=dokdo?(aspect<1?2.1:1.65):(portrait?2.3:1.9);
+ const dokdo=region==='mist',u=ease(progress/.64),settle=ease((progress-.74)/.26),portrait=aspect<.8;
+ const startZoom=Math.min(dokdo?.435:.60,aspect*.70),endZoom=portrait?2.3:1.9,closeZoom=endZoom*1.35;
  return {x:player.x*u+(!dokdo?1.2*(1-u):0)+(dokdo?-1.8:0)*Math.sin(Math.PI*u),z:(dokdo?-2:11)*(1-u)+player.z*u+(!dokdo?1.4:0)*Math.sin(Math.PI*u),
-  height:(dokdo?60:52)*(1-u)+24*u,look:(dokdo?2.5:1)*(1-u)+(dokdo?player.y+1:.8)*u+(dokdo?1.4:0)*Math.sin(Math.PI*u),
-  angle:.65+(dokdo?-.22:.22)*(1-u)+(dokdo?.11:.10)*Math.sin(Math.PI*u),zoom:startZoom*Math.pow(endZoom/startZoom,u)};
+  height:(dokdo?40:26)*(1-u)+(21+3*settle)*u,look:(dokdo?2.5:1)*(1-u)+(dokdo?player.y+1:.8)*u+(dokdo?1.4:0)*Math.sin(Math.PI*u),
+  angle:.65+(dokdo?-.22:.22)*(1-u)+(dokdo?.11:.10)*Math.sin(Math.PI*u),zoom:startZoom*Math.pow(closeZoom/startZoom,u)*Math.pow(endZoom/closeZoom,settle)};
 }
 export function applyEntrancePose(world,pose){
  world.center.set(pose.x,0,pose.z);world.cameraHeight=pose.height;world.lookHeight=pose.look;
@@ -27,8 +27,7 @@ export function voyagePose(u,boat,region,aspect){
 export function voyageArrivalPose(u,region,player,aspect){
  const hold=region==='mist'?.15:.12;
  const progress=Math.max(0,(u-hold)/(1-hold)),pose=entrancePose(progress,region,player,aspect);
- pose.height-=4*(1-ease(progress));pose.look+=.5*(1-ease(progress));
- pose.x+=(region==='mist'?1.05:-.85)*Math.sin(Math.PI*ease(progress));
- pose.angle+=(region==='mist'?-.065:.045)*Math.sin(Math.PI*ease(progress));
- pose.zoom*=1+(region==='mist'?.16:.10)*(1-ease(region==='mist'?progress:Math.max(0,(progress-.06)/.94)));return pose;
+ return pose;
 }
+
+
