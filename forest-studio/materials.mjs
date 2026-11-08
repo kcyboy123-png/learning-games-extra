@@ -1,0 +1,359 @@
+// materials.mjs — procedural 3D forms for the 48 materials. Every form reads from all sides at eye level.
+// Instanced kinds return a baked prototype (one mesh per colour/map). Ground covers are built per instance so they follow the terrain.
+// Visual upgrade (2026-11-07): bark/wood/stone maps, layered leaf-card crowns on real limbs, petal/bloom/floret cards for
+// flowers and hydrangeas, contact shadows, rippled pond water. IDs, footprints, collision bodies and walking tops are unchanged.
+import * as T from './vendor/three.module.js';
+import {MATERIALS,material,toWorld} from './core.mjs';
+import {GLTFLoader} from './vendor/GLTFLoader.js';
+import {surfaceData,foliageDetailTex,barkTex,birchBarkTex,woodTex,woodRoughTex,cedarTex,endGrainTex,stoneTex,mossTex,petalTex,leafTex,tuftTex,floretTex,daisyTex,bloomTex,shadowTex,rippleNormal,depthFor,twigOvalTex,twigSmallTex,twigLobedTex,twigLanceTex,twigNeedleTex,twigBloomTex} from './textures.mjs';
+export const cache=new Map();
+// Average coincident normals without welding texture seams or changing topology.
+function softenNormals(g,amount){const p=g.attributes.position,n=g.attributes.normal,groups=new Map(),keys=[];for(let i=0;i<p.count;i++){const key=[p.getX(i),p.getY(i),p.getZ(i)].map(v=>Math.round(v*10000)).join(',');keys.push(key);if(!groups.has(key))groups.set(key,new T.Vector3());groups.get(key).add(new T.Vector3(n.getX(i),n.getY(i),n.getZ(i)));}const v=new T.Vector3();for(let i=0;i<n.count;i++){v.fromBufferAttribute(n,i).lerp(groups.get(keys[i]).clone().normalize(),amount).normalize();n.setXYZ(i,v.x,v.y,v.z);}}
+
+// Leaf cluster card reused from the piano forest (local asset copy). Loaded before the world is built.
+export const leafTexture=new T.Texture();leafTexture.colorSpace=T.SRGBColorSpace;leafTexture.anisotropy=4;
+export const leafDepth=new T.MeshDepthMaterial({depthPacking:T.RGBADepthPacking,map:leafTexture,alphaTest:.3,side:T.DoubleSide});
+export const assetsReady=new Promise(resolve=>{const img=new Image();img.onload=()=>{leafTexture.image=img;leafTexture.needsUpdate=true;resolve(true);};img.onerror=()=>resolve(false);img.src='./assets/leaf-cluster-v3.png';});
+// ---- Blender-made models (visual-blender): real mesh leaves/branches/petals exported as GLB (assets/models/*.glb, made
+// in-house with visual-blender/blend/make_assets.py). Loaded once with the stock three r162 GLTFLoader; a kind whose
+// file is missing, fails to parse or looks wrong (no triangles, no normals, absurd size) keeps its procedural prototype.
+const MODELS=Object.fromEntries(['oak','birch','maple','cherry','cosmos','daisy','hydrangea','liriope'].map(k=>[k,'./assets/models/'+k+'.glb']));
+const modelParts=new Map();export const modelStatus={};
+function extractParts(scene,kind){scene.updateMatrixWorld(true);const parts=[];const box=new T.Box3();scene.traverse(o=>{if(!o.isMesh)return;const g=o.geometry.clone().applyMatrix4(o.matrixWorld);if(!g.attributes.position||!g.attributes.normal||g.attributes.position.count<3)throw new Error('part without triangles/normals');
+  // COLOR_0 arrives as normalized uint8/uint16 RGBA; bake() concatenates raw arrays, so convert to plain float RGB here.
+  const c=g.attributes.color;if(c){const n=c.count,f=new Float32Array(n*3);for(let i=0;i<n;i++){f[i*3]=c.getX(i);f[i*3+1]=c.getY(i);f[i*3+2]=c.getZ(i);}g.setAttribute('color',new T.BufferAttribute(f,3));}
+  const name=(o.material?.name||o.name||'part').toLowerCase();
+  if(name==='bark'&&g.attributes.uv){const p=g.attributes.position,n=g.attributes.normal,uv=g.attributes.uv;for(let i=0;i<p.count;i++){const u=uv.getX(i),v=uv.getY(i),ridge=Math.sin(u*Math.PI*36+Math.sin(v*8)*.45),d=(kind==='birch'?.0015:.011)*(ridge+.25*Math.sin(u*Math.PI*12+v*3));p.setXYZ(i,p.getX(i)+n.getX(i)*d,p.getY(i)+n.getY(i)*d,p.getZ(i)+n.getZ(i)*d);}g.computeVertexNormals();softenNormals(g,.7);const color=[];for(let i=0;i<p.count;i++){const y=p.getY(i),patch=(.5+.5*Math.sin(p.getX(i)*18+p.getZ(i)*13))*Math.max(0,1-y/(.32+.12*Math.sin(p.getX(i)*9+p.getZ(i)*7))),c=new T.Color('#ffffff').lerp(new T.Color('#728451'),patch*.34);color.push(c.r,c.g,c.b);}g.setAttribute('color',new T.Float32BufferAttribute(color,3));}
+ 
+  // Leaf normals blend with the crown volume to soften isolated dark paper facets.
+  if(name==='leaf'){const n=g.attributes.normal,p=g.attributes.position,v=new T.Vector3(),radial=new T.Vector3();for(let i=0;i<n.count;i++){v.fromBufferAttribute(n,i);if(v.y<0)v.negate();radial.set(p.getX(i)*.22,.8,p.getZ(i)*.22).normalize();v.lerp(radial,kind==='oak'?.20:.26).normalize();n.setXYZ(i,v.x,v.y,v.z);}}
+
+  parts.push({name,geometry:g});box.expandByObject(o);});
+ if(!parts.length)throw new Error('no meshes');const size=box.getSize(new T.Vector3());if(!(size.x<12&&size.y<12&&size.z<12)||!(size.y>.05))throw new Error('unexpected size '+size.toArray().map(n=>n.toFixed(2)));return parts;}
+let modelsOff=false;try{modelsOff=localStorage.getItem('forest-models')==='off';}catch{} // QA switch: compare the procedural prototypes at the same poses
+// Loading only starts in a browser (document + fetch); Node-side checks that import this module (independent-qa) keep
+// the procedural prototypes. Any exception while starting a load also falls back instead of breaking module init.
+const canLoad=typeof document!=='undefined'&&typeof fetch==='function'&&!modelsOff;
+export const modelsReady=Promise.all(Object.entries(MODELS).map(([kind,url])=>new Promise(resolve=>{if(!canLoad){modelStatus[kind]=modelsOff?'off':'skipped: no browser';resolve();return;}
+ try{const loader=new GLTFLoader();loader.load(url,gltf=>{try{modelParts.set(kind,extractParts(gltf.scene,kind));modelStatus[kind]='ok';}catch(e){modelStatus[kind]='fallback: '+e.message;console.warn('[models] '+kind+' unusable, procedural fallback:',e.message);}resolve();},undefined,err=>{modelStatus[kind]='fallback: load failed';console.warn('[models] '+kind+' failed to load, procedural fallback');resolve();});}
+ catch(e){modelStatus[kind]='fallback: '+e.message;console.warn('[models] '+kind+' load could not start, procedural fallback:',e.message);resolve();}})));
+// Game materials for the model parts: bark reuses the tinted bark map on the model's cylindrical UVs; every other part is
+// a vertex-coloured Lambert (double-sided where it is a thin leaf/petal/blade) with the usual breeze, canopy gradient and
+// translucency hooks. Blender's own materials are ignored (they only carry the vertex colour).
+const glbMats=new Map();
+function glbMat(kind,name){const key=kind+'|'+name;if(glbMats.has(key))return glbMats.get(key);let m;
+ if(name==='bark'){m=mat(BARK[kind]??BARK.oak,{map:kind==='birch'?'birch':'bark',bump:kind==='birch'?.012:.045});m.vertexColors=true;}
+ else{const thin=['leaf','petal','grass','sepal','blossom','floret'].includes(name);const canopy=(name==='leaf'||name==='blossom')&&!!BARK[kind];const sway={leaf:canopy?.03:.02,blossom:.03,petal:.03,floret:.02,grass:.045,sepal:.03,stem:.02,center:.03}[name]??.02;
+  m=new (name==='leaf'?T.MeshStandardMaterial:T.MeshLambertMaterial)({vertexColors:true,color:'#ffffff',side:thin?T.DoubleSide:T.FrontSide,emissive:new T.Color('#ffffff'),emissiveIntensity:0,map:['leaf','sepal','grass'].includes(name)?foliageDetailTex():null});
+  if(m.isMeshStandardMaterial){m.roughness=.76;m.metalness=0;}
+  if(['petal','floret','blossom'].includes(name)){m.color.set('#fff2ed');m.emissive.copy(m.color);m.emissiveIntensity=.004;}
+  m.userData={canopy,sway,sprig:true,depth:null,lamp:false,lampIntensity:1,baseOpacity:1};cache.set('glb|'+key,m);/* registered so canopy see-through and lamp loops see it */}
+ glbMats.set(key,m);return m;}
+// The world (and its surrounding forest) is built before the GLB files arrive; once they are settled the procedural
+// prototypes of model kinds are dropped so the next build uses the models.
+export function resetModelPrototypes(){for(const kind of modelParts.keys()){const key=kind+'|full';const p=protos.get(key);if(p){p.traverse(o=>{if(o.isMesh)o.geometry.dispose();});protos.delete(key);}}}
+function modelGroup(kind){const g=new T.Group();for(const p of modelParts.get(kind)){const m=new T.Mesh(p.geometry,glbMat(kind,p.name));m.castShadow=true;m.receiveShadow=p.name==='bark'||p.name==='stem'||(['oak','birch','cherry','maple','hydrangea','cosmos','daisy'].includes(kind)&&['leaf','floret','petal','blossom'].includes(p.name));g.add(m);}
+ if(['hydrangea','cosmos','daisy'].includes(kind)){const r=rng(kind.length*93);leafCards(g,r,0,.12,0,kind==='hydrangea'?.45:.22,.15,['#55843f','#72994d','#88aa5c'],kind==='hydrangea'?14:7,kind==='hydrangea'?.34:.18);}
+ if(BARK[kind])contact(g,1.25);else contact(g,.5,.015);return g;}
+// Surface maps (tinted by the colour) and alpha cards. 'sprig' = the illustrated leaf cluster; 'card' = a procedural card.
+const MAPS={cedar:cedarTex,endgrain:endGrainTex,bark:barkTex,birch:birchBarkTex,wood:woodTex,stone:stoneTex,moss:mossTex};const CARDS={petal:petalTex,leaf:leafTex,tuft:tuftTex,floret:floretTex,daisy:daisyTex,bloom:bloomTex,twigoval:twigOvalTex,twigsmall:twigSmallTex,twiglobed:twigLobedTex,twiglance:twigLanceTex,twigneedle:twigNeedleTex,twigbloom:twigBloomTex};
+export function mat(color,o={}){const key=color+'|'+(o.rough??.9)+'|'+(o.canopy?1:0)+'|'+(o.sway??0)+'|'+(o.emissive??'')+'|'+(o.metal??0)+'|'+(o.flat?1:0)+'|'+(o.opacity??1)+'|'+(o.sprig?1:0)+'|'+(o.double?1:0)+'|'+(o.map??'')+'|'+(o.card??'')+'|'+(o.lamp?1:0)+'|'+(o.bump??'')+'|'+(o.emissiveIntensity??'');
+ if(!cache.has(key)){let m;const card=o.sprig?leafTexture:(o.card?CARDS[o.card]():null);
+  // alphaTest .3 (not .45): mipmapped cards otherwise erode with distance and expose the inner masses as flat balloons.
+  if(card){m=new T.MeshLambertMaterial({map:card,color,emissive:new T.Color(color),emissiveMap:card,emissiveIntensity:o.emissiveIntensity??.06,alphaTest:.3,side:T.DoubleSide});}
+  else{const map=o.map?MAPS[o.map]():null;m=new T.MeshStandardMaterial({color,roughness:o.rough??.9,metalness:o.metal??0,flatShading:!!o.flat,side:o.double?T.DoubleSide:T.FrontSide,map,bumpMap:map?surfaceData(map):null,bumpScale:map?(o.bump??.03):0});if(o.map==='moss'){m.bumpMap=surfaceData(map);m.roughness=1;m.bumpScale=.012;}if(o.map==='stone'){m.vertexColors=true;m.bumpMap=surfaceData(map);m.roughnessMap=surfaceData(map,true);m.roughness=o.rough??1;m.bumpScale=o.bump??.035;}if(o.map==='bark'){m.bumpMap=surfaceData(map);m.roughnessMap=surfaceData(map,true);m.roughness=1;m.bumpScale=.086;}if(o.map==='wood'||o.map==='cedar'){m.bumpMap=surfaceData(map);m.roughnessMap=surfaceData(map,true);m.roughness=.86;m.bumpScale=o.map==='wood'?.022:.026;}if(o.emissive){m.emissive=new T.Color(o.emissive);m.emissiveIntensity=o.emissiveIntensity??1;}if(o.opacity!==undefined&&o.opacity<1){m.transparent=true;m.opacity=o.opacity;}}
+  m.userData={canopy:!!o.canopy,sway:o.sway??0,sprig:!!o.sprig||!!o.card,depth:card?(o.sprig?leafDepth:depthFor(card)):null,lamp:!!o.lamp,lampIntensity:o.emissiveIntensity??1,baseOpacity:m.opacity};cache.set(key,m);}return cache.get(key);}
+// Contact shadow: one shared unlit disc material (baked into prototypes like everything else).
+let contactMat=null;export function contactMaterial(){contact(new T.Group(),0);return contactMat;}function contact(g,rad,y=.02,op=1){if(!contactMat){contactMat=new T.MeshBasicMaterial({map:shadowTex(),transparent:true,depthWrite:false,color:'#36452c',opacity:.34});contactMat.userData={sway:0,contact:true};}const m=new T.Mesh(G.plane,contactMat);m.rotation.x=-Math.PI/2;m.position.y=y;m.scale.set(rad*2,rad*2,1);m.castShadow=false;m.receiveShadow=false;g.add(m);return m;}
+const sprigGeo=new T.PlaneGeometry(1,1,3,3);{const p=sprigGeo.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,Math.sin(p.getX(i)*Math.PI)*.1);sprigGeo.computeVertexNormals();}
+const cardGeo=new T.PlaneGeometry(1,1,1,1);
+const petalGeo=new T.PlaneGeometry(1,1,2,3);petalGeo.translate(0,.5,0);{const p=petalGeo.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,Math.sin(p.getY(i)*Math.PI)*(.10+.035*(1-4*p.getX(i)*p.getX(i))));petalGeo.computeVertexNormals();}
+// Curved illustrated leaf cards on the canopy shell: close-up detail without a whole-tree billboard.
+function sprigs(g,r,cx,cy,cz,rad,hgt,tint,n,size=.9,sway=.03){for(let i=0;i<n;i++){const a=i*2.4+r()*.5,v=r()*1.6-.8,rr=Math.sqrt(Math.max(0,1-v*v));const m=mesh(g,sprigGeo,tint,cx+Math.cos(a)*rr*rad*.8,cy+v*hgt*.6,cz+Math.sin(a)*rr*rad*.8,size+r()*size*.5,size+r()*size*.5,1,{sprig:true,canopy:true,sway});m.rotation.set((r()-.5)*.9,a,(r()-.5)*.6);}}
+export const G={
+ sphere:new T.IcosahedronGeometry(1,1),smoothSphere:new T.SphereGeometry(1,10,7),ball:new T.SphereGeometry(1,8,5),box:new T.BoxGeometry(1,1,1),cyl:new T.CylinderGeometry(1,1,1,9),cyl14:new T.CylinderGeometry(1,1,1,14),cone:new T.ConeGeometry(1,1,10),cone4:new T.ConeGeometry(1,1,4),disc:new T.CylinderGeometry(1,1,1,16),torus:new T.TorusGeometry(1,.08,6,18,Math.PI),plane:cardGeo,rock:new T.IcosahedronGeometry(1,3)
+};
+// One tapered, cupped petal, reused without increasing the sphere topology.
+G.petal=G.smoothSphere.clone();{const p=G.petal.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),t=(x+1)*.5;p.setXYZ(i,x,y*(.55+.45*t),z*.55+.20*x*x);}G.petal.computeVertexNormals();}
+// Irregular but bounded rock surfaces preserve every existing placement footprint.
+{const p=G.rock.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),s=.92+.055*Math.sin(x*8+z*3)*Math.cos(y*7-z*5);p.setXYZ(i,x*s,Math.min(y*s,.73+.10*x-.04*z),Math.max(z*s,-.78+.10*x));}G.rock.computeVertexNormals();softenNormals(G.rock,.68);const colors=[];for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),patch=Math.max(0,Math.sin(x*7+z*5)+Math.cos(z*9-y*4)-.25)*Math.max(0,y)*.55,c=new T.Color('#ffffff').lerp(new T.Color('#728950'),Math.min(.68,patch*1.05));colors.push(c.r,c.g,c.b);}G.rock.setAttribute('color',new T.Float32BufferAttribute(colors,3));}
+export function mesh(g,geo,c,x,y,z,sx=1,sy=sx,sz=sx,o={}){const m=new T.Mesh(geo,typeof c==='string'?mat(c,o):c);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=o.shadow!==false;m.receiveShadow=o.receive!==false;g.add(m);return m;}
+// Woody branches (radius ≥ 3 cm, no breeze) get the bark map; thin green stems stay plain.
+export function branch(g,a,b,r,c='#806345',o={},r2=r){const v=new T.Vector3(...b).sub(new T.Vector3(...a));const geo=r2===r?G.cyl:new T.CylinderGeometry(r2/r,1,1,9);const opts=(typeof c==='string'&&r>=.03&&!o.sway&&o.map===undefined)?{map:'bark',bump:.045,...o}:o;const m=mesh(g,geo,c,...a,r,v.length(),r,opts);m.position.addScaledVector(v,.5);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),v.normalize());return m;}
+export function rng(seed){return ()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+// Merge all meshes that share a material into one geometry. Instances reuse the result.
+// Buckets are split by material and by shadow flags (flower/floret cards neither cast nor receive, so they never show
+// shadow acne from their own neighbours); world.applyMeshFlags keeps those flags on the instanced copies.
+export function bake(group){group.updateMatrixWorld(true);const buckets=new Map();group.traverse(o=>{if(!o.isMesh)return;const key=o.material.uuid+'|'+(o.castShadow?1:0)+(o.receiveShadow?1:0);if(!buckets.has(key))buckets.set(key,{mat:o.material,gs:[],shadow:o.castShadow,receive:o.receiveShadow});const geo=(o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone()).applyMatrix4(o.matrixWorld);if(o.material.vertexColors&&!geo.getAttribute('color')){const colors=new Float32Array(geo.attributes.position.count*3);colors.fill(1);geo.setAttribute('color',new T.BufferAttribute(colors,3));}buckets.get(key).gs.push(geo);});
+ const out=new T.Group();for(const {mat:material,gs,shadow,receive} of buckets.values()){const g=new T.BufferGeometry();for(const name of ['position','normal','uv','color']){const arrays=gs.map(x=>x.getAttribute(name));if(arrays.some(x=>!x))continue;const a=new Float32Array(arrays.reduce((s,x)=>s+x.array.length,0));let off=0;for(const x of arrays){a.set(x.array,off);off+=x.array.length;}g.setAttribute(name,new T.BufferAttribute(a,arrays[0].itemSize));}g.computeBoundingSphere();g.computeBoundingBox();const m=new T.Mesh(g,material);m.castShadow=shadow;m.receiveShadow=receive;m.userData.noShadow=!shadow;m.userData.noReceive=!receive;out.add(m);gs.forEach(x=>x.dispose());}return out;}
+
+// ---- shared pieces ----
+// Bark colours are lighter than the final look: the bark map (mean ~0.75) multiplies them.
+const BARK={oak:'#b09a7e',birch:'#ece8d8',pine:'#aa745a',fir:'#7e6652',cherry:'#a38b75',willow:'#9d8b6b',maple:'#8e7660'};
+const WOOD={light:'#d8b98a',mid:'#c3a074',dark:'#9a7a52',grey:'#8e8878'};const STONE={a:'#aaa99a',b:'#929888',c:'#b8b8a6',d:'#7f8578'};
+const W=(c,o={})=>({map:'wood',bump:.025,...o});
+// Physical-size UVs keep grain along a timber's length, including upright posts.
+const timberGeometries=new Map();
+function lanternBody(g,x,y,z,size){const shell=new T.Group();shell.position.set(x,y,z);g.add(shell);
+ mesh(shell,G.box,'#ead3a2',0,0,0,size*.83,size*1.08,size*.83,{emissive:'#ffc879',emissiveIntensity:.48,rough:.82,lamp:true});
+ for(const xx of [-1,1])for(const zz of [-1,1])mesh(shell,G.cyl,'#575647',xx*size*.48,0,zz*size*.48,size*.035,size*1.32,size*.035,{metal:.45,rough:.6});
+ for(const yy of [-.66,.65])mesh(shell,G.box,'#806747',0,yy*size,0,size*1.15,size*.08,size*1.15,{metal:.4,rough:.6});
+ const cap=mesh(shell,G.cone4,'#656650',0,size*.85,0,size*.89,size*.32,size*.89,{metal:.25,rough:.7});cap.rotation.y=Math.PI/4;
+ for(const side of [-1,1]){mesh(shell,G.box,'#806747',side*size*.46,0,0,size*.035,size*.045,size*.95,{metal:.4,rough:.6});mesh(shell,G.box,'#806747',0,0,side*size*.46,size*.95,size*.045,size*.035,{metal:.4,rough:.6});}
+}
+function hipRoof(g,y,reach,rise,rows){const backing=mesh(g,G.cone4,'#71583e',0,y+rise/2-.09,0,reach*Math.SQRT2,rise,reach*Math.SQRT2,{map:'wood',bump:.008});backing.rotation.y=Math.PI/4;for(let side=0;side<4;side++)for(let row=0;row<rows;row++){
+ const t0=row/rows,t1=Math.min(1,(row+1.34)/rows),r0=reach*(1-t0),r1=reach*(1-t1),n=Math.max(1,Math.ceil(r0*2/.38));
+ // Continuous underlay closes the shingle joints without hiding their bevels.
+ const under=new T.BufferGeometry();under.setAttribute('position',new T.Float32BufferAttribute([-r0,y+rise*(.82*t0+.18*t0*t0)+row*.004-.035,r0,r0,y+rise*(.82*t0+.18*t0*t0)+row*.004-.035,r0,r1,y+rise*(.82*t1+.18*t1*t1)+row*.004-.035,r1,-r1,y+rise*(.82*t1+.18*t1*t1)+row*.004-.035,r1],3));under.setIndex([0,1,2,0,2,3]);under.computeVertexNormals();mesh(g,under,'#92775b',0,0,0,1,1,1,{rough:1,double:true}).rotation.y=side*Math.PI/2;
+ for(let k=0;k<n;k++){const a=-1+2*k/n+.006,b=-1+2*(k+1)/n-.006,low=y+rise*(.82*t0+.18*t0*t0)+row*.004,high=y+rise*(.82*t1+.18*t1*t1)+row*.004,points=[[a*r0,low,r0],[b*r0,low,r0],[b*r1,high,r1],[a*r1,high,r1]],positions=[],uv=[],colors=[];
+  for(let layer=0;layer<2;layer++)for(let j=0;j<4;j++){const p=points[j];positions.push(p[0],p[1]-(layer?0:.028),p[2]);uv.push((j>1?1:0)*.72+row*.17,(j===1||j===2?1:0)*.38+k*.19);const c=layer?1:.73;colors.push(c,c,c);}
+  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(positions,3));geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geo.setAttribute('color',new T.Float32BufferAttribute(colors,3));geo.setIndex([4,5,6,4,6,7,0,2,1,0,3,2,0,4,5,0,5,1,1,5,6,1,6,2,2,6,7,2,7,3,3,7,4,3,4,0]);geo.computeVertexNormals();
+  const m=mat(['#b9a07f','#b29c7c','#bba585','#ad9578'][Math.floor((Math.sin(k*7.13+row*9.7+side*4.3)*.5+.5)*3.999)],{map:'cedar',bump:.012,rough:.96});m.vertexColors=true;mesh(g,geo,m,0,0,0).rotation.y=side*Math.PI/2;
+ }}for(let side=0;side<4;side++){const a=side*Math.PI/2,beam=timber(g,'#8a6c4d',0,y-.035,reach,reach*2+.08,.09,.10);beam.position.set(Math.sin(a)*reach,y-.035,Math.cos(a)*reach);beam.rotation.y=a;}
+ mesh(g,G.ball,'#9b7952',0,y+rise+.07,0,.065,.09,.065,{rough:.8});}
+function timber(g,c,x,y,z,sx,sy,sz,o={}){const key=[sx,sy,sz].join('|');if(!timberGeometries.has(key)){
+ const dims=[sx,sy,sz],axis=dims.indexOf(Math.max(...dims)),cross=axis===0?[sz,sy]:axis===1?[sx,sz]:[sx,sy],len=dims[axis],bevel=Math.min(...dims)*.14;
+ const shape=new T.Shape();shape.moveTo(-cross[0]/2+bevel,-cross[1]/2+bevel);shape.lineTo(cross[0]/2-bevel,-cross[1]/2+bevel);shape.lineTo(cross[0]/2-bevel,cross[1]/2-bevel);shape.lineTo(-cross[0]/2+bevel,cross[1]/2-bevel);shape.closePath();
+ const geo=new T.ExtrudeGeometry(shape,{depth:len-bevel*2,steps:1,bevelEnabled:true,bevelSize:bevel,bevelThickness:bevel,bevelSegments:2});geo.translate(0,0,-len/2+bevel);if(axis===0)geo.rotateY(Math.PI/2);if(axis===1)geo.rotateX(-Math.PI/2);
+ const p=geo.attributes.position,n=geo.attributes.normal,uv=geo.attributes.uv,col=[];for(let i=0;i<p.count;i++){const a=[p.getX(i),p.getY(i),p.getZ(i)],nn=[Math.abs(n.getX(i)),Math.abs(n.getY(i)),Math.abs(n.getZ(i))],face=nn.indexOf(Math.max(...nn)),other=[0,1,2].find(k=>k!==axis&&k!==face)??(axis+1)%3;uv.setXY(i,a[axis]/.85+.37,a[other]/.25+.43);const bevelFace=nn.filter(v=>v>.15).length>1;const t=Math.min(1,(.82+.14*(a[1]/sy+.5))+(bevelFace?.065:0));col.push(t,t*.993,t*.975);}geo.setAttribute('color',new T.Float32BufferAttribute(col,3));timberGeometries.set(key,geo);
+ }const tone=new T.Color(c).multiplyScalar([.92,.97,1.02][Math.abs(Math.round(x*7.3+y*13.1+z*5.7))%3]);const m=mat('#'+tone.getHexString(),{map:'wood',bump:.008,...o});m.vertexColors=true;return mesh(g,timberGeometries.get(key),m,x,y,z);}
+function rootFlare(g,r,c){mesh(g,new T.CylinderGeometry(r*1.05,r*2.3,.5,10),c,0,.02,0,1,1,1,{map:'bark',bump:.045});for(let i=0;i<5;i++)branch(g,[0,.1,0],[Math.cos(i*1.25+.4)*r*2.6,-.12,Math.sin(i*1.25+.4)*r*2.4],Math.max(.03,r*.42),c);contact(g,r*5.5);}
+function trunk(g,h,r,c,bend=0,r2=r*.6){const n=5;let p=[0,0,0];for(let i=0;i<n;i++){const t=(i+1)/n,q=[Math.sin(t*2.2)*bend,h*t,Math.cos(t*1.7)*bend*.6];branch(g,p,q,r*(1-.4*(i/n)),c,{},r*(1-.4*((i+1)/n)));p=q;}return p;}
+// Crown = several leaf clumps hung on limb ends: a darker inner mass per clump + leaf cards on its shell, lit tint on top,
+// shaded tint underneath. Cards face outward with a little scatter, so every clump reads as layered foliage, not a ball.
+// visual-push: no dark core cards (they read as black clumps). Each clump = 3 mid-tone fill cards + many SMALL cards on an
+// uneven shell (reach varies ±25%, so the clump is lumpy and open, not a ball). Lit cards on top get a stronger emissive
+// term for a back-lit, translucent look; the underside is a medium green, never black.
+// visual-three round 1: leaves grow on twigs. Each clump = a fan of thin twig cylinders from the limb end; every twig carries
+// a crossed pair of leafy-twig cards whose stem base sits on the twig and whose small leaves spread past its tip. No large
+// leaf-cluster billboards: the crown reads as many small leaves on fine branches, with sky showing between the twigs.
+const UP=new T.Vector3(0,1,0),TWIG_GEO=new T.CylinderGeometry(.4,1,1,5,1,true);
+function twigAt(g,a,d,len,rad,c){const m=mesh(g,TWIG_GEO,c,a[0]+d[0]*len/2,a[1]+d[1]*len/2,a[2]+d[2]*len/2,rad,len,rad,{rough:.9,shadow:false,receive:false});m.quaternion.setFromUnitVectors(UP,new T.Vector3(d[0],d[1],d[2]));return m;}
+function crown(g,r,centers,pal,o={}){const sway=o.sway??.03,size=o.size??1,n=o.twigs??10,tex=o.tex??'twigoval',bark=o.bark??'#7a6650',droop=o.droop??0;
+ for(const [x,y,z,cr] of centers){
+  // n twigs fan out from the clump centre; the first three are short inner twigs (their fronds fill the middle of the
+  // clump from the inside — every card still sits on a twig, nothing floats at a random angle).
+  for(let i=0;i<n+3;i++){const u=r()*6.28,v=Math.acos(1-2*r());let dx=Math.sin(v)*Math.cos(u),dy=Math.cos(v)*.75+.12-droop,dz=Math.sin(v)*Math.sin(u);const l=Math.hypot(dx,dy,dz);dx/=l;dy/=l;dz/=l;
+   const inner=i<3;const bx=x+(r()-.5)*cr*.3,by=y+(r()-.5)*cr*.25,bz=z+(r()-.5)*cr*.3;const len=cr*(inner?.2+r()*.15:.45+r()*.55),s=size*cr*(inner?.95+r()*.3:.7+r()*.4);
+   twigAt(g,[bx,by,bz],[dx,dy,dz],len*.9,.009+cr*.01,bark);
+   const mixT=o.mix&&r()<o.mix.ratio;const pc=mixT?o.mix.card:pal.card,tx=mixT?o.mix.tex:tex;const tint=dy>.25?pc[0]:(dy<-.3?pc[2]:pc[1]);const em=dy>.25?.1:(dy<-.3?.05:.07);
+   for(let k=0;k<2;k++){const m=mesh(g,petalGeo,tint,bx+dx*len*.3,by+dy*len*.3,bz+dz*len*.3,s*(o.aspect??.95),s*1.25,1,{card:tx,canopy:true,sway,emissiveIntensity:em});m.quaternion.setFromUnitVectors(UP,new T.Vector3(dx,dy,dz));m.rotateY(k*Math.PI/2+(r()-.5)*.6);}}}}
+// Asymmetric, open crown layout: 3–5 limbs of uneven reach, clumps of uneven radius, and the top clump only sometimes.
+// Round 1 (visual-three, Codex review): besides the clump at each limb end, a smaller clump sits part-way along every
+// limb (55–75%) and leans to one side, so leaves grow from the middle of the branches in several directions and the
+// crown is full without closing its gaps.
+function crownCenters(r,ends,top,h,base,o={}){const c=ends.map(e=>[e[0]*(1.0+r()*.15),e[1]+base*.4,e[2]*(1.0+r()*.15),base*(.68+r()*.45)]);
+ for(const e of ends){const t=.55+r()*.2,side=(r()-.5)*base*.5;c.push([top[0]+(e[0]-top[0])*t+side,h-.2+(e[1]-h+.2)*t+base*.3,top[2]+(e[2]-top[2])*t-side,base*(.42+r()*.25)]);}
+ if(r()<.65)c.push([top[0]+(r()-.5)*.4,h+(o.topRise??1.0),top[2]+(r()-.5)*.4,base*(.75+r()*.3)]);return c;}
+// Limb ends double as clump centres so the foliage hangs on real branches.
+function limbs(g,r,from,h,n,reach,rise,rad,c,spread=0){const out=[];n=Math.max(3,n-1+Math.floor(r()*3));for(let i=0;i<n;i++){const a=i/n*6.28+r()*.9+spread;const d=reach*(.55+r()*.75);const end=[from[0]+Math.cos(a)*d,h+rise+(r()-.4)*.5,from[2]+Math.sin(a)*d];branch(g,from,end,rad,c,{},rad*.55);const mid=[(from[0]+end[0])/2,(from[1]+end[1])/2,(from[2]+end[2])/2];for(let k=0;k<2;k++){const b=a+(k?.9:-.9)+r()*.4;const tip=[mid[0]+Math.cos(b)*d*.5,mid[1]+.25+r()*.3,mid[2]+Math.sin(b)*d*.5];branch(g,mid,tip,rad*.5,c,{},rad*.22);
+  // thin twigs beyond the limb end: the open-crown look needs visible fine branches between leaf clusters
+  for(let t=0;t<2;t++){const bb=b+(t?.7:-.7)+r()*.3;branch(g,tip,[tip[0]+Math.cos(bb)*d*.35,tip[1]+.2+r()*.35,tip[2]+Math.sin(bb)*d*.35],Math.max(.03,rad*.26),c,{},.03);}}
+  for(let t=0;t<2;t++){const bb=a+(t?.5:-.5)+r()*.3;branch(g,end,[end[0]+Math.cos(bb)*d*.4,end[1]+.3+r()*.4,end[2]+Math.sin(bb)*d*.4],Math.max(.03,rad*.3),c,{},.03);}out.push(end);}return out;}
+// Low-detail tree for the far rings: trunk + squashed masses + a few cards.
+const FAR_PAL={oak:['#3b6342','#5a7f49','#c3d994'],birch:['#6d8a4c','#92ad5e','#dde6b0'],pine:['#2f5232','#45703f','#9cbf8a'],fir:['#28503c','#3b6b4b','#8fb48e'],maple:['#9a4426','#c9683a','#f5b070'],willow:['#7a9a4e','#9db86a','#d6e3a2'],cherry:['#d99bb4','#e9aec3','#fbe3ea']};
+function farTree(g,r,kind){const h=2.4+r()*.8,pal=FAR_PAL[kind]??FAR_PAL.oak;const top=trunk(g,h,.17,BARK[kind]??BARK.oak,.05);const centers=[];const n=2+Math.floor(r()*2.5);for(let i=0;i<n;i++){const a=i/n*6.28+r()*.9,d=.5+r()*.7;centers.push([Math.cos(a)*d,h+.1+r()*.6,Math.sin(a)*d,.6+r()*.35]);}if(r()<.7)centers.push([top[0],h+.9,top[2],.8]);crown(g,r,centers,{inner:[pal[0],pal[1]],card:[pal[2],pal[1],pal[1]]},{twigs:6,size:1.35,sway:.02,tex:kind==='maple'?'twiglobed':(kind==='pine'||kind==='fir')?'twigneedle':'twigoval'});rootFlare(g,.17,BARK[kind]??BARK.oak);}
+// Thin stems with a gentle curve (two segments), never straight thick rods.
+function stem(g,x,z,h,c='#59814e',r=.007){const mx=x+.012,mz=z+.008;branch(g,[x,0,z],[mx,h*.55,mz],r,c,{sway:.015,rough:.7});branch(g,[mx,h*.55,mz],[x+.03,h,z],r*.85,c,{sway:.02,rough:.7});}
+// Rounded bell (lathe) with a flared rim, hanging from its top; a bud-like inner cup shows at the mouth.
+G.bell=new T.LatheGeometry([new T.Vector2(0,0),new T.Vector2(.03,-.005),new T.Vector2(.052,-.05),new T.Vector2(.06,-.1),new T.Vector2(.068,-.135),new T.Vector2(.088,-.165),new T.Vector2(.1,-.175)],12);
+// Leaf card at a point: +y of the card points along `dir` yaw with `tilt` from vertical (0 = upright, 1.4 = nearly flat).
+function leaf(g,x,y,z,len,wid,c,yaw,tilt,o={}){const m=mesh(g,petalGeo,c,x,y,z,wid,len,1,{card:'leaf',sway:.025,...o});m.rotation.order='YXZ';m.rotation.set(-tilt,yaw,0);return m;}
+function leafCards(g,r,cx,cy,cz,rad,hgt,colors,n,len,o={}){for(let i=0;i<n;i++){const a=r()*6.28,d=Math.sqrt(r())*rad,y=cy+(r()-.3)*hgt;leaf(g,cx+Math.cos(a)*d,y,cz+Math.sin(a)*d,len*(.8+r()*.5),len*(.5+r()*.3),colors[i%colors.length],a+(r()-.5)*.8,.5+r()*.9,o);}}
+// A flower seen from above as one card (daisy/bloom textures), facing `up` with a small tilt.
+// Small flower cards neither cast nor receive shadows: a clean shape matters more than self-shadowing at this size.
+function head(g,x,y,z,size,c,card,r,tilt=.3,o={}){const m=mesh(g,cardGeo,c,x,y,z,size,size,1,{card,sway:.03,emissiveIntensity:.05,receive:false,shadow:false,...o});m.rotation.order='YXZ';m.rotation.set(-Math.PI/2+tilt,r()*6.28,0);return m;}
+// Petal ring: n petal cards radiating from a centre; tilt lifts them into a cup (>0) or droops them (<0).
+function petals(g,x,y,z,n,len,wid,c,tilt,r,o={}){for(let j=0;j<n;j++){const a=j/n*6.28+r()*.2;const m=mesh(g,petalGeo,c,x+Math.sin(a)*.004,y+j*.0015,z+Math.cos(a)*.004,wid,len,1,{card:'petal',sway:.03,emissiveIntensity:.05,receive:false,shadow:false,...o});m.rotation.order='YXZ';m.rotation.set(-Math.PI/2+tilt,a,0);}}
+// Hydrangea floret: real geometry (four cupped petals + a centre dot), no alpha card, so there is nothing to fringe,
+// erode or z-fight. One merged geometry per floret, placed as a mesh on the head's surface.
+const floretGeo=(()=>{const parts=[];const petal=new T.CircleGeometry(1,7);petal.scale(.55,.75,1);for(let k=0;k<4;k++){const p=petal.clone();p.translate(0,.78,0);p.rotateX(-.55);p.rotateZ(k*Math.PI/2);parts.push(p);}const centre=new T.CircleGeometry(.28,6);centre.translate(0,0,.08);parts.push(centre);
+ const g=new T.BufferGeometry();for(const name of ['position','normal','uv']){const arrays=parts.map(p=>p.toNonIndexed().getAttribute(name));const a=new Float32Array(arrays.reduce((s,x)=>s+x.array.length,0));let off=0;for(const x of arrays){a.set(x.array,off);off+=x.array.length;}g.setAttribute(name,new T.BufferAttribute(a,arrays[0].itemSize));}g.computeBoundingSphere();return g;})();
+// Floret ball: a small darker core hidden under many solid florets whose petals overlap into a rounded, lumpy head.
+function floretBall(g,r,x,y,z,rad,c,n=46){const core=new T.Color(c).multiplyScalar(.72).getStyle();mesh(g,G.smoothSphere,'#'+new T.Color(core).getHexString(),x,y,z,rad*.74,rad*.68,rad*.74,{sway:.02,rough:1});
+ for(let j=0;j<n;j++){const u=r()*6.28,v=Math.acos(1-2*r()*.98);const nx=Math.sin(v)*Math.cos(u),ny=Math.cos(v),nz=Math.sin(v)*Math.sin(u);const px=x+nx*rad*.9,py=y+ny*rad*.82,pz=z+nz*rad*.9;const s=rad*(.26+r()*.14);const m=mesh(g,floretGeo,j%3?c:lighten(c),px,py,pz,s,s,s,{sway:.02,rough:.85,double:true});m.lookAt(px+nx,py+ny,pz+nz);m.rotateZ(r()*6.28);}}
+function lighten(c){const col=new T.Color(c);col.lerp(new T.Color('#ffffff'),.22);return '#'+col.getHexString();}
+function tuft(g,x,y,z,size,c,o={}){for(const yaw of [0,Math.PI/2]){const m=mesh(g,petalGeo,c,x,y,z,size,size*(o.tall??1),1,{card:'tuft',sway:.045,emissiveIntensity:.03,shadow:false,...o});m.rotation.y=yaw+(o.yaw??0);}}
+function leafBlade(g,x,y,z,len,w,c,yaw,tilt,o={}){const m=mesh(g,G.box,c,x,y,z,len,.012,w,{sway:.02,...o});m.rotation.set(0,yaw,tilt);return m;}
+const rock=(g,c,x,y,z,sx,sy,sz,rot)=>{const m=mesh(g,G.rock,c,x,y,z,sx,sy,sz,{map:'stone',bump:.018,flat:false,rough:.94});if(rot)m.rotation.set(...rot);return m;};
+
+// ---- builders for instanced kinds (local origin = ground contact point, +y up) ----
+const build={
+ oak(g,r){const h=2.3;const top=trunk(g,h,.23,BARK.oak,.05,.14);const ends=limbs(g,r,[top[0],h-.15,top[2]],h,4,1.05,.55,.085,BARK.oak);branch(g,top,[top[0]+.1,h+.9,top[2]-.05],.07,BARK.oak,{},.03);
+  crown(g,r,crownCenters(r,ends,top,h,.82),{inner:['#3f6a46','#4f7d4b'],card:['#d8ec9c','#a3c472','#7aa160']},{twigs:11,size:1.0,bark:BARK.oak});rootFlare(g,.23,BARK.oak);},
+ birch(g,r){const h=3.3;const top=trunk(g,h,.12,BARK.birch,.06,.06);for(let j=0;j<12;j++){const m=mesh(g,G.box,'#5f5e58',.02,j*.27+.15,.1,.13,.026,.012);m.rotation.y=j*.9;}
+  const ends=limbs(g,r,[top[0],h-.6,top[2]],h,4,.7,.35,.04,'#d9d5c2');crown(g,r,crownCenters(r,ends,top,h,.55,{topRise:.6}),{inner:['#6f9152','#86a85e'],card:['#e8f0ba','#bdd38c','#8aa864']},{twigs:12,size:1.08,sway:.035,tex:'twigsmall',droop:.2,bark:'#cfcab6'});rootFlare(g,.12,BARK.birch);},
+ pine(g,r){const h=3.2;const top=trunk(g,h,.17,BARK.pine,.35);const pal={inner:['#2f5233','#3d6a3e'],card:['#8fb27a','#4f7a4a','#2f5536']};const centers=[];
+  for(let i=0;i<4;i++){const a=i*1.9+.5,y=1.3+i*.55;const tip=[Math.cos(a)*(1.3-i*.15),y+.25,Math.sin(a)*(1.2-i*.15)];branch(g,[Math.sin(y/h*2.2)*.35*.5,y,Math.cos(y/h*1.7)*.2],tip,.06,BARK.pine,{},.03);centers.push([tip[0],tip[1]+.1,tip[2],.55]);}
+  centers.push([top[0],top[1]+.3,top[2],.6]);crown(g,r,centers,{inner:pal.inner,card:['#9bbd86','#5a865a','#3f6a48']},{twigs:9,size:.85,sway:.015,tex:'twigneedle',bark:BARK.pine,aspect:.7});rootFlare(g,.17,BARK.pine);},
+ // Fir (round 2): whorls of real branches with needle-card clusters along each one, over a slim dark core — no stacked plates.
+ // Fir (round 1 of visual-three): needle-twig cards lie ALONG each whorl branch (stem base at the trunk side, needles
+ // toward the tip, drooping a little), so the foliage is attached to the branches; the slim core only closes the middle.
+ fir(g,r){const h=3.8;branch(g,[0,0,0],[0,h,0],.14,BARK.fir,{},.03);
+  // no solid cone in the middle (Codex): short needle fronds on stub twigs around the trunk at every whorl close the centre
+  for(let i=0;i<7;i++){const y=.5+i*.47,rad=1.25-i*.15,n=5+(i%2);for(let k=0;k<4;k++){const a=k/4*6.28+i*.9+r()*.4;const d=[Math.cos(a)*.9,-.35,Math.sin(a)*.9];const dl=Math.hypot(...d);d[0]/=dl;d[1]/=dl;d[2]/=dl;twigAt(g,[0,y+.3,0],d,rad*.25,.015,BARK.fir);for(let q=0;q<2;q++){const m=mesh(g,petalGeo,['#4f7e5e','#3f6e50'][(k+q)%2],d[0]*rad*.08,y+.3+d[1]*rad*.08,d[2]*rad*.08,.34*(1-i*.06),.48*(1-i*.06),1,{card:'twigneedle',canopy:true,sway:.01,emissiveIntensity:.05});m.quaternion.setFromUnitVectors(UP,new T.Vector3(d[0],d[1],d[2]));m.rotateY(q*Math.PI/2+(r()-.5)*.5);}}
+   for(let k=0;k<n;k++){const a=k/n*6.28+i*.55+r()*.5;const ex=Math.cos(a)*rad,ez=Math.sin(a)*rad;branch(g,[0,y+.12,0],[ex,y-.1,ez],.03,BARK.fir,{},.012);
+   const dir=new T.Vector3(ex,-.22-.12,ez).normalize();for(let c=0;c<3;c++){const t=.25+c*.3;const px=ex*t,pz=ez*t,py=y+.12-.22*t;const s=(.42+r()*.15)*(1-c*.12);for(let q=0;q<2;q++){const m=mesh(g,petalGeo,['#7aa886','#4f7e5e','#3a6a4c'][(c+k+q)%3],px,py,pz,s*.8,s*1.25,1,{card:'twigneedle',canopy:true,sway:.015,emissiveIntensity:c?.06:.09});m.quaternion.setFromUnitVectors(UP,dir);m.rotateY(q*Math.PI/2+(r()-.5)*.5+.4);}}}}
+  for(let q=0;q<2;q++){const m=mesh(g,petalGeo,'#6c9c7a',0,h-.15,0,.32,.5,1,{card:'twigneedle',canopy:true,sway:.02,emissiveIntensity:.09});m.rotation.y=q*Math.PI/2+.7;}rootFlare(g,.14,BARK.fir);},
+ cherry(g,r){const h=2.2;const top=trunk(g,h,.16,BARK.cherry,.12,.08);const ends=limbs(g,r,[top[0],h-.3,top[2]],h,5,1.0,.45,.055,BARK.cherry);
+  crown(g,r,crownCenters(r,ends,top,h,.66,{topRise:.75}),{inner:['#d48fa9','#e3a5bc'],card:['#fdeaf1','#f4c6d7','#e3a6bf']},{twigs:11,size:.9,sway:.025,tex:'twigbloom',bark:BARK.cherry,mix:{ratio:.3,tex:'twigsmall',card:['#d6e6a6','#a9c47c','#86a868']}});rootFlare(g,.16,BARK.cherry);},
+ willow(g,r){const h=2.6;const top=trunk(g,h,.22,BARK.willow,.1,.1);const ends=limbs(g,r,[top[0],h-.3,top[2]],h,4,.9,.4,.06,BARK.willow);crown(g,r,crownCenters(r,ends,top,h,.62,{topRise:.6}),{inner:['#8aa85c','#9db86a'],card:['#e0eaae','#bccf84','#8ea662']},{twigs:9,size:.9,tex:'twiglance',droop:.45,bark:BARK.willow});
+  for(let i=0;i<36;i++){const a=i/36*6.28+r()*.2,d=1.2+r()*.5;const x=Math.cos(a)*d,z=Math.sin(a)*d,ty=h+.2+r()*.5,len=1.6+r()*1.1;branch(g,[x,ty,z],[x+Math.cos(a)*.25,ty-len,z+Math.sin(a)*.25],.016,'#9bb66a',{sway:.045});for(let k=0;k<6;k++){const t=(k+.5)/6;leaf(g,x+Math.cos(a)*.25*t,ty-len*t,z+Math.sin(a)*.25*t,.16,.05,['#c3d58a','#a7bd6c'][k%2],a+(k%2?1.3:-1.3),1.3,{sway:.05,shadow:false});}}rootFlare(g,.22,BARK.willow);},
+ maple(g,r){const h=2.4;const top=trunk(g,h,.16,BARK.maple,.08,.08);const ends=limbs(g,r,[top[0],h-.25,top[2]],h,5,1.2,.5,.06,BARK.maple);
+  crown(g,r,crownCenters(r,ends,top,h,.7,{topRise:.8}),{inner:['#8a3b22','#a8502c'],card:['#fac97e','#ec9256','#cc6a3c']},{twigs:11,size:1.0,sway:.03,tex:'twiglobed',bark:BARK.maple});rootFlare(g,.16,BARK.maple);},
+ bamboo(g,r){for(let i=0;i<8;i++){const a=i*.8+r()*.4,d=.12+r()*.28,x=Math.cos(a)*d,z=Math.sin(a)*d,h=3+r()*1.1,lean=.12+r()*.1;const top=[x+Math.cos(a)*lean,h,z+Math.sin(a)*lean];branch(g,[x,0,z],top,.045,['#9fc272','#afcc80','#8fb266'][i%3],{sway:.02,rough:.6});for(let n=1;n<Math.floor(h/.42);n++){const t=n*.42/h;mesh(g,G.cyl14,'#5f7e41',x+(top[0]-x)*t,n*.42,z+(top[2]-z)*t,.055,.035,.055);}
+   for(let k=0;k<8;k++){const t=.5+k*.065;const px=x+(top[0]-x)*t,pz=z+(top[2]-z)*t,py=h*t;const yaw=r()*6.28;leaf(g,px+Math.cos(yaw)*.1,py,pz+Math.sin(yaw)*.1,.5,.09,['#a9d06e','#8fbf5e'][k%2],yaw,1.25,{sway:.04,shadow:false});}}contact(g,.5);},
+ // Hydrangea: round flower heads made of floret cards over a tinted core, big leaves around the base.
+ // Hydrangea body: no smooth sphere; a few leaf-cluster cards fill the middle and many big leaf cards make the mound.
+ hydrangea(g,r){const heads=['#c6a6dc','#a4b9e8','#eaa8c6','#b9a8e0','#f0bdd2','#9fb0dd','#d9a9d8'];
+  for(let i=0;i<7;i++){const a=i*.9+.5;branch(g,[0,.05,0],[Math.cos(a)*.35,.5,Math.sin(a)*.35],.012,'#5e7a4a',{sway:.012});}
+  leafCards(g,r,0,.3,0,.7,.44,['#6e9a5a','#5a864c','#84ad66','#78a360'],64,.34,{sway:.015,receive:false,emissiveIntensity:.07}); // round 2: no leaf-cluster billboards inside, just big leaves
+  for(let i=0;i<7;i++){const a=i*.9+r()*.3,d=i<6?.42:.05,x=Math.cos(a)*d,z=Math.sin(a)*d,y=(i<6?.55:.72)+r()*.12;floretBall(g,r,x,y,z,.2+r()*.03,heads[i]);}contact(g,.55,.015);},
+ fern(g,r){for(let i=0;i<9;i++){const a=i*.7+r()*.2;let prev=[0,.05,0];for(let j=1;j<7;j++){const d=j*.11,y=.16+Math.sin(j/7*Math.PI)*.4,x=Math.cos(a)*d,z=Math.sin(a)*d;branch(g,prev,[x,y,z],.012,'#82955b',{sway:.025});prev=[x,y,z];const len=.2*(1-j/9)+.06;for(const s of [-1,1])leaf(g,x,y,z,len,len*.45,j%2?'#5f8a52':'#7ea050',a+s*1.35,1.2,{sway:.03,shadow:false});}}},
+ // Azalea (round 2): no smooth green balls — a dense mound of small leaf cards on short woody stems carries the blooms.
+ azalea(g,r){for(let i=0;i<6;i++){const a=i*1.05+r()*.3;branch(g,[0,.02,0],[Math.cos(a)*.3,.3+r()*.1,Math.sin(a)*.3],.014,'#5e4a38',{},.006);}leafCards(g,r,0,.24,0,.6,.34,['#4f7c45','#6a9452','#5b8a4a','#7aa45c'],70,.15,{sway:.012,receive:false,emissiveIntensity:.05});
+  for(let i=0;i<34;i++){const a=r()*6.28,d=Math.sqrt(r())*.58,y=.32+r()*.3;head(g,Math.cos(a)*d,y,Math.sin(a)*d,.2,['#ec7aa6','#f598bb','#df6690'][i%3],'bloom',r,.4+r()*.5);}contact(g,.6,.015);},
+ camellia(g,r){branch(g,[0,0,0],[0,.6,0],.04,'#5a4a3c');for(let i=0;i<5;i++)branch(g,[0,.45,0],[Math.cos(i*1.26)*.35,.85+r()*.3,Math.sin(i*1.26)*.35],.03,'#5a4a3c',{},.015);leafCards(g,r,0,.75,0,.55,.9,['#2c5a37','#3a6e46','#234a2d','#3f7a4e'],96,.24,{sway:.012,emissiveIntensity:.08,receive:false});
+  for(let i=0;i<9;i++){const a=i*.75+.4,d=.3+r()*.2,y=.5+r()*.65;head(g,Math.cos(a)*d,y,Math.sin(a)*d,.2,'#d2303f','bloom',r,.6+r()*.4);}contact(g,.45,.015);},
+ silvergrass(g,r){for(let i=0;i<8;i++){const a=r()*6.28,d=r()*.2;tuft(g,Math.cos(a)*d,0,Math.sin(a)*d,.6+r()*.25,['#d8cf9c','#c3b97f','#e3d9ab'][i%3],{tall:1.9,yaw:r()*3,sway:.05});}
+  for(let i=0;i<16;i++){const a=r()*6.28,d=r()*.22,x=Math.cos(a)*d,z=Math.sin(a)*d,h=1.2+r()*.6,yaw=r()*6.28,lean=.25+r()*.35;branch(g,[x,0,z],[x+Math.cos(yaw)*lean,h,z+Math.sin(yaw)*lean],.012,['#c8bd86','#b4ad72'][i%2],{sway:.05});const p=mesh(g,G.ball,['#efe6c9','#e7dcb5'][i%2],x+Math.cos(yaw)*lean*1.15,h+.12,z+Math.sin(yaw)*lean*1.15,.035,.2,.035,{sway:.06});p.rotation.z=.3*Math.cos(yaw);p.rotation.x=-.3*Math.sin(yaw);}},
+ // Boxwood: a small dark core buried under many leaf cards at random angles, so the silhouette is leafy, not a ball.
+ boxwood(g,r){mesh(g,G.smoothSphere,'#3f6a33',0,.48,0,.36,.33,.36,{sway:.008,receive:false});for(let i=0;i<96;i++){const u=r()*6.28,v=r()*Math.PI*.85,rr=.3+r()*.2;const nx=Math.cos(u)*Math.sin(v),ny=Math.cos(v),nz=Math.sin(u)*Math.sin(v);const px=nx*rr*1.15,py=.48+ny*rr,pz=nz*rr*1.15;const m=mesh(g,cardGeo,['#6f9d4e','#86ad59','#5e8d44','#9bbd62'][i%4],px,py,pz,.26,.26,1,{card:'leaf',sway:.01,emissiveIntensity:.04,receive:false});if(i%2){m.lookAt(px*2,py+ny*.5,pz*2);m.rotateX((r()-.5)*1.2);m.rotateZ(r()*6.28);}else m.rotation.set(r()*6.28,r()*6.28,r()*6.28);}branch(g,[0,0,0],[0,.25,0],.05,'#5a4a3a');contact(g,.5,.015);},
+ // Moss (round 2): lumpy low cushions (irregular rock geometry, moss map) with fine tufts and tiny leaves on top.
+ moss(g,r){for(let i=0;i<7;i++){const a=r()*6.28,d=r()*.3;const m=mesh(g,G.rock,['#6f9a4c','#7fa957','#5f8b43'][i%3],Math.cos(a)*d,.02,Math.sin(a)*d,.28+r()*.15,.11+r()*.05,.26+r()*.15,{rough:1,map:'moss',bump:.02});m.rotation.y=r()*3;}for(let i=0;i<22;i++){const a=r()*6.28,d=r()*.42;tuft(g,Math.cos(a)*d,.05,Math.sin(a)*d,.07+r()*.05,['#9bc268','#86b25a','#b4d27a'][i%3],{yaw:r()*3,sway:.02});}
+  for(let i=0;i<12;i++){const a=r()*6.28,d=r()*.36;leaf(g,Math.cos(a)*d,.09,Math.sin(a)*d,.05,.03,'#a9cf72',a,1.2,{sway:.01,shadow:false});}},
+ liriope(g,r){for(let i=0;i<8;i++){const a=r()*6.28,d=r()*.22;tuft(g,Math.cos(a)*d,0,Math.sin(a)*d,.42+r()*.15,['#4e7a44','#5f8c4e','#3f6a3a'][i%3],{tall:1.3,yaw:r()*3,sway:.03});}
+  for(let i=0;i<5;i++){const a=i*1.3,x=Math.cos(a)*.1,z=Math.sin(a)*.1;branch(g,[x,.1,z],[x,.62,z],.012,'#6f5f8f',{sway:.02});for(let k=0;k<4;k++){const m=mesh(g,cardGeo,['#8a6fb4','#a58ccc'][k%2],x,.4+k*.06,z,.09,.09,1,{card:'floret',sway:.02});m.rotation.y=k*.8;}}},
+ // Flower heads are single textured cards or petal rings on real stems (storybook scale, readable from the path).
+ daisy(g,r){flowerBase(g,r,8,(x,z,h)=>{discHead(g,x+.035,h,z,14,.085,.045,'#ffffff','#f0c84a',r,.3+r()*.2);},.3,.7,.009);},
+ lavender(g,r){flowerBase(g,r,9,(x,z,h)=>{for(let j=0;j<5;j++){const m=mesh(g,cardGeo,['#8d7cb8','#a894cf'][j%2],x+.035,h+j*.055,z,.1-j*.012,.1,1,{card:'floret',sway:.03,emissiveIntensity:.05,receive:false});m.rotation.y=j*.9;}},.35,.65,.008);},
+ poppy(g,r){flowerBase(g,r,8,(x,z,h,i)=>{const c=i%2?'#f0966c':'#e46a48';petals(g,x+.035,h,z,5,.13,.12,c,.45+r()*.25,r,{sway:.03});petals(g,x+.035,h+.005,z,4,.1,.09,c,.9,r,{sway:.03});mesh(g,G.ball,'#4a3326',x+.035,h+.02,z,.03,.028,.03);},.35,.75,.009);},
+ // Tulip cup: six overlapping curved petals (outer ring upright, inner ring slightly closed), no cylinder.
+ tulip(g,r){flowerBase(g,r,7,(x,z,h,i)=>{const c=['#e5635f','#f2b23c','#e9779b'][i%3];petals(g,x+.035,h-.02,z,6,.2,.12,c,1.25,r,{sway:.03});petals(g,x+.035,h-.015,z,3,.19,.12,c,1.42,r,{sway:.03});leaf(g,x+.09,.03,z,.34,.08,'#5e8f55',.3,.35,{sway:.02});leaf(g,x-.06,.02,z+.03,.28,.07,'#6a9a5a',2.4,.45,{sway:.02});},.3,.5,.009);},
+ cosmos(g,r){flowerBase(g,r,8,(x,z,h,i)=>{discHead(g,x+.035,h,z,8,.1,.08,i%3?'#f08cba':'#fbd0e2','#e8b23c',r,.3+r()*.25,'bloom');},.5,.9,.007);},
+ bellflower(g,r){flowerBase(g,r,8,(x,z,h,i)=>{for(let k=0;k<3;k++){const y=h-k*.12,a=k*2.1+r()*.5;const px=x+.035+Math.cos(a)*.06,pz=z+Math.sin(a)*.06;branch(g,[x+.035,y+.02,z],[px,y,pz],.004,'#6f8f5a',{sway:.03});const b=mesh(g,G.bell,['#8c93d6','#7a80c8'][i%2],px,y,pz,1,1,1,{sway:.03,double:true,rough:.6});b.rotation.set((r()-.5)*.5,r()*6.28,(r()-.5)*.5);}},.45,.7,.008);},
+ iris(g,r){flowerBase(g,r,6,(x,z,h,i)=>{petals(g,x+.035,h+.02,z,3,.16,.07,'#6a5fb8',1.2,r,{sway:.03});petals(g,x+.035,h,z,3,.15,.09,'#8f84d6',-.5,r,{sway:.03});mesh(g,G.ball,'#f2d35a',x+.035,h+.02,z,.025,.02,.025);for(let j=0;j<3;j++)leaf(g,x+Math.cos(j*2)*.06,.02,z+Math.sin(j*2)*.06,.6,.06,'#5c8a4e',j*2,.15,{sway:.02});},.5,.8,.01);},
+ // Wild asters: a leafy low mound (leaf cards + tufts, no green balls) with many small heads on thin stems.
+ wildaster(g,r){for(let i=0;i<8;i++){const a=r()*6.28,d=r()*.3;tuft(g,Math.cos(a)*d,0,Math.sin(a)*d,.1+r()*.06,['#8fb85e','#7ea852'][i%2],{yaw:r()*3,sway:.03});}leafCards(g,r,0,.08,0,.38,.12,['#4c7a44','#5b8b4d','#6a9a56'],30,.1,{sway:.015,shadow:false});
+  for(let i=0;i<22;i++){const a=r()*6.28,d=Math.sqrt(r())*.42,x=Math.cos(a)*d,z=Math.sin(a)*d,h=.25+r()*.25;stem(g,x,z,h,'#59814e',.005);if(i%2)discHead(g,x+.03,h,z,8,.04,.016,'#fbf4dc','#e8c850',r,.35+r()*.3);else head(g,x+.03,h,z,.085,'#fbf4dc','daisy',r,.3+r()*.5,{shadow:false});}},
+ woodpath(g,r){/* deck: top surface at y=0, frame below */for(let i=0;i<6;i++)timber(g,i%2?WOOD.mid:WOOD.light,0,-.03,-.5+i*.2,1.1,.06,.18);for(const z of [-.52,.52])timber(g,WOOD.dark,0,-.1,z,1.12,.08,.07);for(const x of [-.5,.5])timber(g,WOOD.dark,x,-.1,0,.07,.08,1.1);for(let i=0;i<6;i++)for(const x of [-.4,.4])mesh(g,G.ball,'#5f5240',x,.001,-.5+i*.2,.016,.006,.016);},
+ bench(g,r){for(const x of [-.65,.65]){for(const z of [-.23,.25])mesh(g,G.cyl14,'#3e4a40',x,.25,z,.0425,.5,.04,{rough:.72,metal:.24});mesh(g,G.cyl14,'#3e4a40',x,.72,-.28,.0325,.65,.0325,{rough:.72,metal:.24});timber(g,WOOD.mid,x,.67,0,.09,.07,.68);}for(let i=0;i<4;i++)timber(g,i%2?WOOD.light:WOOD.mid,0,.5,-.23+i*.16,1.65,.08,.135);for(let i=0;i<3;i++)timber(g,i%2?WOOD.light:WOOD.mid,0,.72+i*.14,-.28,1.65,.11,.07);contact(g,.95,.012);},
+ rock(g,r){rock(g,STONE.a,0,.27,0,.65,.42,.49,[.13,.2,.1]);rock(g,STONE.b,.32,.16,.18,.3,.2,.26,[.4,1,.2]);rock(g,STONE.c,-.3,.12,-.2,.22,.14,.2,[.2,.5,.3]);for(let i=0;i<11;i++){const a=i*2.4,d=.12+(i%3)*.055;mesh(g,G.smoothSphere,['#788e53','#6c854d','#92a367'][i%3],-.10+Math.cos(a)*d,.57-Math.pow(d,2)*.45,-.04+Math.sin(a)*d,.10+(i%3)*.018,.022,.075+(i%2)*.025,{rough:1,map:'moss',bump:.012});}for(let i=0;i<10;i++){const a=r()*6.28;tuft(g,Math.cos(a)*.3-.1,.55,Math.sin(a)*.25,.08,['#8db85e','#a7cc6a'][i%2],{yaw:r()*3,sway:.015});}contact(g,.75,.012);},
+ logseat(g,r){mesh(g,G.cyl14,'#9a7556',0,.22,0,.3,.44,.3,{map:'bark',bump:.05});mesh(g,G.disc,WOOD.light,0,.445,0,.27,.01,.27,{map:'endgrain',bump:.005,rough:.95});contact(g,.42,.012);},
+ // Pavilion: posts + railings on three sides collide; the front (+z) stays open (matches collision bodies). Wood grain,
+ // layered shingle roof with eaves, and a hanging lamp under the ridge that lights up at night.
+ pavilion(g,r){for(const x of [-1.05,1.05])for(const z of [-1.05,1.05])timber(g,'#b39369',x,.95,z,.18,1.9,.18);timber(g,WOOD.mid,0,.09,0,2.5,.14,2.5);for(let i=0;i<10;i++){timber(g,[WOOD.mid,WOOD.light,'#c5a578'][i%3],0,.155,-1.125+i*.25,2.45,.04,.231);for(const x of [-1.12,1.12])mesh(g,G.ball,'#786246',x,.176,-1.125+i*.25,.012,.003,.012,{rough:.8,metal:.25});}for(const x of [-1.235,1.235])timber(g,'#b6976c',x,.09,0,.065,.13,2.5);
+  for(const s of [-1,1]){timber(g,WOOD.dark,s*1.05,.55,0,.07,.07,2.0);for(let k=0;k<5;k++)timber(g,'#b08c62',s*1.05,.35,-.8+k*.4,.05,.4,.05);}timber(g,WOOD.dark,0,.55,-1.05,2.0,.07,.07);for(let k=0;k<5;k++)timber(g,'#b08c62',-.8+k*.4,.35,-1.05,.05,.4,.05);timber(g,WOOD.mid,0,.05,1.3,1.42,.08,.3);timber(g,'#d6b98c',0,.087,1.43,1.42,.006,.035);
+  for(const z of [-1.05,1.05])timber(g,'#aa885e',0,1.9,z,2.3,.1,.1);for(const x of [-1.05,1.05])timber(g,'#aa885e',x,1.9,0,.1,.1,2.3);
+  for(const x of [-1.05,1.05])for(const z of [-1.05,1.05]){
+   mesh(g,G.box,'#a09c89',x,.135,z,.235,.15,.235,{map:'stone',bump:.008,rough:.98});
+   for(const yy of [.25,1.8])timber(g,'#c0a077',x,yy,z,.218,.075,.218);
+   for(const axis of [0,2]){const start=new T.Vector3(x,1.48,z),end=new T.Vector3(x,1.89,z);end.setComponent(axis,end.getComponent(axis)-Math.sign(end.getComponent(axis))*.42);const d=end.clone().sub(start),brace=timber(g,'#b29165',0,0,0,.075,d.length(),.075);brace.position.copy(start).addScaledVector(d,.5);brace.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),d.normalize());}
+   for(const yy of [.42,1.65])mesh(g,G.ball,'#594c36',x,yy,z+.096,.013,.013,.006,{metal:.3,rough:.75});
+  }
+  for(const side of [-1,1]){timber(g,'#c1a174',side*1.05,.60,0,.105,.055,2.07);timber(g,'#97764e',side*1.05,.245,0,.065,.065,2.0);for(let k=0;k<5;k++){const z=-.8+k*.4;for(const yy of [.285,.48])timber(g,'#c1a174',side*1.05,yy,z,.072,.045,.072);}}
+  timber(g,'#c1a174',0,.60,-1.05,2.07,.055,.105);timber(g,'#97764e',0,.245,-1.05,2,.065,.065);for(let k=0;k<5;k++)for(const yy of [.285,.48])timber(g,'#c1a174',-.8+k*.4,yy,-1.05,.072,.045,.072);
+  for(let i=0;i<5;i++)timber(g,'#a18059',0,1.955,-.8+i*.4,2.12,.075,.065);
+  // Layered fascia and visible joinery distinguish the overhang from its supporting posts.
+  for(const z of [-1.1,1.1]){timber(g,'#c3a47e',0,1.96,z,2.42,.13,.15);timber(g,'#8c704e',0,2.03,z,2.48,.035,.19);}
+  for(const x of [-1.1,1.1]){timber(g,'#c3a47e',x,1.96,0,.15,.13,2.42);timber(g,'#8c704e',x,2.03,0,.19,.035,2.48);}
+  hipRoof(g,2.02,1.49,.94,8);
+  mesh(g,G.cone4,'#b59971',0,3.06,0,.16,.19,.16,{map:'cedar',rough:.9}).rotation.y=Math.PI/4;
+  mesh(g,G.ball,'#b69b72',0,3.19,0,.045,.065,.045,{rough:.8});
+  for(const x of [-1.05,1.05])for(const z of [-1.05,1.05])for(const yy of [.75,1.35]){const knot=mesh(g,G.smoothSphere,'#977a54',x,yy,z+.092,.022,.045,.003,{rough:1,shadow:false});knot.rotation.z=.15;} 
+  for(const x of [-1,1])for(const z of [-1,1]){const start=new T.Vector3(x*1.49,2.05,z*1.49),end=new T.Vector3(0,3.02,0),d=end.clone().sub(start),cap=timber(g,'#b2936c',0,0,0,.065,d.length(),.065);cap.position.copy(start).addScaledVector(d,.5);cap.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),d.normalize());}
+  // A climbing rose follows the post and lintel; the floor and front opening remain clear.
+  let last=[-1.12,.21,1.04];for(let k=0;k<32;k++){const yy=k<20?.26+k*.078:1.78+Math.sin(k*.7)*.03,xx=k<20?-1.12+Math.sin(k*.9)*.08:-1.12+(k-20)*.10,zz=1.10+Math.cos(k*.9)*.085;
+   branch(g,last,[xx,yy,zz],.008,'#69734b',{sway:.004,shadow:false});last=[xx,yy,zz];
+   for(let q=0;q<3;q++)leaf(g,xx+(q-1)*.07,yy+(q%2)*.04,zz+.03,.16,.09,['#587b43','#78964f','#91aa62'][q],k*1.9+q*1.8,.8,{sway:.018,shadow:false});
+   if(k%2===0)for(let q=0;q<2;q++){const flower=new T.Group();flower.position.set(xx-.06+q*.10,yy+.03+q*.05,zz+.10);flower.rotation.set(-.22+(k%3)*.19,(k%3-1)*.35,(q?1:-1)*.12);g.add(flower);
+    for(let pet=0;pet<5;pet++){const a=pet/5*Math.PI*2;const m=mesh(flower,G.petal,k%4===0?'#f8edda':'#f1ded3',Math.cos(a)*.027,Math.sin(a)*.027,.004,.032,.020,.009,{rough:.85,shadow:false});m.rotation.z=a;}
+    mesh(flower,G.ball,'#dcb75c',0,0,.015,.011,.011,.008,{shadow:false});}
+  }
+
+  mesh(g,G.cyl,'#5a4a3a',0,1.86,0,.012,.25,.012);lanternBody(g,0,1.68,0,.23);contact(g,1.6,.012);},
+ arch(g,r){for(const x of [-.75,.75])timber(g,'#9c8462',x,.95,0,.1,1.9,.1);const top=new T.Mesh(new T.TorusGeometry(.75,.05,6,20,Math.PI),mat('#9c8462',W()));top.position.y=1.9;top.castShadow=true;g.add(top);
+  for(let i=0;i<30;i++){const a=i/30*Math.PI,x=Math.cos(a)*.78,y=1.9+Math.sin(a)*.78;const side=(i%2?1:-1)*.07;leaf(g,x,y,side,.14,.08,['#6e9a52','#86b062','#5f8a48'][i%3],r()*6.28,1.0,{sway:.02,shadow:false});if(i%3===0)head(g,x,y+.02,-side,.1,['#f1b8d2','#fbe0a5'][i%2],'bloom',r,r()*1.5,{shadow:false});}
+  for(const x of [-.75,.75])for(let k=0;k<9;k++)leaf(g,x+(k%2?.08:-.08),.3+k*.18,(k%3-1)*.07,.14,.08,'#6e9a52',k*1.3,1.1,{sway:.02,shadow:false});contact(g,.5,.012);},
+ lantern(g,r){mesh(g,G.box,'#929384',0,.04,0,.3,.08,.3,{map:'stone',bump:.009});timber(g,'#b2956d',0,.3,0,.1,.5,.1);timber(g,'#997a53',0,.56,0,.22,.045,.22);lanternBody(g,0,.72,0,.20);},
+ signpost(g,r){timber(g,'#ac8d60',0,.8,0,.11,1.6,.11);
+  for(let row=0;row<2;row++){const shape=new T.Shape(),l=row?.69:.81,h=.19;shape.moveTo(-l/2,-h/2);shape.lineTo(l/2-.12,-h/2);shape.lineTo(l/2,0);shape.lineTo(l/2-.12,h/2);shape.lineTo(-l/2,h/2);shape.closePath();const geo=new T.ExtrudeGeometry(shape,{depth:.065,bevelEnabled:true,bevelSize:.006,bevelThickness:.005,bevelSegments:2,steps:1});const uv=geo.attributes.uv,p=geo.attributes.position;for(let i=0;i<p.count;i++)uv.setXY(i,p.getX(i)/.85+.5,p.getY(i)/.25+.5);const board=mesh(g,geo,row?'#c6a573':'#dcc093',row?-.21:.28,row?1.0:1.26,.045);if(row)board.rotation.y=Math.PI;const normals=geo.attributes.normal,colors=[];for(let j=0;j<p.count;j++){const side=Math.abs(normals.getZ(j))<.75,t=side?.78:.94+.06*(p.getY(j)/h+.5);colors.push(t,t*.99,t*.97);}geo.setAttribute('color',new T.Float32BufferAttribute(colors,3));board.material=mat(row?'#c6a573':'#dcc093',{map:'wood',bump:.007});board.material.vertexColors=true;
+   for(const x of [-.025,.025])mesh(g,G.ball,'#66533b',x,row?1:1.26,.10,.012,.012,.004,{rough:.7,metal:.4});}
+ },
+ table(g,r){mesh(g,G.disc,WOOD.light,0,.7,0,.52,.05,.52,W());for(let i=0;i<6;i++)mesh(g,G.box,WOOD.mid,0,.725,0,.05,.005,1.0,W()).rotation.y=i*.52;mesh(g,G.cyl,WOOD.dark,0,.35,0,.07,.7,.07,W());for(let i=0;i<3;i++){const a=i*2.094;mesh(g,G.box,WOOD.dark,Math.cos(a)*.2,.04,Math.sin(a)*.2,.45,.07,.08,W()).rotation.y=-a;}contact(g,.55,.012);},
+ // Reeds (visual-push): a clump of tall curved blades and grass tufts with a few cattail heads — no bare stick stems.
+ reeds(g,r){for(let i=0;i<3;i++){const a=r()*6.28,d=r()*.15;tuft(g,Math.cos(a)*d,0,Math.sin(a)*d,.3+r()*.12,['#a9c070','#8fb15e','#c2cf80'][i%3],{tall:3.2+r()*.8,yaw:r()*3,sway:.045});}
+  // thin pointed blades (3–4.5 cm wide, 1.2–1.9 m tall) leaning 15–30° in all directions: curved by the card's own bend
+  for(let i=0;i<18;i++){const a=r()*6.28,d=Math.sqrt(r())*.27,x=Math.cos(a)*d,z=Math.sin(a)*d,h=1.2+r()*.7;leaf(g,x,0,z,h,.03+r()*.015,['#9db36a','#b5c47a','#8aa860','#c9d48a'][i%4],r()*6.28,.26+r()*.28,{sway:.045,shadow:false});
+   if(i%6===0){branch(g,[x,.3,z],[x+.04,h*.85,z],.009,'#8aa05a',{sway:.045});mesh(g,G.cyl14,'#6b4a2e',x+.04,h*.85,z,.03,.22,.03,{sway:.045});}}},
+ birdbath(g,r){mesh(g,G.disc,STONE.b,0,.03,0,.25,.06,.25,{map:'stone',bump:.03});mesh(g,new T.CylinderGeometry(.07,.11,.5,10),STONE.c,0,.31,0,1,1,1,{map:'stone',bump:.03});mesh(g,new T.CylinderGeometry(.3,.2,.1,16),STONE.c,0,.6,0,1,1,1,{map:'stone',bump:.03});mesh(g,G.disc,'#8fc0d2',0,.64,0,.26,.02,.26,{rough:.1,metal:.15});mesh(g,G.ball,'#d7b870',.1,.7,-.05,.05,.04,.08);},
+ birdhouse(g,r){timber(g,'#9c8462',0,.7,0,.07,1.4,.07);timber(g,'#d2a874',0,1.55,0,.34,.34,.3);mesh(g,G.box,'#e8d5b5',0,1.55,.16,.12,.12,.02);mesh(g,G.disc,'#3a2d22',0,1.55,.165,.05,.01,.05).rotation.x=Math.PI/2;mesh(g,G.cyl,'#5a4a3a',0,1.43,.2,.015,.1,.015).rotation.x=Math.PI/2;const roof=timber(g,'#9e805b',-.13,1.8,0,.31,.045,.41);roof.rotation.z=.5;const roof2=timber(g,'#8c704f',.13,1.8,0,.31,.045,.41);roof2.rotation.z=-.5;},
+ insecthotel(g,r){timber(g,'#a08862',0,.5,0,.76,1.0,.36);mesh(g,G.box,'#5a4a3a',0,.5,0,.7,.92,.3);for(let i=0;i<3;i++)for(let j=0;j<2;j++){const x=-.22+i*.22,y=.3+j*.42;const kind=(i+j)%3;if(kind===0)for(let k=0;k<6;k++)mesh(g,G.cyl14,'#c9a877',x+(k%3-1)*.06,y+(k<3?.07:-.07),.17,.025,.1,.025,{map:'bark'}).rotation.x=Math.PI/2;else if(kind===1)for(let k=0;k<5;k++)timber(g,'#a0784e',x,y-.12+k*.06,.17,.18,.02,.1);else mesh(g,G.box,'#d8c39c',x,y,.17,.18,.3,.08);}const roof=timber(g,'#7a5a3e',0,1.06,0,.86,.05,.5);roof.rotation.x=-.25;contact(g,.45,.012);},
+ rainbarrel(g,r){mesh(g,G.cyl14,'#5f7a8a',0,.4,0,.3,.8,.3,{rough:.7});for(const y of [.12,.4,.68])mesh(g,G.cyl14,'#43525c',0,y,0,.315,.04,.315,{rough:.5,metal:.3});mesh(g,G.disc,'#4a5e6a',0,.82,0,.31,.04,.31);mesh(g,G.cyl14,'#43525c',0,.22,.3,.03,.14,.03).rotation.x=Math.PI/2;mesh(g,G.box,'#43525c',0,.17,.38,.05,.1,.05);mesh(g,G.box,'#9c8462',0,.95,-.1,.08,.3,.08,W()).rotation.x=.4;contact(g,.38,.012);},
+ compost(g,r){for(const s of [-1,1]){for(let k=0;k<4;k++){timber(g,'#8a845e',s*.4,.1+k*.2,0,.06,.1,.84);timber(g,'#8a845e',0,.1+k*.2,s*.4,.84,.1,.06);}for(const t of [-1,1])timber(g,'#6c664a',s*.42,.42,t*.42,.07,.84,.07);}mesh(g,G.box,'#4b3b2a',0,.55,0,.74,.3,.74);for(let i=0;i<10;i++){const a=r()*6.28,d=r()*.3;mesh(g,G.ball,['#6b5436','#a3843c','#8aa05a'][i%3],Math.cos(a)*d,.72+r()*.06,Math.sin(a)*d,.07,.03,.06);}contact(g,.5,.012);}
+};
+// Flower patch (visual-three round 2): a low layer first — short grass tufts and ground leaves — then the stems rise from
+// that clump at uneven heights, with a few closed buds between the open flowers. Nothing stands on bare ground.
+function flowerBase(g,r,n,head_,hmin=.25,hmax=.7,stemR=.008){for(let i=0;i<6;i++){const a=r()*6.28,d=.1+r()*.36;tuft(g,Math.cos(a)*d,0,Math.sin(a)*d,.1+r()*.07,['#8fb85e','#a4c86a','#7ea852'][i%3],{yaw:r()*3,sway:.03});}
+ for(let i=0;i<10;i++){const a=r()*6.28,d=r()*.42;leaf(g,Math.cos(a)*d,.012,Math.sin(a)*d,.12+r()*.08,.06,['#6f9a52','#7fa85a','#5f8a48'][i%3],a+(r()-.5),1.0+r()*.35,{sway:.02,shadow:false});}
+ for(let i=0;i<n;i++){const a=i*2.4,x=Math.cos(a)*Math.sqrt(i/n)*.46,z=Math.sin(a)*Math.sqrt(i/n)*.46,h=hmin+r()*(hmax-hmin);stem(g,x,z,h,'#59814e',stemR);leaf(g,x+.03,h*.3,z,.17,.07,'#729454',a+.4,1.1,{sway:.02,shadow:false});leaf(g,x-.02,h*.18,z+.02,.14,.06,'#6a8f4c',a+2.6,1.2,{sway:.02,shadow:false});head_(x,z,h,i);
+  if(i%3===1){const bx=x+.09,bz=z-.06,bh=h*.55;stem(g,bx,bz,bh,'#59814e',stemR*.8);mesh(g,G.ball,'#9fbf6c',bx+.03,bh+.01,bz,.016,.024,.016,{sway:.03,shadow:false});}}}
+// Open flower head in 3D: a ring of curved petal cards around a centre ball (daisy/cosmos), not one top-down card.
+// Codex round-2 review: the petals rise a little from the centre (an open bloom, not a wilted one) and the flat centre
+// disc sits IN the petal plane, so from above and in front the heart never looks like a ball perched over hanging petals.
+// Codex r2c: the open face is one flat flower card (daisy/bloom texture, clean silhouette from above and in front) with a
+// ring of slightly raised petal cards under it for thickness from the side; the centre is a flat disc at the same height.
+function discHead(g,x,y,z,n,len,wid,c,centre,r,tilt=.35,card='daisy'){head(g,x,y+.006,z,len*2.15,c,card,r,.06+r()*.1);petals(g,x,y,z,n,len,wid,c,tilt,r,{sway:.03});mesh(g,G.ball,centre,x,y+.009,z,len*.26,len*.07,len*.26,{sway:.03,rough:.8,shadow:false});}
+const protos=new Map();
+export function prototype(kind,lod='full'){const key=kind+'|'+lod;if(!protos.has(key)){const r=rng(MATERIALS.findIndex(x=>x.id===kind)+70+(lod==='far'?500:0));let g;if(lod==='full'&&modelParts.has(kind))g=modelGroup(kind);else{g=new T.Group();if(lod==='far')farTree(g,r,kind);else if(build[kind])build[kind](g,r);else mesh(g,G.box,material(kind)?.color??'#999',0,.3,0,.4,.6,.4);}protos.set(key,bake(g));}return protos.get(key);}
+
+// ---- ground covers: built per instance so each piece sits on the real ground ----
+function patch(g,it,foot,c,heightAt,lift=.025,n=9,o={}){const geo=new T.PlaneGeometry(foot.w*2,foot.d*2,n,n);const pos=geo.attributes.position;for(let i=0;i<pos.count;i++){let lx=pos.getX(i),lz=-pos.getY(i);if(foot.round){const rr=Math.hypot(lx/foot.w,lz/foot.d);if(rr>1){lx/=rr;lz/=rr;}}const w=toWorld(it,lx,lz);pos.setXYZ(i,w.x,heightAt(w.x,w.z)+lift,w.z);}geo.computeVertexNormals();const m=new T.Mesh(geo,mat(c,{rough:1,...o}));m.receiveShadow=true;m.castShadow=false;g.add(m);return m;}
+function scatter(it,r,n,foot,fn){for(let i=0;i<n;i++){let lx=(r()*2-1)*foot.w,lz=(r()*2-1)*foot.d;if(foot.round){const rr=Math.hypot(lx/foot.w,lz/foot.d);if(rr>1){lx*=.95/rr;lz*=.95/rr;}}const w=toWorld(it,lx,lz);fn(w.x,w.z,lx,lz);}}
+const pebble=(g,c,x,y,z,sx,sy,sz,r)=>{const p=mesh(g,G.rock,c,x,y,z,sx,sy,sz,{map:'stone',bump:.03,flat:true,rough:.95});p.rotation.set(r()*3,r()*3,r()*3);return p;};
+const covers={
+ // Stepping stones (visual-push): flattened irregular rock slabs in warm beige-grey (no cylinder side stripes), with
+ // little moss tufts at the edges so each stone sits in the grass.
+ stonepath(g,it,heightAt,r){for(let i=0;i<2;i++){const lx=(i-.5)*.66,lz=(i%2-.5)*.15,w=toWorld(it,lx,lz),y=heightAt(w.x,w.z),shape=new T.Shape(),points=[];
+   // Broken stone edges keep long facets and small chips; the stone is partly buried, not a round biscuit.
+   for(let k=0;k<12;k++){const a=k/12*Math.PI*2+(r()-.5)*.12,rad=.275+r()*.055-(k%5===1?.025:0);points.push(new T.Vector2(Math.cos(a)*rad,Math.sin(a)*rad*.96));}
+   shape.moveTo(points[0].x,points[0].y);for(let k=1;k<points.length;k++)shape.lineTo(points[k].x,points[k].y);shape.closePath();
+   const geo=new T.ExtrudeGeometry(shape,{depth:.028,bevelEnabled:true,bevelSegments:3,steps:1,bevelSize:.013,bevelThickness:.009,curveSegments:1});geo.rotateX(-Math.PI/2);
+   const pos=geo.attributes.position,uv=geo.attributes.uv,colors=[],offsetU=.5+.5*Math.sin(it.x*7.13+it.z*3.1+i),offsetV=.5+.5*Math.cos(it.x*4.7-it.z*8.3+i);for(let k=0;k<pos.count;k++){const x=pos.getX(k),z=pos.getZ(k);uv.setXY(k,x*1.4+offsetU,z*1.4+offsetV);const edge=geo.attributes.normal.getY(k)<.75;const c=new T.Color(edge?'#b6baa7':'#fff8e9');c.multiplyScalar(.88+.12*Math.sin(x*7+z*5)*Math.cos(z*11));colors.push(c.r,c.g,c.b);}
+   const angle=it.rotation+i*1.5,ca=Math.cos(angle),sa=Math.sin(angle);for(let k=0;k<pos.count;k++){const x=pos.getX(k)*it.scale,z=pos.getZ(k)*it.scale;pos.setY(k,pos.getY(k)+.003*Math.sin(x*17+z*9)+(heightAt(w.x+x*ca+z*sa,w.z-x*sa+z*ca)-y)/it.scale);}geo.computeVertexNormals();
+   geo.setAttribute('color',new T.Float32BufferAttribute(colors,3));const material=mat(['#c9c5b7','#d8d1bd','#b7bfb5'][i],{map:'stone',bump:.028,rough:.94});material.vertexColors=true;
+   const slab=new T.Mesh(geo,material);slab.position.set(w.x,y+.008,w.z);slab.scale.setScalar(it.scale);slab.rotation.y=it.rotation+i*1.5;slab.castShadow=true;slab.receiveShadow=true;slab.userData.owned=true;g.add(slab);
+   for(let k=0;k<6;k++){const a=r()*6.28,px=w.x+Math.cos(a)*.39*it.scale,pz=w.z+Math.sin(a)*.42*it.scale;tuft(g,px,heightAt(px,pz)+.008,pz,.055+r()*.04,['#8c9c69','#a9b77e'][k%2],{yaw:a,sway:.02});}
+   const shadowGeo=new T.PlaneGeometry(1.05*it.scale,1.15*it.scale,4,4);shadowGeo.rotateX(-Math.PI/2);const sp=shadowGeo.attributes.position;for(let k=0;k<sp.count;k++){const x=w.x+sp.getX(k),z=w.z+sp.getZ(k);sp.setXYZ(k,x,heightAt(x,z)+.009,z);}const sh=new T.Mesh(shadowGeo,contactMaterial());sh.raycast=()=>{};g.add(sh);
+  }},
+ gravel(g,it,heightAt,r){patch(g,it,material('gravel').foot,'#d8c8a4',heightAt,.02,9,{map:'stone',bump:.015});scatter(it,r,36,material('gravel').foot,(x,z)=>pebble(g,r()<.5?'#c9b893':'#e3d5b6',x,heightAt(x,z)+.03,z,.03*it.scale,.02,.04*it.scale,r));},
+ gravelpath(g,it,heightAt,r){patch(g,it,material('gravelpath').foot,'#aaa698',heightAt,.02,9,{map:'stone',bump:.02});scatter(it,r,60,material('gravelpath').foot,(x,z)=>pebble(g,['#8f8b7e','#b8b4a6','#9e9a8c'][Math.floor(r()*3)],x,heightAt(x,z)+.035,z,.035*it.scale,.03,.045*it.scale,r));},
+ soilpath(g,it,heightAt,r){patch(g,it,material('soilpath').foot,'#8e6f4c',heightAt,.018,9,{map:'stone',bump:.02});scatter(it,r,14,material('soilpath').foot,(x,z)=>pebble(g,'#7a5c3c',x,heightAt(x,z)+.025,z,.05*it.scale,.015,.07*it.scale,r));},
+ grasspatch(g,it,heightAt,r){patch(g,it,material('grasspatch').foot,'#8fb45a',heightAt,.022);scatter(it,r,22,material('grasspatch').foot,(x,z)=>tuft(g,x,heightAt(x,z)+.01,z,(.14+r()*.08)*it.scale,['#9cc265','#7fa84e'][Math.floor(r()*2)],{yaw:r()*3,sway:.04}));},
+ barkpath(g,it,heightAt,r){patch(g,it,material('barkpath').foot,'#7e5a3c',heightAt,.02,9,{map:'bark',bump:.02});scatter(it,r,50,material('barkpath').foot,(x,z)=>{const c=mesh(g,G.box,['#6a4a30','#8f6a46','#5c3f2a'][Math.floor(r()*3)],x,heightAt(x,z)+.03,z,.1*it.scale,.015,.05*it.scale,{map:'wood'});c.rotation.y=r()*3;c.rotation.z=(r()-.5)*.3;});},
+ logpads(g,it,heightAt,r){for(let i=0;i<4;i++){const lx=-.52+i*.35,lz=(i%2-.5)*.18;const w=toWorld(it,lx,lz);const y=heightAt(w.x,w.z);const s=mesh(g,G.cyl14,'#9a7556',w.x,y+.045,w.z,.19*it.scale,.09,.19*it.scale,{map:'bark',bump:.05});s.rotation.y=it.rotation;mesh(g,G.disc,'#d9bf92',w.x,y+.092,w.z,.17*it.scale,.004,.17*it.scale,{map:'endgrain',bump:.005,rough:.95});}},
+ drystream(g,it,heightAt,r){patch(g,it,material('drystream').foot,'#aaa79b',heightAt,.018,9,{map:'stone',bump:.02});scatter(it,r,40,material('drystream').foot,(x,z,lx,lz)=>{const big=Math.abs(lz)>.3*(r()+.5);pebble(g,['#8e8c80','#b4b1a4','#9a9689','#c4c1b3'][Math.floor(r()*4)],x,heightAt(x,z)+(big?.06:.03),z,(big?.12:.05)*it.scale,big?.07:.03,(big?.1:.06)*it.scale,r);});},
+ // Pond: rippled reflective water over a bed that darkens toward the middle, a wet-sand shore ring, mossy rim stones,
+ // lily pads with a white bloom. The level water surface and the full-footprint collision are unchanged.
+ pond(g,it,heightAt,r,waterY){const foot=material('pond').foot;const w=new T.Mesh(new T.CircleGeometry(1,36),waterMat());w.rotation.x=-Math.PI/2;w.position.set(it.x,waterY,it.z);w.scale.set(foot.w*it.scale*.97,foot.d*it.scale*.97,1);w.rotation.z=-it.rotation;w.receiveShadow=true;g.add(w);
+  const bedGeo=new T.CircleGeometry(1,36);{const p=bedGeo.attributes.position,col=new Float32Array(p.count*3),c1=new T.Color('#657f72'),c2=new T.Color('#143b47'),c=new T.Color();for(let i=0;i<p.count;i++){const d=Math.hypot(p.getX(i),p.getY(i));c.copy(c1).lerp(c2,Math.min(1,.25+(1-d)*.75));col.set([c.r,c.g,c.b],i*3);}bedGeo.setAttribute('color',new T.BufferAttribute(col,3));}
+  const bed=new T.Mesh(bedGeo,bedMat());bed.rotation.x=-Math.PI/2;bed.position.set(it.x,waterY-.018,it.z);bed.scale.set(foot.w*it.scale,foot.d*it.scale,1);bed.rotation.z=-it.rotation;g.add(bed);
+  const shoreGeo=new T.RingGeometry(1,1.12,36,2);{const p=shoreGeo.attributes.position;for(let i=0;i<p.count;i++){const lx=p.getX(i)*foot.w,lz=-p.getY(i)*foot.d;const q=toWorld(it,lx,lz);p.setXYZ(i,q.x,Math.max(heightAt(q.x,q.z),waterY-.02)+.014,q.z);}shoreGeo.computeVertexNormals();}
+  const sp=shoreGeo.attributes.position,shoreColors=[];for(let j=0;j<sp.count;j++){const x=sp.getX(j)-it.x,z=sp.getZ(j)-it.z,v=.88+.10*Math.sin(x*7+z*5);shoreColors.push(v,v*.98,v*.90);}shoreGeo.setAttribute('color',new T.Float32BufferAttribute(shoreColors,3));const shoreMaterial=mat('#758465',{rough:1,map:'moss'});shoreMaterial.vertexColors=true;const shore=new T.Mesh(shoreGeo,shoreMaterial);shore.receiveShadow=true;shore.castShadow=false;g.add(shore);
+  for(let i=0;i<26;i++){const a=i/26*6.28+(r()-.5)*.06,edge=1.01+.045*Math.sin(a*5);const lx=Math.cos(a)*foot.w*edge,lz=Math.sin(a)*foot.d*edge;const p=toWorld(it,lx,lz);const y=Math.max(heightAt(p.x,p.z),waterY-.05);const rim=mesh(g,G.rock,['#65776e','#92998b','#566961'][i%3],p.x,y+.045,p.z,(.12+r()*.11)*it.scale,.07+r()*.035,(.10+r()*.10)*it.scale,{map:'stone',rough:.78});rim.rotation.y=r()*6.28;if(i%3===0)tuft(g,p.x,y+.08,p.z,.16,'#8db85e',{yaw:r()*3,sway:.02});}
+  for(let i=0;i<7;i++){const lx=(r()-.5)*foot.w*1.2,lz=(r()-.5)*foot.d*1.2;const p=toWorld(it,lx,lz);const rad=(.078+(i%3)*.022)*it.scale,padGeo=new T.CircleGeometry(rad,56,.08,Math.PI*1.96),pp=padGeo.attributes.position,colors=new Float32Array(pp.count*3),inner=new T.Color('#365e3e'),outer=new T.Color('#86a65e');
+   for(let j=0;j<pp.count;j++){const x=pp.getX(j),y=pp.getY(j),a=Math.atan2(y,x),d=Math.hypot(x,y)/rad,scallop=1+.025*Math.sin(a*7);pp.setXYZ(j,x*scallop,y*scallop,d*d*(.013+.004*Math.sin(a*3))*it.scale);const c=inner.clone().lerp(outer,d*.85);c.multiplyScalar(.91+.09*Math.pow(Math.max(0,Math.cos(a*12)),12));colors.set([c.r,c.g,c.b],j*3);}padGeo.setAttribute('color',new T.BufferAttribute(colors,3));padGeo.computeVertexNormals();
+   const pad=new T.Mesh(padGeo,lilyMat());pad.rotation.x=-Math.PI/2;pad.rotation.z=r()*6.28;pad.position.set(p.x,waterY+.012,p.z);pad.receiveShadow=true;g.add(pad);if(i<2){const lily=new T.Group();for(let ring=0;ring<2;ring++)for(let k=0;k<9;k++){const a=(k+ring*.5)/9*Math.PI*2,rad=ring?.026:.048;const pet=mesh(lily,G.petal,ring?'#fff0d8':'#eee1dd',Math.cos(a)*rad,.020+ring*.018,Math.sin(a)*rad,ring?.045:.062,.022,.012,{rough:.6,shadow:false});pet.rotation.order="YXZ";pet.rotation.set(Math.PI/2,-a,.18+ring*.25);}mesh(lily,G.ball,'#e8bc50',0,.052,0,.021,.014,.021,{shadow:false});lily.position.set(p.x,waterY+.017,p.z);g.add(lily);}}
+  // Soil skirt closes the gap between the level bed and sloping ground; no terrain is cut.
+  const skirt=mesh(g,G.cyl14,'#5a5444',it.x,waterY-.26,it.z,foot.w*it.scale*1.03,.36,foot.d*it.scale*1.03,{shadow:false});skirt.rotation.y=it.rotation;}
+};
+// Water: shared material with a scrolling ripple normal map (offset driven from world.mjs each frame; 0 in photos).
+// Round 2: light Fresnel — looking down the water is clearer (teal, bed and pebbles show through), at grazing angles it
+// mirrors the sky colour (uSky follows morning/night). No reflection render, no post-processing.
+let water=null,bed=null,lily=null;function lilyMat(){if(!lily){lily=new T.MeshStandardMaterial({vertexColors:true,roughness:.58,side:T.DoubleSide});lily.userData={sway:0};}return lily;}export function waterMat(){if(!water){water=new T.MeshStandardMaterial({color:'#235d60',roughness:.22,metalness:.04,transparent:true,opacity:.61,normalMap:rippleNormal(),normalScale:new T.Vector2(.05,.05),emissive:new T.Color('#163239'),emissiveIntensity:.08});water.normalMap.repeat.set(2.5,2.5);
+  water.userData={sway:0,water:true,baseOpacity:.68,prepared:true,time:{value:0},sky:{value:new T.Color('#cfe2f0')}};
+  water.onBeforeCompile=sh=>{sh.uniforms.uSky=water.userData.sky;sh.uniforms.uWaterTime=water.userData.time;sh.vertexShader='varying vec3 vWaterWorld;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvWaterWorld=(modelMatrix*vec4(transformed,1.0)).xyz;');sh.fragmentShader='uniform float uWaterTime;varying vec3 vWaterWorld;uniform vec3 uSky;\n'+sh.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\n{float fres=pow(1.0-abs(dot(normalize(vNormal),normalize(vViewPosition))),2.5);float rip=sin(vWaterWorld.z*31.0+sin(vWaterWorld.x*5.0)+uWaterTime*.65)*sin(vWaterWorld.x*13.0-vWaterWorld.z*7.0+uWaterTime*.35);vec3 reflected=mix(uSky*vec3(.38,.58,.43),uSky,.5+.5*sin(vWaterWorld.x*5.0+sin(vWaterWorld.z*2.0)+rip*.25));diffuseColor.rgb=mix(diffuseColor.rgb,reflected,fres*.78);diffuseColor.rgb+=uSky*pow(max(rip,0.0),18.0)*.10;diffuseColor.a=mix(.34,.76,fres);}');};water.customProgramCacheKey=()=>'water';}return water;}
+function bedMat(){if(!bed){bed=new T.MeshStandardMaterial({vertexColors:true,roughness:1,map:stoneTex(),bumpMap:surfaceData(stoneTex()),bumpScale:.03});bed.userData={sway:0};}return bed;}
+export function coverGroup(kind,it,heightAt,waterY=0){const g=new T.Group();const r=rng((it.id?[...it.id].reduce((s,c)=>s+c.charCodeAt(0),0):7)+kind.length);if(covers[kind])covers[kind](g,it,heightAt,r,waterY);return g;}
+export const isCoverKind=kind=>!!covers[kind];
+
