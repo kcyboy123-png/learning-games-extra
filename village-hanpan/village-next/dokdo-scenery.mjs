@@ -14,8 +14,8 @@ export function createIslandScenery(world){
  function samplePoint(x,z){const key=`${x.toFixed(7)},${z.toFixed(7)}`;if(!heightSamples.has(key))heightSamples.set(key,cliffPoint(x,z));return heightSamples.get(key);}
  const sampleHeight=(x,z)=>samplePoint(x,z)[1];
  const shared=new T.Group();island.add(shared);
- const positions=[],colors=[],uvs=[],norm=new T.Color(),vegetationTone=new T.Color('#8b9d64'),step=.6;
- function vertex(x,z){const y=sampleHeight(x,z);positions.push(...samplePoint(x,z));uvs.push((x+24)/49,(z+25)/43);const slope=Math.hypot(sampleHeight(x+.15,z)-sampleHeight(x-.15,z),sampleHeight(x,z+.15)-sampleHeight(x,z-.15))/.3;const greenery=y>1?(1-T.MathUtils.smoothstep(slope,1.0,2.6))*T.MathUtils.smoothstep(Math.sin(x*.8+z*.7)+.35*Math.sin(x*2.3-z*1.6),-.3,.6):0;norm.set(y<.6?'#6d8580':'#c4bcaa');norm.lerp(vegetationTone,greenery);const hollow=(sampleHeight(x+.6,z)+sampleHeight(x-.6,z)+sampleHeight(x,z+.6)+sampleHeight(x,z-.6))*.25-y;norm.multiplyScalar(.95-.28*T.MathUtils.smoothstep(hollow,.05,.85)+.07*T.MathUtils.smoothstep(-hollow,.1,.8));colors.push(norm.r,norm.g,norm.b);}
+ const positions=[],colors=[],uvs=[],norm=new T.Color(),vegetationTone=new T.Color('#829b57'),step=.6;
+ function vertex(x,z){const y=sampleHeight(x,z);positions.push(...samplePoint(x,z));uvs.push((x+24)/49,(z+25)/43);const slope=Math.hypot(sampleHeight(x+.15,z)-sampleHeight(x-.15,z),sampleHeight(x,z+.15)-sampleHeight(x,z-.15))/.3;const greenery=y>1?(1-T.MathUtils.smoothstep(slope,.55,1.7))*T.MathUtils.smoothstep(Math.sin(x*.8+z*.7)+.35*Math.sin(x*2.3-z*1.6),-.3,.6):0;norm.set(y<.6?'#617d78':'#bdb6a5');norm.lerp(vegetationTone,greenery);const hollow=(sampleHeight(x+.6,z)+sampleHeight(x-.6,z)+sampleHeight(x,z+.6)+sampleHeight(x,z-.6))*.25-y;norm.multiplyScalar(.99-.43*T.MathUtils.smoothstep(hollow,.12,1.15)+.11*T.MathUtils.smoothstep(-hollow,.18,1.1));colors.push(norm.r,norm.g,norm.b);}
  for(let x=-30;x<30;x+=step)for(let z=-29;z<20;z+=step){if([sampleHeight(x,z),sampleHeight(x+step,z),sampleHeight(x,z+step),sampleHeight(x+step,z+step)].every(h=>h<0))continue;for(const [dx,dz]of[[0,0],[0,1],[1,0],[1,0],[0,1],[1,1]])vertex(x+dx*step,z+dz*step);}
  // These low approach foundations are fictional construction, not added natural islands.
  for(const e of walkEdges){const mesh=bridgeFootingMesh(e);if(!mesh)continue;const {points,faces}=mesh;
@@ -26,7 +26,7 @@ export function createIslandScenery(world){
  const averaged=new Map(),normals=geometry.attributes.normal,keys=[];
  for(let i=0;i<positions.length;i+=3){const key=positions.slice(i,i+3).map(v=>v.toFixed(5)).join(',');keys.push(key);const n=averaged.get(key)||new T.Vector3();n.add(new T.Vector3().fromBufferAttribute(normals,i/3));averaged.set(key,n);}
  for(const n of averaged.values())n.normalize();
- for(let i=0;i<keys.length;i++){const n=new T.Vector3().fromBufferAttribute(normals,i).lerp(averaged.get(keys[i]),.80).normalize();normals.setXYZ(i,n.x,n.y,n.z);}
+ for(let i=0;i<keys.length;i++){const n=new T.Vector3().fromBufferAttribute(normals,i).lerp(averaged.get(keys[i]),.66).normalize();normals.setXYZ(i,n.x,n.y,n.z);}
  const texCanvas=document.createElement('canvas');texCanvas.width=texCanvas.height=1024;const tc=texCanvas.getContext('2d');tc.fillStyle='#d5cdb8';tc.fillRect(0,0,1024,1024);
  let seed=7461;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
  for(let i=0;i<70000;i++){const shade=100+Math.floor(rand()*125);tc.fillStyle=`rgba(${shade},${shade},${shade},.22)`;tc.fillRect(rand()*1024,rand()*1024,1+rand()*4,1+rand()*3);}
@@ -39,26 +39,26 @@ export function createIslandScenery(world){
   shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nrockPosition=position;rockNormal=normal;');
   shader.fragmentShader='varying vec3 rockPosition; varying vec3 rockNormal;\n'+shader.fragmentShader;
   shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_begin>',`#include <normal_fragment_begin>
-   float bedding=rockPosition.y*5.3+sin(rockPosition.x*.91+rockPosition.z*.6)*2.4+sin(rockPosition.z*2.7-rockPosition.x*.4)*.7;
-   float joint=rockPosition.x*2.1+rockPosition.z*1.4+sin(rockPosition.y*.8);
-   float relief=sin(bedding)*.012+pow(.5+.5*sin(joint),10.)*.025;
+   float bedding=rockPosition.y*2.6+sin(rockPosition.x*.91+rockPosition.z*.6)*3.6+sin(rockPosition.z*2.7-rockPosition.x*.4)*.7;
+   float joint=rockPosition.x*1.6+rockPosition.z*1.1+rockPosition.y*.23+sin(rockPosition.y*.43);
+   float relief=sin(bedding)*.009+pow(.5+.5*sin(joint),14.)*.038;
    vec3 dpX=dFdx(vViewPosition),dpY=dFdy(vViewPosition);
    vec3 rX=cross(dpY,normal),rY=cross(normal,dpX);
    float det=dot(dpX,rX);
-   normal=normalize(abs(det)*normal-sign(det)*(dFdx(relief)*rX+dFdy(relief)*rY));`);
+   if(abs(det)>.0000001)normal=normalize(abs(det)*normal-sign(det)*(dFdx(relief)*rX+dFdy(relief)*rY));`);
   shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`#ifdef USE_MAP
    vec3 weights=pow(abs(normalize(rockNormal)),vec3(4.)); weights/=max(.001,weights.x+weights.y+weights.z);
    vec4 stone=texture2D(map,rockPosition.yz*.18)*weights.x+texture2D(map,rockPosition.xz*.18)*weights.y+texture2D(map,rockPosition.xy*.18)*weights.z;
-   diffuseColor*=mix(vec4(1.),stone,.34);
-   float strata=sin(rockPosition.y*5.4+sin(rockPosition.x*.8+rockPosition.z*.6)*2.1+sin(rockPosition.x*2.7)*.5);
+   diffuseColor*=mix(vec4(1.),stone,.27);
+   float strata=sin(rockPosition.y*2.6+sin(rockPosition.x*.8+rockPosition.z*.6)*3.6+sin(rockPosition.x*2.7)*.5);
    float cliff=1.-smoothstep(.35,.8,abs(normalize(rockNormal).y));
    diffuseColor.rgb*=1.-cliff*.07*smoothstep(.35,.9,strata);
    float mineral=.5+.5*sin(rockPosition.x*.72+rockPosition.z*.48+sin(rockPosition.y*.63));
    float fissure=pow(.5+.5*sin(rockPosition.x*.95+rockPosition.z*.61+sin(rockPosition.y*.9)),12.);
-   diffuseColor.rgb*=mix(vec3(.88,.94,1.015),vec3(1.055,1.015,.93),mineral)*(1.-fissure*cliff*.10);
+   diffuseColor.rgb*=mix(vec3(.88,.94,1.015),vec3(1.055,1.015,.93),mineral)*(1.-fissure*cliff*.16);
    float creviceMoss=smoothstep(.65,.92,fissure)*(1.-smoothstep(.4,.8,cliff))*smoothstep(1.,4.,rockPosition.y);
    diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.16,.24,.09),creviceMoss*.32);
-   diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(.72,.81,.83),1.-smoothstep(-.3,1.1,rockPosition.y));
+   diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(.64,.79,.80),1.-smoothstep(-.3,1.4,rockPosition.y));
    #endif`);
  };
 
@@ -74,47 +74,47 @@ export function createIslandScenery(world){
  float grazing=pow(1.-abs(dot(normal,normalize(vViewPosition))),3.);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.22,.40,.46),grazing*.18);`);shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
  float w=sin(seaPosition.x*.72+seaPosition.z*1.14+seaTime*.65+sin(seaPosition.z*.23)*1.7)*.55+sin(seaPosition.x*2.1-seaPosition.z*.45+seaTime*.39+sin(seaPosition.x*.37))*.3+sin(seaPosition.x*.41+seaPosition.z*3.2-seaTime*.3)*.15;
  float broad=.5+.25*sin(seaPosition.x*.13+seaPosition.z*.21+sin(seaPosition.z*.07))+.25*sin(seaPosition.x*.087-seaPosition.z*.16);
- float swell=sin(seaPosition.x*.75+seaPosition.z*.47+seaTime*.52+sin(seaPosition.z*.28)*1.6);
+ float swell=sin(seaPosition.x*.43+seaPosition.z*.32+seaTime*.52+sin(seaPosition.z*.28)*1.6);
  float smallWave=pow(max(0.,sin(seaPosition.x*2.1+seaPosition.z*1.3+seaTime*.8+sin(seaPosition.z*.9))),20.)*smoothstep(.2,.9,sin(seaPosition.z*1.7-seaPosition.x*.9));
  float crest=pow(max(0.,swell),18.)*smoothstep(.15,.8,sin(seaPosition.x*.31-seaPosition.z*.23));
  vec2 coastUV=((seaPosition.xz-seaSpace.xy)/seaSpace.z-vec2(-38.,-40.))/vec2(70.,64.);
  float insideMap=step(0.,coastUV.x)*step(coastUV.x,1.)*step(0.,coastUV.y)*step(coastUV.y,1.);
- float shore=texture2D(coastMap,clamp(coastUV,0.,1.)).r*insideMap;shore=pow(shore,2.45);
+ float shore=texture2D(coastMap,clamp(coastUV,0.,1.)).r*insideMap;shore=pow(shore,1.95);
  vec2 leftCoast=abs(seaPosition.xz-vec2(-8.4,0.))/vec2(13.35,21.75),rightCoast=abs(seaPosition.xz-vec2(14.4,0.))/vec2(7.35,21.75);
  float mainlandDistance=min((pow(pow(leftCoast.x,4.)+pow(leftCoast.y,4.),.25)-1.)*13.35,(pow(pow(rightCoast.x,4.)+pow(rightCoast.y,4.),.25)-1.)*7.35);
  float mainlandShore=(1.-smoothstep(.1,4.8,max(0.,mainlandDistance)))*(1.-step(.9,seaSpace.z));
  shore=max(shore,mainlandShore*.82);
- diffuseColor.rgb=mix(mix(vec3(.018,.095,.19),vec3(.025,.135,.235),broad),mix(vec3(.075,.46,.37),vec3(.035,.28,.31),insideMap),smoothstep(0.,1.,shore)*.86)*(.91+w*.065);
+ diffuseColor.rgb=mix(mix(vec3(.018,.105,.19),vec3(.025,.16,.25),broad),mix(vec3(.075,.46,.37),vec3(.035,.33,.34),insideMap),smoothstep(0.,1.,shore)*.86)*(.95+w*.075);
  float shoalLight=(1.-smoothstep(.025,.11,abs(sin(seaPosition.x*2.8+sin(seaPosition.z*2.1)+seaTime*.16)+sin(seaPosition.z*3.2-seaTime*.21))));
- diffuseColor.rgb+=vec3(.012,.035,.028)*shoalLight*pow(shore,4.);
+ diffuseColor.rgb+=vec3(.012,.035,.028)*shoalLight*pow(shore,3.);
  float lace=sin(seaPosition.x*7.+sin(seaPosition.z*4.)+seaTime*.4)*sin(seaPosition.z*6.-seaTime*.3);
  float wash=.5+.5*sin(shore*28.-seaTime*.8+sin(seaPosition.x*1.7+seaPosition.z*2.1));
  float foamPatch=smoothstep(-.45,.65,sin(seaPosition.x*1.17+seaPosition.z*.84+sin(seaPosition.z*1.9)));
  float foamBand=smoothstep(.70,.98,shore)*smoothstep(.48,.88,wash)*foamPatch*(.45+.55*smoothstep(-.6,.5,lace));
  float washFront=sin(shore*34.-seaTime*.72+sin(seaPosition.x*.63+seaPosition.z*.91)*.45);
  float surf=smoothstep(.91,.995,washFront)*smoothstep(.64,.91,shore)*foamPatch;
- diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.65,.82,.77),foamBand*.22+surf*.22);
+ diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.65,.82,.77),foamBand*.18+surf*.27);
  float glintWave=sin(seaPosition.x*4.6+seaPosition.z*7.1+seaTime*.72+sin(seaPosition.x*1.83+seaPosition.z*.79)*3.4+sin(seaPosition.z*2.7-seaPosition.x*.4)*2.);
  float glintCross=sin(seaPosition.x*1.4-seaPosition.z*2.3-seaTime*.38+sin(seaPosition.x*.6+seaPosition.z*.9)*2.);
  float sunPath=exp(-pow((seaPosition.x+seaPosition.z*.58-9.)/9.,2.));
  float glint=pow(max(0.,glintWave),28.)*smoothstep(.40,.92,glintCross)*(.10+.90*sunPath)*smoothstep(.10,.75,sin(seaPosition.x*.31+sin(seaPosition.z*.23))*sin(seaPosition.z*.47-seaPosition.x*.13));
  glint*=smoothstep(.15,.85,sin(seaPosition.x*5.7-seaPosition.z*4.9+seaTime*.22));
- diffuseColor.rgb+=vec3(.65,.59,.42)*glint*(1.-shore*.65);
+ diffuseColor.rgb+=vec3(.58,.56,.43)*glint*(1.-shore*.65);
  float fleck=pow(max(0.,sin(seaPosition.x*5.1+seaPosition.z*3.7+seaTime*.3+sin(seaPosition.z*1.8))*sin(seaPosition.z*6.4-seaPosition.x*2.8+seaTime*.2+sin(seaPosition.x*1.3))),12.);
  diffuseColor.rgb+=vec3(.045,.055,.05)*fleck*shore*smoothstep(.25,.85,broad);
- diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.18,.34,.40),(crest*.045+smallWave*.018)*(1.-shore));`);
+ diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.18,.34,.40),(crest*.055+smallWave*.014)*(1.-shore));`);
  shader.fragmentShader=shader.fragmentShader.replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
   float ribbon=exp(-pow((seaPosition.x+seaPosition.z*.58-9.)/8.,2.));
-  vec2 glitterUV=seaPosition.xz*2.2,glitterCell=floor(glitterUV);
+  vec2 glitterUV=seaPosition.xz*vec2(1.8,2.4),glitterCell=floor(glitterUV);
   vec3 jitter=fract(sin(vec3(dot(glitterCell,vec2(127.1,311.7)),dot(glitterCell,vec2(269.5,183.3)),dot(glitterCell,vec2(419.2,371.9))))*43758.5453);
   vec2 spot=fract(glitterUV)-(.2+jitter.xy*.6);
   spot.x+=spot.y*(jitter.z-.5)*.8;
-  float glintShape=dot(spot*vec2(4.2,13.),spot*vec2(4.2,13.));
+  float glintShape=dot(spot*vec2(3.2,12.),spot*vec2(3.2,12.));
   float glintEdge=max(.08,fwidth(glintShape));
   float blink=smoothstep(.3,.95,sin(seaTime*(.8+jitter.z*.5)+jitter.x*31.));
   float patches=smoothstep(-.4,.65,sin(seaPosition.x*.63+sin(seaPosition.z*.37)*2.)*sin(seaPosition.z*.52-seaPosition.x*.17));
-  float sparkle=(1.-smoothstep(.7-glintEdge,.7+glintEdge,glintShape))*step(.42,jitter.z)*blink*patches*ribbon*(1.-shore*.8);
-  totalEmissiveRadiance+=vec3(.95,.80,.51)*sparkle*.65;`);
+  float sparkle=(1.-smoothstep(.7-glintEdge,.7+glintEdge,glintShape))*step(.58,jitter.z)*blink*patches*ribbon*(1.-shore*.8);
+  totalEmissiveRadiance+=vec3(.95,.80,.51)*sparkle*.42;`);
  };
 
  // Each outline is traced from the published KIOST map, not a random ring of rocks.
@@ -140,7 +140,7 @@ export function createIslandScenery(world){
   const geo=new T.ExtrudeGeometry(shape,{depth:elephant?2:2.2,bevelEnabled:true,bevelSize:.11,bevelThickness:.12,bevelSegments:1,curveSegments:6,steps:1});geo.translate(site.position[0],0,site.position[1]-1.0);rockVertices.push(...geo.attributes.position.array);geo.dispose();
  }
  const rockGeo=new T.BufferGeometry();rockGeo.setAttribute('position',new T.Float32BufferAttribute(rockVertices,3));rockGeo.computeVertexNormals();
- const rockColors=[];for(let i=0;i<rockVertices.length;i+=3){norm.set(rockVertices[i+1]<.4?'#6d8580':'#c4bcaa');norm.multiplyScalar(.94+.06*Math.sin(rockVertices[i]*2+rockVertices[i+2]));rockColors.push(norm.r,norm.g,norm.b);}rockGeo.setAttribute('color',new T.Float32BufferAttribute(rockColors,3));
+ const rockColors=[];for(let i=0;i<rockVertices.length;i+=3){norm.set('#c4bcaa');norm.lerp(new T.Color('#526e6c'),1-T.MathUtils.smoothstep(rockVertices[i+1],-.4,.8));norm.multiplyScalar(.89+.11*T.MathUtils.smoothstep(rockGeo.attributes.normal.getY(i/3),-.4,.8));rockColors.push(norm.r,norm.g,norm.b);}rockGeo.setAttribute('color',new T.Float32BufferAttribute(rockColors,3));
  const rocks=new T.Mesh(rockGeo,terrain.material);rocks.name='dokdo-map-rocks';rocks.userData.mappedOutlines=mappedRocks.length;shared.add(rocks);
  // Low coastal foliage uses species-specific leaves; flowers follow the game's season.
  function plantGeometry(kind){const v=[],c=[],col=new T.Color();
@@ -153,23 +153,23 @@ export function createIslandScenery(world){
   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(v,3));g.setAttribute('color',new T.Float32BufferAttribute(c,3));g.computeVertexNormals();return g;
  }
  const plantMaterial=new T.MeshStandardMaterial({vertexColors:true,roughness:.94,side:T.DoubleSide});
- const plants=new T.InstancedMesh(plantGeometry('haeguk'),plantMaterial,180),sedums=new T.InstancedMesh(plantGeometry('sedum'),plantMaterial,180),blooms=new T.InstancedMesh(plantGeometry('haeguk-flower'),plantMaterial,100),yellowBlooms=new T.InstancedMesh(plantGeometry('sedum-flower'),plantMaterial,100);
+ const plants=new T.InstancedMesh(plantGeometry('haeguk'),plantMaterial,176),sedums=new T.InstancedMesh(plantGeometry('sedum'),plantMaterial,180),blooms=new T.InstancedMesh(plantGeometry('haeguk-flower'),plantMaterial,100),yellowBlooms=new T.InstancedMesh(plantGeometry('sedum-flower'),plantMaterial,100);
  plants.name='dokdo-plants';sedums.name='dokdo-sedum';blooms.name='dokdo-blooms';yellowBlooms.name='dokdo-sedum-blooms';shared.add(plants,sedums,blooms,yellowBlooms);plants.userData.species='해국';sedums.userData.species='섬기린초';
- let pi=0,si=0,fi=0,yi=0;for(let i=0;i<3000&&(pi<180||si<180);i++){const x=-22+rand()*45,z=-23+rand()*39,y=sampleHeight(x,z);if(trailSet.has(`${Math.round(x/C+8.5)},${Math.round(z/C+8.5)}`)||y<.8||y>14||Math.abs(sampleHeight(x+.2,z)-sampleHeight(x-.2,z))>.7||Math.abs(sampleHeight(x,z+.2)-sampleHeight(x,z-.2))>.7)continue;if(Math.sin(x*.63+z*.41)+Math.sin(z*.85-x*.27)<-.85)continue;const sedum=x>5?i%3!==0:i%3===0;if(sedum?si>=180:pi>=180)continue;const point=samplePoint(x,z);dummy.position.set(point[0],y+.04,point[2]);dummy.scale.setScalar(.65+i%5*.12);dummy.rotation.set(Math.atan2(sampleHeight(x,z+.2)-sampleHeight(x,z-.2),.4)*.35,i,-Math.atan2(sampleHeight(x+.2,z)-sampleHeight(x-.2,z),.4)*.35);dummy.updateMatrix();if(sedum){sedums.setMatrixAt(si++,dummy.matrix);if(yi<100&&i%2)yellowBlooms.setMatrixAt(yi++,dummy.matrix);}else{plants.setMatrixAt(pi++,dummy.matrix);if(fi<100&&i%2)blooms.setMatrixAt(fi++,dummy.matrix);}}
+ let pi=0,si=0,fi=0,yi=0;for(let i=0;i<3000&&(pi<176||si<180);i++){const x=-22+rand()*45,z=-23+rand()*39,y=sampleHeight(x,z);if(trailSet.has(`${Math.round(x/C+8.5)},${Math.round(z/C+8.5)}`)||y<.8||y>14||Math.abs(sampleHeight(x+.2,z)-sampleHeight(x-.2,z))>.7||Math.abs(sampleHeight(x,z+.2)-sampleHeight(x,z-.2))>.7)continue;if(Math.sin(x*.63+z*.41)+Math.sin(z*.85-x*.27)<-.85)continue;const sedum=x>5?i%3!==0:i%3===0;if(sedum?si>=180:pi>=176)continue;const point=samplePoint(x,z);dummy.position.set(point[0],y+.04,point[2]);dummy.scale.setScalar(.62+.84*(.5+.5*Math.sin(x*.81+z*.62)));dummy.rotation.set(Math.atan2(sampleHeight(x,z+.2)-sampleHeight(x,z-.2),.4)*.35,i,-Math.atan2(sampleHeight(x+.2,z)-sampleHeight(x-.2,z),.4)*.35);dummy.updateMatrix();if(sedum){sedums.setMatrixAt(si++,dummy.matrix);if(yi<100&&i%2)yellowBlooms.setMatrixAt(yi++,dummy.matrix);}else{plants.setMatrixAt(pi++,dummy.matrix);if(fi<100&&i%2)blooms.setMatrixAt(fi++,dummy.matrix);}}
  plants.count=pi;sedums.count=si;blooms.count=fi;yellowBlooms.count=yi;
  // Fixed lighthouse on Dongdo ridge. Its silhouette remains readable from the main town.
  const lx=19,lz=7,ly=sampleHeight(lx,lz);part(shared,'cylinder','#e7e3d3',lx,ly+1.45,lz,.43,2.9,.43);part(shared,'cylinder','#b7c9c7',lx,ly+3,lz,.58,.45,.58);part(shared,'cone','#536e70',lx,ly+3.42,lz,.68,.42);part(shared,'sphere','#ffe5a1',lx,ly+3.05,lz,.35,.16,.35);
- function railBetween(a,b,width=.05,parent=shared,color='#85785f'){const d=new T.Vector3().subVectors(b,a),m=part(parent,'box',color,...(a.clone().add(b).multiplyScalar(.5).toArray()),width,d.length(),width);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),d.normalize());}
+ function railBetween(a,b,width=.04,parent=shared,color='#8d795b'){const d=new T.Vector3().subVectors(b,a),m=part(parent,'box',color,...(a.clone().add(b).multiplyScalar(.5).toArray()),width,d.length(),width);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),d.normalize());}
  // Continuous paths follow the same edges and heights used by the rabbit.
- for(const e of walkEdges){const footing=bridgeFooting(e),stone=rockWalk(e)||!!footing,a=walkNodes[e.a],b=walkNodes[e.b],dx=b.x-a.x,dz=b.z-a.z,length=Math.hypot(dx,dz),angle=Math.atan2(dx,dz),nx=dz/length,nz=-dx/length,steps=Math.max(2,Math.ceil(length/(stone?.70:e.width===1.55?.60:.32)),Math.ceil(Math.abs(b.y-a.y)/.17));
-  for(let j=0;j<steps;j++){const u=(j+.5)/steps,flare=bridgeFlare(e,u),drift=bridgeDrift(e,u),ground=naturalHeight(a.x+dx*u,a.z+dz*u),supported=stone||(ground>.1&&ground>a.y+(b.y-a.y)*u-1.4),depth=footing?.18:supported?Math.max(.25,a.y+(b.y-a.y)*u-naturalHeight(a.x+dx*u,a.z+dz*u)+.12):.14,m=part(shared,'box',(supported?['#8c9381','#9b9f89','#909580']:['#8c8c77','#92917b','#8c8d78'])[Math.abs(Math.floor(a.x*3+j*7))%3],a.x+dx*u+nx*drift,a.y+(b.y-a.y)*u-depth/2,a.z+dz*u+nz*drift,e.width+flare+(stone?.045*(1+Math.sin(j*2.4+a.x)):0),depth,length/steps+.015);m.rotation.y=angle;}
+ for(const e of walkEdges){const footing=bridgeFooting(e),stone=rockWalk(e)||!!footing,a=walkNodes[e.a],b=walkNodes[e.b],dx=b.x-a.x,dz=b.z-a.z,length=Math.hypot(dx,dz),angle=Math.atan2(dx,dz),nx=dz/length,nz=-dx/length,steps=Math.max(2,Math.ceil(length/(stone?.80:e.width===1.55?.68:.40)),Math.ceil(Math.abs(b.y-a.y)/.17));
+  for(let j=0;j<steps;j++){const u=(j+.5)/steps,flare=bridgeFlare(e,u),drift=bridgeDrift(e,u),ground=naturalHeight(a.x+dx*u,a.z+dz*u),supported=stone||(ground>.1&&ground>a.y+(b.y-a.y)*u-1.4),depth=footing?.18:supported?Math.max(.20,a.y+(b.y-a.y)*u-naturalHeight(a.x+dx*u,a.z+dz*u)+.12):.14,m=part(shared,'box',(e.width===1.55?(footing?['#979686','#a09c89','#969580']:['#827c69','#918570','#89816c']):supported?['#aaa38f','#b1aa98','#a29e8d']:['#9e9074','#aa997b','#a39377'])[Math.abs(Math.floor(a.x*3+j*7))%3],a.x+dx*u+nx*drift,a.y+(b.y-a.y)*u-depth/2,a.z+dz*u+nz*drift,e.width+flare+(stone?.045*(1+Math.sin(j*2.4+a.x)):0),depth,length/steps+.015);m.rotation.y=angle;}
   for(const side of[-1,1]){
    const sheltered=[.1,.5,.9].every(u=>naturalHeight(a.x+dx*u+nx*(e.width/2+.16)*side,a.z+dz*u+nz*(e.width/2+.16)*side)>a.y+(b.y-a.y)*u+(stone?.28:.45));
    if(sheltered)continue;
-   const trim=e.width===1.55?0:Math.min(.16,.22/length),count=Math.max(1,Math.ceil(length/1.5));
-   const railPoint=u=>{const flare=bridgeFlare(e,u),offset=bridgeDrift(e,u)+(e.width+flare)*.5*side;return new T.Vector3(a.x+dx*u+nx*offset,a.y+(b.y-a.y)*u+.65,a.z+dz*u+nz*offset);};
+   const trim=e.width===1.55?0:Math.min(.16,.22/length),count=Math.max(1,Math.ceil(length/2.5));
+   const railPoint=u=>{const flare=bridgeFlare(e,u),offset=bridgeDrift(e,u)+(e.width+flare)*.5*side;return new T.Vector3(a.x+dx*u+nx*offset,a.y+(b.y-a.y)*u+.65-(e.width===1.55?.10*Math.sin(Math.PI*Math.max(0,Math.min(1,(a.x+dx*u+3.6)/12))):0),a.z+dz*u+nz*offset);};
    let previous;
-   for(let j=0;j<=count;j++){const q=railPoint(trim+(1-2*trim)*j/count);if(previous&&(e.width===1.55||j===count))railBetween(previous,q);part(shared,'box','#707767',q.x,q.y-.32,q.z,.05,.71,.05);if(!previous||e.width===1.55)previous=q;}}
+   for(let j=0;j<=count;j++){const q=railPoint(trim+(1-2*trim)*j/count);if(previous)railBetween(previous,q);part(shared,'box','#8d795b',q.x,q.y-.32,q.z,.05,.71,.05);previous=q;}}
 
   if(stone||e.width===1.55)continue;
   // Cliff walks use short brackets; the low bridge alone keeps water-reaching piles.
@@ -181,8 +181,8 @@ export function createIslandScenery(world){
   }
  }
  // One light arch replaces the central row of water-reaching piles.
- for(const side of[-1,1]){let previous;for(let j=0;j<=7;j++){const x=-3.6+12*j/7,e=walkEdges.find(e=>e.width===1.55&&walkNodes[e.a].x<=x+.001&&walkNodes[e.b].x>=x-.001);if(!e)continue;const a=walkNodes[e.a],b=walkNodes[e.b],u=(x-a.x)/(b.x-a.x),flare=bridgeFlare(e,u),q=new T.Vector3(x,a.y+(b.y-a.y)*u-.25,8.4-bridgeDrift(e,u)+side*(e.width+flare)*.43);if(previous)railBetween(previous,q,.15,shared,'#697268');previous=q;}}
- for(const n of walkNodes){if(n.kind==='lower'&&n.z===8.4&&n.x>-3.59&&n.x<8.39)continue;const ground=naturalHeight(n.x,n.z),grounded=ground>.1&&ground>=n.y-1.4,depth=grounded?Math.max(.25,n.y-ground+.12):.16,radius=n.lookout?.76:n.kind==='lower'?.68:.56,m=part(shared,'cylinder',grounded?'#aaa58e':n.lookout?'#ada58d':'#a49b83',n.x,n.y-depth/2,n.z,radius,depth,radius);m.rotation.y=Math.PI/12;if(n.lookout&&!grounded)part(shared,'cylinder','#786c57',n.x,n.y-.20,n.z,radius*.9,.12,radius*.9);}
+ for(const side of[-1,1]){let previous;for(let j=0;j<=7;j++){const x=-3.6+12*j/7,e=walkEdges.find(e=>e.width===1.55&&walkNodes[e.a].x<=x+.001&&walkNodes[e.b].x>=x-.001);if(!e)continue;const a=walkNodes[e.a],b=walkNodes[e.b],u=(x-a.x)/(b.x-a.x),flare=bridgeFlare(e,u),q=new T.Vector3(x,a.y+(b.y-a.y)*u-.65+.40*Math.sin(Math.PI*j/7),8.4-bridgeDrift(e,u)+side*(e.width+flare)*.43);if(previous)railBetween(previous,q,.11,shared,'#756e5e');previous=q;}}
+ for(const n of walkNodes){if(n.kind==='lower'&&n.z===8.4&&n.x>-3.59&&n.x<8.39)continue;const ground=naturalHeight(n.x,n.z),grounded=ground>.1&&ground>=n.y-1.4,depth=grounded?Math.max(.25,n.y-ground+.12):.16,radius=n.lookout?.76:n.kind==='lower'?.68:.56,m=part(shared,'cylinder',grounded?'#aaa38f':n.lookout?'#aa997b':'#a39377',n.x,n.y-depth/2,n.z,radius,depth,radius);m.rotation.y=Math.PI/12;if(n.lookout&&!grounded)part(shared,'cylinder','#786c57',n.x,n.y-.20,n.z,radius*.9,.12,radius*.9);}
  const pier=new T.Group();shared.add(pier);pier.position.x=-5;part(pier,'box','#c4bca7',14,.05,16,2.2,.4,5);part(pier,'box','#c4bca7',13,.05,18.2,4.2,.4,1.25);
  for(const x of[12,14.9])for(const z of[17.8,18.6])part(pier,'cylinder','#737e79',x,.45,z,.07,.65,.07);
  // A short switchback joins the existing home terrace to the actual trail, not an obsolete sea-level landing.
@@ -198,7 +198,7 @@ export function createIslandScenery(world){
  for(const [x,y,r]of [[45,75,48],[95,60,58],[140,76,65],[200,65,50],[125,35,36]]){const grad=ctx.createRadialGradient(x,y,0,x,y,r);grad.addColorStop(0,'rgba(224,235,244,.75)');grad.addColorStop(.5,'rgba(224,235,244,.42)');grad.addColorStop(1,'rgba(224,235,244,0)');ctx.fillStyle=grad;ctx.fillRect(0,0,256,128);}
  ctx.save();ctx.globalCompositeOperation='destination-in';ctx.scale(2,1);const fade=ctx.createRadialGradient(64,64,24,64,64,64);fade.addColorStop(0,'#fff');fade.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=fade;ctx.fillRect(0,0,128,128);ctx.restore();
  const texture=new T.CanvasTexture(cv),mistMat=new T.MeshBasicMaterial({map:texture,transparent:true,opacity:.72,depthWrite:false,depthTest:false,side:T.DoubleSide});
- const fogLayers=[[68,19,-5,3,7],[56,14,6,8,-4],[48,12,-9,12,1],[72,15,4,1,-8]].map(([w,h,x,y,z],i)=>{const m=new T.Mesh(new T.PlaneGeometry(w,h),mistMat.clone());m.position.set(x,y,z);m.userData.home=m.position.clone();m.userData.density=[.78,.64,.42,.65][i];mist.add(m);return m;});
+ const fogLayers=[[68,13,-5,1.5,7],[52,11,6,5,-4],[42,8,-9,10,1],[70,12,4,.5,-8]].map(([w,h,x,y,z],i)=>{const m=new T.Mesh(new T.PlaneGeometry(w,h),mistMat.clone());m.position.set(x,y,z);m.userData.home=m.position.clone();m.userData.density=[.58,.40,.19,.52][i];mist.add(m);return m;});
  // Fine shore foam follows the actual coast, leaving the channel free of random rocks.
  const foamGeo=new T.BufferGeometry(),fp=[];for(const poly of [...outlines,...mappedRocks.filter(r=>r.mapCenter[1]<230).map(r=>r.outline)])for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length];for(let k=0;k<2;k++){const u=k/2,v=(k+.65)/2;fp.push(a[0]+(b[0]-a[0])*u,-.58,a[1]+(b[1]-a[1])*u,a[0]+(b[0]-a[0])*v,-.58,a[1]+(b[1]-a[1])*v);}}foamGeo.setAttribute('position',new T.Float32BufferAttribute(fp,3));const foam=new T.LineSegments(foamGeo,new T.LineBasicMaterial({color:'#d8e9de',transparent:true,opacity:.28}));shared.add(foam);farCopy.add(foam.clone());
  const gulls=new T.Group();gulls.name='dokdo-gulls';island.add(gulls);

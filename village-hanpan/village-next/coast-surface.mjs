@@ -13,12 +13,12 @@ export function coastSurface(kind='sand'){
    #if COAST_ROCK == 1
     float broad=sin(coastPoint.x*2.3+sin(coastPoint.z*1.7))*sin(coastPoint.z*3.1);
    #else
-    float broad=.52*sin(coastPoint.x*.45+sin(coastPoint.z*.38))+.48*sin(coastPoint.z*.58-coastPoint.x*.27);
+    float broad=.60*sin(coastPoint.x*.19+sin(coastPoint.z*.16))+.40*sin(coastPoint.z*.27-coastPoint.x*.13);
    #endif
    vec2 grainCell=floor(coastPoint.xz*64.);
    float grain=fract(sin(dot(grainCell,vec2(127.1,311.7)))*43758.5453)-.5;
    float grainFade=1.-smoothstep(.01,.075,length(fwidth(coastPoint.xz)));
-   float wet=1.-smoothstep(-.58,-.16,coastPoint.y);
+   float wet=1.-smoothstep(-.58,-.16,coastPoint.y+.035*sin(coastPoint.x*2.1+sin(coastPoint.z*1.4)));
    float reliefFade=1.-smoothstep(.08,.3,length(fwidth(coastPoint)));
    float coastRelief=(sin(coastPoint.x*7.+sin(coastPoint.z*3.))*sin(coastPoint.z*9.+coastPoint.y*19.))*.003*reliefFade;
    #if COAST_ROCK == 1
@@ -28,11 +28,11 @@ export function coastSurface(kind='sand'){
     float seam=smoothstep(.91,1.,sin(coastPoint.x*7.+coastPoint.y*13.)*sin(coastPoint.z*8.-coastPoint.y*9.));
     diffuseColor.rgb*=1.-seam*.065*reliefFade;
    #else
-    float ripple=sin(coastPoint.z*19.+sin(coastPoint.x*3.)*1.6);
+    float ripple=sin(coastPoint.z*10.+coastPoint.x*2.+sin(coastPoint.x*.8)*3.+sin(coastPoint.z*.6));
     float turf=smoothstep(.025,.09,diffuseColor.g-diffuseColor.r)*smoothstep(-.05,.1,coastPoint.y);
-    diffuseColor.rgb*=mix(vec3(1.),mix(vec3(.73,.88,.72),vec3(1.06,1.025,.83),smoothstep(.12,.88,.5+.5*broad)),turf);
-    diffuseColor.rgb*=1.+broad*.035*(1.-turf)+ripple*.011*(1.-turf)+grain*grainFade*mix(.10,.30,turf);
-    diffuseColor.rgb*=mix(vec3(1.),vec3(.81,.89,.85),wet*.55);
+    diffuseColor.rgb*=mix(vec3(1.),mix(vec3(.67,.84,.63),vec3(1.08,1.03,.81),smoothstep(.12,.88,.5+.5*broad)),turf);
+    diffuseColor.rgb*=1.+broad*.065*(1.-turf)+ripple*.019*(1.-turf)+grain*grainFade*mix(.10,.30,turf);
+    diffuseColor.rgb*=mix(vec3(1.),vec3(.66,.79,.78),wet*.62);
    #endif`);
   shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
    vec3 shoreDx=dFdx(-vViewPosition),shoreDy=dFdy(-vViewPosition);

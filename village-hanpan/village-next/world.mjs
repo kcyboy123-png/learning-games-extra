@@ -1,3 +1,4 @@
+import {entrancePose,applyEntrancePose} from './entrance-camera.mjs';
 import {createFrontCoast} from './front-coast.mjs?v=living15';
 import {createShoreFringe} from './shore-fringe.mjs?v=living15';
 import {coastSurface} from './coast-surface.mjs?v=living15';
@@ -515,7 +516,7 @@ export class World{
   // 두 섬: 왼쪽 0~10열(숲 포함), 오른쪽 12~17열. 잔디 윗면 ≈ .10
   for(const[c0,c1,seed]of[[0,RIVER-1,4.1],[RIVER+1,SIZE-1,1.3]]){const cx=((c0+c1)/2-half)*CELL,w=(c1-c0+1)*CELL+.3,d=L+.3;
    blob(S,'#746b55',cx,-.78,0,w+.1,d,.3,seed,.012,.05,coastSurface('rock'));blob(S,'#b09d77',cx,-.45,0,w,d-.05,.3,seed+.2,.014,.08,coastSurface('rock'));blob(S,'#dccb9f',cx,-.16,0,w+.12,d+.05,.1,seed+.4,.016,.08,coastSurface('sand'));blob(S,'#9cbd6e',cx,-.02,0,w-.2,d-.2,.04,seed+.6,.018);}
-  for(let i=0;i<80;i++){const z=-L/2+.8+i*(L-1.6)/80;for(const side of[-1,1]){if(z>10&&(i%5===2||z>19&&i%3!==0))continue;pebble(S,i%3?'#8a9088':'#a3a79c',rx+side*(1.08+Math.sin(i*.51+side)*(z>10?.18:.13)),-.56,z,z>10?.16+(i%4)*.035:.2,.15,z>10?.16+(i%3)*.06:.24,WET);if(i%2&&(z<10||i%3===0))pebble(S,'#b8bcad',rx+side*(1.34+Math.cos(i*2.1)*.06),.05,z+.2,.10+(i%3)*.025,.08,.12+(i%4)*.025);if(i%4===1)dot(S,'#7fa857',rx+side*1.3,.02,z-.15,.1,.07,.1);
+  for(let i=0;i<80;i++){const z=-L/2+.8+i*(L-1.6)/80;for(const side of[-1,1]){if((z>10&&(i%5===2||z>19&&i%3!==0))||(z>3&&i%7===3))continue;pebble(S,i%3?'#8a9088':'#a3a79c',rx+side*(1.08+Math.sin(i*.51+side)*(z>10?.18:.13)),-.56,z,z>10?.16+(i%4)*.035:.2,.15,z>10?.16+(i%3)*.06:.24,WET);if(i%2&&(z<10||i%3===0))pebble(S,'#b8bcad',rx+side*(1.34+Math.cos(i*2.1)*.06),.05,z+.2,.10+(i%3)*.025,.08,.12+(i%4)*.025);if(i%4===1)dot(S,'#7fa857',rx+side*1.3,.02,z-.15,.1,.07,.1);
    if(i%3===0)for(let k=0;k<3;k++){const reed=cylinder(S,'#82985c',rx+side*1.56+k*.07,.19+(i%4)*.025,z+k*.04,.016,.36+(i%4)*.05);reed.rotation.z=(k-1)*.2+side*.1+.12*Math.sin(i);dot(S,'#8c6a4a',rx+side*1.56+k*.07-(k-1)*.045,.37+(i%4)*.05,z+k*.04,.022,.05,.022);}}}
   // Stream edge details stay inside the bank strip, outside building centres.
   for(let i=0;i<38;i++){const z=-L/2+1+i*(L-2)/38,side=i%2?1:-1,x=rx+side*1.23;if(z>19)continue;pebble(S,'#b8ac90',x,-.12,z,.23,.18,.34,WET);pebble(S,'#6f8858',x+.06,.02,z,.17,.05,.22);if(i%3===0){flower(S,x+side*.18,z+.2,'#fff2ce');flower(S,x+side*.28,z+.4,'#e9adba');clump(S,'#81b56c',x+side*.24,.11,z-.1,.23,.13,.26);tuft(S,x+side*.1,z-.28,.7);}}
@@ -672,23 +673,15 @@ export class World{
  previewEntrance(){
   this.welcomeView={center:this.center.clone(),zoom:this.targetZoom,angle:this.angle,height:this.cameraHeight??26,look:this.lookHeight??.2};
   this.welcoming=true;this.followPlayer=false;
-  const portrait=this.aspect<.8,p=this.player.g.position;
-  this.center.copy(p);this.center.y=0;
-  this.zoom=this.targetZoom=portrait?3.05:2.60;this.cameraHeight=17;this.lookHeight=1.0;
+  applyEntrancePose(this,entrancePose(0,this.dokdo?'mist':'main',this.player.g.position,this.aspect));
  }
  startEntrance(){
-  const to={center:this.player.g.position.clone(),zoom:this.aspect<.8?2.3:1.9,angle:this.angle,height:24,look:.8};
-  this.entrance={t:0,to:to.center,from:this.center.clone(),zoom:to.zoom,angle:to.angle,height:to.height,look:to.look,fromZoom:this.zoom,fromAngle:this.angle,fromHeight:this.cameraHeight??26,fromLook:this.lookHeight??.2};
-  this.welcoming=false;this.followPlayer=false;this.updateEntrance(0);
+  this.entrance={t:0};this.welcoming=false;this.followPlayer=false;this.updateEntrance(0);
  }
  updateEntrance(dt){
   const e=this.entrance;if(!e)return;
-  e.t=Math.min(1,e.t+dt/4.8);
-  const u=e.t*e.t*e.t*(e.t*(e.t*6-15)+10);
-  this.center.lerpVectors(e.from,e.to,u);this.center.y=0;
-  this.cameraHeight=e.fromHeight+(e.height-e.fromHeight)*u;this.lookHeight=e.fromLook+(e.look-e.fromLook)*u;
-  this.angle=e.fromAngle+(e.angle-e.fromAngle)*u+.035*Math.sin(u*Math.PI);
-  this.zoom=this.targetZoom=e.fromZoom+(e.zoom-e.fromZoom)*u;
+  e.t=Math.min(1,e.t+dt/6.5);
+  applyEntrancePose(this,entrancePose(e.t,this.dokdo?'mist':'main',this.player.g.position,this.aspect));
   if(e.t===1){this.entrance=null;this.welcomeView=null;}
  }
  // 화면 픽셀 → 지면 이동. 세로는 카메라 앙각(약 41°) 때문에 1.5배.

@@ -65,9 +65,9 @@ export function walkRoute(from,to){
  const start=nearestWalk(from.x,from.z,from.y),end=nearestWalk(to.x,to.z,to.y);if(!start||!end)return[];
  if(start.edge===end.edge)return[{x:end.x,y:end.y,z:end.z}];
  const dist=new Map(),previous=new Map(),open=new Set(walkNodes.map((_,i)=>i)),edge=walkEdges[start.edge];
- for(const id of [edge.a,edge.b]){const n=walkNodes[id];dist.set(id,Math.hypot(n.x-start.x,n.z-start.z));previous.set(id,null);}
+ for(const id of [edge.a,edge.b]){const n=walkNodes[id];dist.set(id,Math.hypot(n.x-start.x,n.z-start.z,n.y-start.y));previous.set(id,null);}
  while(open.size){let id=null,best=Infinity;for(const i of open)if((dist.get(i)??Infinity)<best){best=dist.get(i);id=i;}if(id===null)break;open.delete(id);for(const e of walkEdges){const next=e.a===id?e.b:e.b===id?e.a:null;if(next===null||!open.has(next))continue;const a=walkNodes[id],b=walkNodes[next],cost=best+Math.hypot(b.x-a.x,b.z-a.z,b.y-a.y);if(cost<(dist.get(next)??Infinity)){dist.set(next,cost);previous.set(next,id);}}}
- const target=walkEdges[end.edge];let id=[target.a,target.b].sort((a,b)=>(dist.get(a)+Math.hypot(walkNodes[a].x-end.x,walkNodes[a].z-end.z))-(dist.get(b)+Math.hypot(walkNodes[b].x-end.x,walkNodes[b].z-end.z)))[0];
+ const target=walkEdges[end.edge];let id=[target.a,target.b].sort((a,b)=>(dist.get(a)+Math.hypot(walkNodes[a].x-end.x,walkNodes[a].z-end.z,walkNodes[a].y-end.y))-(dist.get(b)+Math.hypot(walkNodes[b].x-end.x,walkNodes[b].z-end.z,walkNodes[b].y-end.y)))[0];
  if(!dist.has(id))return[];const route=[];while(id!==null){route.push({x:walkNodes[id].x,y:walkNodes[id].y,z:walkNodes[id].z});id=previous.get(id);}route.reverse();route.unshift({x:start.x,y:start.y,z:start.z});route.push({x:end.x,y:end.y,z:end.z});return route.filter((p,i,a)=>i?Math.hypot(p.x-a[i-1].x,p.z-a[i-1].z)>.01:Math.hypot(p.x-from.x,p.z-from.z)>.01);
 }
 export function walkStep(p,v,distance){
@@ -78,9 +78,9 @@ export function walkStep(p,v,distance){
   for(const id of [edge.a,edge.b]){const node=walkNodes[id];if(Math.hypot(out.x-node.x,out.z-node.z)>edge.width/2+.08||Math.abs(out.y-node.y)>.65)continue;
    for(let k=0;k<walkEdges.length;k++){const e=walkEdges[k],other=e.a===id?e.b:e.b===id?e.a:null;if(other===null)continue;const b=walkNodes[other],dx=b.x-node.x,dz=b.z-node.z,d=Math.hypot(dx,dz),alignment=(dx*v.x+dz*v.z)/d;if(alignment>best){best=alignment;out.edge=k;}}
   }
-  edge=walkEdges[out.edge];const a=walkNodes[edge.a],b=walkNodes[edge.b],dx=b.x-a.x,dz=b.z-a.z,l=dx*dx+dz*dz,x=out.x+v.x*step,z=out.z+v.z*step,u=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/l)),qx=a.x+u*dx,qz=a.z+u*dz,d=Math.hypot(x-qx,z-qz),limit=Math.max(.16,edge.width/2-.18),t=d>limit?limit/d:1;
+  edge=walkEdges[out.edge];const a=walkNodes[edge.a],b=walkNodes[edge.b],dx=b.x-a.x,dz=b.z-a.z,l=dx*dx+dz*dz,grade=(b.y-a.y)*(dx*v.x+dz*v.z)/l,groundStep=step/Math.sqrt(1+grade*grade),x=out.x+v.x*groundStep,z=out.z+v.z*groundStep,u=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/l)),qx=a.x+u*dx,qz=a.z+u*dz,d=Math.hypot(x-qx,z-qz),limit=Math.max(.16,edge.width/2-.18),t=d>limit?limit/d:1;
   // Wide landings can meet a narrower stair: steer onto it without snapping sideways.
-  const tx=qx+(x-qx)*t,tz=qz+(z-qz)*t,travel=Math.hypot(tx-out.x,tz-out.z),blend=travel>step?step/travel:1;
+  const tx=qx+(x-qx)*t,tz=qz+(z-qz)*t,travel=Math.hypot(tx-out.x,tz-out.z),blend=travel>groundStep?groundStep/travel:1;
   const nx=out.x+(tx-out.x)*blend,nz=out.z+(tz-out.z)*blend,nu=Math.max(0,Math.min(1,((nx-a.x)*dx+(nz-a.z)*dz)/l));
   out={x:nx,y:out.y+Math.max(-step*2.6,Math.min(step*2.6,a.y+(b.y-a.y)*nu-out.y)),z:nz,edge:out.edge};
  }

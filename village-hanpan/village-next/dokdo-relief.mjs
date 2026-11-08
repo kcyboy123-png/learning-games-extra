@@ -8,11 +8,11 @@ export function cliffPoint(x,z){
  for(const [px,pz]of plots)clearance=Math.min(clearance,Math.max(Math.abs(x-px),Math.abs(z-pz))-1.25);
  const mask=smooth(.6,1.3,clearance)*smooth(.5,2,h);
  if(!mask)return [x,h,z];
- const groove=Math.pow(.5+.5*Math.sin(x*.92+z*.39+Math.sin(z*.43)*.7+Math.sin(z*.19-x*.28)*.8),4);
+ const groove=Math.pow(.5+.5*Math.sin(x*.78+z*.43+Math.sin(z*.31)*.55+Math.sin(z*.19-x*.28)*.55+h*.10+Math.sin(h*.35)*.15),4);
  const shoulder=.5+.5*Math.sin(x*.46-z*.57+Math.sin(z*.23));
- const y=h+mask*(shoulder*(.55+.2*smooth(3,10,h))-groove*(x<0?1.65:1.05));
+ const y=h+mask*(shoulder*(1.05+.35*smooth(3,10,h))-groove*(x<0?2.3:1.55));
  const sideMask=smooth(.75,1.75,clearance)*smooth(1.5,4,h);
- const shift=.58*sideMask*Math.sin(z*.83+x*.44+Math.sin(z*.29));
+ const shift=.82*sideMask*Math.sin(z*.68+x*.41+Math.sin(z*.29)+h*.06);
  const px=x+shift,pz=z+shift*(x<0?.38:-.22);
  return coastlines.some(c=>insideCoast(c,px,pz))?[px,y,pz]:[x,y,z];
 }

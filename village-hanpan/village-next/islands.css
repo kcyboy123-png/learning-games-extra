@@ -45,8 +45,20 @@ body:has(#buildPanel.open,#placePanel.open) .region-tools{display:none}#visitBan
 body.sailing #arrivalFilm.playing{display:block}
 @media(max-height:620px){.travel-scene{max-height:155px}}
 
-.travel-scene{position:relative}.travel-art-caption{position:absolute;left:12px;bottom:10px;color:#fff7df;font-size:11px;letter-spacing:.03em;text-shadow:0 1px 4px #142d39,0 0 8px #142d39}
+.travel-scene{position:relative}
 
 .dokdo-look{position:fixed;right:12px;bottom:240px;z-index:12;border-radius:24px;background:#fff7df;border:1px solid #b9a277;color:#345347;padding:9px 15px}.sailing .dokdo-look,body:has(.sheet.open) .dokdo-look{display:none}
 
 @media(max-width:700px){.dokdo-look{bottom:315px}}
+
+/* Voyage-only framing: no extra 3D meshes, and no motion outside travel. */
+.sailing #toast,.sailing #bubble{visibility:hidden}
+.sailing::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:91;background:linear-gradient(#102d3e80,transparent 18%,transparent 72%,#102d3e9c);border-block:clamp(12px,4vh,36px) solid #102b35}
+#voyageHUD{bottom:max(6vh,28px);background:transparent;color:#fff9df;border-radius:0;text-shadow:0 2px 8px #122b35;width:min(760px,90vw);padding:12px 0;flex-direction:column;gap:16px;text-align:center}
+#voyageCaption{font-weight:800;font-size:clamp(17px,2.2vw,26px);letter-spacing:.035em;line-height:1.5}
+#skipVoyage{background:#183d4a90;color:#fff9df;border:1px solid #e9e4cb80;border-radius:24px;min-height:44px;padding:8px 20px;font-size:13px}
+#voyageMist{background:radial-gradient(ellipse at 20% 40%,#eff2eb 0%,#dce8e6 45%,#e6ece5 100%)}
+@media(prefers-reduced-motion:reduce){.sailing #world{filter:none}}
+
+/* One existing fog layer opens from the destination outward, without blur or particles. */
+#voyageMist{mask-image:radial-gradient(ellipse at 46% 37%,transparent calc(var(--opening,0)*100% - 75%),#000 calc(var(--opening,0)*100%));}
