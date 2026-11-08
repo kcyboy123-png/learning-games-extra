@@ -1,3 +1,4 @@
+import {trailCells} from './dokdo-terrain.mjs';
 import {residentDialogue,prefersPlace,outdoorPlace,gardenPlace,personality} from './resident-dialogue.mjs?v=islands1';
 import {PLAYER_SPEED} from './move.mjs?v=perf1';
 import {TYPES,connected,network} from './core.mjs?v=perf1';
@@ -22,6 +23,12 @@ export function residentContext(s){
  return value;
 }
 export function syncResidents(s,people,world,context=residentContext(s)){
+ if(s.island==='mist'){
+  const count=Math.min(6,3+Math.floor((s.otherIsland?.pop||0)/80));
+  while(people.length>count)world.removePerson(people.pop().p);
+  while(people.length<count){const i=people.length,n={p:world.person(['#e0a46c','#8f93b8','#7fa3a8'][i%3],String.fromCharCode(97+i)),visitor:true,phase:'stroll',wait:1+i,target:null,turn:i};people.push(n);world.place(n.p,14-i*2,12);}
+  return;
+ }
  const {homes}=context;
  const count=homes.length?Math.min(24,Math.ceil(s.pop/2)):0;
  while(people.length>count)world.removePerson(people.pop().p);
@@ -63,6 +70,15 @@ export function advancePersonRoute(p,dt,people=[]){
 }
 export function tickResidents(s,people,dt,time,world,context=residentContext(s)){
  if(s.paused||s.ended)return null;
+ if(s.island==='mist'){
+  let bubble=null;
+  const stops=trailCells.filter(([x,y],i,a)=>a.findIndex(p=>p[0]===x&&p[1]===y)===i);
+  for(let i=0;i<people.length;i++){const n=people[i],p=n.p;p.g.visible=true;if(p.route.length)continue;n.wait-=dt;if(n.wait>0)continue;
+   const from=toCell(p.g.position.x,p.g.position.z);n.turn=(n.turn||0)+1;
+   for(let j=0;j<stops.length;j++){const [gx,gy]=stops[(n.turn*5+i*3+j)%stops.length],r=path(s,from,{gx,gy});if(r.length){p.route=r;break;}}
+   n.wait=5+(i+n.turn)%7;if(!bubble)bubble={p,text:residentDialogue(s,n),end:time+4};
+  }return bubble;
+ }
  let bubble=null;const {net,destinations,roadSig,byId,roads}=context;
  // Rotate visit priority so a few early residents cannot reserve the only shop forever.
  for(let slot=0;slot<people.length;slot++){

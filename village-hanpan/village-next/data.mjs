@@ -4,6 +4,19 @@ export const PLAY_SPEED=1.5;
 export const realSeconds=seconds=>Math.ceil(Math.max(0,seconds)/PLAY_SPEED);
 // Costs are classroom simulation values, not actual construction estimates.
 export const TYPES={
+ dokdoTea:{name:'바다 찻집',cost:450000,time:300,up:0,e:0,unlock:0,stage:0,group:'독도',island:'mist',food:32,desc:'원하는 정원 데크에 놓는 게임 속 상상 찻집이에요. 바다를 보며 쉬어요.'},
+ dokdoGuest:{name:'바닷바람 작은집',cost:300000,time:240,up:0,e:0,unlock:0,stage:0,group:'독도',island:'mist',cap:4,desc:'원하는 정원 데크에 놓는 게임 속 상상 집이에요. 실제 독도 시설은 아니에요.'},
+ dokdoSolar:{"name": "태양광 발전시설", "cost": 220000, "time": 90, "up": 0, "e": 30, "unlock": 0, "stage": 0, "group": "독도", "island": "mist", "desc": "태양광 시설에서 착안한 작은 설비예요. 전력과 친환경을 도와요."},
+ dokdoDeck:{"name": "바다 관찰쉼터", "cost": 120000, "time": 60, "up": 0, "e": 0, "unlock": 0, "stage": 0, "group": "독도", "island": "mist", "desc": "바닷새와 파도를 조용히 관찰하는 작은 쉼터예요.", "garden": "rest"},
+ dokdoSedum:{"name": "섬기린초 정원", "cost": 15000, "time": 25, "up": 0, "e": 0, "unlock": 0, "stage": 0, "group": "독도", "island": "mist", "desc": "울릉도와 독도의 식물 섬기린초를 가꾸는 작은 정원이에요.", "garden": "flowers"},
+ dokdoFlower:{"name": "해국 바람정원", "cost": 30000, "time": 30, "up": 0, "e": 0, "unlock": 0, "stage": 0, "group": "독도", "island": "mist", "desc": "독도의 대표 식물 해국을 가까이 보는 작은 정원이에요.", "garden": "flowers"},
+ dokdoFlag:{"name": "태극기 전망쉼터", "cost": 0, "time": 2, "up": 0, "e": 0, "unlock": 0, "stage": 0, "group": "독도", "island": "mist", "desc": "무료로 세우는 태극기예요. 세 곳의 후보지 중 하나를 골라요.", "garden": "rest"},
+ dokdoHistory:{"name": "의용수비대 기억마당", "cost": 600000, "time": 180, "up": 0, "e": 0, "unlock": 0, "stage": 0, "group": "독도", "island": "mist", "desc": "역사 속 독도의용수비대를 기억하는 게임 속 마당이에요. 현재의 독도경비대와 구분해요.", "leisure": 24},
+ dokdoResearch:{"name": "해양생태 연구소", "cost": 2400000, "time": 480, "up": 0, "e": 0, "unlock": 0, "stage": 0, "group": "독도", "island": "mist", "desc": "독도 생태 연구에서 착안한 게임 속 연구소예요. 높은 절벽은 그대로 두어요.", "education": 64},
+ dokdoWeather:{"name": "기상 관측시설", "cost": 850000, "time": 240, "up": 0, "e": 0, "unlock": 0, "stage": 0, "group": "독도", "island": "mist", "desc": "독도의 실제 기상 관측에서 착안했어요. 바다와 바람을 살피는 시설이에요.", "education": 24},
+ dokdoMemory:{"name": "강치 기억관", "cost": 1200000, "time": 300, "up": 0, "e": 0, "unlock": 0, "stage": 0, "group": "독도", "island": "mist", "desc": "지금은 멸종한 독도 바다사자 강치를 기억하는 게임 속 작은 전시관이에요.", "education": 32},
+ dokdoHome:{"name": "서도 주민숙소", "cost": 180000, "time": 90, "up": 0, "e": 0, "unlock": 0, "stage": 0, "group": "독도", "island": "mist", "desc": "서도 주민숙소에서 착안한 작은 집이에요. 인구만 늘고 수입·행복 보너스는 없어요.", "cap": 8},
+ dokdoKeeper:{"name": "독도경비대 숙소", "cost": 250000, "time": 120, "up": 0, "e": 0, "unlock": 0, "stage": 0, "group": "독도", "island": "mist", "desc": "독도를 지키는 경찰에서 착안한 게임 속 안내소예요. 정해진 해안 자리에 지어요.", "health": 20},
  road:{name:'산책길',cost:12,time:3,up:0,e:0,unlock:0,stage:0,group:'기반',desc:'집과 시설을 마을 입구까지 연결해요.'},
  house:{name:'벽돌 주택',cost:120,time:25,up:3,e:-1.5,unlock:0,cap:4,stage:0,sprite:0,group:'주거',desc:'4명이 사는 작은 집. 빠르게 완공해요.'},
  snack:{name:'분식집',cost:180,time:35,up:6,e:-2,unlock:0,food:16,stage:0,sprite:2,group:'음식',desc:'16명의 식생활 수요. 식당·장보기 시설이 수요를 나눠요.'},
@@ -38,7 +51,7 @@ export const TYPES={
  cinema:{"name":"영화관","cost":12000,"time":180,"up":5,"e":-2,"unlock":0,"stage":0,"group":"여가","desc":"반짝이는 간판 아래 함께 영화를 보는 곳.","leisure":80,"foot":2},
  animalFarm:{"name":"동물농장","cost":18000,"time":270,"up":5,"e":-2,"unlock":0,"stage":0,"group":"여가","desc":"빨간 헛간과 울타리 안의 양·소·닭을 만나요.","leisure":64,"foot":2},
  rosePark:{"name":"장미공원","cost":12000,"time":180,"up":0,"e":0,"unlock":0,"stage":0,"group":"꾸미기","desc":"장미 아치와 분수, 벤치가 있는 꽃 공원.","garden":"flowers","leisure":48,"foot":2},
- harbor:{"name":"항구","cost":500000,"time":360,"up":5,"e":-2,"unlock":0,"stage":0,"group":"명소","desc":"개울 입구의 항구 자리에 지어요. 완공하면 배를 타고 안개꽃섬을 꾸밀 수 있어요.","leisure":80,"foot":2},
+ harbor:{"name":"항구","cost":500000,"time":360,"up":5,"e":-2,"unlock":0,"stage":0,"group":"기반","desc":"정해진 물가에 지어요. 항구를 완공하면 배를 타고 독도로 가서 건물과 정원을 꾸밀 수 있어요.","leisure":80,"foot":2},
  rabbitTower:{"name":"토끼탑","cost":150000,"time":450,"up":5,"e":-2,"unlock":0,"stage":0,"group":"명소","desc":"꽃 광장 위로 우뚝 선 마을의 커다란 토끼.","leisure":96,"foot":2},
  skyTower:{"name":"하늘빛 타워","cost":180000,"time":540,"up":5,"e":-2,"unlock":0,"stage":0,"group":"명소","desc":"하늘로 길게 뻗은 유리 전망대와 초록 광장.","leisure":120,"foot":2},
  largePark:{"name":"대형 놀이동산","cost":350000,"time":720,"up":5,"e":-2,"unlock":0,"stage":0,"group":"명소","desc":"4×4칸의 큰 명소. 대관람차·회전목마·기차와 동화 성!","leisure":240,"foot":4},
@@ -51,22 +64,33 @@ export const TYPES={
  starTree:{"name":"별빛 나무","cost":240000,"time":540,"up":0,"e":0,"unlock":0,"stage":0,"group":"레어","desc":"황금 가지에 별과 작은 등이 매달린 특별한 나무.","garden":"trees","foot":2}
 };
 Object.assign(TYPES,{
- mistHydrangea:{name:'안개꽃 수국 정원',cost:8000,time:120,up:0,e:0,unlock:0,stage:0,group:'섬 전용',island:'mist',garden:'flowers',foot:2,desc:'안개꽃섬 전용. 파랑·보라 수국과 꽃 아치 사이로 산책해요.'},
- fireflyPond:{name:'반딧불 연못',cost:18000,time:180,up:0,e:0,unlock:0,stage:0,group:'섬 전용',island:'mist',garden:'rest',foot:2,desc:'안개꽃섬 전용. 은은한 반딧불과 연꽃이 물가를 밝혀요.'},
- islandCafe:{name:'물빛 찻집',cost:45000,time:240,up:0,e:-2,unlock:0,stage:0,group:'섬 전용',island:'mist',food:72,foot:2,desc:'안개꽃섬 전용. 청록 지붕과 물가 테라스에서 차를 나누어요. 수입 중심 시설이에요.'},
- glassGarden:{name:'별빛 온실',cost:90000,time:360,up:0,e:-2,unlock:0,stage:0,group:'섬 전용',island:'mist',education:64,leisure:64,foot:2,desc:'안개꽃섬 전용. 별 장식의 유리 온실에서 꽃을 가꾸고 자연을 배워요.'},
- wishTree:{name:'소원나무',cost:160000,time:480,up:0,e:0,unlock:0,stage:0,group:'섬 전용',island:'mist',garden:'trees',foot:2,desc:'안개꽃섬 전용. 연보라 가지에 소원 리본과 작은 별이 매달린 행복의 나무예요.'},
- cloudObservatory:{name:'구름 전망대',cost:220000,time:600,up:0,e:-2,unlock:0,stage:0,group:'섬 전용',island:'mist',leisure:120,foot:2,desc:'안개꽃섬 전용. 나선 계단을 올라 바다와 두 마을을 바라보는 명소예요.'}
+ mistHydrangea:{name:'안개꽃 수국 정원',cost:8000,time:120,up:0,e:0,unlock:0,stage:0,group:'섬 전용',island:'mist',legacy:true,garden:'flowers',foot:2,desc:'안개꽃섬 전용. 파랑·보라 수국과 꽃 아치 사이로 산책해요.'},
+ fireflyPond:{name:'반딧불 연못',cost:18000,time:180,up:0,e:0,unlock:0,stage:0,group:'섬 전용',island:'mist',legacy:true,garden:'rest',foot:2,desc:'안개꽃섬 전용. 은은한 반딧불과 연꽃이 물가를 밝혀요.'},
+ islandCafe:{name:'물빛 찻집',cost:45000,time:240,up:0,e:-2,unlock:0,stage:0,group:'섬 전용',island:'mist',legacy:true,food:72,foot:2,desc:'안개꽃섬 전용. 청록 지붕과 물가 테라스에서 차를 나누어요. 수입 중심 시설이에요.'},
+ glassGarden:{name:'별빛 온실',cost:90000,time:360,up:0,e:-2,unlock:0,stage:0,group:'섬 전용',island:'mist',legacy:true,education:64,leisure:64,foot:2,desc:'안개꽃섬 전용. 별 장식의 유리 온실에서 꽃을 가꾸고 자연을 배워요.'},
+ wishTree:{name:'소원나무',cost:160000,time:480,up:0,e:0,unlock:0,stage:0,group:'섬 전용',island:'mist',legacy:true,garden:'trees',foot:2,desc:'안개꽃섬 전용. 연보라 가지에 소원 리본과 작은 별이 매달린 행복의 나무예요.'},
+ cloudObservatory:{name:'구름 전망대',cost:220000,time:600,up:0,e:-2,unlock:0,stage:0,group:'섬 전용',island:'mist',legacy:true,leisure:120,foot:2,desc:'안개꽃섬 전용. 나선 계단을 올라 바다와 두 마을을 바라보는 명소예요.'}
 });
 export const OPTIONS={ins:{name:'단열 보강',cost:45,desc:'겨울·여름 에너지 수요 25% 절약'},shade:{name:'차양 설치',cost:25,desc:'여름 냉방 수요 20% 절약'},reuse:{name:'재사용 자재',cost:20,desc:'자원 재사용 성과에 반영'}};
 export const TIERS=[[950,'레디언트','미래를 짓는 건축가'],[900,'이모탈','초록 도시의 거장'],[800,'다이아몬드','마을 설계의 달인'],[700,'플래티넘','빛나는 도시 설계자'],[600,'골드','든든한 마을 건축가'],[450,'실버','성장하는 건축단장'],[300,'브론즈','가능성을 짓는 설계자'],[0,'새싹','첫 마을의 개척자']];
 // 해금 달(0=1월). B규칙: 정해진 달 또는 주민 수 성과로 앞당겨진다. 에너지 시설은 부족 대응을 위해 처음부터 열려 있다.
-export const TABS={주거:['주거'],먹거리:['음식','장보기'],생활:['생활'],기반:['기반','에너지','안전'],여가:['여가'],명소:['명소'],조경:['꾸미기'],레어:['레어'],'섬 전용':['섬 전용']};
+export const TABS={주거:['주거'],먹거리:['음식','장보기'],생활:['생활'],기반:['기반','에너지','안전'],여가:['여가'],명소:['명소'],조경:['꾸미기'],레어:['레어'],'독도':['독도']};
 export const SEASONS=['겨울','봄','여름','가을'];
 export const season=m=>m<2||m===11?0:m<5?1:m<8?2:3;
 
 // Cozy rewards are net coins per real playing minute; happiness is a target increase.
-export const COZY_EFFECTS={
+export const COZY_EFFECTS={dokdoTea:{income:600,happiness:4,welfare:2},dokdoGuest:{income:0,happiness:0,welfare:0},
+ dokdoSolar:{"income": 160, "happiness": 0, "welfare": 4},
+ dokdoDeck:{"income": 70, "happiness": 4, "welfare": 2},
+ dokdoSedum:{"income": 12, "happiness": 2, "welfare": 0},
+ dokdoFlower:{"income": 20, "happiness": 3, "welfare": 0},
+ dokdoFlag:{"income": 0, "happiness": 2, "welfare": 0},
+ dokdoHistory:{"income": 300, "happiness": 5, "welfare": 10},
+ dokdoResearch:{"income": 3000, "happiness": 4, "welfare": 24},
+ dokdoWeather:{"income": 800, "happiness": 2, "welfare": 18},
+ dokdoMemory:{"income": 1200, "happiness": 8, "welfare": 12},
+ dokdoHome:{"income": 0, "happiness": 0, "welfare": 0},
+ dokdoKeeper:{"income": 0, "happiness": 0, "welfare": 12},
  mistHydrangea:{income:400,happiness:9,welfare:2},
  fireflyPond:{income:1200,happiness:12,welfare:4},
  islandCafe:{income:4500,happiness:8,welfare:2},
@@ -120,4 +144,4 @@ export const COZY_EFFECTS={
  starTree:{income:12000,happiness:25,welfare:6}
 };
 // Population unlocks persist once reached; old buildings stay usable.
-export const POPULATION_UNLOCKS={"house":0,"road":0,"snack":0,"flower":0,"avenue":0,"tree":0,"bench":0,"solar":0,"generator":0,"bridge":0,"drain":0,"duplex":12,"convenience":12,"chicken":12,"clinic":12,"lavender":12,"japanese":16,"kids":16,"hydrangea":16,"gardenhouse":20,"school":20,"fire":20,"fountain":20,"apartment":24,"library":24,"police":24,"flowerArch":24,"western":28,"terracehouse":32,"amusement":32,"workshop":32,"chinese":40,"buffet":40,"hospital":48,"supermarket":48,"cinema":64,"rosePark":64,"animalFarm":80,"moonGarden":100,"harbor":120,"rabbitTower":160,"goldFountain":160,"skyTower":200,"largePark":240,"starTree":240};
+export const POPULATION_UNLOCKS={dokdoResearch:180,dokdoMemory:140,"house":0,"road":0,"snack":0,"flower":0,"avenue":0,"tree":0,"bench":0,"solar":0,"generator":0,"bridge":0,"drain":0,"duplex":12,"convenience":12,"chicken":12,"clinic":12,"lavender":12,"japanese":16,"kids":16,"hydrangea":16,"gardenhouse":20,"school":20,"fire":20,"fountain":20,"apartment":24,"library":24,"police":24,"flowerArch":24,"western":28,"terracehouse":32,"amusement":32,"workshop":32,"chinese":40,"buffet":40,"hospital":48,"supermarket":48,"cinema":64,"rosePark":64,"animalFarm":80,"moonGarden":100,"harbor":120,"rabbitTower":160,"goldFountain":160,"skyTower":200,"largePark":240,"starTree":240};

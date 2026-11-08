@@ -17,7 +17,8 @@ const COZY_TYPES={
  chicken:{time:60},japanese:{cost:900,time:75},western:{cost:1800,time:120},chinese:{cost:3200,time:150},buffet:{time:180},
  police:{time:105},hospital:{cost:3600,time:225},supermarket:{cost:5000,time:225},amusement:{cost:2000,time:150}
 };
-export const buildingSpec=(s,type)=>{const d=(s?.cityV===1?CITY_TYPES:TYPES)[type];return s?.cozyV===1&&Object.hasOwn(COZY_TYPES,type)?{...d,...COZY_TYPES[type]}:d;};
+const DOKDO_DECOR_COST={bench:12000,flowerArch:60000,fountain:90000};
+export const buildingSpec=(s,type)=>{const d=(s?.cityV===1?CITY_TYPES:TYPES)[type];if(s?.island==='mist'&&DOKDO_DECOR_COST[type])return {...d,cost:DOKDO_DECOR_COST[type]};return s?.cozyV===1&&Object.hasOwn(COZY_TYPES,type)?{...d,...COZY_TYPES[type]}:d;};
 export const cityPhase=s=>s.cityV===1?Math.max(0,Math.min(1,(s.t/MONTH-4)/8)):0;
 export function premiumIncome(s,live){
  if(s.cityV!==1)return 0;

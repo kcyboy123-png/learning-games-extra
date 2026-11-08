@@ -1,5 +1,5 @@
 import {buildingSpec} from './city-rules.mjs?v=perf1';
-export const PAINTABLE=new Set(['house','duplex','gardenhouse','apartment','terracehouse','snack','convenience','chicken','western','japanese','chinese','buffet','supermarket','cinema','animalFarm','harbor','skyTower','rabbitTower']);
+export const PAINTABLE=new Set(['dokdoGuest','dokdoTea','house','duplex','gardenhouse','apartment','terracehouse','snack','convenience','chicken','western','japanese','chinese','buffet','supermarket','cinema','animalFarm','harbor','skyTower','rabbitTower']);
 export const PALETTES=[
  {name:'기본색',wall:'#f1e3c3',roof:'#719784',accent:'#547668'},
  {name:'따뜻한 크림',wall:'#f6e8c6',roof:'#ad895a',accent:'#826b49'},

@@ -16,6 +16,7 @@ const SEASONAL=[['겨울 산책 뒤에는 따뜻한 집이 좋아요.','겨울�
 const PLACES={harbor:['배를 타면 어떤 풍경을 만날까요?','부두에서 물결을 바라보니 마음이 편해요.'],library:['오늘은 어떤 책을 골라 볼까요?','도서관에 다시 들르고 싶어요.'],bench:['이 벤치에서 잠깐 쉬어 갈래요.','쉬어 가는 시간도 소중해요.'],tree:['나무 곁은 내가 좋아하는 쉼터예요.','나무를 바라보며 숨을 천천히 쉬어요.'],chicken:['치킨집에 친구와 함께 와 보고 싶어요.','치킨집 앞을 지나니 배가 고파요.'],animalFarm:['동물 친구들은 지금 무엇을 할까요?','동물농장에 오면 구경할 게 많아요.']};
 // Only runtime residents remember lines; saved towns and income never change.
 export function residentDialogue(s,n,type){
+ if(s.island==='mist'){const lines=['배 타고 놀러 왔어! 함께 걸을까?','네가 꾸민 정원에서 바다를 보니 좋아.','저쪽 꽃과 이쪽 쉼터가 잘 어울려!','바닷바람을 느끼며 천천히 걷자.','강치에게도 인사하고 갈 거야.','다음엔 마을 친구들과 또 놀러 올게!'];n.dialogueTurn=(n.dialogueTurn||0)+1;return lines[(n.dialogueTurn+n.p.id.charCodeAt(0))%lines.length];}
  const current=type||s.buildings.find(b=>b.id===n.target&&b.progress>=1&&!b.closed)?.type;
  const month=Math.floor(s.t/MONTH)+(s.startMonth??0),pool=[...PERSONAL[personality(n)],...SEASONAL[season(month%12)]];
  if(current){if(PLACES[current])pool.push(...PLACES[current]);else if(GARDENS.has(current))pool.push('이 꽃들은 어떤 색끼리 어울릴까요?','꽃을 가까이서 보니 작은 정원도 특별해요.');else if(TYPES[current]?.food)pool.push('가게 구경이 끝나면 동네를 한 바퀴 돌아야지.','다음에는 친구와 이 가게에 올래요.');else pool.push(`${TYPES[current].name}에 들렀다 가려고요.`);}

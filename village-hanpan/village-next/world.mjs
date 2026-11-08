@@ -1,3 +1,5 @@
+import {deckHeight,walkHeight,naturalHeight,plotSurface,slotCells,trailCells} from './dokdo-terrain.mjs';
+import {dokdoModels} from './dokdo-models.mjs';
 import {addNeighborDetails} from './neighbor-details.mjs?v=perf1';
 // village-next 표현 계층. pocket/world.mjs의 헬퍼·모델·배칭·주민 리그를 가져와 18×18 격자 위에 올린다.
 // 경제 값은 계산하지 않는다. sync(state)로 건물을 그리고 preview()로 배치 미리보기를 보여준다.
@@ -33,7 +35,7 @@ const clump=(g,c,x,y,z,w,h=w,d=w)=>mesh(g,geometry('foliage',()=>{const geo=new 
 const pebble=(g,c,x,y,z,w,h=w,d=w,o)=>mesh(g,geometry('pebble',()=>new T.IcosahedronGeometry(1,1)),c,x,y,z,w,h,d,o);
 const wedge=(g,c,x,y,z,w,h,d)=>mesh(g,geometry('wedge',()=>{const s=new T.Shape();s.moveTo(-.5,0);s.lineTo(.5,0);s.lineTo(0,1);s.closePath();const e=new T.ExtrudeGeometry(s,{depth:1,bevelEnabled:false});e.translate(0,0,-.5);return e;}),c,x,y,z,w,h,d);
 function shade(g,x,y,z,r){
- if(!materials.has('contact-shadow')){const c=document.createElement('canvas');c.width=c.height=128;const ctx=c.getContext('2d'),gradient=ctx.createRadialGradient(64,64,8,64,64,64);gradient.addColorStop(0,'#ffffff');gradient.addColorStop(.55,'#777777');gradient.addColorStop(1,'#000000');ctx.fillStyle=gradient;ctx.fillRect(0,0,128,128);const alphaMap=new T.CanvasTexture(c);alphaMap.userData.shared=true;materials.set('contact-shadow',new T.MeshBasicMaterial({color:'#37412c',alphaMap,opacity:.30,transparent:true,depthWrite:false}));}
+ if(!materials.has('contact-shadow')){const c=document.createElement('canvas');c.width=c.height=128;const ctx=c.getContext('2d'),gradient=ctx.createRadialGradient(64,64,8,64,64,64);gradient.addColorStop(0,'#ffffff');gradient.addColorStop(.55,'#777777');gradient.addColorStop(1,'#000000');ctx.fillStyle=gradient;ctx.fillRect(0,0,128,128);const alphaMap=new T.CanvasTexture(c);alphaMap.userData.shared=true;materials.set('contact-shadow',new T.MeshBasicMaterial({color:'#37412c',alphaMap,opacity:.25,transparent:true,depthWrite:false}));}
  const m=new T.Mesh(geometry('disc',()=>{const d=new T.CircleGeometry(1,24);d.rotateX(-Math.PI/2);return d;}),materials.get('contact-shadow'));m.position.set(x,y,z);m.scale.set(r,1,r*.85);g.add(m);return m;
 }
 function rounded(g,c,x,y,z,w,d,h,r=.4,o){const s=new T.Shape();s.moveTo(-w/2+r,-d/2);s.lineTo(w/2-r,-d/2);s.quadraticCurveTo(w/2,-d/2,w/2,-d/2+r);s.lineTo(w/2,d/2-r);s.quadraticCurveTo(w/2,d/2,w/2-r,d/2);s.lineTo(-w/2+r,d/2);s.quadraticCurveTo(-w/2,d/2,-w/2,d/2-r);s.lineTo(-w/2,-d/2+r);s.quadraticCurveTo(-w/2,-d/2,-w/2+r,-d/2);
@@ -52,7 +54,7 @@ function label(g,text,x,y,z,w,h,bg='#fff6de',fg='#345347',size=68){
 function tree(g,x,z,s=1,pink=false,stage=2){const painted=paintedTree(g,x,z,s,pink,stage);if(painted){shade(painted,0,.108/(s*[.45,.75,1][stage]),0,.34);return painted;}const a=new T.Group();a.position.set(x,0,z);a.scale.setScalar(s*[.45,.75,1][stage]);g.add(a);shade(a,0,.11/s,0,1);taper(a,'#7a5b41',0,.78,0,.14,1.6);
  for(let k=0;k<3;k++){const t=k*2.1+.4,r=taper(a,'#6f5139',Math.sin(t)*.13,.16,Math.cos(t)*.13,.07,.32);r.rotation.set(Math.cos(t)*.55,0,-Math.sin(t)*.55);}
  for(let k=0;k<3;k++){const t=k*2.1+1,b=taper(a,'#6f5139',Math.sin(t)*.27,1.38+k*.12,Math.cos(t)*.27,.055,.75);b.rotation.set(Math.cos(t)*.8,0,-Math.sin(t)*.8);}
- const cols=pink?['#efb5c7','#f9d6df','#dd9fb5']:['#81b56c','#a3c77a','#679f63'];clump(a,cols[0],-.06,1.98,0,.65,.61,.62);
+ const cols=pink?['#edb5c4','#f9dce1','#dca3b5']:['#82ad70','#b0c884','#63976b'];clump(a,cols[0],-.06,1.98,0,.65,.61,.62);
  for(let i=0;i<6;i++){const t=i*1.047+.3;clump(a,cols[(i+1)%3],Math.sin(t)*.51,1.68+(i%2)*.18,Math.cos(t)*.49,.43,.38+(i%2)*.04,.43);}
  for(let i=0;i<4;i++){const t=i*1.57+.9;clump(a,cols[(i+2)%3],Math.sin(t)*.34,2.24+(i%2)*.07,Math.cos(t)*.31,.34,.29,.35);}
  if(pink){for(let i=0;i<14;i++){const t=i*2.399,y=1.5+(i%5)*.19,r=.58+Math.sin(i*1.3)*.12;clump(a,cols[i%3],Math.sin(t)*r,y,Math.cos(t)*r,.18,.14,.19);for(let j=0;j<3;j++)dot(a,'#fbe4ea',Math.sin(t)*r+(j-1)*.05,y+.11,Math.cos(t)*r,.038,.021,.038);}
@@ -369,7 +371,7 @@ function ecoDetails(a,b){
   }
  }
 }
-const MODELS={...expansionModels({paintPart,T,box,ball,dot,cylinder,taper,cone,rounded,softBlock,mesh,geometry,flat,roof,cottageRoof,casement,door,sign,label,flower,shrub,pot,bench,clump,amusementModel,GLASS,GLOW,WATER}),house:[a=>alignedCottage(a),.6],snack:[a=>alignedCottage(a,'snack'),.6],generator:[a=>alignedCottage(a,'generator'),.6],tree:[gardenModel,.85],road:[roadModel,1],apartment:[apartmentModel,.6],western:[westernModel,.6],japanese:[japaneseModel,.6],chinese:[chineseModel,.6],convenience:[convenienceModel,.6],supermarket:[supermarketModel,.6],clinic:[clinicModel,.6],hospital:[hospitalModel,.6],kids:[kidsModel,.6],amusement:[amusementModel,.6],school:[schoolModel,.6],library:[libraryModel,.6],fire:[fireModel,.6],drain:[drainModel,.6],workshop:[workshopModel,.6],solar:[solarModel,.6],bridge:[bridgeModel,1],flower:[flowerModel,.85],avenue:[avenueModel,.8],bench:[benchModel,.85]};
+const MODELS={...dokdoModels,...expansionModels({paintPart,T,box,ball,dot,cylinder,taper,cone,rounded,softBlock,mesh,geometry,flat,roof,cottageRoof,casement,door,sign,label,flower,shrub,pot,bench,clump,amusementModel,GLASS,GLOW,WATER}),house:[a=>alignedCottage(a),.6],snack:[a=>alignedCottage(a,'snack'),.6],generator:[a=>alignedCottage(a,'generator'),.6],tree:[gardenModel,.85],road:[roadModel,1],apartment:[apartmentModel,.6],western:[westernModel,.6],japanese:[japaneseModel,.6],chinese:[chineseModel,.6],convenience:[convenienceModel,.6],supermarket:[supermarketModel,.6],clinic:[clinicModel,.6],hospital:[hospitalModel,.6],kids:[kidsModel,.6],amusement:[amusementModel,.6],school:[schoolModel,.6],library:[libraryModel,.6],fire:[fireModel,.6],drain:[drainModel,.6],workshop:[workshopModel,.6],solar:[solarModel,.6],bridge:[bridgeModel,1],flower:[flowerModel,.85],avenue:[avenueModel,.8],bench:[benchModel,.85]};
 function scaffold(a,p,n=1){ // 공사 단계: 터 정비 → 골조 → 외장(모델) → 간판·개장. y스케일 늘이기 없음.
  const w=CELL*n*.86;rounded(a,'#9a7f5d',0,0,0,w,w,.06,.2);for(const[x,z]of[[-1,-1],[1,-1],[1,1],[-1,1]]){box(a,'#c2a579',x*w/2,.5,z*w/2,.09,1,.09);box(a,'#e2c981',x*w/2,.9,z*w/2,.17,.12,.14);}
  for(const z of[-1,1])box(a,'#e7cd7b',0,.72,z*w/2,w,.04,.04);for(const x of[-1,1])box(a,'#e7cd7b',x*w/2,.72,0,.04,.04,w);
@@ -462,7 +464,7 @@ function bakeRidePart(group,key){
 }
 function batch(group){group.updateMatrixWorld(true);const lists=new Map();group.traverse(o=>{if(o.isMesh&&!o.userData.keepArtHierarchy&&(!o.material.map||o.material.map.userData.shared)){const k=o.geometry.uuid+o.material.uuid+o.castShadow+o.receiveShadow;if(!lists.has(k))lists.set(k,[]);lists.get(k).push(o);}});const inverse=group.matrixWorld.clone().invert();
  for(const list of lists.values()){if(list.length<3)continue;const b=new T.InstancedMesh(list[0].geometry,list[0].material,list.length);list.forEach((o,i)=>{b.setMatrixAt(i,new T.Matrix4().multiplyMatrices(inverse,o.matrixWorld));o.parent.remove(o);});b.castShadow=list[0].castShadow;b.receiveShadow=list[0].receiveShadow;group.add(b);}}
-function dispose(g){g.traverse(o=>{if(o.geometry?.userData.owned)o.geometry.dispose();if(o.material?.map&&!o.material.map.userData.shared){o.material.map.dispose();o.material.dispose();}if(o.isInstancedMesh)o.dispose();});g.removeFromParent();}
+function dispose(g){g.traverse(o=>{if(o.geometry?.userData.owned)o.geometry.dispose();if(o.material?.map&&!o.material.map.userData.shared){o.material.map.dispose();o.material.dispose();}else if(o.material?.userData.owned)o.material.dispose();if(o.isInstancedMesh)o.dispose();});g.removeFromParent();}
 // Ground overlays remain legible through flowers and snow without changing the building model.
 function siteFrame(parent,n,status){
  const g=new T.Group(),W=CELL*n,c=status==='blocked'?'#d35b48':status==='selected'?'#f5d780':'#51c6a4';g.name='site-'+status;parent.add(g);
@@ -486,8 +488,8 @@ export class World{
   this.canvas=canvas;this.scene=new T.Scene();this.scene.background=new T.Color('#9ccfc3');this.camera=new T.OrthographicCamera();
   this.renderer=new T.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.05;this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFSoftShadowMap;this.renderer.info.autoReset=false;this.sunlight=createSunlight(this.renderer);
   // A low warm key and cool sky fill keep the late-afternoon colour in the light, not a screen filter.
-  this.hemi=new T.HemisphereLight('#dce5ed','#b7ad98',1.30);this.scene.add(this.hemi);const sun=this.sun=new T.DirectionalLight('#ffcb88',3.35);sun.position.set(-11,15,6);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-16,right:16,top:16,bottom:-16,near:1,far:60});sun.shadow.normalBias=.018;sun.shadow.bias=-.0002;sun.shadow.radius=3.5;this.scene.add(sun);this.scene.add(sun.target);
-  const fill=new T.DirectionalLight('#dce4f2',.60);fill.position.set(9,10,7);this.scene.add(fill);
+  this.hemi=new T.HemisphereLight('#e1eaf0','#a6b091',1.34);this.scene.add(this.hemi);const sun=this.sun=new T.DirectionalLight('#ffdaa3',3.15);sun.position.set(-11,15,6);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-16,right:16,top:16,bottom:-16,near:1,far:60});sun.shadow.normalBias=.018;sun.shadow.bias=-.0002;sun.shadow.radius=3.5;this.scene.add(sun);this.scene.add(sun.target);
+  const fill=new T.DirectionalLight('#dce8f2',.68);fill.position.set(9,10,7);this.scene.add(fill);
   this.angle=.65;this.zoom=1;this.targetZoom=1;this.center=new T.Vector3(-7.2,0,-4);this.ray=new T.Raycaster();this.plane=new T.Plane(new T.Vector3(0,1,0),-GROUND_Y);
   this.groups=new Map();this.animations=[];this.people=[];this.roads=new Set();this.natural=new Map();this.cleared=new Set();
   const S=this.static=new T.Group();this.scene.add(S);this.terrain(S);batch(S);
@@ -546,18 +548,20 @@ export class World{
   this.natureBounds=[];for(const[gx,gy,f]of keys){const p=toWorld(gx,gy),h=hash(gx,gy);this.natureBounds.push({gx,gy,box:new T.Box3(new T.Vector3(p.x-.95,GROUND_Y,p.z-.95),new T.Vector3(p.x+.95,f==='tree'?3.5:.6,p.z+.95))});if(f==='tree'){tree(g,p.x+(h%5-2)*.12,p.z+(h%7-3)*.1,1.1+(h%3)*.1,(gx<9&&gy<11)||h%5===0);for(let j=0;j<3;j++){const t=j*2.1+.5,x=p.x+Math.sin(t)*.78,z=p.z+Math.cos(t)*.78;shrub(g,x,z,1.05);patch(g,x+.15,z+.1,j%2?'#fff2ce':'#e9adba');}pebble(g,'#b8bcad',p.x-.7,.15,p.z+.4,.22,.12,.19);}else{patch(g,p.x-.5,p.z-.3,'#e9adba');patch(g,p.x+.6,p.z+.4,'#f2d58c');patch(g,p.x+.1,p.z-.9,'#e59bb6');}}
   if(ware){const w=new T.Group(),p=toWorld(14,7);w.position.set(p.x,GROUND_Y-.01,p.z);w.rotation.y=Math.PI/2;g.add(w);const m=new T.Group();m.scale.setScalar(.6);w.add(m);workshopModel(m,0,true);}batch(g);}
  // 건물 한 채: 원점 바닥 중앙, 문은 인접한 길 쪽. stage 1·2 터 정비/골조, 3 외장(간판 없음), 4 완공.
- model(parent,b,s,stage){const dir=facing(s,b,this.roads),g=new T.Group(),p=origin(b.type,b.x,b.y),n=foot(b.type);g.position.set(p.x,b.type==='bridge'?ROAD_Y-.03:GROUND_Y-.01,p.z);g.rotation.y=dir*Math.PI/2;parent.add(g);
+ model(parent,b,s,stage){if(s.island==='mist'&&b.starter&&['road','bridge'].includes(b.type))return new T.Group();const dir=facing(s,b,this.roads),g=new T.Group(),p=origin(b.type,b.x,b.y),n=foot(b.type);g.position.set(p.x,this.dokdo?deckHeight(b.x,b.y):b.type==='bridge'?ROAD_Y-.03:GROUND_Y-.01,p.z);g.rotation.y=dir*Math.PI/2;parent.add(g);
+  if(this.dokdo){const {low,high}=plotSurface(b.x,b.y);if(high-low>.35||low<0){box(g,'#b49d79',0,-.10,0,2.05,.18,2.05);for(const dx of[-.82,.82])for(const dz of[-.82,.82]){const h=Math.max(.15,g.position.y-Math.max(-.65,naturalHeight(p.x+dx,p.z+dz)));box(g,'#8d8068',dx,-h/2,dz,.10,h,.10);}}}
+
   if(stage<3&&!['road','bridge'].includes(b.type)){scaffold(g,b.progress,n);this.rememberBuilding(b,g);return g;}const[make,sc]=MODELS[b.type]||[alignedCottage,.6];const m=new T.Group();m.scale.setScalar(sc);g.add(m);m.userData.palette=(b.x+b.y)%3;if(TYPES[b.type].cap||TYPES[b.type].food||TYPES[b.type].health||TYPES[b.type].education||TYPES[b.type].leisure)shade(m,0,.025,0,1.95*n);const finish=make(m,growthStage(s,b));finish.push(streetDetails(m,b.type),cottageYard(m,b.type));
   if(stage===4)ecoDetails(m,b);applyBuildingPaint(m,b);
   if(stage<4){for(const f of finish)f.visible=false;const w=CELL*n*.43;for(const[x,z]of[[-1,-1],[1,-1],[1,1],[-1,1]])box(g,'#c2a579',x*w,.5,z*w,.09,1,.09);for(const z of[-1,1])box(g,'#e7cd7b',0,.95,z*w,w*2,.04,.04);}this.rememberBuilding(b,g);return g;}
  rememberBuilding(b,g){this.buildingBounds??=new Map();g.updateWorldMatrix(true,true);this.buildingBounds.set(b.id,{id:b.id,box:new T.Box3().setFromObject(g)});}
- pickObject(px,py){this.ray.setFromCamera(new T.Vector2(px/innerWidth*2-1,1-py/innerHeight*2),this.camera);let nearest=null,distance=Infinity;const point=new T.Vector3();for(const item of [...(this.buildingBounds?.values()||[]),...(this.natureBounds||[])]){if(!this.ray.ray.intersectBox(item.box,point))continue;const d=point.distanceToSquared(this.ray.ray.origin);if(d<distance){distance=d;nearest=item;}}return nearest;}
+ pickObject(px,py){this.ray.setFromCamera(new T.Vector2(px/innerWidth*2-1,1-py/innerHeight*2),this.camera);let nearest=null,distance=Infinity;const point=new T.Vector3();for(const item of [...(this.buildingBounds?.values()||[]),...(this.dokdo?[]:this.natureBounds||[])]){if(!this.ray.ray.intersectBox(item.box,point))continue;const d=point.distanceToSquared(this.ray.ray.origin);if(d<distance){distance=d;nearest=item;}}return nearest;}
  // 완공 건물은 한 묶음(배칭)으로, 공사 중 건물은 각각. 묶음은 구성·방향·성장단계가 바뀔 때만 다시 만든다.
- sync(s,animate=true){for(const id of this.buildingBounds?.keys()||[])if(!s.buildings.some(b=>b.id===id))this.buildingBounds.delete(id);this.seasonDetailSites=seasonalSites(s);this.roads=roadSet(s);this.syncTownscape(s);this.syncNature(s);this.seasonAnchors=s.buildings.filter(b=>b.progress>=1&&b.type==='tree').slice(0,6).map(b=>toWorld(b.x,b.y));
+ sync(s,animate=true){this.dokdo=s.island==='mist';this.pickSites=new Set([...slotCells,...trailCells,...s.buildings.map(b=>[b.x,b.y])].map(p=>p.join(',')));this.pickCells=[...this.pickSites].map(k=>k.split(',').map(Number)).filter(([x,y])=>x>=2&&x<18&&y>=0&&y<18).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);for(const id of this.buildingBounds?.keys()||[])if(!s.buildings.some(b=>b.id===id))this.buildingBounds.delete(id);this.seasonDetailSites=this.dokdo?[]:seasonalSites(s);this.roads=roadSet(s);this.syncTownscape(s);this.syncNature(s);for(const o of [this.townscape,this.nature,this.meadow,this.gardenDecor])if(o)o.visible=!this.dokdo;this.seasonAnchors=s.buildings.filter(b=>b.progress>=1&&b.type==='tree').slice(0,6).map(b=>toWorld(b.x,b.y));
   const done=s.buildings.filter(b=>b.progress>=1),pending=s.buildings.filter(b=>b.progress<1);
   const sig=done.map(b=>`${b.id}:${b.type}:${b.x},${b.y}:${facing(s,b,this.roads)}:${growthStage(s,b)}:${b.closed?1:0}:${b.opts.join(',')}:${b.paint??0}`).join('|')+'|preview:'+(this.paintPreview?.id??'');
   if(sig!==this.builtSig){if(this.built)dispose(this.built);const g=this.built=new T.Group();this.dynamic.add(g);for(const b of done)if(b.id!==this.paintPreview?.id)this.model(g,b,s,4);batch(g);this.rides=[];g.traverse(o=>{if(o.userData.ride)this.rides.push(o);});this.animateRides(0,true);
-   if(animate&&this.builtIds)for(const b of done)if(!this.builtIds.has(b.id)&&!b.starter)this.sparkle(b.x,b.y);this.builtIds=new Set(done.map(b=>b.id));this.builtSig=sig;}
+   if(animate&&this.builtIds)for(const b of done)if(!this.builtIds.has(b.id)&&!b.starter)this.sparkle(b.x,b.y);this.dokdoFlags=[];g.traverse(o=>{if(o.userData.dokdoFlag)this.dokdoFlags.push(o);});this.builtIds=new Set(done.map(b=>b.id));this.builtSig=sig;}
   const seen=new Set();for(const b of pending){const stage=b.progress>=.6?3:b.progress>=.25?2:1,psig=`${b.type}|${b.x},${b.y}|${facing(s,b,this.roads)}|${stage}`;seen.add(b.id);let e=this.groups.get(b.id);if(e&&e.sig!==psig){dispose(e.g);e=null;}
    if(!e){const g=this.model(this.dynamic,b,s,stage);batch(g);this.groups.set(b.id,{g,sig:psig});}}
   for(const[id,e]of this.groups)if(!seen.has(id)){dispose(e.g);this.groups.delete(id);}this.season(this.se??1,true);}
@@ -568,17 +572,17 @@ export class World{
   this.paintGroup=new T.Group();this.dynamic.add(this.paintGroup);this.model(this.paintGroup,{...b,paint:index},s,4);batch(this.paintGroup);
  }
  endPaintPreview(s){if(!this.paintPreview)return;this.paintPreview=null;if(this.paintGroup)dispose(this.paintGroup);this.paintGroup=null;this.sync(s,false);}
- sparkle(gx,gy){const g=new T.Group(),p=toWorld(gx,gy);g.position.set(p.x,GROUND_Y+.3,p.z);this.scene.add(g);for(let i=0;i<7;i++){const t=i*.9;const m=ball(g,'#fff2b3',Math.sin(t)*.9,i*.12,Math.cos(t)*.9,.12,.12,.12,GLOW);m.castShadow=false;}this.animations.push({g,t:0,rise:true});}
+ sparkle(gx,gy){const g=new T.Group(),p=toWorld(gx,gy);g.position.set(p.x,(this.dokdo?deckHeight(gx,gy):GROUND_Y)+.3,p.z);this.scene.add(g);for(let i=0;i<7;i++){const t=i*.9;const m=ball(g,'#fff2b3',Math.sin(t)*.9,i*.12,Math.cos(t)*.9,.12,.12,.12,GLOW);m.castShadow=false;}this.animations.push({g,t:0,rise:true,baseY:g.position.y});}
  // 배치 미리보기: 반투명 모델 + 바닥 테두리 + 출입구 화살표. ok=false면 붉은 테두리.
- preview(type,gx,gy,dir,ok){this.clearPreview();ghostMode=true;const g=this.ghost=new T.Group(),p=origin(type,gx,gy),W=CELL*foot(type);g.position.set(p.x,GROUND_Y,p.z);g.rotation.y=dir*Math.PI/2;this.scene.add(g);
+ preview(type,gx,gy,dir,ok){this.clearPreview();ghostMode=true;const g=this.ghost=new T.Group(),p=origin(type,gx,gy),W=CELL*foot(type);g.position.set(p.x,this.dokdo?deckHeight(gx,gy):GROUND_Y,p.z);g.rotation.y=dir*Math.PI/2;this.scene.add(g);
   const[make,sc]=MODELS[type]||[alignedCottage,.6];const m=new T.Group();m.scale.setScalar(sc);g.add(m);m.userData.palette=(gx+gy)%3;make(m,2);streetDetails(m,type);cottageYard(m,type);ghostMode=false;batch(g);
   const frame=siteFrame(g,foot(type),ok?'ready':'blocked');
   if(!['road','bridge'].includes(type)){const ar=new T.Mesh(geometry('site-entry',()=>{const shape=new T.Shape();shape.moveTo(-.24,0);shape.lineTo(.24,0);shape.lineTo(0,.36);shape.closePath();const geo=new T.ShapeGeometry(shape);geo.rotateX(-Math.PI/2);return geo;}),materials.get('site:#fff9df:1'));ar.name='site-entry';ar.rotation.y=Math.PI;ar.position.set(0,.10,W/2+.12);ar.renderOrder=31;frame.add(ar);}}
- highlightBuilding(b){const sig=b?`${b.type}:${b.x},${b.y}`:'';if(this.selectionSig===sig)return;this.selectionSig=sig;if(this.selection){dispose(this.selection);this.selection=null;}if(!b)return;const p=origin(b.type,b.x,b.y),g=this.selection=new T.Group();g.position.set(p.x,b.type==='bridge'?ROAD_Y:GROUND_Y,p.z);this.scene.add(g);siteFrame(g,foot(b.type),'selected');return true;}
+ highlightBuilding(b){const sig=b?`${b.type}:${b.x},${b.y}`:'';if(this.selectionSig===sig)return;this.selectionSig=sig;if(this.selection){dispose(this.selection);this.selection=null;}if(!b)return;const p=origin(b.type,b.x,b.y),g=this.selection=new T.Group();g.position.set(p.x,this.dokdo?deckHeight(b.x,b.y):b.type==='bridge'?ROAD_Y:GROUND_Y,p.z);this.scene.add(g);siteFrame(g,foot(b.type),'selected');return true;}
  clearPreview(){if(this.ghost){dispose(this.ghost);this.ghost=null;}}
- showSpots(list,type='house'){while(this.rings.children.length)dispose(this.rings.children[0]);for(const{gx,gy}of list){const p=origin(type,gx,gy),r=new T.Mesh(geometry('spot',()=>{const g=new T.RingGeometry(.75,.95,32);g.rotateX(-Math.PI/2);return g;}),mat('#fff1a8',{emissive:'#ffe27a',emissiveIntensity:.8,side:T.DoubleSide}));r.position.set(p.x,(type==='bridge'?ROAD_Y:GROUND_Y)+.03,p.z);r.scale.setScalar(foot(type));r.castShadow=r.receiveShadow=false;this.rings.add(r);}}
+ showSpots(list,type='house'){while(this.rings.children.length)dispose(this.rings.children[0]);if(this.dokdo){if(!list.length)return;const geo=new T.RingGeometry(.72,.87,16);geo.rotateX(-Math.PI/2);const material=new T.MeshBasicMaterial({color:'#ffe7a0',side:T.DoubleSide,depthWrite:false}),mesh=new T.InstancedMesh(geo,material,list.length),dummy=new T.Object3D();list.forEach(({gx,gy},i)=>{const p=origin(type,gx,gy);dummy.position.set(p.x,deckHeight(gx,gy)+.05,p.z);dummy.scale.setScalar(foot(type));dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);});geo.userData.owned=true;material.userData.owned=true;mesh.name='dokdo-available-plots';this.rings.add(mesh);return;}for(const{gx,gy}of list){const p=origin(type,gx,gy),r=new T.Mesh(geometry('spot',()=>{const g=new T.RingGeometry(.75,.95,32);g.rotateX(-Math.PI/2);return g;}),mat('#fff1a8',{emissive:'#ffe27a',emissiveIntensity:.8,side:T.DoubleSide}));r.position.set(p.x,(this.dokdo?deckHeight(gx,gy):type==='bridge'?ROAD_Y:GROUND_Y)+.03,p.z);r.scale.setScalar(foot(type));r.castShadow=r.receiveShadow=false;this.rings.add(r);}}
  // 계절: 조명·하늘·잔디 색만 바꾼다(모델 재사용). 0 겨울 1 봄 2 여름 3 가을
- season(se,force=false){if(this.se===se&&!force)return;this.se=se;surfaceWinter.value=se===0?1:0;const detailSig=se+JSON.stringify(this.seasonDetailSites||[]);if(detailSig!==this.seasonDetailSig){disposeSeasonDetails(this.seasonGround);this.seasonGround=createSeasonDetails(this.seasonDetailSites||[],se);this.scene.add(this.seasonGround);this.seasonDetailSig=detailSig;}for(const p of this.people||[])if(p.scarf)p.scarf.visible=se===0;meadowSeason(this.meadow,se);treeArtSeason(this.scene,se);this.sunlight?.season(se);this.gardenDecor?.traverse(o=>{if(o.userData.gardenFlowers)o.visible=se!==0;});this.townscape?.traverse(o=>{if(o.userData.gardenFlowers)o.visible=se!==0;});
+ season(se,force=false){if(this.se===se&&!force)return;this.se=se;surfaceWinter.value=se===0?1:0;const detailSig=se+JSON.stringify(this.seasonDetailSites||[]);if(detailSig!==this.seasonDetailSig){disposeSeasonDetails(this.seasonGround);this.seasonGround=createSeasonDetails(this.dokdo?[]:this.seasonDetailSites||[],se);this.scene.add(this.seasonGround);this.seasonDetailSig=detailSig;}for(const p of this.people||[])if(p.scarf)p.scarf.visible=se===0;meadowSeason(this.meadow,se);treeArtSeason(this.scene,se);this.sunlight?.season(se);this.gardenDecor?.traverse(o=>{if(o.userData.gardenFlowers)o.visible=se!==0;});this.townscape?.traverse(o=>{if(o.userData.gardenFlowers)o.visible=se!==0;});
   const palettes={
    '#efb5c7':['#dce4df','#efb5c7','#63a361','#d98c51'],'#f9d6df':['#f5f6ec','#f9d6df','#92bc62','#edbb65'],'#dd9fb5':['#b7c9bf','#dd9fb5','#478457','#b96643'],
    '#81b56c':['#cedbd2','#81b56c','#65a564','#cc914e'],'#a3c77a':['#e4eade','#a3c77a','#9ac873','#e4b966'],'#679f63':['#9db8ab','#679f63','#458458','#ae734c'],
@@ -606,8 +610,8 @@ export class World{
 
  person(color,id){const p=personRig(this.scene,color,id);p.scarf.visible=this.se===0;if(id==='player')p.g.rotation.y=1.3;addRabbitArt(p);addResidentArt(p);this.people.push(p);return p;}
  removePerson(p){dispose(p.g);this.people=this.people.filter(q=>q!==p);}
- place(p,gx,gy){const w=toWorld(gx,gy);p.g.position.set(w.x,GROUND_Y,w.z);p.route=[];}
- focus(gx,gy){this.followPlayer=false;const w=toWorld(gx,gy);this.center.set(w.x,0,w.z);}
+ place(p,gx,gy){const w=toWorld(gx,gy);p.g.position.set(w.x,this.dokdo?walkHeight(w.x,w.z):GROUND_Y,w.z);p.route=[];}
+ focus(gx,gy){this.followPlayer=false;const w=toWorld(gx,gy);this.center.set(w.x,0,w.z);if(this.dokdo)this.lookHeight=deckHeight(Math.round(gx),Math.round(gy))+1;}
  previewEntrance(){
   this.welcomeView={center:this.center.clone(),zoom:this.targetZoom,angle:this.angle,height:this.cameraHeight??26,look:this.lookHeight??.2};
   this.welcoming=true;this.followPlayer=false;
@@ -633,8 +637,12 @@ export class World{
  // 화면 픽셀 → 지면 이동. 세로는 카메라 앙각(약 41°) 때문에 1.5배.
  pan(dx,dy){this.followPlayer=false;const right=new T.Vector3(Math.cos(this.angle),0,-Math.sin(this.angle)),fwd=new T.Vector3(-Math.sin(this.angle),0,-Math.cos(this.angle));this.center.addScaledVector(right,-dx*this.unit).addScaledVector(fwd,dy*this.unit*1.5);
   const lim=SIZE*CELL/2+2;this.center.x=Math.max(-lim,Math.min(lim,this.center.x));this.center.z=Math.max(-lim,Math.min(lim,this.center.z));}
- resize(){const w=innerWidth,h=innerHeight;this.renderer.setSize(w,h,false);this.sunlight?.resize();this.aspect=w/h;if(this.welcoming){const original=this.welcomeView;this.previewEntrance();this.welcomeView=original;}}
- point(px,py){this.ray.setFromCamera(new T.Vector2(px/innerWidth*2-1,1-py/innerHeight*2),this.camera);const p=new T.Vector3();return this.ray.ray.intersectPlane(this.plane,p)?p:null;}
+ resize(){const w=innerWidth,h=innerHeight;this.renderer.setSize(w,h,false);this.sunlight?.resize();this.aspect=w/h;if(this.dokdo&&this.targetZoom<=.32)this.targetZoom=Math.min(.29,this.aspect*.42);if(this.welcoming){const original=this.welcomeView;this.previewEntrance();this.welcomeView=original;}}
+ point(px,py,walking=false){this.ray.setFromCamera(new T.Vector2(px/innerWidth*2-1,1-py/innerHeight*2),this.camera);const p=this.pickScratch??=new T.Vector3();if(!this.dokdo)return this.ray.ray.intersectPlane(this.plane,p)?p.clone():null;
+  const plane=this.pickPlane??=new T.Plane(new T.Vector3(0,1,0));let hit=null,dist=Infinity;for(const [gx,gy]of (walking?trailCells:this.pickCells||[])){
+   const h=deckHeight(gx,gy),x=(gx-8.5)*CELL,z=(gy-8.5)*CELL;
+   if(this.ray.ray.intersectPlane((plane.constant=-h,plane),p)&&Math.abs(p.x-x)<=1.15&&Math.abs(p.z-z)<=1.15){const d=p.distanceToSquared(this.ray.ray.origin);if(d<dist){dist=d;hit=new T.Vector3(x,h,z);}}
+  }return hit;}
  screen(p){const v=p.clone().project(this.camera);return{x:(v.x+1)*innerWidth/2,y:(1-v.y)*innerHeight/2};}
  animateRides(dt,reduced){
   if(!this.paused&&!reduced)this.rideTime=(this.rideTime||0)+dt;
@@ -642,22 +650,22 @@ export class World{
    for(const child of ride.children){if(child.userData.cabin)child.rotation.z=-ride.rotation.z;if(Number.isInteger(child.userData.pony))child.position.y=.68+Math.sin(ride.rotation.y*3+child.userData.pony*Math.PI/3)*.09;}
   }
  }
- frame(dt,time,reduced){if(this.followPlayer&&!this.paused&&this.player&&(this.player.route.length||this.player.moving>.01)){const p=this.player.g.position,k=reduced?1:1-Math.exp(-dt*5);this.center.x+=(p.x-this.center.x)*k;this.center.z+=(p.z-this.center.z)*k;}if(!this.treeArtSettled&&this.scene)this.treeArtSettled=treeArtReady(this.scene);this.zoom+=(this.targetZoom-this.zoom)*Math.min(1,dt*7);const span=this.span=(this.aspect<1?13:8.5)/this.zoom;this.unit=span*2/innerHeight;
+ frame(dt,time,reduced){if(this.followPlayer&&!this.paused&&this.player&&(this.player.route.length||this.player.moving>.01)){const p=this.player.g.position,k=reduced?1:1-Math.exp(-dt*5);this.center.x+=(p.x-this.center.x)*k;this.center.z+=(p.z-this.center.z)*k;if(this.dokdo)this.lookHeight+=(p.y+1-(this.lookHeight??0))*k;}if(!this.treeArtSettled&&this.scene)this.treeArtSettled=treeArtReady(this.scene);this.zoom=Math.abs(this.targetZoom-this.zoom)<1e-7?this.targetZoom:this.zoom+(this.targetZoom-this.zoom)*Math.min(1,dt*7);const span=this.span=(this.aspect<1?13:8.5)/this.zoom;this.unit=span*2/innerHeight;
   if(this.projectionSpan!==span||this.projectionAspect!==this.aspect){this.projectionSpan=span;this.projectionAspect=this.aspect;
   this.camera.left=-span*this.aspect;this.camera.right=span*this.aspect;this.camera.top=span;this.camera.bottom=-span;this.camera.near=.1;this.camera.far=120;this.camera.updateProjectionMatrix();}
   this.camera.position.set(this.center.x+Math.sin(this.angle)*30,this.cameraHeight??26,this.center.z+Math.cos(this.angle)*30);this.camera.lookAt(this.center.x,this.lookHeight??.2,this.center.z);
-  this.sun.position.set(this.center.x-14,11.8,this.center.z+8);this.sun.target.position.copy(this.center);
+  this.sun.position.set(this.center.x-14,this.dokdo?28:11.8,this.center.z+8);this.sun.target.position.copy(this.center);
   const shadowSpan=Math.min(38,Math.max(18,span*this.aspect*.9)),sc=this.sun.shadow.camera;
   if(Math.abs(sc.right-shadowSpan)>.5){Object.assign(sc,{left:-shadowSpan,right:shadowSpan,top:shadowSpan,bottom:-shadowSpan,far:100});sc.updateProjectionMatrix();}
   const welcomeMotion=!!(this.welcoming||this.entrance),motionDt=this.paused?(welcomeMotion&&!reduced?dt:0):dt,sceneryDt=this.welcoming||this.entrance?dt:motionDt;
-  this.animateRides(motionDt,reduced);
+  this.animateRides(motionDt,reduced);for(const flag of this.dokdoFlags||[]){const a=flag.geometry.attributes.position;for(let i=0;i<a.count;i++){const u=(a.getX(i)+.675)/1.35;a.setZ(i,reduced?0:Math.sin(time*2.2-u*4)*.065*u);}a.needsUpdate=true;}
   this.idleTime=(this.idleTime??0)+sceneryDt;const idleTime=this.idleTime;surfaceTime.value=reduced?0:idleTime;
   if(this.meadow)this.meadow.userData.wind.value=reduced?0:this.meadow.userData.wind.value+sceneryDt;
   this.welcomeLife?.tick(motionDt);
   for(const p of this.people){if(this.paused&&!welcomeMotion)continue;const speed=advancePersonRoute(p,motionDt,this.people);
    p.moving+=(speed-p.moving)*Math.min(1,motionDt*12);p.seatBlend=(p.seatBlend||0)+((p.sitting?1:0)-(p.seatBlend||0))*Math.min(1,motionDt*7);const personality=p.id==='player'?0:(p.id.charCodeAt(0)-96)*1.37,localIdle=idleTime+personality;
    if(p.sitting&&Number.isFinite(p.seatAngle)){const diff=Math.atan2(Math.sin(p.seatAngle-p.g.rotation.y),Math.cos(p.seatAngle-p.g.rotation.y));p.g.rotation.y+=diff*Math.min(1,motionDt*7);}
-   const gx=Math.round(p.g.position.x/CELL+(SIZE-1)/2),gy=Math.round(p.g.position.z/CELL+(SIZE-1)/2);p.g.position.y=(this.roads.has(`${gx},${gy}`)?ROAD_Y:GROUND_Y)+p.seatBlend*.08;
+   const gx=Math.round(p.g.position.x/CELL+(SIZE-1)/2),gy=Math.round(p.g.position.z/CELL+(SIZE-1)/2);p.g.position.y=(this.dokdo?walkHeight(p.g.position.x,p.g.position.z):(this.roads.has(`${gx},${gy}`)?ROAD_Y:GROUND_Y))+p.seatBlend*.08;
    if(p.wateringDrops){p.wateringDrops.visible=!!p.watering&&this.se!==0&&!reduced;if(p.wateringDrops.visible)for(let i=0;i<p.wateringDrops.children.length;i++)p.wateringDrops.children[i].position.y=.08+(1-((localIdle*1.7+i/5)%1))*.30;}
    // The painted NPC owns the visible animation; do not animate its hidden fallback rig.
    if(p.residentArt?.e.ready&&!p.residentArt.e.failed)continue;
@@ -678,9 +686,15 @@ export class World{
   }
 
   updateRabbitArt(this.player,this.angle,idleTime,reduced);
+  // One depth-only silhouette keeps the walking rabbit readable behind cliffs, without fading the island.
+  const art=this.player.rabbitArt;
+  if(this.dokdo&&art?.e.ready&&!this.rabbitEcho){this.echoMaterials=new Map();this.rabbitEcho=new T.Sprite();this.rabbitEcho.renderOrder=999;this.player.g.add(this.rabbitEcho);}
+  if(this.rabbitEcho){this.rabbitEcho.visible=!!(this.dokdo&&art?.sprite.visible&&this.player.g.parent===this.scene);if(this.rabbitEcho.visible){let m=this.echoMaterials.get(art.sprite.material);if(!m){m=art.sprite.material.clone();m.depthFunc=T.GreaterDepth;m.depthWrite=false;m.transparent=true;m.opacity=.75;m.color.set('#fff5ad');this.echoMaterials.set(art.sprite.material,m);}m.rotation=art.sprite.material.rotation;this.rabbitEcho.material=m;this.rabbitEcho.position.copy(art.sprite.position);this.rabbitEcho.scale.copy(art.sprite.scale);this.rabbitEcho.center.copy(art.sprite.center);}}
+
   for(const p of this.people)updateResidentArt(p,this.angle,idleTime,reduced,this.se===0,time);
-  for(let i=this.animations.length-1;i>=0;i--){const a=this.animations[i];a.t+=motionDt;const u=Math.min(1,a.t/.9);a.g.position.y=GROUND_Y+.3+u*1.6;a.g.scale.setScalar(1-u*.8);if(u===1||reduced){dispose(a.g);this.animations.splice(i,1);}}
-  this.petals.visible=!reduced;
+  for(let i=this.animations.length-1;i>=0;i--){const a=this.animations[i];a.t+=motionDt;const u=Math.min(1,a.t/.9);a.g.position.y=(a.baseY??GROUND_Y+.3)+u*1.6;a.g.scale.setScalar(1-u*.8);if(u===1||reduced){dispose(a.g);this.animations.splice(i,1);}}
+  this.petals.visible=!reduced&&!this.dokdo&&!this.sailing;
   if(this.petals.visible){this.petals.count=Math.min(this.petals.instanceMatrix.count,[96,64,20,56][this.se??1]);for(let i=0;i<this.petals.count;i++){const o=this.petalPose,t=idleTime*.24+i*1.618,summer=this.se===2;o.position.set(this.center.x-9+(i*3.71%18)+Math.sin(t)*.55,summer?.7+Math.sin(t*1.4+i)*.32:.25+(5-((idleTime*(this.se===0?.23:.32)+i*.71)%5)),this.center.z-9+(i*2.37%18)+Math.cos(t*.7)*.6);o.rotation.set(t,i,t*.6);o.scale.set(this.se===0?.048:this.se===3?.085:.065,summer?.012+Math.abs(Math.sin(idleTime*7+i))*.04:.012,this.se===0?.048:summer?.065:.045);o.updateMatrix();this.petals.setMatrixAt(i,o.matrix);}this.petals.instanceMatrix.needsUpdate=true;}
   if(!reduced)this.waterLines.position.z=this.se===0?0:(idleTime*.14)%0.47;this.renderer.info?.reset();if(this.sunlight)this.sunlight.render(this.scene,this.camera);else this.renderer.render(this.scene,this.camera);}
 }
+

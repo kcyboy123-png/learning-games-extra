@@ -19,7 +19,7 @@ function paintArchitecture(kind,ctx,map){
   if(!image)return;
   const w=image.naturalWidth/2,h=image.naturalHeight/2;
   // Preserve the existing palette and seasonal shaders beneath the shared painted grain.
-  ctx.globalAlpha=kind==='plaster'?.36:kind==='wood'?.62:kind==='roof'?.34:.48;
+  ctx.globalAlpha=kind==='plaster'?.24:kind==='wood'?.44:kind==='roof'?.30:.40;
   ctx.drawImage(image,quadrant[0]*w,quadrant[1]*h,w,h,0,0,256,256);
   ctx.globalAlpha=1;map.needsUpdate=true;
  });
@@ -50,7 +50,7 @@ function texture(kind){
  if(kind==='fabric'){for(let i=0;i<256;i+=4){ctx.fillStyle=i%8?'#77705c0b':'#fffbea38';ctx.fillRect(i,0,1,256);ctx.fillRect(0,i,256,1);}for(let i=4;i<256;i+=10){ctx.fillStyle='#9b87633b';ctx.fillRect(i,6,5,1);ctx.fillRect(i,248,5,1);}}
  if(kind==='wood')for(let i=0;i<90;i++){ctx.strokeStyle=i%4?'#775d3933':'#fff4d077';ctx.lineWidth=.4+rand();ctx.beginPath();let x=rand()*256;ctx.moveTo(x,0);for(let y=0;y<=256;y+=8)ctx.lineTo(x+Math.sin(y*.04+i)*2,y);ctx.stroke();}
  if(kind==='plaster')for(let y=0;y<256;y++){const eave=.14*Math.exp(-y/30),base=.08*Math.exp(-(255-y)/20);ctx.fillStyle=`rgba(100,76,44,${eave+base})`;ctx.fillRect(0,y,256,1);}
- if(kind==='roof')for(let y=0;y<256;y+=32){ctx.fillStyle='#3b4c5735';ctx.fillRect(0,y,256,2);ctx.fillStyle='#ffffff40';ctx.fillRect(0,y+2,256,1);}
+ if(kind==='roof')for(let y=0;y<256;y+=32){ctx.fillStyle='#3b4c5735';ctx.fillRect(0,y,256,2);ctx.fillStyle='#ffffff40';ctx.fillRect(0,y+2,256,1);for(let x=(y/32%2)*32;x<256;x+=64){ctx.fillStyle='#3b4c5720';ctx.fillRect(x,y,1,32);}}
  if(kind==='stone'){
   for(let i=0;i<22;i++){const x=rand()*256,y=rand()*256,r=12+rand()*34,g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,i%3?'#9d927728':'#ffffff75');g.addColorStop(1,'#ffffff00');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}
   for(let i=0;i<240;i++){ctx.strokeStyle=i%4?'#807b6d33':'#fff8df88';ctx.lineWidth=.7;const x=rand()*256,y=rand()*256;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+rand()*6,y+rand()*2);ctx.stroke();}
@@ -59,7 +59,7 @@ function texture(kind){
  if(kind==='grass'){
   map.repeat.set(.12,.12);
   // Detailed neutral meadow albedo is softly blended so paths and buildings remain legible.
-  const art=new Image();art.onload=()=>{ctx.fillStyle='#fffef5';ctx.fillRect(0,0,1024,1024);ctx.globalAlpha=.38;ctx.drawImage(art,0,0,1024,1024);ctx.globalAlpha=1;map.needsUpdate=true;};
+  const art=new Image();art.onload=()=>{ctx.fillStyle='#fffef5';ctx.fillRect(0,0,1024,1024);ctx.globalAlpha=.46;ctx.drawImage(art,0,0,1024,1024);ctx.globalAlpha=1;for(let i=0;i<120;i++){const x=rand()*1024,y=rand()*1024,r=24+rand()*70,g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,i%3?'#8d995718':'#fff8ce22');g.addColorStop(1,'#ffffff00');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}map.needsUpdate=true;};
   art.src=new URL('./assets/scenario-meadow.webp',import.meta.url).href;
  }
  paintArchitecture(kind,ctx,map);maps.set(kind,map);return map;
@@ -69,7 +69,7 @@ export function surfaceOptions(color){
 
  const kind=color==='#9cbd6e'?'grass':Object.keys(palettes).find(k=>palettes[k].includes(color));
  if(!kind){if(['#ddc990','#9cab83','#8fd1c7','#c1d9cb','#dbe1bf'].includes(color))return{roughness:.32,onBeforeCompile(shader){shader.vertexShader='varying vec3 vWindowPoint;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvWindowPoint=position;');shader.fragmentShader='varying vec3 vWindowPoint;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nfloat reflection=pow(max(0.,sin((vWindowPoint.x+vWindowPoint.y*.55)*13.)),12.);float sky=smoothstep(-.35,.45,vWindowPoint.y);diffuseColor.rgb=mix(diffuseColor.rgb,mix(vec3(.91,.74,.46),vec3(.69,.87,.90),sky),.10);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.94,.97,.92),reflection*.18);');},customProgramCacheKey:()=> 'village-window-v2'};return{};}const map=texture(kind);
- const options={map,bumpMap:map,bumpScale:kind==='roof'?.018:kind==='stone'?.018:kind==='wood'?.018:kind==='plaster'?.004:kind==='fabric'?.006:0,roughness:kind==='roof'?.8:kind==='fabric'?.99:.92};
+ const options={map,bumpMap:map,bumpScale:kind==='roof'?.024:kind==='stone'?.022:kind==='wood'?.012:kind==='plaster'?.004:kind==='fabric'?.006:0,roughness:kind==='roof'?.8:kind==='fabric'?.99:.92};
  if(kind==='roof'||color==='#d9d2c0')Object.assign(options,{
   onBeforeCompile(shader){
    shader.uniforms.roofWinter=surfaceWinter;

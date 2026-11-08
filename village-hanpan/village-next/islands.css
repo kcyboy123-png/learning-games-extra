@@ -15,3 +15,23 @@ body:has(#buildPanel.open,#placePanel.open) .region-tools{display:none}#visitBan
 .entrance-secondary button{width:202px;min-width:0;min-height:46px;margin:0;padding:8px 16px;font-size:15px;border-width:1px;border-radius:16px;box-shadow:0 3px 0 #a18c60,0 5px 16px #35533a20}
 @media(max-width:600px){.entrance-title{left:20px;right:20px;top:max(48px,11vh);max-width:none;text-align:center}.entrance-title .maker-credit{justify-content:center}.entrance-title h1{font-size:44px}.entrance-secondary{right:18px;bottom:max(22px,env(safe-area-inset-bottom))}.entrance-secondary button{width:192px;font-size:14px}#enterVillage{top:54%;width:224px;min-height:58px}}
 @media(max-height:500px){.entrance-title{top:22px;left:26px;text-align:left}.entrance-title h1{font-size:34px}.entrance-title .maker-credit{justify-content:flex-start;margin-bottom:6px;font-size:12px}#enterVillage{top:69%;left:43%;min-height:52px;width:218px}.entrance-secondary{right:18px;bottom:18px;gap:8px}.entrance-secondary button{width:186px;min-height:44px;font-size:13px}}
+/* Coastal travel keeps the village's illustrated wood-and-paper vocabulary. */
+.cozy .village-sign{background:#fff8e9ed;border:1px solid #d4bd8c;border-radius:16px 5px 16px 5px;padding:8px 12px;color:#294f42;text-shadow:none;box-shadow:0 3px 0 #234a4930}
+.cozy .village-sign .maker-credit span{color:#365746;font-weight:750;opacity:1}.cozy .village-sign b{color:#315844}
+.sailing .village-sign{display:none}
+.cozy #dpad #moveStick{border:3px solid #e8d7ad;background:radial-gradient(circle at 40% 30%,#f9f3d8 0 34%,#a9bc9b 36%,#668e80 70%,#416c62 100%);box-shadow:0 4px 0 #355c54,0 7px 14px #173d4033,inset 0 0 0 5px #fff6dc,inset 0 0 0 7px #8eac97}
+.cozy #moveStick:before{content:'◆';position:absolute;inset:7px;color:#eef0d3;text-align:center;font-size:10px;line-height:12px;text-shadow:0 70px #eef0d3;pointer-events:none}
+.cozy #stickKnob{background:radial-gradient(circle at 35% 25%,#e5edbd,#aac385 55%,#769c70);border:2px solid #fff6d9;box-shadow:0 4px 0 #3f6b58,0 6px 8px #274d4950,inset 0 2px 2px #fff9df}
+.cozy .stick-cross{font-size:0}.cozy #moveHint{background:#fff9e8;color:#315447;border:1px solid #b8c6a4;border-radius:12px;padding:3px 10px}
+#travelDialog{padding:0 24px 22px;width:440px;max-width:calc(100vw - 32px);border:3px solid #d4bd8e;border-radius:26px;background:#fffbed;box-shadow:0 8px 0 #354e4933,0 22px 64px #163b454d;overflow:auto;max-height:calc(100dvh - 32px);box-sizing:border-box}
+#travelDialog::backdrop{background:#183e4d66;backdrop-filter:blur(3px)}
+.travel-scene{margin:0 -24px 18px;background:linear-gradient(#d3e8e4,#edf3de);height:110px;overflow:hidden}.travel-scene svg{width:100%;height:100%;display:block}
+#travelDialog h2{color:#315b53;font-size:23px;line-height:1.35;margin:0 0 12px}#travelDescription{font-size:15px;line-height:1.75;color:#42655a;margin:0 0 12px}
+.travel-ticket{padding:9px 12px;border-block:1px dashed #b1c4a8;font-size:13px;color:#3d6658;font-weight:750}.travel-ticket span{padding:0 8px;color:#b79457}
+.travel-footnote{font-size:12px;line-height:1.5;color:#6b7866;margin:10px 0 16px}
+#travelDialog .row{display:flex;flex-wrap:nowrap;gap:10px}#travelDialog .row button{margin:0;width:auto;min-height:48px;flex:1;font-weight:800;border-radius:14px}#travelDialog .row .primary{flex:1.7;background:#447c6a;border:1px solid #396755;box-shadow:0 3px 0 #305647;color:#fff9df}
+#travelDialog [hidden]{display:none!important}.harbor-note{grid-column:1/-1;color:#3b6556;font-size:12px;line-height:1.5;border-top:1px dashed #b4c2a0;padding-top:5px;text-align:left}
+@media(max-width:700px){.cozy .village-sign{padding:6px 9px}.cozy .village-sign b{font-size:14px}.cozy #moveStick:before{text-shadow:0 58px #eef0d3}#travelDialog{padding-inline:18px}.travel-scene{margin-inline:-18px}#travelDialog h2{font-size:21px}}
+
+.cozy .gangchi-talk{bottom:185px}@media(max-width:700px){.cozy .gangchi-talk{bottom:260px}}
+@media(max-width:700px){.cozy .stats .money-pocket,.cozy:has(#buildPanel.open,#placePanel.open) .stats .money-pocket{flex:0 0 112px;min-width:112px;box-sizing:border-box}.cozy .stats .money-pocket b{font-size:16px;white-space:nowrap}.cozy .stats .village-stat{flex:1;min-width:0}.cozy .stats .village-stat small{font-size:11px}}
