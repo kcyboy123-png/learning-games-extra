@@ -39,8 +39,8 @@ export function installReflection(mesh,beforeView=()=>{}){
   // shortcut: 20 Hz while moving, 10 Hz still; validate target tablets before increasing either rate.
   const moving=camera.position.distanceToSquared(r.position)>.003||1-Math.abs(camera.quaternion.dot(r.rotation))>.0002;
   if(r.camera===camera&&r.width===drawingSize.x&&r.heightPixels===drawingSize.y&&now-r.last<(moving?50:100))return;
-  camera.updateMatrixWorld();camera.getWorldPosition(position);if(position.y<=r.height+.005)return;
-  if(!mirror||mirror.type!==camera.type)mirror=camera.clone();else mirror.copy(camera,false);camera.getWorldDirection(direction);up.set(0,1,0).applyQuaternion(camera.quaternion);
+  camera.updateMatrixWorld();position.setFromMatrixPosition(camera.matrixWorld);if(position.y<=r.height+.005)return;
+  if(!mirror||mirror.type!==camera.type)mirror=camera.clone();else mirror.copy(camera,false);direction.set(0,0,-1).transformDirection(camera.matrixWorld);up.set(0,1,0).applyQuaternion(camera.quaternion);
   position.y=2*r.height-position.y;direction.y=-direction.y;up.y=-up.y;
   mirror.position.copy(position);mirror.up.copy(up);mirror.lookAt(look.copy(position).add(direction));mirror.updateMatrixWorld();
   matrixCopy(r.matrix,bias,mirror);

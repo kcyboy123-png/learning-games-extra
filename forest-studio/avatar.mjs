@@ -30,7 +30,7 @@ export class ForestAvatar {
  tick(dt,moved){
   const a=this.actor,w=this.world;if(!a)return;
   const on=w.mode==='walk',groundChanged=this.groundX!==w.walk.x||this.groundZ!==w.walk.z||this.groundTerrain!==w.terrain||this.groundSurfaces!==w.surfaces;
-  const y=groundChanged?walkHeight(w.walk.x,w.walk.z,w.terrain,w.surfaces):this.groundY;this.groundY=y;
+  const y=groundChanged?w.walkGround():this.groundY;this.groundY=y;
   a.root.visible=on;this.contact.visible=on; // Keep the light count stable: hiding lights recompiles every lit forest material.
   a.root.position.set(w.walk.x,y-a.minY,w.walk.z);
   if(moved>.00001){const angle=w.walk.yaw+Math.atan2(w.move.x,w.move.z);a.root.rotation.y+=Math.atan2(Math.sin(angle-a.root.rotation.y),Math.cos(angle-a.root.rotation.y))*(1-Math.exp(-dt*14));}
@@ -55,8 +55,8 @@ export class ForestAvatar {
   // Keep the boom above slopes; tree and furniture surfaces shorten it below.
   for(let d=.2;d<=distance;d+=.12){const p=this.slopePoint.copy(target).addScaledVector(direction,d);if(p.y<height(p.x,p.z,w.terrain)+.25){distance=Math.max(.18,d-.16);break;}}
   w.objects.updateMatrixWorld();w.scenery.updateMatrixWorld();this.ray.set(target,direction);this.ray.near=.08;this.ray.far=distance+.18;
-  const roots=this.rayRoots??=[],hits=this.rayHits??=[];roots[0]=w.objects;roots[1]=w.scenery;hits.length=0;
-  const hit=this.ray.intersectObjects(roots,true,hits).find(h=>h.object.visible);
+  const roots=this.rayRoots??=[],hits=this.rayHits??=[];if(this.raySurfaces!==w.surfaces||this.rayScenery!==w.scenery){roots.length=0;for(const root of [w.objects,w.scenery])root.traverse(o=>{if(o.isMesh||o.isLine||o.isPoints||o.isSprite)roots.push(o);});this.raySurfaces=w.surfaces;this.rayScenery=w.scenery;}hits.length=0;
+  const hit=this.ray.intersectObjects(roots,false,hits).find(h=>h.object.visible);
   if(hit)distance=Math.min(distance,Math.max(.18,hit.distance-.22));
   const c=this.collision??={};c.x=target.x;c.y=target.y;c.z=target.z;c.yaw=yaw;c.elev=elev;c.requested=this.distance;c.surfaces=w.surfaces;c.terrain=w.terrain;c.scenery=w.scenery;c.distance=distance;
   }

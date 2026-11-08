@@ -74,7 +74,8 @@ const thumbPending=new Map();let thumbTimer;
 function ensureThumbs(){if(thumbTimer||!thumbPending.size||mode!=='view')return;thumbTimer=setTimeout(()=>{thumbTimer=null;if(mode!=='view'||!thumbPending.size)return;const [kind,nodes]=thumbPending.entries().next().value;thumbPending.delete(kind);try{const src=thumbs.get(kind)??world.thumbnail(kind);thumbs.set(kind,src);for(const img of nodes)if(img.isConnected)img.src=src;}catch(e){console.warn('재료 미리보기 생성 실패',kind,e);}world.render();ensureThumbs();},32);}
 function queueThumb(kind,img){if(!thumbPending.has(kind))thumbPending.set(kind,new Set());thumbPending.get(kind).add(img);ensureThumbs();}
 function thumbImage(kind,img){if(thumbs.has(kind)){img.src=thumbs.get(kind);return;}if(!modelStatus[kind]||modelStatus[kind]==='ok'){img.onerror=()=>{img.onerror=null;queueThumb(kind,img);};img.src='assets/material-thumbs/'+kind+'.webp?v=palette28';}else queueThumb(kind,img);}
-function palette(){const target=$('#palette');target.replaceChildren();thumbPending.clear();const list=tab==='rec'?MATERIALS.filter(m=>m.recommended):MATERIALS.filter(m=>m.drawer===tab);
+let paletteTab=null;
+function palette(){const target=$('#palette');if(paletteTab===tab){for(const b of target.children)b.setAttribute('aria-pressed',String(placing?.kind===b.dataset.material&&!placing.id));return;}paletteTab=tab;target.replaceChildren();thumbPending.clear();const list=tab==='rec'?MATERIALS.filter(m=>m.recommended):MATERIALS.filter(m=>m.drawer===tab);
  for(const m of list){const b=document.createElement('button');b.className='material';b.dataset.material=m.id;b.setAttribute('aria-pressed',String(placing?.kind===m.id&&!placing.id));b.setAttribute('aria-label',m.name+' · '+m.tag);const img=new Image();img.alt='';thumbImage(m.id,img);const title=document.createElement('strong');title.textContent=m.name;const tag=document.createElement('small');tag.textContent=m.tag;b.append(img,title,tag);b.onclick=()=>startPlacing(m.id);target.append(b);}
  $$('#tabs button').forEach(t=>{t.classList.toggle('active',t.dataset.tab===tab);t.setAttribute('aria-selected',String(t.dataset.tab===tab));});}
 $('#tabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;tab=b.dataset.tab;palette();};
@@ -82,8 +83,8 @@ $('#tabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;tab=b
 function startPlacing(kind){clearSelection();setStartSpot(false);const keep=placing&&!placing.id?placing:null;const o=world.orbit;const spot=keep?{x:keep.x,z:keep.z}:{x:o.tx,z:o.tz};placing={kind,x:spot.x,z:spot.z,scale:keep?.scale??1,rotation:keep?.rotation??0,n:material(kind).group?(keep?.n??1):1,seed:uuid(),id:null};palette();showPlaceBar();updateGhost();if(!keep)toast(material(kind).name+' 미리보기가 나타났어요. 바닥을 누르거나 끌어서 자리를 정한 뒤 ‘여기에 놓기’를 눌러요.');}
 function showPlaceBar(){const m=material(placing.kind);$('#placeBar').hidden=false;$('#selectBar').hidden=true;$('#placeName').textContent=(placing.id?'옮기는 중 · ':'')+m.name;$('#bundle').hidden=!(m.group&&!placing.id);$$('#bundle button').forEach(b=>{b.classList.toggle('active',+b.dataset.n===placing.n);b.setAttribute('aria-pressed',String(+b.dataset.n===placing.n));});}
 function candidates(){if(placing.id)return [{id:placing.id,kind:placing.kind,x:placing.x,z:placing.z,scale:placing.scale,rotation:placing.rotation,group:placing.group,on:null}];return groupCandidates(placing.kind,placing.x,placing.z,placing.scale,placing.rotation,placing.n,placing.seed);}
-let lastEval=null;
-function updateGhost(){if(!placing)return;const cands=candidates();lastEval=evaluateGroup(state.items,cands,terrain());world.setGhost(cands,lastEval.results);$('#placeMsg').textContent=lastEval.ok?(placing.n>1?'묶음 전체를 이 모양으로 놓을 수 있어요.':'여기에 놓을 수 있어요. 끌어서 옮기거나 회전·크기를 바꿔 보세요.'):lastEval.message;$('#placeMsg').classList.toggle('warn',!lastEval.ok);$('#confirm').disabled=!lastEval.ok;}
+let lastEval=null,lastGhostKey='';
+function updateGhost(){if(!placing)return;const cands=candidates(),key=JSON.stringify([cands,state.items,terrain()]);if(lastEval&&key===lastGhostKey)return;lastGhostKey=key;lastEval=evaluateGroup(state.items,cands,terrain());world.setGhost(cands,lastEval.results);const message=lastEval.ok?(placing.n>1?'묶음 전체를 이 모양으로 놓을 수 있어요.':'여기에 놓을 수 있어요. 끌어서 옮기거나 회전·크기를 바꿔 보세요.'):lastEval.message;if($('#placeMsg').textContent!==message)$('#placeMsg').textContent=message;$('#placeMsg').classList.toggle('warn',!lastEval.ok);$('#confirm').disabled=!lastEval.ok;}
 function cancelPlacing(){firstPlanting=false;if(!placing)return;placing=null;lastEval=null;world.setGhost(null);$('#placeBar').hidden=true;palette();}
 function confirmPlacing(){if(!placing||!lastEval?.ok)return;const cands=candidates(),results=lastEval.results;
  if(placing.id){edit(()=>{const o=state.items.find(x=>x.id===placing.id);if(o){o.x=cands[0].x;o.z=cands[0].z;o.scale=cands[0].scale;o.rotation=cands[0].rotation;o.on=results[0].on;}});const id=placing.id;placing=null;world.setGhost(null);$('#placeBar').hidden=true;selected=id;selection();toast('옮겼어요.');return;}
@@ -160,7 +161,14 @@ function replace(title,fn){confirmation=()=>{cancelPlacing();clearSelection();ed
 $('#sample').onclick=()=>replace('예시 숲을 펼쳐 볼까요? (높낮이 빈터에서 열려요)',()=>{const fresh=initial();fresh.mission=state.mission;fresh.title=state.title;fresh.intention=state.intention;fresh.items=sample();state=fresh;});
 $('#restartWalk').onclick=()=>$('#empty').click();
 $('#empty').onclick=()=>replace('새로 시작할까요? 지금 숲은 비워져요. 필요한 작품은 먼저 파일로 저장해 주세요.',()=>{const fresh=initial();fresh.mission=state.mission;state=fresh;});
-$('#confirmYes').onclick=()=>{confirmation?.();confirmation=null;$('#confirmDialog').close();};
+$('#confirmYes').onclick=async()=>{const action=confirmation;if(!action)return;confirmation=null;const button=$('#confirmYes'),label=button.textContent,dialog=$('#confirmDialog'),controls=[...dialog.querySelectorAll('button')],preventCancel=e=>e.preventDefault();controls.forEach(b=>b.disabled=true);dialog.addEventListener('cancel',preventCancel);button.textContent='숲을 준비하는 중…';world.preparing=true;
+ try{action();await world.renderer.compileAsync(world.scene,world.camera);
+  // The pond renders into a different target; prepare that shader variant before its first draw too.
+  let pond;world.covers.traverse(o=>{if(o.material?.pondReflection)pond=o.material.pondReflection;});
+  if(pond){const previous=world.renderer.getRenderTarget();let ready;try{world.renderer.setRenderTarget(pond.target);ready=world.renderer.compileAsync(world.scene,world.camera);}finally{world.renderer.setRenderTarget(previous);}await ready;}
+ }catch(error){console.warn('숲 사전 준비를 건너뛰고 기본 렌더로 이어갑니다.',error);}
+ finally{world.preparing=false;world.last=performance.now();controls.forEach(b=>b.disabled=false);dialog.removeEventListener('cancel',preventCancel);button.textContent=label;dialog.close();}
+};
 $$('[data-close]').forEach(b=>b.onclick=()=>b.closest('dialog').close());
 // ---- postcard ----
 const imageLoad=src=>new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=reject;i.src=src;});

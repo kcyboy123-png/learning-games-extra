@@ -41,7 +41,7 @@ export function enterGarden(world,done){
  const material=new T.PointsMaterial({map:sparkTex(),color:'#fff0bc',size:.10,transparent:true,opacity:0,depthWrite:false,blending:T.AdditiveBlending});
  const sparks=new T.Points(geometry,material);world.scene.add(sparks);
  const overlay=document.querySelector('#entrance'),caption=document.querySelector('#entranceCaption');overlay.hidden=false;document.querySelector('#skipEntrance').focus();
- let elapsed=0,finished=false,prepared=false,finishRequested=false,shadowsFaded=false;
+ let shownArrival=1,elapsed=0,finished=false,prepared=false,finishRequested=false,shadowsFaded=false;
  const finish=()=>{if(finished)return;if(!prepared){finishRequested=true;return;}finished=true;world.preparing=false;world.entrance=null;for(const [o,m,shadow] of originals){o.material=m;o.castShadow=shadow;}for(const m of clones.values())m.dispose();world.scene.remove(sparks);geometry.dispose();material.dispose();for(const root of [world.objects,world.covers]){for(const child of [...root.children]){root.remove(child);world.constructor.disposeOwned(child);}}
  for(const child of kept.objects)world.objects.add(child);for(const child of kept.covers)world.covers.add(child);world.items=savedItems;for(const key of fields)world[key]=kept[key];
  world.maskData.set(kept.mask);world.hideData.set(kept.hide);world.maskTex.needsUpdate=true;world.hideTex.needsUpdate=true;
@@ -57,7 +57,7 @@ export function enterGarden(world,done){
    if(fade.value>0&&!shadowsFaded){for(const [o] of originals)o.castShadow=false;shadowsFaded=true;}
    sparks.position.y=fade.value*1.8;sparks.rotation.y=fade.value*.18;material.opacity=Math.sin(fade.value*Math.PI)*.7;
    const text=world.reduced||elapsed>=7.8?'이제, 당신의 손으로 숲을 만들어 보세요.':elapsed<3.2?'햇살 가득한 정원이 당신을 기다려요.':'이 숲에, 어떤 이야기를 담고 싶나요?';if(caption.textContent!==text)caption.textContent=text;
-   overlay.style.setProperty('--arrival',Math.min(1,elapsed/.8));world.dirty=true;
+   const arrival=Math.min(1,elapsed/.8);if(shownArrival!==arrival){shownArrival=arrival;overlay.style.setProperty('--arrival',arrival);};world.dirty=true;
  }};
  world.preparing=true;caption.textContent='햇살 가득한 정원으로 들어가는 중…';overlay.style.setProperty('--arrival',1);
  // Compile both the main view and pond reflection before moving the camera, keeping the overlay responsive.
@@ -71,4 +71,3 @@ export function enterGarden(world,done){
    finally{world.renderer.setRenderTarget(previous);warm.dispose();}
   }catch(error){console.warn('연출 사전 준비를 건너뛰고 기본 렌더로 이어갑니다.',error);}finally{prepared=true;try{if(finishRequested)finish();else{controller.tick(0);world.render();}}finally{world.preparing=false;world.last=performance.now();}}})();
 }
-

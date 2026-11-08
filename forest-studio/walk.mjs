@@ -6,11 +6,11 @@ const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
 const finite=n=>Number.isFinite(n)?n:0;
 export function input(x,z){x=clamp(finite(x),-1,1);z=clamp(finite(z),-1,1);const l=Math.max(1,Math.hypot(x,z));return {x:x/l,z:z/l};}
 // Walking tops resolved once per items change: decks and the pavilion floor. {deck, top}
-export const deckSurfaces=(items,terrain)=>items.filter(i=>material(i.kind)?.walkTop!==undefined).map(d=>({deck:d,top:restY(items,d,terrain)+material(d.kind).walkTop}));
+export function deckSurfaces(items,terrain){const surfaces=[];for(const deck of items){const m=material(deck.kind);if(m?.walkTop!==undefined)surfaces.push({deck,top:restY(items,deck,terrain)+m.walkTop});}return surfaces;}
 // Ground + deck tops blended over a short approach band: the camera never pops at a deck edge.
 export function walkHeight(x,z,terrain,surfaces=[]){
- let h=height(x,z,terrain);
- for(const {deck,top} of surfaces){const f=material(deck.kind).foot,l=toLocal(deck,x,z);const ex=Math.max(0,Math.abs(l.x)-f.w)*deck.scale,ez=Math.max(0,Math.abs(l.z)-f.d)*deck.scale;const dist=Math.hypot(ex,ez);if(dist>.45)continue;const t=1-smooth(0,.45,dist);const g=height(x,z,terrain);h=Math.max(h,g+(top-g)*t);}
+ const g=height(x,z,terrain);let h=g;
+ for(const {deck,top} of surfaces){const f=material(deck.kind).foot,l=toLocal(deck,x,z);const ex=Math.max(0,Math.abs(l.x)-f.w)*deck.scale,ez=Math.max(0,Math.abs(l.z)-f.d)*deck.scale;const dist=Math.hypot(ex,ez);if(dist>.45)continue;const t=1-smooth(0,.45,dist);h=Math.max(h,g+(top-g)*t);}
  return h;
 }
 // Collision bodies: oriented boxes per material, padded by the body radius. Footprints with rotation and scale.
@@ -22,7 +22,7 @@ export function blockedBy(items,x,z,radius=BODY){
 export const walkable=(items,x,z,radius=BODY)=>insideSite(x,z,WALK_MARGIN)&&!blockedBy(items,x,z,radius);
 export function step(pos,inp,yaw,dt,items){
  const v=input(inp.x,inp.z),a=finite(yaw),d=clamp(finite(dt),0,.05)*SPEED;
- const dx=(v.x*Math.cos(a)+v.z*Math.sin(a))*d,dz=(-v.x*Math.sin(a)+v.z*Math.cos(a))*d;
+ const c=Math.cos(a),s=Math.sin(a),dx=(v.x*c+v.z*s)*d,dz=(-v.x*s+v.z*c)*d;
  let {x,z}=pos;
  if(walkable(items,x+dx,z+dz)){x+=dx;z+=dz;}
  else if(walkable(items,x+dx,z))x+=dx;
