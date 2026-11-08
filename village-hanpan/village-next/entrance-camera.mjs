@@ -1,11 +1,11 @@
 const ease=t=>{t=Math.max(0,Math.min(1,t));return t*t*t*(t*(t*6-15)+10);};
-// Lower opening, rabbit close-up, short hold, then the normal play framing. Saves and paths stay untouched.
+// Start with the rabbit, rise above the scenery, then settle into the existing play framing.
 export function entrancePose(progress,region,player,aspect){
- const dokdo=region==='mist',u=ease(progress/.64),settle=ease((progress-.74)/.26),portrait=aspect<.8;
- const startZoom=Math.min(dokdo?.435:.60,aspect*.70),endZoom=portrait?2.3:1.9,closeZoom=endZoom*1.35;
- return {x:player.x*u+(!dokdo?1.2*(1-u):0)+(dokdo?-1.8:0)*Math.sin(Math.PI*u),z:(dokdo?-2:11)*(1-u)+player.z*u+(!dokdo?1.4:0)*Math.sin(Math.PI*u),
-  height:(dokdo?40:26)*(1-u)+(21+3*settle)*u,look:(dokdo?2.5:1)*(1-u)+(dokdo?player.y+1:.8)*u+(dokdo?1.4:0)*Math.sin(Math.PI*u),
-  angle:.65+(dokdo?-.22:.22)*(1-u)+(dokdo?.11:.10)*Math.sin(Math.PI*u),zoom:startZoom*Math.pow(closeZoom/startZoom,u)*Math.pow(endZoom/closeZoom,settle)};
+ const dokdo=region==='mist',rise=ease((progress-.09)/.39),settle=ease((progress-.55)/.45),wide=rise*(1-settle);
+ const endZoom=aspect<.8?2.3:1.9,closeZoom=endZoom*1.35,wideZoom=closeZoom/(dokdo?5:3);
+ return {x:player.x,z:player.z,height:21+(21*(dokdo?5:3)-21)*wide+3*settle,
+  look:dokdo?player.y+1:.8,angle:.65,
+  zoom:closeZoom*Math.pow(wideZoom/closeZoom,rise)*Math.pow(endZoom/wideZoom,settle)};
 }
 export function applyEntrancePose(world,pose){
  world.center.set(pose.x,0,pose.z);world.cameraHeight=pose.height;world.lookHeight=pose.look;
@@ -13,9 +13,9 @@ export function applyEntrancePose(world,pose){
 }
 
 // A close escort opens into the destination vista; region switching stays hidden by mist.
-export function voyagePose(u,boat,region,aspect){
+export function voyagePose(u,boat,region,aspect,arrival={x:0,y:0,z:0}){
  const dokdo=region==='mist',reveal=ease((u-.50)/(dokdo?.24:.28)),swell=Math.sin(Math.PI*u);
- const start=voyageArrivalPose(0,region,{x:0,y:0,z:0},aspect);
+ const start=voyageArrivalPose(0,region,arrival,aspect);
  return {x:boat.x*(1-reveal)+start.x*reveal,z:(boat.z+1.8*swell)*(1-reveal)+start.z*reveal,
  height:(15+9*swell)*(1-reveal)+start.height*reveal,look:.6*(1-reveal)+start.look*reveal,
  angle:(-.48-.24*swell)*(1-reveal)+start.angle*reveal,

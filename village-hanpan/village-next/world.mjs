@@ -703,7 +703,7 @@ export class World{
  }
  frame(dt,time,reduced){if(this.followPlayer&&!this.paused&&this.player&&(this.player.route.length||this.player.moving>.01)){const p=this.player.g.position,k=reduced?1:1-Math.exp(-dt*5);this.center.x+=(p.x-this.center.x)*k;this.center.z+=(p.z-this.center.z)*k;if(this.dokdo)this.lookHeight+=(p.y+1-(this.lookHeight??0))*k;}if(!this.treeArtSettled&&this.scene)this.treeArtSettled=treeArtReady(this.scene);this.zoom=Math.abs(this.targetZoom-this.zoom)<1e-7?this.targetZoom:this.zoom+(this.targetZoom-this.zoom)*Math.min(1,dt*7);const span=this.span=(this.aspect<1?13:8.5)/this.zoom;this.unit=span*2/innerHeight;
   if(this.projectionSpan!==span||this.projectionAspect!==this.aspect){this.projectionSpan=span;this.projectionAspect=this.aspect;
-  this.camera.left=-span*this.aspect;this.camera.right=span*this.aspect;this.camera.top=span;this.camera.bottom=-span;this.camera.near=.1;this.camera.far=120;this.camera.updateProjectionMatrix();}
+  this.camera.left=-span*this.aspect;this.camera.right=span*this.aspect;this.camera.top=span;this.camera.bottom=-span;this.camera.near=.1;this.camera.far=Math.max(120,(this.cameraHeight??26)+55);this.camera.updateProjectionMatrix();}
   this.camera.position.set(this.center.x+Math.sin(this.angle)*30,this.cameraHeight??26,this.center.z+Math.cos(this.angle)*30);this.camera.lookAt(this.center.x,this.lookHeight??.2,this.center.z);
   this.sun.position.set(this.center.x-42,this.dokdo?84:35.4,this.center.z+24);this.sun.target.position.copy(this.center);
   const shadowSpan=Math.min(42,Math.max(21,span*this.aspect+3)),sc=this.sun.shadow.camera;
