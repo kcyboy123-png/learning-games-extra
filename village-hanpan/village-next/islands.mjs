@@ -2,7 +2,7 @@
 import {seedDokdo} from './dokdo-layout.mjs';
 export const ISLAND_OPEN=true;
 export const ISLAND_HOLD='독도 업데이트 준비 중이에요. 항구 건설과 섬 여행은 잠시 쉬어요.';
-export const islandName=s=>s.island==='mist'?'독도':'우리 마을';
+export const islandName=s=>s.island==='mist'?'독도':(s.townName||'우리 마을');
 export const totalPopulation=s=>s.pop+(s.otherIsland?.pop||0);
 export const allBuildings=s=>s.otherIsland?[...s.buildings,...s.otherIsland.buildings]:s.buildings;
 export const hasPassage=s=>!!s.otherIsland||s.buildings.some(b=>b.type==='harbor'&&b.progress>=1&&!b.closed);

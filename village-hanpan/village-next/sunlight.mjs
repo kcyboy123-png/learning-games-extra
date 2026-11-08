@@ -30,12 +30,12 @@ export function createSunlight(renderer){
   float contactShade(){
    vec3 p=positionAt(vUv),normal=normalize(cross(dFdx(p),dFdy(p)));float shade=0.;
    for(int i=0;i<8;i++){float a=(float(i)+.5)*.78539816;vec3 delta=positionAt(clamp(vUv+vec2(cos(a),sin(a))*contactStep,vec2(.001),vec2(.999)))-p;float d=length(delta);shade+=max(dot(normal,delta)/(d+.001)-.12,0.)*(1.-smoothstep(.10,.60,d));}
-   return 1.-min(.18,shade*.15);
+   return 1.-min(.24,shade*.21);
   }
   void main(){vec3 c=texture2D(source,vUv).rgb;
    c*=contactShade();
    float sunlit=smoothstep(.8,2.,dot(c,vec3(.2126,.7152,.0722)));
-   c*=mix(vec3(.97,1.,1.025),vec3(1.035,1.008,.965),sunlit);
+   c*=mix(vec3(.94,.985,1.045),vec3(1.045,1.012,.95),sunlit);
    c*=1.-.045*smoothstep(.32,.82,length((vUv-vec2(.51,.48))*vec2(.9,1.)));
    vec3 b=texture2D(glow,vUv).rgb*.4;
    b+=(texture2D(glow,vUv+stepSize).rgb+texture2D(glow,vUv-stepSize).rgb+texture2D(glow,vUv+stepSize*vec2(1.,-1.)).rgb+texture2D(glow,vUv+stepSize*vec2(-1.,1.)).rgb)*.15;

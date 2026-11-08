@@ -15,10 +15,11 @@ export function meadowSites(s){
   const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
   const patch=(seed>>>5)%5,p=toWorld(x,y),count=(patch===0?3:patch===1?8:14)+Math.floor(random()*6),cx=(random()-.5)*.8,cz=(random()-.5)*.8;
   for(let i=0;i<count;i++){
+   if(p.z>8&&Math.abs(x-RIVER)>1&&i>Math.max(1,(y===17?5:2)+4*Math.sin(x*.7+y*.9)))continue;
    const clustered=i%4<2,r=clustered?.44:.86,dx=(random()-.5)*r*2,dz=(random()-.5)*r*2;
    const roadside=[[-1,0],[1,0],[0,-1],[0,1]].some(([a,b])=>roads.has(`${x+a},${y+b}`)&&dx*a+dz*b>.45);
    const size=(i<5?.76+random()*.6:.24+random()*.48)*(roadside?.55:1);
-   out.push({key,x:p.x+dx+(clustered?cx:0),z:p.z+dz+(clustered?cz:0),size,angle:random()*Math.PI*2,flower:i<3&&patch!==0&&random()>.12&&!roadside,tone:random()});
+   out.push({key,x:p.x+dx*(clustered?.72:1)+(clustered?cx:0),z:p.z+dz*(clustered?.72:1)+(clustered?cz:0),size,angle:random()*Math.PI*2,flower:i<(p.z>8&&Math.abs(x-RIVER)>1?(y===17?2:1):3)&&patch!==0&&random()>.12&&!roadside,tone:random()});
   }
  }
  return out;
@@ -72,6 +73,13 @@ function geometry(flowers){
  for(let i=0;i<pos.length;i+=3){const key=pos.slice(i,i+3).map(v=>v.toFixed(5)).join(','),n=i/3,sum=sums.get(key)||new T.Vector3();sum.x+=normals.getX(n);sum.y+=normals.getY(n);sum.z+=normals.getZ(n);sums.set(key,sum);keys.push(key);}
  for(const sum of sums.values())sum.normalize();
  keys.forEach((key,i)=>{const n=sums.get(key);normals.setXYZ(i,n.x,n.y,n.z);});
+ // Reuse identical shader inputs without changing petals, normals, colours or wind.
+ const attrs=Object.entries(g.attributes),values=attrs.map(()=>[]),seen=new Map(),indices=[];
+ for(let i=0;i<g.attributes.position.count;i++){
+  const row=attrs.flatMap(([,a])=>Array.from(a.array.slice(i*a.itemSize,(i+1)*a.itemSize))),key=row.join(',');
+  let index=seen.get(key);if(index===undefined){index=seen.size;seen.set(key,index);attrs.forEach(([,a],j)=>values[j].push(...a.array.slice(i*a.itemSize,(i+1)*a.itemSize)));}indices.push(index);
+ }
+ attrs.forEach(([name,a],j)=>g.setAttribute(name,new T.Float32BufferAttribute(values[j],a.itemSize)));g.setIndex(indices);
  return g;
 }
 

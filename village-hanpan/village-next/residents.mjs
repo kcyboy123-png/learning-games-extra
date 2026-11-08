@@ -66,7 +66,7 @@ export function advancePersonRoute(p,dt,people=[]){
   }return 0;
  }
  p.blockedFor=0;
- p.g.position.x=arrived?q.x:x;p.g.position.z=arrived?q.z:z;if(arrived)p.route.shift();p.distance=(p.distance||0)+step;const target=Math.atan2(dx,dz),diff=Math.atan2(Math.sin(target-p.g.rotation.y),Math.cos(target-p.g.rotation.y));p.g.rotation.y+=diff*(1-Math.exp(-dt*12));return 1;
+ if(Number.isFinite(q.y))p.g.position.y+=(q.y-p.g.position.y)*(step/d);p.g.position.x=arrived?q.x:x;p.g.position.z=arrived?q.z:z;if(arrived)p.route.shift();p.distance=(p.distance||0)+step;const target=Math.atan2(dx,dz),diff=Math.atan2(Math.sin(target-p.g.rotation.y),Math.cos(target-p.g.rotation.y));p.g.rotation.y+=diff*(1-Math.exp(-dt*12));return 1;
 }
 export function tickResidents(s,people,dt,time,world,context=residentContext(s)){
  if(s.paused||s.ended)return null;

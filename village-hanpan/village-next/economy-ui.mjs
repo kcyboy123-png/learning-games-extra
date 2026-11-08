@@ -1,4 +1,4 @@
-import {cozyEffects,buildingSpec,metrics,TYPES,MONTH,month,monthLabel,calendarMonth,demandMonth,connected,unlocked,HARVEST,HARVEST_SECONDS} from './core.mjs?v=perf1';
+import {COZY_BASE_INCOME,cozyEffects,buildingSpec,metrics,TYPES,MONTH,month,monthLabel,calendarMonth,demandMonth,connected,unlocked,HARVEST,HARVEST_SECONDS} from './core.mjs?v=perf1';
 import {PLAY_SPEED,realSeconds} from './data.mjs?v=perf1';
 
 // nextId never decreases, so cancelling or reloading cannot restart completed guidance.
@@ -114,7 +114,7 @@ export function cozyPlacementText(s,type,x,y,moving=null){
  if(moving)return buildingSpec(s,type).cap?cozyEffectText(s,type):'옮겨도 시설 보너스는 유지돼요. 길 연결과 주변 조경에 따라 친환경·목표 행복은 달라져요.';
  const before=cozyEffects(s,true),after=cozyEffects({...s,buildings:[...s.buildings,{id:s.nextId,type,progress:1}]},true),d=buildingSpec(s,type),timing=constructionTime(s,{id:s.nextId,type,progress:0});
  const queued=s.buildings.some(b=>!b.starter&&!b.closed&&b.progress<1);
- const effect=d.cap?cozyEffectText(s,type):cozyEffectText(s,type)+`\n${queued?'대기 공사 포함 예상':'마을 전체'} 수입: 매분 ${effectNumber(90+before.income)} → ${effectNumber(90+after.income)}코인`;
+ const effect=d.cap?cozyEffectText(s,type):cozyEffectText(s,type)+`\n${queued?'대기 공사 포함 예상':'마을 전체'} 수입: 매분 ${effectNumber(COZY_BASE_INCOME+before.income)} → ${effectNumber(COZY_BASE_INCOME+after.income)}코인`;
  const planned={...s,buildings:s.buildings.map(b=>({...b,progress:1}))},future={...planned,buildings:[...planned.buildings,{id:s.nextId,type,x,y,opts:[],progress:1}]};
  const previous=metrics(planned),next=metrics(future),capped=next.targetSat+1e-6<50+after.happiness;
  const happiness=`\n목표 행복 ${effectNumber(previous.targetSat)} → ${effectNumber(next.targetSat)}점 (친환경 반영)`+(capped?'\n친환경 상태를 개선하면 행복이 더 오를 수 있어요.':'');

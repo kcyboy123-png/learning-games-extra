@@ -33,7 +33,7 @@ const palettes={
  roof:['#53646a','#3d5056','#8c5545','#6c4039','#719784','#618b79','#5c8170','#4d7362','#52745e','#385443','#4a6a70','#3a5459','#5f7b6b','#4b6457','#3d4247','#2c3034','#7a3b32','#5a2a24','#7d8b8e','#a77760','#825743','#7b926a','#5c7653','#7d6b52','#7d7d74','#6fa08a','#4a7fa6']
 };
 // Expansion buildings share the same grain and winter roof treatment as the first cottages.
-palettes.wood.push('#d7b68e','#c8af89','#c19975','#d7c29b','#b99670','#c5a177','#c9ad83','#d5ba92','#8e7558','#bba17b','#b99a6a','#b39059','#bc9c60');
+palettes.wood.push('#cbb58d','#d1bb94','#dcc9a4','#e1d0ad','#e9d8b1','#9b8262','#826b50','#bda785','#d7b68e','#c8af89','#c19975','#d7c29b','#b99670','#c5a177','#c9ad83','#d5ba92','#8e7558','#bba17b','#b99a6a','#b39059','#bc9c60');
 palettes.plaster.push('#f4ddbc','#f6e5c8','#f1d6c3','#c4d8d2','#e9dfb9','#f8df9e','#f2e4cb','#f3ead6','#f1dbc5','#e7e6cf','#c67d65','#e8cfc2','#eee0c6');
 palettes.stone.push('#e4d4b6','#d8d0b9','#bcad8d','#d7d8cd','#c7c6b3','#a7b4ba');
 palettes.roof.push('#be6554','#a85549','#64879a','#4b6b7a','#6e99a6','#537786','#73968c','#57796f','#7b98a9','#b988a4');
@@ -49,6 +49,7 @@ function texture(kind){
  }
  if(kind==='fabric'){for(let i=0;i<256;i+=4){ctx.fillStyle=i%8?'#77705c0b':'#fffbea38';ctx.fillRect(i,0,1,256);ctx.fillRect(0,i,256,1);}for(let i=4;i<256;i+=10){ctx.fillStyle='#9b87633b';ctx.fillRect(i,6,5,1);ctx.fillRect(i,248,5,1);}}
  if(kind==='wood')for(let i=0;i<90;i++){ctx.strokeStyle=i%4?'#775d3933':'#fff4d077';ctx.lineWidth=.4+rand();ctx.beginPath();let x=rand()*256;ctx.moveTo(x,0);for(let y=0;y<=256;y+=8)ctx.lineTo(x+Math.sin(y*.04+i)*2,y);ctx.stroke();}
+ if(kind==='wood')for(const [x,y] of [[65,70],[192,184]]){for(let k=1;k<10;k++){ctx.strokeStyle='#71523730';ctx.lineWidth=.7;ctx.beginPath();ctx.ellipse(x,y,2+k*1.5,5+k*3.3,.1,0,Math.PI*2);ctx.stroke();}}
  if(kind==='plaster')for(let y=0;y<256;y++){const eave=.14*Math.exp(-y/30),base=.08*Math.exp(-(255-y)/20);ctx.fillStyle=`rgba(100,76,44,${eave+base})`;ctx.fillRect(0,y,256,1);}
  if(kind==='roof')for(let y=0;y<256;y+=32){ctx.fillStyle='#3b4c5735';ctx.fillRect(0,y,256,2);ctx.fillStyle='#ffffff40';ctx.fillRect(0,y+2,256,1);for(let x=(y/32%2)*32;x<256;x+=64){ctx.fillStyle='#3b4c5720';ctx.fillRect(x,y,1,32);}}
  if(kind==='stone'){
@@ -59,17 +60,29 @@ function texture(kind){
  if(kind==='grass'){
   map.repeat.set(.12,.12);
   // Detailed neutral meadow albedo is softly blended so paths and buildings remain legible.
-  const art=new Image();art.onload=()=>{ctx.fillStyle='#fffef5';ctx.fillRect(0,0,1024,1024);ctx.globalAlpha=.46;ctx.drawImage(art,0,0,1024,1024);ctx.globalAlpha=1;for(let i=0;i<120;i++){const x=rand()*1024,y=rand()*1024,r=24+rand()*70,g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,i%3?'#8d995718':'#fff8ce22');g.addColorStop(1,'#ffffff00');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}map.needsUpdate=true;};
+  const art=new Image();art.onload=()=>{ctx.fillStyle='#fffef5';ctx.fillRect(0,0,1024,1024);ctx.globalAlpha=.36;ctx.drawImage(art,0,0,1024,1024);ctx.globalAlpha=1;for(let i=0;i<120;i++){const x=rand()*1024,y=rand()*1024,r=24+rand()*70,g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,i%3?'#8d995718':'#fff8ce22');g.addColorStop(1,'#ffffff00');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}map.needsUpdate=true;};
   art.src=new URL('./assets/scenario-meadow.webp',import.meta.url).href;
  }
  paintArchitecture(kind,ctx,map);maps.set(kind,map);return map;
 }
 export function surfaceOptions(color){
- if(color==='#7cc5be')return{onBeforeCompile(shader){shader.uniforms.streamTime=surfaceTime;shader.uniforms.streamWinter=surfaceWinter;shader.vertexShader='varying vec2 vStreamUv;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvStreamUv=uv;');shader.fragmentShader='varying vec2 vStreamUv;uniform float streamTime,streamWinter;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nfloat flow=streamTime*(1.-streamWinter);float wave=sin(vStreamUv.y*96.-flow*1.05+sin(vStreamUv.x*10.+flow*.35)*1.2)*.72+sin(vStreamUv.y*165.+vStreamUv.x*24.-flow*.75)*.28;float edge=pow(abs(vStreamUv.x-.5)*2.,2.);diffuseColor.rgb*=mix(vec3(.78,.96,1.06),vec3(1.08,1.04,.92),edge);float crossing=sin(vStreamUv.x*26.+sin(vStreamUv.y*50.-flow*.4))+sin(vStreamUv.y*210.-flow*.7);float caustic=1.-smoothstep(.02,.13,abs(crossing));diffuseColor.rgb+=vec3(.10,.16,.14)*smoothstep(.82,1.,wave)*(1.-streamWinter);diffuseColor.rgb+=vec3(.035,.065,.052)*caustic*(1.-edge*.65)*(1.-streamWinter);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.66,.82,.84),streamWinter*.28);');},customProgramCacheKey:()=> 'village-stream-v2'};
+ if(color==='#7cc5be')return{onBeforeCompile(shader){shader.uniforms.streamTime=surfaceTime;shader.uniforms.streamWinter=surfaceWinter;shader.vertexShader='varying vec2 vStreamUv;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvStreamUv=uv;');shader.fragmentShader='varying vec2 vStreamUv;uniform float streamTime,streamWinter;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nfloat flow=streamTime*(1.-streamWinter);float wave=sin(vStreamUv.y*96.-flow*1.05+sin(vStreamUv.x*10.+flow*.35)*1.2)*.72+sin(vStreamUv.y*165.+vStreamUv.x*24.-flow*.75)*.28;float edge=pow(abs(vStreamUv.x-.5)*2.,2.);diffuseColor.rgb*=mix(vec3(.70,.93,1.04),vec3(1.12,1.07,.94),edge);float crossing=sin(vStreamUv.x*26.+sin(vStreamUv.y*50.-flow*.4))+sin(vStreamUv.y*210.-flow*.7);float caustic=1.-smoothstep(.02,.13,abs(crossing));diffuseColor.rgb+=vec3(.10,.16,.14)*smoothstep(.82,1.,wave)*(1.-streamWinter);diffuseColor.rgb+=vec3(.028,.052,.042)*caustic*(1.-edge*.65)*(1.-streamWinter);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.66,.82,.84),streamWinter*.28);');},customProgramCacheKey:()=> 'village-stream-v2'};
 
  const kind=color==='#9cbd6e'?'grass':Object.keys(palettes).find(k=>palettes[k].includes(color));
  if(!kind){if(['#ddc990','#9cab83','#8fd1c7','#c1d9cb','#dbe1bf'].includes(color))return{roughness:.32,onBeforeCompile(shader){shader.vertexShader='varying vec3 vWindowPoint;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvWindowPoint=position;');shader.fragmentShader='varying vec3 vWindowPoint;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nfloat reflection=pow(max(0.,sin((vWindowPoint.x+vWindowPoint.y*.55)*13.)),12.);float sky=smoothstep(-.35,.45,vWindowPoint.y);diffuseColor.rgb=mix(diffuseColor.rgb,mix(vec3(.91,.74,.46),vec3(.69,.87,.90),sky),.10);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.94,.97,.92),reflection*.18);');},customProgramCacheKey:()=> 'village-window-v2'};return{};}const map=texture(kind);
- const options={map,bumpMap:map,bumpScale:kind==='roof'?.024:kind==='stone'?.022:kind==='wood'?.012:kind==='plaster'?.004:kind==='fabric'?.006:0,roughness:kind==='roof'?.8:kind==='fabric'?.99:.92};
+ const options={map,bumpMap:map,bumpScale:kind==='roof'?.035:kind==='stone'?.035:kind==='wood'?.024:kind==='plaster'?.004:kind==='fabric'?.006:0,roughness:kind==='roof'?.8:kind==='fabric'?.99:.92};
+ if(kind==='grass')Object.assign(options,{onBeforeCompile(shader){
+  shader.uniforms.groundWinter=surfaceWinter;
+  shader.vertexShader='varying vec3 meadowPoint;\n'+shader.vertexShader;
+  shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nmeadowPoint=(modelMatrix*vec4(transformed,1.)).xyz;');
+  shader.fragmentShader='varying vec3 meadowPoint; uniform float groundWinter;\n'+shader.fragmentShader;
+  shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+   float turfPatch=.5+.26*sin(meadowPoint.x*.45+sin(meadowPoint.z*.38))+.24*sin(meadowPoint.z*.58-meadowPoint.x*.27);
+   vec3 turf=mix(vec3(.73,.88,.72),vec3(1.06,1.025,.83),smoothstep(.12,.88,turfPatch));
+   diffuseColor.rgb*=mix(turf,vec3(1.),groundWinter);
+   float blades=sin(meadowPoint.x*36.+sin(meadowPoint.z*24.))*sin(meadowPoint.z*42.+meadowPoint.x*13.);
+   diffuseColor.rgb*=1.+blades*.028*(1.-groundWinter);`);
+ },customProgramCacheKey:()=> 'meadow-ground-v3'});
  if(kind==='roof'||color==='#d9d2c0')Object.assign(options,{
   onBeforeCompile(shader){
    shader.uniforms.roofWinter=surfaceWinter;

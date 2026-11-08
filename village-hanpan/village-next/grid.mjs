@@ -33,7 +33,7 @@ export function spots(s,type,limit=3){const net=network(s),homes=s.buildings.fil
  else for(let gx=2;gx<SIZE;gx++)for(let gy=0;gy<SIZE;gy++){if(!free(s,type,gx,gy))continue;const adj=perimeter(type,gx,gy).filter(([x,y])=>net.has(`${x},${y}`)).length;if(!adj&&type!=='harbor')continue;
   const near=homes.length?Math.min(...homes.map(h=>Math.abs(h.x-gx)+Math.abs(h.y-gy))):0;push(gx,gy,cost(gx,gy)+near+(adj>1?-1:0));}
  return out.sort((a,b)=>a.score-b.score).slice(0,limit).map(({gx,gy})=>({gx,gy}));}
-export function walkable(s,gx,gy,roads=roadSet(s)){if(!inside(gx,gy)||gx<2)return false;if(s.island==='mist'){if(!dokdoWalk(gx,gy))return false;const b=at(s,gx,gy);return b?b.type==='road'||b.type==='bridge':trailSet.has(`${gx},${gy}`);}if(gx===RIVER)return roads.has(`${gx},${gy}`);const b=at(s,gx,gy);return !b||b.type==='road'||b.type==='bridge';}
+export function walkable(s,gx,gy,roads=roadSet(s)){if(!inside(gx,gy)||gx<2)return false;if(s.island==='mist'){if(!trailSet.has(`${gx},${gy}`))return false;const b=at(s,gx,gy);return b?b.type==='road'||b.type==='bridge':trailSet.has(`${gx},${gy}`);}if(gx===RIVER)return roads.has(`${gx},${gy}`);const b=at(s,gx,gy);return !b||b.type==='road'||b.type==='bridge';}
 // BFS. roadsOnly면 길 위로만 걷고 출발·도착 칸은 건물 칸이어도 허용(문 앞 드나들기).
 export function path(s,from,to,roadsOnly=false){const roads=roadSet(s),key=(x,y)=>`${x},${y}`,ok=(x,y)=>roadsOnly?roads.has(key(x,y))||(x===to.gx&&y===to.gy):walkable(s,x,y,roads);
  if(!inside(to.gx,to.gy)||(!roadsOnly&&!walkable(s,to.gx,to.gy,roads)))return[];const start=[from.gx,from.gy],seen=new Map([[key(...start),null]]),q=[start];

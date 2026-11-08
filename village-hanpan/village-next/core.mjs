@@ -1,3 +1,4 @@
+import {validTownName} from './town-name.mjs';
 import {fixedTypes} from './dokdo-terrain.mjs';
 import {dokdoPlacement,dokdoWalk,dokdoLand,DOKDO_SITES} from './dokdo-layout.mjs';
 import {ISLAND_OPEN,ISLAND_HOLD,allBuildings,totalPopulation,harborSite,hasPassage} from './islands.mjs';
@@ -10,6 +11,7 @@ import {VERSION,RULE,MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,TIERS,season,PLAY_SPEED
 import {PAINTABLE,validPaint} from './building-paint.mjs?v=perf1';
 export {MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,RULE,VERSION};
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+export const COZY_BASE_INCOME=99;
 export const SCOPE={label:'B규칙'};
 export const HARVEST=35,HARVEST_SECONDS=15;
 export const RELOCATE_WINDOW=60; // 21절 다: 완공 후 게임시간 60초 안에 건물당 1회 무료 재배치
@@ -125,7 +127,7 @@ function localMetrics(s){const net=network(s),live=s.buildings.filter(b=>b.progr
  const D=clamp(clamp(s.pop/popGoal)*(.35-.14*beautyPhase)+service*.30+env*.20+safety*.15+beauty*.14*beautyPhase);
  const Q=clamp(s.sat/100*.50+service*.30+energy*.15+clamp(housing/p)*.05);
  let welfare=0;
- if(s.cozyV===1){const effect=cozyEffects(s);welfare=effect.welfare;targetSat=Math.min(50+effect.happiness,80+20*clamp(env));income=upkeep+(90+effect.income)*MONTH/(60*PLAY_SPEED);}
+ if(s.cozyV===1){const effect=cozyEffects(s);welfare=effect.welfare;targetSat=Math.min(50+effect.happiness,80+20*clamp(env));income=upkeep+(COZY_BASE_INCOME+effect.income)*MONTH/(60*PLAY_SPEED);}
  return{welfare,environmentRaw:clamp(env),environment:Math.round(clamp(env)*100),landscaping,beautyPhase,premium,net,live,production,use,energy,food,health,education,leisure,housing,service,green,comfort,targetSat,income,upkeep,D,Q,score:s.cozyV===1?cozyGrowth(s).score:Math.round(1000*D*Q),demands,popGoal,fire,drain,optionRate,foodCap:sum('food'),healthCap:sum('health'),educationCap:sum('education'),leisureCap:sum('leisure')};
 }
 // Evaluate inhabited regions together, so travelling cannot change shared happiness or grades.
@@ -193,6 +195,7 @@ export function continueFree(s){if(!s.result)return false;s.mode='free';s.ended=
 export function serialize(s){return JSON.stringify(s);}
 export function parseSave(text,dokdoRegion=false){if(typeof text!=='string'||text.length>500000)throw Error('파일 크기를 확인해 주세요.');let s;try{s=JSON.parse(text);}catch{throw Error('작품 파일 형식이 아니에요.');}
  if(s?.otherIsland){if(!['main','mist'].includes(s.island)||!s.otherIsland||typeof s.otherIsland!=='object'||Object.keys(s.otherIsland).some(k=>!['pop','buildings','landscape'].includes(k)))throw Error('섬 기록을 확인해 주세요.');const checked=parseSave(JSON.stringify({...s,...s.otherIsland,otherIsland:undefined,island:undefined}),s.dokdoV===1&&s.island!=='mist');const ids=new Set(s.buildings?.map(b=>b.id));if(checked.buildings.some(b=>ids.has(b.id)))throw Error('섬 시설 번호가 겹쳐요.');if(!Number.isInteger(s.pop)||s.pop+checked.pop>10000)throw Error('두 지역의 인구 기록을 확인해 주세요.');s.otherIsland={pop:checked.pop,buildings:checked.buildings,landscape:checked.landscape};}else if(s?.island!==undefined)throw Error('섬 연결 기록을 확인해 주세요.');
+ if(s?.townName!==undefined&&!validTownName(s.townName))throw Error('마을 이름은 1~5글자여야 해요.');
  const num=(v,a,b)=>typeof v==='number'&&Number.isFinite(v)&&v>=a&&v<=b;
  const validConditions=h=>h&&Array.isArray(h.reasons)&&h.reasons.length<=Object.keys(TIER_CAPS).length&&new Set(h.reasons).size===h.reasons.length&&h.reasons.every(k=>Object.hasOwn(TIER_CAPS,k)&&TIER_CAPS[k]===h.cap)&&h.cap===(h.reasons.length?TIER_CAPS[h.reasons[0]]:1000);
  if(!s||s.v!==VERSION||s.rule!==RULE||!['run','free'].includes(s.mode)||!num(s.t,0,s.mode==='run'?duration(s):1e8)||!Number.isInteger(s.t)||!num(s.carry,0,1)||!num(s.money,0,1e8)||!Number.isInteger(s.pop)||!num(s.pop,0,10000)||!num(s.sat,0,100)||!Number.isInteger(s.stage)||!num(s.stage,0,3)||typeof s.paused!=='boolean'||typeof s.ended!=='boolean'||!Array.isArray(s.buildings)||s.buildings.length>SIZE*SIZE||!Array.isArray(s.hist)||s.hist.length>(s.runMonths??12))throw Error('저장 내용이 올바르지 않아요.');

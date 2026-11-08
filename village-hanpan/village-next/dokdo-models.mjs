@@ -1,6 +1,7 @@
 import * as T from '../lib/three.module.min.js';
+import {surfaceOptions} from './surfaces.mjs?v=perf1';
 const mats=new Map(),geos=new Map();
-function material(c){if(!mats.has(c))mats.set(c,new T.MeshStandardMaterial({color:c,roughness:.85}));return mats.get(c);}
+function material(c){if(!mats.has(c))mats.set(c,new T.MeshStandardMaterial({color:c,roughness:.85,...surfaceOptions(c)}));return mats.get(c);}
 function shape(k){if(!geos.has(k))geos.set(k,k==='box'?new T.BoxGeometry(1,1,1):k==='cylinder'?new T.CylinderGeometry(1,1,1,12):k==='cone'?new T.ConeGeometry(1,1,12):new T.SphereGeometry(1,12,8));return geos.get(k);}
 export function part(g,k,c,x,y,z,sx,sy=sx,sz=sx){const m=new T.Mesh(shape(k),material(c));m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;}
 export function makeFlag(g,x=0,z=0){
@@ -41,8 +42,8 @@ export const dokdoModels=Object.fromEntries(['Tea','Guest','Keeper','Home','Memo
 // Batch static parts within each moving limb; motion stays on the parent groups.
 export function batchParts(root){
  for(const child of [...root.children])if(child.isGroup)batchParts(child);
- const groups=new Map();for(const m of root.children)if(m.isMesh&&!m.isInstancedMesh&&!m.material.map&&!m.geometry.attributes.color){const key=m.geometry.uuid;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(m);}
- for(const list of groups.values()){if(list.length<2)continue;const mat=new T.MeshStandardMaterial({color:'#ffffff',roughness:.86}),mesh=new T.InstancedMesh(list[0].geometry,mat,list.length);list.forEach((m,i)=>{m.updateMatrix();mesh.setMatrixAt(i,m.matrix);mesh.setColorAt(i,m.material.color);root.remove(m);});mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);}
+ const groups=new Map();for(const m of root.children)if(m.isMesh&&!m.isInstancedMesh&&(!m.material.map||m.material.map.userData.shared)&&!m.geometry.attributes.color){const key=m.geometry.uuid+(m.material.map?'|'+m.material.map.uuid+'|'+m.material.roughness+'|'+m.material.bumpScale:'');if(!groups.has(key))groups.set(key,[]);groups.get(key).push(m);}
+ for(const list of groups.values()){if(list.length<2)continue;const source=list[0].material,mat=source.map?source.clone():new T.MeshStandardMaterial({roughness:.86});mat.color.set('#ffffff');if(source.map){mat.onBeforeCompile=source.onBeforeCompile;mat.customProgramCacheKey=source.customProgramCacheKey;}const mesh=new T.InstancedMesh(list[0].geometry,mat,list.length);list.forEach((m,i)=>{m.updateMatrix();mesh.setMatrixAt(i,m.matrix);mesh.setColorAt(i,m.material.color);root.remove(m);});mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);}
 }
 export function createGangchi(){
  const g=new T.Group();g.name='gangchi-memory-guide';g.userData.keepArtHierarchy=true;
