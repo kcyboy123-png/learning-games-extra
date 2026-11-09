@@ -1,4 +1,5 @@
 import * as T from '../lib/three.module.min.js';
+import {socialAmount,idleStretch} from './resident-social.mjs';
 import {rabbitView} from './rabbit-art.mjs?v=perf1';
 import {penguinFrames,penguinAtlasSize} from './penguin-frames.mjs';
 
@@ -45,5 +46,10 @@ export function updateResidentArt(p,camera,time,reduced,winter,viewTime=time){
  const moving=!p.sitting&&!p.watering&&p.moving>.08&&!reduced;
  a.sprite.scale.set(w*a.e.pixel,h*a.e.pixel*(1+(reduced?0:Math.sin(time*2)*.003*(1-p.moving))),1);
  a.sprite.position.y=.004+(moving?Math.abs(Math.sin(p.distance/.95*Math.PI*2))*.018*p.moving:0);
+ const greeting=socialAmount(p,reduced,viewTime),style=p.id.charCodeAt(0)%3;
+ a.sprite.scale.y*=1-greeting*(style===0?.045:.025);
+ a.sprite.position.y+=greeting*(style===1?.035:0);
+ a.sprite.scale.x*=1+greeting*(style===2?.025:0);
+ const stretch=idleStretch(p,time,reduced);a.sprite.scale.y*=1+stretch*.018;a.sprite.scale.x*=1-stretch*.012;
  // Four painted camera angles match the rabbit; distance controls the walk cycle.
 }

@@ -35,4 +35,3 @@ export function voyageArrivalPose(u,region,player,aspect){
 
 
 
-

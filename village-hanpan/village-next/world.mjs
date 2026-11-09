@@ -1,4 +1,5 @@
 import {entrancePose,applyEntrancePose} from './entrance-camera.mjs';
+import {socialAmount} from './resident-social.mjs';
 import {createFrontCoast} from './front-coast.mjs?v=living15';
 import {createShoreFringe} from './shore-fringe.mjs?v=living15';
 import {coastSurface} from './coast-surface.mjs?v=living15';
@@ -694,7 +695,7 @@ export class World{
    const h=deckHeight(gx,gy),x=(gx-8.5)*CELL,z=(gy-8.5)*CELL;
    if(this.ray.ray.intersectPlane((plane.constant=-h,plane),p)&&Math.abs(p.x-x)<=1.15&&Math.abs(p.z-z)<=1.15){const d=p.distanceToSquared(this.ray.ray.origin);if(d<dist){dist=d;hit=new T.Vector3(x,h,z);}}
   }return hit;}
- screen(p){const v=p.clone().project(this.camera);return{x:(v.x+1)*innerWidth/2,y:(1-v.y)*innerHeight/2};}
+ screen(p){const v=(this.screenPoint??=new T.Vector3()).copy(p).project(this.camera);return{x:(v.x+1)*innerWidth/2,y:(1-v.y)*innerHeight/2};}
  animateRides(dt,reduced){
   if(!this.paused&&!reduced)this.rideTime=(this.rideTime||0)+dt;
   for(const ride of this.rides||[]){if(ride.userData.ride==='train'){const track=ride.userData.track,t=((this.rideTime||0)*.022)%1,p=track.getPoint(t),v=track.getTangent(t);ride.position.copy(p);ride.rotation.y=Math.atan2(v.x,v.z);continue;}const wheel=ride.userData.ride==='wheel',axis=wheel?'z':'y';ride.rotation[axis]=((this.rideTime||0)*(wheel?.10:.20))%(Math.PI*2);
@@ -733,10 +734,11 @@ export class World{
    const sit=p.seatBlend;for(let k=0;k<2;k++){p.knees[k].rotation.x=(1-sit)*Math.max(0,-Math.sin(phase+k*Math.PI))*.25*p.moving+sit*1.35;p.limbs[k*2].rotation.x=p.limbs[k*2].rotation.x*(1-sit)-1.35*sit;p.limbs[k*2+1].rotation.x=p.limbs[k*2+1].rotation.x*(1-sit)-(p.book.visible?.7:.35)*sit;}p.body.rotation.z*=1-sit;p.body.position.y*=1-sit;
    if(p.id!=='player'){const resting=p.moving<.03&&!sit&&!p.carry.visible,envelope=!reduced&&resting&&localIdle%17>12&&localIdle%17<14?Math.sin((localIdle%17-12)*Math.PI/2):0;p.limbs[3].rotation.z=envelope*(.85+Math.sin(localIdle*6)*.12);if(!reduced&&resting)p.body.position.y+=Math.sin(localIdle*1.8)*.006;const player=this.player,near=player&&player!==p&&player.g.visible&&Math.hypot(player.g.position.x-p.g.position.x,player.g.position.z-p.g.position.z)<3.5;let look=0;if(!reduced&&resting&&near){const a=Math.atan2(player.g.position.x-p.g.position.x,player.g.position.z-p.g.position.z)-p.g.rotation.y;const relative=Math.atan2(Math.sin(a),Math.cos(a));if(Math.abs(relative)<1.5)look=Math.max(-.35,Math.min(.35,relative));}p.lookAtPlayer=reduced?0:(p.lookAtPlayer||0)+(look-(p.lookAtPlayer||0))*Math.min(1,motionDt*4);if(p.head)p.head.rotation.y+=p.lookAtPlayer;}
    if(p.id==='player'&&p.moving<.01&&!sit&&!reduced){const greeting=idleTime%14,envelope=greeting>10&&greeting<12?Math.sin((greeting-10)*Math.PI/2):0;p.limbs[3].rotation.z=envelope*(.9+Math.sin(idleTime*7)*.13);p.body.position.y+=Math.sin(idleTime*2)*.006;}else if(p.id==='player')p.limbs[3].rotation.z=0;
+   if(p.head)p.head.rotation.x+=socialAmount(p,reduced,time)*.16;
    if(p.wateringCan){p.wateringCan.visible=!!p.watering&&this.se!==0;p.broom.visible=!!p.watering&&this.se===0;if(p.watering){p.limbs[3].rotation.x=this.se===0?-.15:-.55;p.limbs[3].rotation.z=this.se===0&&!reduced?Math.sin(localIdle*2)*.20:-.12;p.head.rotation.x=.12+(reduced?0:Math.sin(localIdle)*.03);p.wateringCan.rotation.x=.2+(reduced?0:Math.sin(localIdle*1.4)*.08);}}
   }
 
-  updateRabbitArt(this.player,this.angle,idleTime,reduced);
+  updateRabbitArt(this.player,this.angle,idleTime,reduced,time);
   // One depth-only silhouette keeps the walking rabbit readable behind cliffs, without fading the island.
   const art=this.player.rabbitArt;
   if(this.dokdo&&art?.e.ready&&!this.rabbitEcho){this.echoMaterials=new Map();this.rabbitEcho=new T.Sprite();this.rabbitEcho.renderOrder=999;this.player.g.add(this.rabbitEcho);}

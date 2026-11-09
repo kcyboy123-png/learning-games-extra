@@ -22,15 +22,15 @@ export function coastSurface(kind='sand'){
    float reliefFade=1.-smoothstep(.08,.3,length(fwidth(coastPoint)));
    float coastRelief=(sin(coastPoint.x*7.+sin(coastPoint.z*3.))*sin(coastPoint.z*9.+coastPoint.y*19.))*.006*reliefFade;
    #if COAST_ROCK == 1
-    float strata=sin(coastPoint.y*28.+sin(coastPoint.x*3.+coastPoint.z*2.)*.8);
+    float strata=sin(coastPoint.y*18.+sin(coastPoint.x*1.9+coastPoint.z*1.3)*1.6);
     diffuseColor.rgb*=1.+broad*.065+strata*.025+grain*grainFade*.07;
-    diffuseColor.rgb*=mix(vec3(1.),vec3(.78,.85,.84),wet*.45);
+    diffuseColor.rgb*=mix(vec3(1.),vec3(.61,.77,.79),wet*.55);
     float seam=smoothstep(.91,1.,sin(coastPoint.x*7.+coastPoint.y*13.)*sin(coastPoint.z*8.-coastPoint.y*9.));
     diffuseColor.rgb*=1.-seam*.065*reliefFade;
    #else
     float ripple=sin(coastPoint.z*10.+coastPoint.x*2.+sin(coastPoint.x*.8)*3.+sin(coastPoint.z*.6));
     float turf=smoothstep(.025,.09,diffuseColor.g-diffuseColor.r)*smoothstep(-.05,.1,coastPoint.y);
-    diffuseColor.rgb*=mix(vec3(1.),mix(vec3(.64,.85,.70),vec3(1.015,1.04,.87),smoothstep(.12,.88,.5+.5*broad)),turf);
+    diffuseColor.rgb*=mix(vec3(1.),mix(vec3(.80,.94,.76),vec3(1.025,1.035,.91),smoothstep(.12,.88,.5+.5*broad)),turf);
     diffuseColor.rgb*=1.+broad*.065*(1.-turf)+ripple*.012*(1.-turf)+grain*grainFade*mix(.08,.12,turf);
     diffuseColor.rgb*=mix(vec3(1.),vec3(.70,.83,.84),wet*.52);
    #endif`);
