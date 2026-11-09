@@ -29,7 +29,8 @@ export function createState(mode='run'){
  add('house',4,5,['ins']);add('house',6,5,['ins']);add('generator',4,7);add('tree',6,9);add('tree',4,10);return s;
 }
 // Relaxed decorating keeps past results intact and uses a separate current growth score.
-export function enableCozy(s){s.populationPeak=Math.max(s.populationPeak??s.pop,totalPopulation(s));if(s.cozyV!==1)s.money=Math.max(300,s.money);s.placementHintsShown??=Math.min(2,s.buildings.filter(b=>!b.starter).length);s.cozyV=1;s.mode='free';s.ended=false;return s;}
+export function refundHarbor(s){let refund=0;for(const b of allBuildings(s)){if(b.type!=='harbor'||!Number.isInteger(b.paidCost)||b.paidCost<=TYPES.harbor.cost)continue;const amount=Math.min(b.paidCost-TYPES.harbor.cost,Math.floor(1e8-s.money));if(amount<=0)continue;b.harborOriginalCost??=b.paidCost;b.paidCost-=amount;s.money+=amount;refund+=amount;}return refund;}
+export function enableCozy(s){refundHarbor(s);s.populationPeak=Math.max(s.populationPeak??s.pop,totalPopulation(s));if(s.cozyV!==1)s.money=Math.max(300,s.money);s.placementHintsShown??=Math.min(2,s.buildings.filter(b=>!b.starter).length);s.cozyV=1;s.mode='free';s.ended=false;return s;}
 export function cozyGrowth(s){
  const made=allBuildings(s).filter(b=>!b.starter&&b.progress>=1&&!b.closed&&!['road','bridge'].includes(b.type));
  const gardens=made.filter(isGarden).length,buildings=made.length-gardens,variety=new Set(made.map(b=>b.type)).size,details=made.reduce((n,b)=>n+b.opts.length,0);
@@ -128,13 +129,14 @@ function localMetrics(s){const net=network(s),live=s.buildings.filter(b=>b.progr
  const Q=clamp(s.sat/100*.50+service*.30+energy*.15+clamp(housing/p)*.05);
  let welfare=0;
  if(s.cozyV===1){const effect=cozyEffects(s);welfare=effect.welfare;targetSat=Math.min(50+effect.happiness,80+20*clamp(env));income=upkeep+(COZY_BASE_INCOME+effect.income)*MONTH/(60*PLAY_SPEED);}
- return{welfare,environmentRaw:clamp(env),environment:Math.round(clamp(env)*100),landscaping,beautyPhase,premium,net,live,production,use,energy,food,health,education,leisure,housing,service,green,comfort,targetSat,income,upkeep,D,Q,score:s.cozyV===1?cozyGrowth(s).score:Math.round(1000*D*Q),demands,popGoal,fire,drain,optionRate,foodCap:sum('food'),healthCap:sum('health'),educationCap:sum('education'),leisureCap:sum('leisure')};
+ return{environmentParts:[energy*40,green*15,(m<2?1:optionRate)*15,landscaping.score*.3],welfare,environmentRaw:clamp(env),environment:Math.round(clamp(env)*100),landscaping,beautyPhase,premium,net,live,production,use,energy,food,health,education,leisure,housing,service,green,comfort,targetSat,income,upkeep,D,Q,score:s.cozyV===1?cozyGrowth(s).score:Math.round(1000*D*Q),demands,popGoal,fire,drain,optionRate,foodCap:sum('food'),healthCap:sum('health'),educationCap:sum('education'),leisureCap:sum('leisure')};
 }
 // Evaluate inhabited regions together, so travelling cannot change shared happiness or grades.
 export function metrics(s){
  const current=localMetrics(s);if(s.cozyV!==1||!s.otherIsland)return current;
  const other=localMetrics({...s,...s.otherIsland,otherIsland:undefined}),population=totalPopulation(s);
  const env=population?(current.environmentRaw*s.pop+other.environmentRaw*s.otherIsland.pop)/population:(current.environmentRaw+other.environmentRaw)/2;
+ current.environmentParts=current.environmentParts.map((n,i)=>population?(n*s.pop+other.environmentParts[i]*s.otherIsland.pop)/population:(n+other.environmentParts[i])/2);
  current.environmentRaw=env;current.environment=Math.round(env*100);
  current.targetSat=Math.min(50+cozyEffects(s).happiness,80+20*env);
  current.upkeep+=other.upkeep;current.income+=other.upkeep;
@@ -214,6 +216,7 @@ export function parseSave(text,dokdoRegion=false){if(typeof text!=='string'||tex
  for(const b of s.buildings)if(b?.plantedAt!==undefined&&(!isGarden(b)||!num(b.plantedAt,0,s.t)))throw Error('식물 성장 기록이 올바르지 않아요.');
  const occupied=new Set(),ids=new Set();for(const b of s.buildings){if(!b||!Object.hasOwn(TYPES,b.type)||!Number.isSafeInteger(b.id)||b.id<1||ids.has(b.id)||!Number.isInteger(b.x)||!Number.isInteger(b.y)||!num(b.progress,0,1)||typeof b.starter!=='boolean'||!Array.isArray(b.opts)||b.opts.length>2||new Set(b.opts).size!==b.opts.length||b.opts.some(o=>!Object.hasOwn(OPTIONS,o)))throw Error('시설 정보가 올바르지 않아요.');
   if(b.paidCost!==undefined&&(!Number.isInteger(b.paidCost)||!num(b.paidCost,0,1e8)))throw Error('건설비 기록이 올바르지 않아요.');
+  if(b.harborOriginalCost!==undefined&&(b.type!=='harbor'||!Number.isInteger(b.harborOriginalCost)||!num(b.harborOriginalCost,b.paidCost??0,1e8)))throw Error('항구 보정 기록을 확인해 주세요.');
   if(b.paint!==undefined&&(!validPaint(b.paint)||!PAINTABLE.has(b.type)))throw Error('건물 색을 확인해 주세요.');
   if(b.dir!==undefined&&(!validDirection(b.dir)||!rotatable(b.type)))throw Error('시설 방향이 올바르지 않아요.');
   if(b.completedAt!==undefined&&(!Number.isInteger(b.completedAt)||!num(b.completedAt,0,Math.max(s.t,0))||b.progress<1))throw Error('완공 기록이 올바르지 않아요.');if(b.moved!==undefined&&(typeof b.moved!=='boolean'||b.starter))throw Error('재배치 기록이 올바르지 않아요.');if(b.closed!==undefined&&(b.closed!==true||b.progress<1))throw Error('휴업 기록이 올바르지 않아요.');

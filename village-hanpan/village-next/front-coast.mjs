@@ -6,7 +6,7 @@ import {surfaceTime,surfaceOptions} from './surfaces.mjs?v=perf1';
 export function createFrontCoast(){
  const group=new T.Group();group.name='mainland-front-coast';
  const positions=[],shoreUV=[],colors=[],indices=[],waterPositions=[],waterUV=[],waterIndices=[],stones=[],grass=[];
- const color=new T.Color(),n=96,bands=[[0,.075,'#9cbd6e'],[.42,.075,'#9cbd6e'],[.60,-.18,'#dcc99e'],[.80,-.38,'#c9bd99'],[1,-.64,'#9fac98'],[1.32,-.94,'#648e87']];
+ const color=new T.Color(),n=96,bands=[[0,.075,'#9cbd6e'],[.42,.075,'#9cbd6e'],[.60,-.18,'#ead5af'],[.80,-.38,'#d4c6aa'],[1,-.64,'#9fb7ad'],[1.32,-.94,'#648e87']];
  for(const [cx,w,seed]of[[-8.4,26.5,4.7],[14.4,14.5,1.9]]){
   const edge=t=>{const cs=Math.cos(t),sn=Math.sin(t),k=1+.018*(Math.sin(seed-t*3)*.5+Math.sin(seed*1.7-t*5)*.3+Math.sin(seed*2.3-t*11)*.2);return[cx+Math.sign(cs)*Math.abs(cs)**.5*w/2*k,Math.sign(sn)*Math.abs(sn)**.5*43.3/2*k];};
   // Equal-distance samples avoid a straight, undersampled shoreline at the long sides.
@@ -23,8 +23,8 @@ export function createFrontCoast(){
    if(i<n&&!river){for(let j=0;j<bands.length-1;j++){const k=start+i*bands.length+j;indices.push(k,k+bands.length,k+1,k+1,k+bands.length,k+bands.length+1);}for(let j=0;j<2;j++){const k=ws+i*3+j;waterIndices.push(k,k+3,k+1,k+1,k+3,k+4);}}
    if(front>.4&&!river&&Math.abs(p[0]-6)>3.4&&(pocket<.55||headland>.50)&&i%2===0){
     const r=(.62+.75*(.5+.5*Math.sin(i*2.31)))*(1+headland*.25),offset=.60+.30*(.5+.5*Math.sin(i*7.8));
-    stones.push({x:p[0]+nx*width*offset,z:p[1]+nz*width*offset,y:-.07-offset*.12+headland*.30,r,angle:t+i,color:i%3?'#aea58e':'#929b80'});
-    stones.push({x:p[0]+nx*(width*offset+.45)+nz*.2,z:p[1]+nz*(width*offset+.45)-nx*.2,y:-.38,r:r*.62,angle:i*1.7,color:'#8f9e90'});
+    stones.push({x:p[0]+nx*width*offset,z:p[1]+nz*width*offset,y:-.07-offset*.12+headland*.30,r,angle:t+i,color:i%3?'#b5b1a3':'#929f9b'});
+    stones.push({x:p[0]+nx*(width*offset+.45)+nz*.2,z:p[1]+nz*(width*offset+.45)-nx*.2,y:-.38,r:r*.62,angle:i*1.7,color:'#829d9c'});
    }
    if(front>.3&&!river&&i%3===0&&Math.sin(i*.31+seed)>.1)grass.push({...grassTop,scale:.95+.85*(.5+.5*Math.sin(i*5))});
   }
@@ -32,7 +32,7 @@ export function createFrontCoast(){
  // Curved mouth banks share the shore mesh and stay in the river strip or beyond the build grid.
  for(const side of [-1,1]){const start=positions.length/3;
   for(let i=0;i<=15;i++){const z=16+i*.55,flare=T.MathUtils.smoothstep(z,20,25),bank=1.12+flare*(side<0?1.85:3.3)+(.12+flare*.63)*Math.sin(z*.65+side)+.06*Math.sin(z*1.6),sink=T.MathUtils.smoothstep(z,20.6,24.25)*.85;
-   for(const [offset,y,c]of [[.53,.055,'#9cbd6e'],[.10,-.14,'#b4af81'],[-.18,-.40,'#c7ba94'],[-.36,-.73,'#749a90']]){positions.push(6+side*(bank+offset)+1.65*flare*flare,y-sink,z);shoreUV.push(6+side*(bank+offset)+1.65*flare*flare-(side<0?-8.4:14.4),-z);color.set(c);colors.push(color.r,color.g,color.b);}
+   for(const [offset,y,c]of [[.53,.055,'#9cbd6e'],[.10,-.14,'#c4bea0'],[-.18,-.40,'#d4c6a5'],[-.36,-.73,'#749a90']]){positions.push(6+side*(bank+offset)+1.65*flare*flare,y-sink,z);shoreUV.push(6+side*(bank+offset)+1.65*flare*flare-(side<0?-8.4:14.4),-z);color.set(c);colors.push(color.r,color.g,color.b);}
    if(i<15)for(let j=0;j<3;j++){const k=start+i*4+j;if(side<0)indices.push(k,k+4,k+1,k+1,k+4,k+5);else indices.push(k,k+1,k+4,k+1,k+5,k+4);}
   }
  }
@@ -53,7 +53,7 @@ export function createFrontCoast(){
  for(let i=0;i<ra.count;i++){const x=ra.getX(i),y=ra.getY(i),z=ra.getZ(i),k=1+.12*Math.sin(x*4+z*3);ra.setXYZ(i,x*k,Math.min(.42+.18*x+.10*Math.sin(z*4),y)*.88,z*(1+.1*Math.sin(x*3-y*2)));}
  rockGeo.computeVertexNormals();
  const rn=rockGeo.attributes.normal,rc=[];
- for(let i=0;i<ra.count;i++){const normal=new T.Vector3().fromBufferAttribute(rn,i),soft=new T.Vector3(ra.getX(i),ra.getY(i)*1.3,ra.getZ(i)).normalize();normal.lerp(soft,.12).normalize();rn.setXYZ(i,normal.x,normal.y,normal.z);const shade=.59+.41*T.MathUtils.smoothstep(ra.getY(i),-.7,.4);color.setRGB(shade,shade,shade);if(ra.getY(i)>.25&&Math.sin(ra.getX(i)*4+ra.getZ(i)*3)>.3)color.lerp(new T.Color('#91a475'),.25);rc.push(color.r,color.g,color.b);}
+ for(let i=0;i<ra.count;i++){const normal=new T.Vector3().fromBufferAttribute(rn,i),soft=new T.Vector3(ra.getX(i),ra.getY(i)*1.3,ra.getZ(i)).normalize();normal.lerp(soft,.12).normalize();rn.setXYZ(i,normal.x,normal.y,normal.z);const shade=.59+.41*T.MathUtils.smoothstep(ra.getY(i),-.7,.4);color.setRGB(shade,shade,shade);if(ra.getY(i)>.25&&Math.sin(ra.getX(i)*4+ra.getZ(i)*3)>.3)color.lerp(new T.Color('#9dae85'),.18);rc.push(color.r,color.g,color.b);}
  rockGeo.setAttribute('color',new T.Float32BufferAttribute(rc,3));rockGeo.computeBoundingBox();rockGeo.userData.owned=true;
  const rockMaterial=new T.MeshStandardMaterial({vertexColors:true,roughness:.94,...coastSurface('rock')});rockMaterial.userData.owned=true;
  const rockSites=Array.from({length:Math.min(58,stones.length)},(_,i)=>stones[Math.min(stones.length-1,Math.floor(Math.max(0,i+1.35*Math.sin(i/58*Math.PI*12)+(i%3===1?-.65:i%3===2?.28:0))*stones.length/Math.min(58,stones.length)))]);
@@ -68,13 +68,13 @@ export function createFrontCoast(){
   rocks.setMatrixAt(i,pose.matrix);rocks.setColorAt(i,color.set(s.color));});rocks.receiveShadow=true;rocks.name='front-headland-stones';group.add(rocks);
  const gp=[],gc=[];
  for(const p of grass)for(let j=0;j<5;j++){
-  const a=j*2.4+p.x,dx=Math.cos(a),dz=Math.sin(a),h=(.24+j%3*.10)*p.scale,w=.085*p.scale;
-  const y=p.y+.01,left=[p.x-dz*w,y,p.z+dx*w],right=[p.x+dz*w,y,p.z-dx*w],tip=[p.x+dx*.32+.09,h+y,p.z+dz*.20];
+  const a=j*2.4+p.x,dx=Math.cos(a),dz=Math.sin(a),h=(.20+j%3*.065)*p.scale,w=.060*p.scale;
+  const y=p.y+.01,left=[p.x-dz*w,y,p.z+dx*w],right=[p.x+dz*w,y,p.z-dx*w],tip=[p.x+dx*.22+.05,h+y,p.z+dz*.16];
   for(const q of[left,right,tip]){gp.push(...q);color.set(q===tip?'#bac67e':'#78934f');gc.push(color.r,color.g,color.b);}
  }
  const gg=new T.BufferGeometry();gg.setAttribute('position',new T.Float32BufferAttribute(gp,3));gg.setAttribute('color',new T.Float32BufferAttribute(gc,3));gg.computeVertexNormals();gg.userData.owned=true;
  const gm=new T.MeshStandardMaterial({vertexColors:true,roughness:1,side:T.DoubleSide});gm.userData.owned=true;const tufts=new T.Mesh(gg,gm);tufts.receiveShadow=true;tufts.name='front-dune-grass';group.add(tufts);
  const wg=new T.BufferGeometry();wg.setAttribute('position',new T.Float32BufferAttribute(waterPositions,3));wg.setAttribute('uv',new T.Float32BufferAttribute(waterUV,2));wg.setIndex(waterIndices);wg.userData.owned=true;
- const wm=new T.ShaderMaterial({transparent:true,depthWrite:false,side:T.DoubleSide,uniforms:{clock:surfaceTime},vertexShader:`varying vec2 vUv; varying vec2 shoreXZ; void main(){vUv=uv;shoreXZ=position.xz;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,fragmentShader:`uniform float clock; varying vec2 vUv; varying vec2 shoreXZ; void main(){float fade=1.-smoothstep(1.,3.,vUv.y);if(vUv.x<0.)fade*=sin((vUv.x+2.)*3.14159265)*.8*smoothstep(1.2,1.65,vUv.y);else fade*=smoothstep(0.,.05,vUv.x)*(1.-smoothstep(.95,1.,vUv.x));float ripple=sin(shoreXZ.x*2.+shoreXZ.y*3.-clock*.6);float depth=.5+.5*sin(shoreXZ.x*.45+shoreXZ.y*.32);float foam=(1.-smoothstep(.008,.04,abs(vUv.y-1.12-.09*sin(clock*.6+shoreXZ.x*.7+sin(shoreXZ.y*.4)))))*smoothstep(-.10,.65,sin(shoreXZ.x*.81+shoreXZ.y*.67+sin(shoreXZ.y*.8)))*smoothstep(.1,.7,sin(shoreXZ.x*3.7-shoreXZ.y*2.4));float sparkle=pow(max(0.,sin(shoreXZ.x*3.1+shoreXZ.y*1.6-clock*.5)),18.)*smoothstep(.45,.9,sin(shoreXZ.x*.32-shoreXZ.y*.25));vec3 c=mix(mix(vec3(.12,.42,.44),vec3(.18,.51,.45),depth),vec3(.75,.85,.72),foam*.92);c+=vec3(.11,.10,.06)*sparkle*smoothstep(1.15,1.8,vUv.y);gl_FragColor=vec4(c,(.12+depth*.12+ripple*.018+foam*.20)*fade);}`});wm.userData.owned=true;
+ const wm=new T.ShaderMaterial({transparent:true,depthWrite:false,side:T.DoubleSide,uniforms:{clock:surfaceTime},vertexShader:`varying vec2 vUv; varying vec2 shoreXZ; void main(){vUv=uv;shoreXZ=position.xz;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,fragmentShader:`uniform float clock; varying vec2 vUv; varying vec2 shoreXZ; void main(){float fade=1.-smoothstep(1.,3.,vUv.y);if(vUv.x<0.)fade*=sin((vUv.x+2.)*3.14159265)*.8*smoothstep(1.2,1.65,vUv.y);else fade*=smoothstep(0.,.05,vUv.x)*(1.-smoothstep(.95,1.,vUv.x));float ripple=sin(shoreXZ.x*2.+shoreXZ.y*3.-clock*.6);float depth=.5+.5*sin(shoreXZ.x*.45+shoreXZ.y*.32);float foam=(1.-smoothstep(.008,.04,abs(vUv.y-1.12-.09*sin(clock*.6+shoreXZ.x*.7+sin(shoreXZ.y*.4)))))*smoothstep(-.10,.65,sin(shoreXZ.x*.81+shoreXZ.y*.67+sin(shoreXZ.y*.8)))*smoothstep(.1,.7,sin(shoreXZ.x*3.7-shoreXZ.y*2.4));float sparkle=pow(max(0.,sin(shoreXZ.x*3.1+shoreXZ.y*1.6-clock*.5)),18.)*smoothstep(.45,.9,sin(shoreXZ.x*.32-shoreXZ.y*.25));vec3 c=mix(mix(vec3(.10,.40,.49),vec3(.17,.55,.53),depth),vec3(.82,.92,.88),foam*.92);c+=vec3(.11,.10,.06)*sparkle*smoothstep(1.15,1.8,vUv.y);gl_FragColor=vec4(c,(.08+depth*.10+ripple*.03+foam*.20)*fade);}`});wm.userData.owned=true;
  const wash=new T.Mesh(wg,wm);wash.name='front-tidal-water';group.add(wash);return group;
 }

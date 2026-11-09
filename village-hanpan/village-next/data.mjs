@@ -51,7 +51,7 @@ export const TYPES={
  cinema:{"name":"영화관","cost":12000,"time":180,"up":5,"e":-2,"unlock":0,"stage":0,"group":"여가","desc":"반짝이는 간판 아래 함께 영화를 보는 곳.","leisure":80,"foot":2},
  animalFarm:{"name":"동물농장","cost":18000,"time":270,"up":5,"e":-2,"unlock":0,"stage":0,"group":"여가","desc":"빨간 헛간과 울타리 안의 양·소·닭을 만나요.","leisure":64,"foot":2},
  rosePark:{"name":"장미공원","cost":12000,"time":180,"up":0,"e":0,"unlock":0,"stage":0,"group":"꾸미기","desc":"장미 아치와 분수, 벤치가 있는 꽃 공원.","garden":"flowers","leisure":48,"foot":2},
- harbor:{"name":"항구","cost":500000,"time":360,"up":5,"e":-2,"unlock":0,"stage":0,"group":"기반","desc":"정해진 물가에 지어요. 항구를 완공하면 배를 타고 독도로 가서 건물과 정원을 꾸밀 수 있어요.","leisure":80,"foot":2},
+ harbor:{"name":"항구","cost":50000,"time":120,"up":5,"e":-2,"unlock":0,"stage":0,"group":"기반","desc":"정해진 물가에 지어요. 항구를 완공하면 배를 타고 독도로 가서 건물과 정원을 꾸밀 수 있어요.","leisure":80,"foot":2},
  rabbitTower:{"name":"토끼탑","cost":150000,"time":450,"up":5,"e":-2,"unlock":0,"stage":0,"group":"명소","desc":"꽃 광장 위로 우뚝 선 마을의 커다란 토끼.","leisure":96,"foot":2},
  skyTower:{"name":"하늘빛 타워","cost":180000,"time":540,"up":5,"e":-2,"unlock":0,"stage":0,"group":"명소","desc":"하늘로 길게 뻗은 유리 전망대와 초록 광장.","leisure":120,"foot":2},
  largePark:{"name":"대형 놀이동산","cost":350000,"time":720,"up":5,"e":-2,"unlock":0,"stage":0,"group":"명소","desc":"4×4칸의 큰 명소. 대관람차·회전목마·기차와 동화 성!","leisure":240,"foot":4},
@@ -136,7 +136,7 @@ export const COZY_EFFECTS={dokdoTea:{income:600,happiness:4,welfare:2},dokdoGues
  fountain:{income:60,happiness:5,welfare:3},
  flowerArch:{income:100,happiness:6,welfare:1},
  rosePark:{income:800,happiness:18,welfare:6},
- harbor:{income:10000,happiness:4,welfare:16},
+ harbor:{income:1000,happiness:4,welfare:16},
  rabbitTower:{income:15000,happiness:20,welfare:4},
  skyTower:{income:20000,happiness:8,welfare:12},
  moonGarden:{income:3000,happiness:20,welfare:4},
@@ -144,4 +144,4 @@ export const COZY_EFFECTS={dokdoTea:{income:600,happiness:4,welfare:2},dokdoGues
  starTree:{income:12000,happiness:25,welfare:6}
 };
 // Population unlocks persist once reached; old buildings stay usable.
-export const POPULATION_UNLOCKS={dokdoResearch:180,dokdoMemory:140,"house":0,"road":0,"snack":0,"flower":0,"avenue":0,"tree":0,"bench":0,"solar":0,"generator":0,"bridge":0,"drain":0,"duplex":12,"convenience":12,"chicken":12,"clinic":12,"lavender":12,"japanese":16,"kids":16,"hydrangea":16,"gardenhouse":20,"school":20,"fire":20,"fountain":20,"apartment":24,"library":24,"police":24,"flowerArch":24,"western":28,"terracehouse":32,"amusement":32,"workshop":32,"chinese":40,"buffet":40,"hospital":48,"supermarket":48,"cinema":64,"rosePark":64,"animalFarm":80,"moonGarden":100,"harbor":120,"rabbitTower":160,"goldFountain":160,"skyTower":200,"largePark":240,"starTree":240};
+export const POPULATION_UNLOCKS={dokdoResearch:180,dokdoMemory:140,"house":0,"road":0,"snack":0,"flower":0,"avenue":0,"tree":0,"bench":0,"solar":0,"generator":0,"bridge":0,"drain":0,"duplex":12,"convenience":12,"chicken":12,"clinic":12,"lavender":12,"japanese":16,"kids":16,"hydrangea":16,"gardenhouse":20,"school":20,"fire":20,"fountain":20,"apartment":24,"library":24,"police":24,"flowerArch":24,"western":28,"terracehouse":32,"amusement":32,"workshop":32,"chinese":40,"buffet":40,"hospital":48,"supermarket":48,"cinema":64,"rosePark":64,"animalFarm":80,"moonGarden":100,"harbor":24,"rabbitTower":160,"goldFountain":160,"skyTower":200,"largePark":240,"starTree":240};

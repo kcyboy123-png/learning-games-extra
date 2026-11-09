@@ -43,14 +43,14 @@ function geometry(flowers){
   // Low leaves fill the gaps between tufts without adding tall obstacles or saved objects.
   for(let f=0;f<3;f++)for(let leaf=0;leaf<3;leaf++){
    const angle=leaf*Math.PI*2/3+f*1.7,cx=[0,.19,-.14][f],cz=[0,.12,.17][f],h=.035+f*.014;
-   const p=t=>{const u=Math.cos(t)*.052,v=.06+Math.sin(t)*.068;return[cx+Math.cos(angle)*v-Math.sin(angle)*u,h+.016*Math.sin(t),cz+Math.sin(angle)*v+Math.cos(angle)*u];};
-   for(let j=0;j<6;j++){tint=j<3?'#a8be70':'#829e59';tri([cx+Math.cos(angle)*.06,h+.025,cz+Math.sin(angle)*.06],p(j*Math.PI/3),p((j+1)*Math.PI/3));}
+   const p=t=>{const u=Math.cos(t)*.052,v=.06+Math.sin(t)*.068;return[cx+Math.cos(angle)*v-Math.sin(angle)*u,h+.028*Math.sin(t),cz+Math.sin(angle)*v+Math.cos(angle)*u];};
+   for(let j=0;j<6;j++){tint=j<3?'#a6bf7d':'#6f945d';tri([cx+Math.cos(angle)*.06,h+.025,cz+Math.sin(angle)*.06],p(j*Math.PI/3),p((j+1)*Math.PI/3));}
   }
  }else if(!flowers){
   for(let i=0;i<7;i++){
    const a=i*2.399,h=.13+(i%4)*.055,r=.02+(i%2)*.018;
-   const point=(side,t)=>{const width=(.006+Math.sin(t*Math.PI)*.038)*(t===1?0:1),bend=r+t*t*.14;return[Math.cos(a)*width*side+Math.sin(a)*bend,h*(t-.2*t*t),Math.sin(a)*width*side-Math.cos(a)*bend];};
-   for(let j=0;j<4;j++){const t=j/4,u=(j+1)/4;tint=['#8ca65d','#9fba65','#bace80','#d0dc97'][j];tri(point(-1,t),point(1,t),point(-1,u));tri(point(1,t),point(1,u),point(-1,u));}
+   const point=(side,t)=>{const width=(.006+Math.sin(t*Math.PI)*.028)*(t===1?0:1),bend=r+t*t*.10;return[Math.cos(a)*width*side+Math.sin(a)*bend,h*(t-.2*t*t),Math.sin(a)*width*side-Math.cos(a)*bend];};
+   for(let j=0;j<4;j++){const t=j/4,u=(j+1)/4;tint=['#6e915c','#89a968','#afc681','#c6d798'][j];tri(point(-1,t),point(1,t),point(-1,u));tri(point(1,t),point(1,u),point(-1,u));}
   }
  }else{
   // Cupped petals, stems and leaves share the buildings' sunlight instead of a flat photo card.
@@ -58,10 +58,10 @@ function geometry(flowers){
    const x=[0,.15,-.14][f],z=[-.1,.12,.13][f],h=[.30,.20,.24][f],n=f===2?8:5;
    tint='#6b914e';for(let j=0;j<3;j++){const a=j*Math.PI*2/3,b=(j+1)*Math.PI*2/3;tri([x+Math.sin(a)*.009,0,z+Math.cos(a)*.009],[x+Math.sin(b)*.009,0,z+Math.cos(b)*.009],[x,h,z]);}
    for(let k=0;k<3;k++){const a=k*2.4+f,stem=[x,.08,z],tip=[x+Math.sin(a)*.13,.13,z+Math.cos(a)*.13],left=[x+Math.sin(a-.5)*.07,.14,z+Math.cos(a-.5)*.07],right=[x+Math.sin(a+.5)*.07,.14,z+Math.cos(a+.5)*.07];tint=k%2?'#88ab59':'#689645';tri(stem,left,tip);tri(stem,tip,right);}
-   tint=['#fff4d0','#efb1b6','#f4d276'][f];
+   tint=['#fff8e9','#eaaac1','#cbbbea'][f];
    for(let i=0;i<n;i++){
     const a=i*Math.PI*2/n;
-    const p=t=>{const u=Math.cos(t)*.045,v=.048+Math.sin(t)*.053;return[x+Math.cos(a)*v-Math.sin(a)*u,h+.024*Math.sin(t)+.02*Math.abs(Math.cos(t)),z+Math.sin(a)*v+Math.cos(a)*u];};
+    const p=t=>{const u=Math.cos(t)*.058,v=.060+Math.sin(t)*.065;return[x+Math.cos(a)*v-Math.sin(a)*u,h+.042*Math.sin(t)+.028*Math.abs(Math.cos(t)),z+Math.sin(a)*v+Math.cos(a)*u];};
     for(let j=0;j<8;j++)tri([x+Math.cos(a)*.04,h-.008,z+Math.sin(a)*.04],p(j*Math.PI/4),p((j+1)*Math.PI/4));
    }
    tint='#dba93f';for(let j=0;j<8;j++){const a=j*Math.PI/4,b=(j+1)*Math.PI/4;tri([x,h+.022,z],[x+Math.sin(a)*.025,h+.009,z+Math.cos(a)*.025],[x+Math.sin(b)*.025,h+.009,z+Math.cos(b)*.025]);}

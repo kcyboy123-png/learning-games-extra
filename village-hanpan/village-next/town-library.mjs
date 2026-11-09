@@ -80,7 +80,7 @@ export function createTownLibrary({getState,onVisit,onRestore,onNew,notify=()=>{
  shareBox.append(shareTitle,el('p','링크를 가진 사람은 작품을 볼 수 있어요. 실명 등 개인정보는 소개에 쓰지 않아요.'),shareText,button('링크 복사',async()=>{await navigator.clipboard.writeText(shareText.value);notify('감상 링크를 복사했어요.');}));
  const file=el('input');file.type='file';file.multiple=true;file.accept='.json,application/json';file.hidden=true;
  function archiveCurrent(title=name.value,description=note.value){return archiveTown(storage,getState(),{name:title,note:description,thumbnail:captureThumbnail()});}
- function startNew(){archiveCurrent();onNew();dialog.close();}
+ function startNew(){archiveCurrent();if(onNew())dialog.close();}
  function download(state=getState(),title=name.value,description=note.value){const a=el('a');const url=URL.createObjectURL(new Blob([townFile(state,title,description)],{type:'application/json'}));a.href=url;a.download='마을-전시작품.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);notify('감상용 마을 파일을 보관했어요.');}
  function render(){list.replaceChildren();const towns=readLibrary(storage);
   if(!towns.length){list.append(el('p','아직 보관한 작품이 없어요. 지금 마을부터 담아 보세요.'));return;}

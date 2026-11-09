@@ -14,7 +14,7 @@ function materials(){
  // Atlas rows: spring/summer, autumn/winter. Insets avoid adjacent-cell mip bleeding.
  for(const index of [3,0,1,2]){
   const[x,y,w,h]=treeFrames[index],[aw,ah]=treeAtlasSize,map=atlas.clone();map.repeat.set(w/aw,h/ah);map.offset.set(x/aw,1-(y+h)/ah);map.colorSpace=T.SRGBColorSpace;map.userData.shared=true;map.needsUpdate=true;
-  seasonMaterials.push(new T.SpriteMaterial({map,color:'#fff1dd',alphaTest:.3,transparent:false,depthWrite:true}));
+  seasonMaterials.push(new T.SpriteMaterial({map,color:'#fff8f0',alphaTest:.3,transparent:false,depthWrite:true}));
  }
 }
 

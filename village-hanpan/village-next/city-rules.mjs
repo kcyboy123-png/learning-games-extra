@@ -32,7 +32,8 @@ export function premiumIncome(s,live){
 }
 export function cityBeauty(s,live,base){
  const phase=cityPhase(s);if(!phase)return base;
- const facilities=live.filter(b=>{const d=TYPES[b.type];return d.cap||d.food||d.health||d.education||d.leisure;});
+ // Cozy facilities without upgrade controls cannot be penalized for missing upgrades.
+ const facilities=live.filter(b=>{const d=TYPES[b.type];return (s.cozyV!==1||Number.isInteger(d.sprite))&&(d.cap||d.food||d.health||d.education||d.leisure);});
  const facade=facilities.length?facilities.reduce((n,b)=>n+Math.min(1,b.opts.length*.5+(buildingSpec(s,b.type).facade||0)),0)/facilities.length:0;
  const trees=live.filter(b=>['tree','avenue'].includes(b.type)).length;
  const restored=Math.max(base.preservation,Math.min(.6,base.preservation+trees*.04));

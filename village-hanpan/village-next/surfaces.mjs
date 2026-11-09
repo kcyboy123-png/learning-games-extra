@@ -6,7 +6,7 @@ const maps=new Map();
 let architectureArt;
 function paintArchitecture(kind,ctx,map){
  if(kind==='stone'){
-  const image=new Image();image.onload=()=>{ctx.globalAlpha=.40;ctx.drawImage(image,40,25,140,55,0,0,256,256);ctx.globalAlpha=1;map.needsUpdate=true;};
+  const image=new Image();image.onload=()=>{ctx.globalAlpha=.26;ctx.drawImage(image,40,25,140,55,0,0,256,256);ctx.globalAlpha=1;map.needsUpdate=true;};
   image.src=new URL('./assets/scenario-stone.webp',import.meta.url).href;return;
  }
  const quadrant={plaster:[0,0],wood:[1,0],roof:[0,1],stone:[1,1]}[kind];
@@ -19,7 +19,7 @@ function paintArchitecture(kind,ctx,map){
   if(!image)return;
   const w=image.naturalWidth/2,h=image.naturalHeight/2;
   // Preserve the existing palette and seasonal shaders beneath the shared painted grain.
-  ctx.globalAlpha=kind==='plaster'?.24:kind==='wood'?.44:kind==='roof'?.30:.40;
+  ctx.globalAlpha=kind==='plaster'?.16:kind==='wood'?.34:kind==='roof'?.24:.32;
   ctx.drawImage(image,quadrant[0]*w,quadrant[1]*h,w,h,0,0,256,256);
   ctx.globalAlpha=1;map.needsUpdate=true;
  });
@@ -50,11 +50,11 @@ function texture(kind){
  if(kind==='fabric'){for(let i=0;i<256;i+=4){ctx.fillStyle=i%8?'#77705c0b':'#fffbea38';ctx.fillRect(i,0,1,256);ctx.fillRect(0,i,256,1);}for(let i=4;i<256;i+=10){ctx.fillStyle='#9b87633b';ctx.fillRect(i,6,5,1);ctx.fillRect(i,248,5,1);}}
  if(kind==='wood')for(let i=0;i<90;i++){ctx.strokeStyle=i%4?'#775d3933':'#fff4d077';ctx.lineWidth=.4+rand();ctx.beginPath();let x=rand()*256;ctx.moveTo(x,0);for(let y=0;y<=256;y+=8)ctx.lineTo(x+Math.sin(y*.04+i)*2,y);ctx.stroke();}
  if(kind==='wood')for(const [x,y] of [[65,70],[192,184]]){for(let k=1;k<10;k++){ctx.strokeStyle='#71523730';ctx.lineWidth=.7;ctx.beginPath();ctx.ellipse(x,y,2+k*1.5,5+k*3.3,.1,0,Math.PI*2);ctx.stroke();}}
- if(kind==='plaster')for(let y=0;y<256;y++){const eave=.14*Math.exp(-y/30),base=.08*Math.exp(-(255-y)/20);ctx.fillStyle=`rgba(100,76,44,${eave+base})`;ctx.fillRect(0,y,256,1);}
+ if(kind==='plaster')for(let y=0;y<256;y++){const eave=.14*Math.exp(-y/30),base=.04*Math.exp(-(255-y)/20);ctx.fillStyle=`rgba(100,76,44,${eave+base})`;ctx.fillRect(0,y,256,1);}
  if(kind==='roof')for(let y=0;y<256;y+=32){ctx.fillStyle='#3b4c5735';ctx.fillRect(0,y,256,2);ctx.fillStyle='#ffffff40';ctx.fillRect(0,y+2,256,1);for(let x=(y/32%2)*32;x<256;x+=64){ctx.fillStyle='#3b4c5720';ctx.fillRect(x,y,1,32);}}
  if(kind==='stone'){
-  for(let i=0;i<22;i++){const x=rand()*256,y=rand()*256,r=12+rand()*34,g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,i%3?'#9d927728':'#ffffff75');g.addColorStop(1,'#ffffff00');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}
-  for(let i=0;i<240;i++){ctx.strokeStyle=i%4?'#807b6d33':'#fff8df88';ctx.lineWidth=.7;const x=rand()*256,y=rand()*256;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+rand()*6,y+rand()*2);ctx.stroke();}
+  for(let i=0;i<22;i++){const x=rand()*256,y=rand()*256,r=12+rand()*34,g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,i%3?'#8b999318':'#ffffff55');g.addColorStop(1,'#ffffff00');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}
+  for(let i=0;i<240;i++){ctx.strokeStyle=i%4?'#7f8b861f':'#fff8df66';ctx.lineWidth=.7;const x=rand()*256,y=rand()*256;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+rand()*6,y+rand()*2);ctx.stroke();}
  }
  const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;map.wrapS=map.wrapT=T.RepeatWrapping;map.anisotropy=4;map.userData.shared=true;
  if(kind==='grass'){
@@ -66,11 +66,11 @@ function texture(kind){
  paintArchitecture(kind,ctx,map);maps.set(kind,map);return map;
 }
 export function surfaceOptions(color){
- if(color==='#7cc5be')return{onBeforeCompile(shader){shader.uniforms.streamTime=surfaceTime;shader.uniforms.streamWinter=surfaceWinter;shader.vertexShader='varying vec2 vStreamUv;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvStreamUv=uv;');shader.fragmentShader='varying vec2 vStreamUv;uniform float streamTime,streamWinter;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nfloat flow=streamTime*(1.-streamWinter);float wave=sin(vStreamUv.y*96.-flow*1.05+sin(vStreamUv.x*10.+flow*.35)*1.2)*.72+sin(vStreamUv.y*165.+vStreamUv.x*24.-flow*.75)*.28;float streamCenter=.5+.07*sin(vStreamUv.y*15.)+.025*sin(vStreamUv.y*37.);float edge=clamp(pow(abs(vStreamUv.x-streamCenter)*2.,2.),0.,1.);diffuseColor.rgb*=mix(vec3(.70,.93,1.04),vec3(1.12,1.07,.94),edge);float crossing=sin(vStreamUv.x*26.+sin(vStreamUv.y*50.-flow*.4))+sin(vStreamUv.y*210.-flow*.7);float caustic=1.-smoothstep(.02,.13,abs(crossing));diffuseColor.rgb+=vec3(.10,.16,.14)*smoothstep(.82,1.,wave)*(1.-streamWinter);diffuseColor.rgb+=vec3(.028,.052,.042)*caustic*(1.-edge*.65)*(1.-streamWinter);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.66,.82,.84),streamWinter*.28);');},customProgramCacheKey:()=> 'village-stream-v2'};
+ if(color==='#7cc5be')return{onBeforeCompile(shader){shader.uniforms.streamTime=surfaceTime;shader.uniforms.streamWinter=surfaceWinter;shader.vertexShader='varying vec2 vStreamUv;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvStreamUv=uv;');shader.fragmentShader='varying vec2 vStreamUv;uniform float streamTime,streamWinter;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nfloat flow=streamTime*(1.-streamWinter);float wave=sin(vStreamUv.y*96.-flow*1.05+sin(vStreamUv.x*10.+flow*.35)*1.2)*.72+sin(vStreamUv.y*165.+vStreamUv.x*24.-flow*.75)*.28;float streamCenter=.5+.07*sin(vStreamUv.y*15.)+.025*sin(vStreamUv.y*37.);float edge=clamp(pow(abs(vStreamUv.x-streamCenter)*2.,2.),0.,1.);diffuseColor.rgb*=mix(vec3(.58,.88,1.06),vec3(1.13,1.09,.97),edge);float crossing=sin(vStreamUv.x*26.+sin(vStreamUv.y*50.-flow*.4))+sin(vStreamUv.y*210.-flow*.7);float caustic=1.-smoothstep(.02,.13,abs(crossing));diffuseColor.rgb+=vec3(.10,.16,.14)*smoothstep(.82,1.,wave)*(1.-streamWinter);diffuseColor.rgb+=vec3(.045,.068,.054)*caustic*(1.-edge*.65)*(1.-streamWinter);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.66,.82,.84),streamWinter*.28);');},customProgramCacheKey:()=> 'village-stream-v2'};
 
  const kind=color==='#9cbd6e'?'grass':Object.keys(palettes).find(k=>palettes[k].includes(color));
  if(!kind){if(['#ddc990','#9cab83','#8fd1c7','#c1d9cb','#dbe1bf'].includes(color))return{roughness:.32,onBeforeCompile(shader){shader.vertexShader='varying vec3 vWindowPoint;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvWindowPoint=position;');shader.fragmentShader='varying vec3 vWindowPoint;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nfloat reflection=pow(max(0.,sin((vWindowPoint.x+vWindowPoint.y*.55)*13.)),12.);float sky=smoothstep(-.35,.45,vWindowPoint.y);diffuseColor.rgb=mix(diffuseColor.rgb,mix(vec3(.91,.74,.46),vec3(.69,.87,.90),sky),.10);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.94,.97,.92),reflection*.18);');},customProgramCacheKey:()=> 'village-window-v2'};return{};}const map=texture(kind);
- const options={map,bumpMap:map,bumpScale:kind==='roof'?.035:kind==='stone'?.035:kind==='wood'?.024:kind==='plaster'?.004:kind==='fabric'?.006:0,roughness:kind==='roof'?.8:kind==='fabric'?.99:.92};
+ const options={map,bumpMap:map,bumpScale:kind==='roof'?.018:kind==='stone'?.018:kind==='wood'?.024:kind==='plaster'?.002:kind==='fabric'?.006:0,roughness:kind==='roof'?.64:kind==='fabric'?.99:.92};
  if(kind==='grass')Object.assign(options,{onBeforeCompile(shader){
   shader.uniforms.groundWinter=surfaceWinter;
   shader.vertexShader='varying vec3 meadowPoint;\n'+shader.vertexShader;
@@ -78,7 +78,7 @@ export function surfaceOptions(color){
   shader.fragmentShader='varying vec3 meadowPoint; uniform float groundWinter;\n'+shader.fragmentShader;
   shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
    float turfPatch=.5+.30*sin(meadowPoint.x*.19+sin(meadowPoint.z*.16))+.20*sin(meadowPoint.z*.27-meadowPoint.x*.13);
-   vec3 turf=mix(vec3(.67,.84,.63),vec3(1.08,1.03,.81),smoothstep(.12,.88,turfPatch));
+   vec3 turf=mix(vec3(.64,.85,.70),vec3(1.015,1.04,.87),smoothstep(.12,.88,turfPatch));
    diffuseColor.rgb*=mix(turf,vec3(1.),groundWinter);
    float blades=sin(meadowPoint.x*36.+sin(meadowPoint.z*24.))*sin(meadowPoint.z*42.+meadowPoint.x*13.);
    diffuseColor.rgb*=1.+blades*.028*(1.-groundWinter);`);

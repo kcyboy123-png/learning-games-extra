@@ -20,7 +20,7 @@ export function coastSurface(kind='sand'){
    float grainFade=1.-smoothstep(.01,.075,length(fwidth(coastPoint.xz)));
    float wet=1.-smoothstep(-.58,-.16,coastPoint.y+.035*sin(coastPoint.x*2.1+sin(coastPoint.z*1.4)));
    float reliefFade=1.-smoothstep(.08,.3,length(fwidth(coastPoint)));
-   float coastRelief=(sin(coastPoint.x*7.+sin(coastPoint.z*3.))*sin(coastPoint.z*9.+coastPoint.y*19.))*.003*reliefFade;
+   float coastRelief=(sin(coastPoint.x*7.+sin(coastPoint.z*3.))*sin(coastPoint.z*9.+coastPoint.y*19.))*.006*reliefFade;
    #if COAST_ROCK == 1
     float strata=sin(coastPoint.y*28.+sin(coastPoint.x*3.+coastPoint.z*2.)*.8);
     diffuseColor.rgb*=1.+broad*.065+strata*.025+grain*grainFade*.07;
@@ -30,9 +30,9 @@ export function coastSurface(kind='sand'){
    #else
     float ripple=sin(coastPoint.z*10.+coastPoint.x*2.+sin(coastPoint.x*.8)*3.+sin(coastPoint.z*.6));
     float turf=smoothstep(.025,.09,diffuseColor.g-diffuseColor.r)*smoothstep(-.05,.1,coastPoint.y);
-    diffuseColor.rgb*=mix(vec3(1.),mix(vec3(.67,.84,.63),vec3(1.08,1.03,.81),smoothstep(.12,.88,.5+.5*broad)),turf);
-    diffuseColor.rgb*=1.+broad*.065*(1.-turf)+ripple*.019*(1.-turf)+grain*grainFade*mix(.10,.30,turf);
-    diffuseColor.rgb*=mix(vec3(1.),vec3(.66,.79,.78),wet*.62);
+    diffuseColor.rgb*=mix(vec3(1.),mix(vec3(.64,.85,.70),vec3(1.015,1.04,.87),smoothstep(.12,.88,.5+.5*broad)),turf);
+    diffuseColor.rgb*=1.+broad*.065*(1.-turf)+ripple*.012*(1.-turf)+grain*grainFade*mix(.08,.12,turf);
+    diffuseColor.rgb*=mix(vec3(1.),vec3(.70,.83,.84),wet*.52);
    #endif`);
   shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
    vec3 shoreDx=dFdx(-vViewPosition),shoreDy=dFdy(-vViewPosition);
@@ -41,6 +41,6 @@ export function coastSurface(kind='sand'){
    vec3 shoreGradient=sign(shoreDet)*(dFdx(coastRelief)*shoreR1+dFdy(coastRelief)*shoreR2);
    if(abs(shoreDet)>.0000001)normal=normalize(abs(shoreDet)*normal-shoreGradient);`);
   shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
-   roughnessFactor=mix(.96,.72,1.-smoothstep(-.58,-.16,coastPoint.y));`);
+   roughnessFactor=mix(.96,.48,1.-smoothstep(-.58,-.16,coastPoint.y));`);
  },customProgramCacheKey:()=>`mainland-coast-${kind}-living15`};
 }

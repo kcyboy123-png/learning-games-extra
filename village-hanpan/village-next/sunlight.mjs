@@ -29,14 +29,14 @@ export function createSunlight(renderer){
   vec3 positionAt(vec2 uv){vec4 p=inverseProjection*vec4(uv*2.-1.,texture2D(depthMap,uv).x*2.-1.,1.);return p.xyz/p.w;}
   float contactShade(){
    vec3 p=positionAt(vUv),normal=normalize(cross(dFdx(p),dFdy(p)));float shade=0.;
-   for(int i=0;i<8;i++){float a=(float(i)+.5)*.78539816;vec3 delta=positionAt(clamp(vUv+vec2(cos(a),sin(a))*contactStep,vec2(.001),vec2(.999)))-p;float d=length(delta);shade+=max(dot(normal,delta)/(d+.001)-.12,0.)*(1.-smoothstep(.10,.60,d));}
-   return 1.-min(.24,shade*.21);
+   for(int i=0;i<8;i++){float a=(float(i)+.5)*.78539816;vec3 delta=positionAt(clamp(vUv+vec2(cos(a),sin(a))*contactStep,vec2(.001),vec2(.999)))-p;float d=length(delta);shade+=max(dot(normal,delta)/(d+.001)-.12,0.)*(1.-smoothstep(.10,.70,d));}
+   return 1.-min(.28,shade*.25);
   }
   void main(){vec3 c=texture2D(source,vUv).rgb;
    c*=contactShade();
    float sunlit=smoothstep(.8,2.,dot(c,vec3(.2126,.7152,.0722)));
-   c*=mix(vec3(.94,.985,1.045),vec3(1.045,1.012,.95),sunlit);
-   c*=1.-.045*smoothstep(.32,.82,length((vUv-vec2(.51,.48))*vec2(.9,1.)));
+   c*=mix(vec3(.96,.99,1.04),vec3(1.045,1.012,.95),sunlit);
+   c*=1.-.025*smoothstep(.32,.82,length((vUv-vec2(.51,.48))*vec2(.9,1.)));
    vec3 b=texture2D(glow,vUv).rgb*.4;
    b+=(texture2D(glow,vUv+stepSize).rgb+texture2D(glow,vUv-stepSize).rgb+texture2D(glow,vUv+stepSize*vec2(1.,-1.)).rgb+texture2D(glow,vUv+stepSize*vec2(-1.,1.)).rgb)*.15;
    gl_FragColor=vec4(c+b*amount*vec3(1.,.94,.81),1.);
@@ -47,7 +47,7 @@ export function createSunlight(renderer){
  return {
   resize(){renderer.getDrawingBufferSize(size);const w=Math.max(1,size.x),h=Math.max(1,size.y);sceneTarget.setSize(w,h);glowTarget.setSize(Math.max(1,Math.ceil(w/4)),Math.max(1,Math.ceil(h/4)));blur.uniforms.stepSize.value.set(7/w,7/h);finish.uniforms.stepSize.value.set(5/w,5/h);},
   season(se){finish.uniforms.amount.value=[.10,.16,.11,.15][se];},
-  render(world,camera3d){try{finish.uniforms.inverseProjection.value.copy(camera3d.projectionMatrixInverse);finish.uniforms.contactStep.value.set(.26/(camera3d.right-camera3d.left),.26/(camera3d.top-camera3d.bottom));renderer.setRenderTarget(sceneTarget);renderer.render(world,camera3d);quad.material=blur;renderer.setRenderTarget(glowTarget);renderer.render(scene,camera);quad.material=finish;renderer.setRenderTarget(null);renderer.render(scene,camera);}finally{renderer.setRenderTarget(null);}},
+  render(world,camera3d){try{finish.uniforms.inverseProjection.value.copy(camera3d.projectionMatrixInverse);finish.uniforms.contactStep.value.set(.30/(camera3d.right-camera3d.left),.30/(camera3d.top-camera3d.bottom));renderer.setRenderTarget(sceneTarget);renderer.render(world,camera3d);quad.material=blur;renderer.setRenderTarget(glowTarget);renderer.render(scene,camera);quad.material=finish;renderer.setRenderTarget(null);renderer.render(scene,camera);}finally{renderer.setRenderTarget(null);}},
   dispose(){sceneTarget.dispose();glowTarget.dispose();quad.geometry.dispose();blur.dispose();finish.dispose();}
  };
 }
