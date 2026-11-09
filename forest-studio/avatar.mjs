@@ -33,9 +33,9 @@ export class ForestAvatar {
   const y=groundChanged?w.walkGround():this.groundY;this.groundY=y;
   a.root.visible=on;this.contact.visible=on; // Keep the light count stable: hiding lights recompiles every lit forest material.
   a.root.position.set(w.walk.x,y-a.minY,w.walk.z);
-  if(moved>.00001){const angle=w.walk.yaw+Math.atan2(w.move.x,w.move.z);a.root.rotation.y+=Math.atan2(Math.sin(angle-a.root.rotation.y),Math.cos(angle-a.root.rotation.y))*(1-Math.exp(-dt*14));}
+  if(moved>.00001){const angle=w.walk.yaw+Math.atan2(w.move.x,w.move.z);a.root.rotation.y+=Math.atan2(Math.sin(angle-a.root.rotation.y),Math.cos(angle-a.root.rotation.y))*(1-Math.exp(-dt*12));}
   const action=a.actions[on&&moved>.00001?'walk':'idle'];
-  if(action&&action!==a.current){action.reset().play();if(a.current)a.current.crossFadeTo(action,.2,false);a.current=action;}
+  if(action&&action!==a.current){action.reset().play();if(a.current)a.current.crossFadeTo(action,.26,false);a.current=action;}
   a.mixer.update(dt);
   const night=w.environment==='night';if(this.lightEnvironment!==w.environment){this.lightEnvironment=w.environment;this.fill.color.set(night?'#e2eaff':'#fff0e5');this.rim.color.set(night?'#a9c7ff':'#fff0da');}
   this.fill.intensity=on?(night?.52:.65):0;this.rim.intensity=on?(night?.48:.7):0;

@@ -15,17 +15,17 @@ export const ENTRANCE={
 export const smooth=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t);};
 const plateau=(x,z,cx,cz,flat,outer,a)=>a*(1-smooth(flat,outer,Math.hypot(x-cx,z-cz)));
 // Normalised distance from the clearing centre: exactly 1 on the irregular (rounded, wobbling) boundary.
-export function siteFactor(x,z){
- const t=Math.atan2(z,x);
+function factorAtAngle(x,z,t){
  const w=1+.06*Math.sin(3*t+.8)+.04*Math.sin(5*t+2.1)+.03*Math.sin(7*t-.5);
  return Math.cbrt((Math.abs(x)/SITE.hx)**3+(Math.abs(z)/SITE.hz)**3)*w;
 }
+export const siteFactor=(x,z)=>factorAtAngle(x,z,Math.atan2(z,x));
 export const insideSite=(x,z,margin=1)=>Number.isFinite(x)&&Number.isFinite(z)&&siteFactor(x,z)<=margin;
 export const EDIT_MARGIN=.96,WALK_MARGIN=.985;
 // The inner clearing: two low hills, one shallow hollow, flat arrival. Outside: rim mounds, then distant ridges.
 export function height(x,z,terrain=DEFAULT_TERRAIN){
  if(!Number.isFinite(x)||!Number.isFinite(z))return 0;
- const f=siteFactor(x,z);let h=0;
+ const a=Math.atan2(z,x),f=factorAtAngle(x,z,a);let h=0;
  if(terrain==='clearing-v6'){
   // Tuned 2026-11-07 by random search (tests/slope-tune.mjs): max inner slope ~10 deg, arrival ring < 0.1 deg.
   h+=plateau(x,z,5.5,-6,1.55,8.5,.77);     // north-east hill: a place to look down on the forest
@@ -33,9 +33,8 @@ export function height(x,z,terrain=DEFAULT_TERRAIN){
   h-=plateau(x,z,1.35,4.35,1.05,4.05,.23); // shallow hollow between the centre and the entrance
   h+=.03*Math.sin(x*.7+1)*Math.cos(z*.55)*smooth(1.2,3,Math.hypot(x,z-9.75));
  }
- const a=Math.atan2(z,x);
- h+=1.7*smooth(1,1.45,f)+.9*smooth(1.3,2.3,f);
- h+=smooth(1.8,3.2,f)*(2.5+1.2*Math.sin(a*3+1)+.8*Math.sin(a*7));
+ if(f>1)h+=1.7*smooth(1,1.45,f)+.9*smooth(1.3,2.3,f);
+ if(f>1.8)h+=smooth(1.8,3.2,f)*(2.5+1.2*Math.sin(a*3+1)+.8*Math.sin(a*7));
  return h;
 }
 export function normal(x,z,terrain=DEFAULT_TERRAIN,e=.08){

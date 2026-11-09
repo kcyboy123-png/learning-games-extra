@@ -93,9 +93,9 @@ export const isLegacy=state=>state.terrain.id==='flat-v1';
 // ---- local/world helpers (match three's rotation.y) ----
 export function toLocal(o,x,z){const c=Math.cos(o.rotation),s=Math.sin(o.rotation),dx=x-o.x,dz=z-o.z;return {x:(dx*c-dz*s)/o.scale,z:(dx*s+dz*c)/o.scale};}
 export function toWorld(o,lx,lz){const c=Math.cos(o.rotation),s=Math.sin(o.rotation);return {x:o.x+(lx*c+lz*s)*o.scale,z:o.z+(-lx*s+lz*c)*o.scale};}
-export function inFoot(o,foot,x,z,inset=0){const l=toLocal(o,x,z);const w=foot.w-inset/o.scale,d=foot.d-inset/o.scale;if(w<=0||d<=0)return false;return foot.round?(l.x/w)**2+(l.z/d)**2<=1:Math.abs(l.x)<=w&&Math.abs(l.z)<=d;}
+export function inFoot(o,foot,x,z,inset=0){const c=Math.cos(o.rotation),s=Math.sin(o.rotation),dx=x-o.x,dz=z-o.z,lx=(dx*c-dz*s)/o.scale,lz=(dx*s+dz*c)/o.scale;const w=foot.w-inset/o.scale,d=foot.d-inset/o.scale;if(w<=0||d<=0)return false;return foot.round?(lx/w)**2+(lz/d)**2<=1:Math.abs(lx)<=w&&Math.abs(lz)<=d;}
 // Sample points across the whole footprint (rotation and scale applied), not only the centre.
-export function footSamples(o,foot,n=5){const out=[];for(let i=0;i<n;i++)for(let j=0;j<n;j++){const lx=-foot.w+2*foot.w*i/(n-1),lz=-foot.d+2*foot.d*j/(n-1);if(foot.round&&(lx/foot.w)**2+(lz/foot.d)**2>1.001)continue;const p=toWorld(o,lx,lz);out.push({lx,lz,x:p.x,z:p.z});}return out;}
+export function footSamples(o,foot,n=5){const out=[],c=Math.cos(o.rotation),s=Math.sin(o.rotation);for(let i=0;i<n;i++)for(let j=0;j<n;j++){const lx=-foot.w+2*foot.w*i/(n-1),lz=-foot.d+2*foot.d*j/(n-1);if(foot.round&&(lx/foot.w)**2+(lz/foot.d)**2>1.001)continue;out.push({lx,lz,x:o.x+(lx*c+lz*s)*o.scale,z:o.z+(-lx*s+lz*c)*o.scale});}return out;}
 export const decksOf=items=>items.filter(i=>material(i.kind)?.base==='deck');
 export function deckTop(deck,terrain){let max=-Infinity;for(const s of footSamples(deck,material(deck.kind).foot))max=Math.max(max,height(s.x,s.z,terrain));return max+.14;}
 export const dependents=(items,id)=>items.filter(i=>i.on===id);
@@ -111,8 +111,7 @@ export function evaluate(items,cand,terrain=DEFAULT_TERRAIN){
  if(!insideSite(o.x,o.z,EDIT_MARGIN))return fail('빈터 안쪽에 놓아 주세요. 바깥은 주변 숲이에요.',{outside:true});
  const samples=m.foot?footSamples(o,m.foot):[{x:o.x,z:o.z}];
  if(samples.some(s=>!insideSite(s.x,s.z,EDIT_MARGIN)))return fail('가장자리에 걸쳐 있어요. 빈터 안쪽으로 조금 옮겨 볼까요?',{outside:true});
- for(const s of samples)s.y=height(s.x,s.z,terrain);
- const min=Math.min(...samples.map(s=>s.y)),max=Math.max(...samples.map(s=>s.y));
+ let min=Infinity,max=-Infinity;for(const s of samples){s.y=height(s.x,s.z,terrain);min=Math.min(min,s.y);max=Math.max(max,s.y);}
  const onDecks=samples.map(s=>deckAt(s.x,s.z));
  const anyDeck=onDecks.some(Boolean);
  if(m.base==='point'){if(anyDeck)return fail('데크 위에는 심을 수 없어요. 땅 위에 놓아 볼까요?');return {ok:true,y:samples[0].y,on:null,samples};}
@@ -132,7 +131,7 @@ export function restY(items,it,terrain=DEFAULT_TERRAIN){
  const m=material(it.kind);if(!m)return height(it.x,it.z,terrain);
  if(it.on){const deck=items.find(d=>d.id===it.on);if(deck)return deckTop(deck,terrain);}
  if(m.base==='point')return height(it.x,it.z,terrain);
- const hs=footSamples(it,m.foot).map(s=>height(s.x,s.z,terrain));const max=Math.max(...hs),min=Math.min(...hs);
+ let max=-Infinity,min=Infinity;for(const s of footSamples(it,m.foot)){const y=height(s.x,s.z,terrain);max=Math.max(max,y);min=Math.min(min,y);}
  if(m.base==='cover')return min;if(m.base==='deck')return max+.14;if(m.base==='pond')return max+.05;return max;
 }
 // Bundles: fixed loose scatter from a seed so the preview equals the confirmed placement.
@@ -149,12 +148,13 @@ export function deckLocked(items,id){return dependents(items,id).length>0;}
 
 // ---- ground cover mask: recomputed from the confirmed covers every time items change ----
 export const MASK_RES=128;
-export function coverMask(items){
- const data=new Uint8Array(MASK_RES*MASK_RES);
+export function coverMask(items,data=new Uint8Array(MASK_RES*MASK_RES)){
+ data.fill(0);
  for(const it of items){const m=material(it.kind);if(!m||m.base!=='cover')continue;const r=Math.max(m.foot.w,m.foot.d)*it.scale+.25;
   const i0=Math.max(0,Math.floor((it.x-r+BOUND.hx)/(2*BOUND.hx)*MASK_RES)),i1=Math.min(MASK_RES-1,Math.ceil((it.x+r+BOUND.hx)/(2*BOUND.hx)*MASK_RES));
   const j0=Math.max(0,Math.floor((it.z-r+BOUND.hz)/(2*BOUND.hz)*MASK_RES)),j1=Math.min(MASK_RES-1,Math.ceil((it.z+r+BOUND.hz)/(2*BOUND.hz)*MASK_RES));
-  for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const x=(i+.5)/MASK_RES*2*BOUND.hx-BOUND.hx,z=(j+.5)/MASK_RES*2*BOUND.hz-BOUND.hz;if(inFoot(it,m.foot,x,z,-.12))data[j*MASK_RES+i]=255;}}
+  const c=Math.cos(it.rotation),s=Math.sin(it.rotation),w=m.foot.w+.12/it.scale,d=m.foot.d+.12/it.scale;
+  for(let j=j0;j<=j1;j++){const dz=(j+.5)/MASK_RES*2*BOUND.hz-BOUND.hz-it.z;for(let i=i0;i<=i1;i++){const dx=(i+.5)/MASK_RES*2*BOUND.hx-BOUND.hx-it.x,lx=(dx*c-dz*s)/it.scale,lz=(dx*s+dz*c)/it.scale;if(m.foot.round?(lx/w)**2+(lz/d)**2<=1:Math.abs(lx)<=w&&Math.abs(lz)<=d)data[j*MASK_RES+i]=255;}}}
  return data;
 }
 export const maskAt=(data,x,z)=>{const i=Math.floor((x+BOUND.hx)/(2*BOUND.hx)*MASK_RES),j=Math.floor((z+BOUND.hz)/(2*BOUND.hz)*MASK_RES);return i<0||j<0||i>=MASK_RES||j>=MASK_RES?0:data[j*MASK_RES+i];};
@@ -210,7 +210,8 @@ export class History{constructor(){this.states=[];}push(s){this.states.push(clon
 export function observe(items){
  const flowers=items.filter(x=>material(x.kind)?.drawer==='flower');
  for(const a of flowers)for(const b of flowers)if(a.kind==='lavender'&&b.kind==='poppy'&&Math.hypot(a.x-b.x,a.z-b.z)<1.8)return '보라색 라벤더 옆에 살구색 꽃을 놓았네요. 어떤 색이 먼저 보이나요?';
- for(const m of MATERIALS){const a=items.filter(x=>x.kind===m.id&&!x.group);if(a.length>=3&&a.some(p=>a.filter(q=>Math.abs(q.x-p.x)<.5||Math.abs(q.z-p.z)<.5).length>=3))return `같은 ${m.name}를 세 번 이상 줄지어 놓았네요. 간격을 바꾸면 어떨까요?`;}
+ const groups=new Map();for(const it of items)if(!it.group){if(!groups.has(it.kind))groups.set(it.kind,[]);groups.get(it.kind).push(it);}
+ for(const m of MATERIALS){const a=groups.get(m.id);if(a?.length>=3&&a.some(p=>{let n=0;for(const q of a)if((Math.abs(q.x-p.x)<.5||Math.abs(q.z-p.z)<.5)&&++n>=3)return true;return false;}))return `같은 ${m.name}를 세 번 이상 줄지어 놓았네요. 간격을 바꾸면 어떨까요?`;}
  if(items.some(a=>a.kind==='bench'&&items.some(b=>material(b.kind)?.drawer==='tree'&&Math.hypot(a.x-b.x,a.z-b.z)<2)))return '벤치 가까이에 키 큰 나무가 있어요. 안에서 바라보면 어떤 모습일까요?';
  if(items.length&&!items.some(x=>x.z>4))return '입구 가까이에 빈 공간을 남겼네요. 이 여백을 어떻게 쓰고 싶나요?';
  if(!items.length)return '빈터를 걸어 본 느낌은 어땠나요? 누구를 위한 자리를 먼저 만들까요?';

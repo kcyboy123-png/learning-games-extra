@@ -6,7 +6,7 @@ const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
 const finite=n=>Number.isFinite(n)?n:0;
 export function input(x,z){x=clamp(finite(x),-1,1);z=clamp(finite(z),-1,1);const l=Math.max(1,Math.hypot(x,z));return {x:x/l,z:z/l};}
 // Walking tops resolved once per items change: decks and the pavilion floor. {deck, top}
-export function deckSurfaces(items,terrain){const surfaces=[];for(const deck of items){const m=material(deck.kind);if(m?.walkTop!==undefined)surfaces.push({deck,top:restY(items,deck,terrain)+m.walkTop});}return surfaces;}
+export function deckSurfaces(items,terrain,heights){const surfaces=[];for(const deck of items){const m=material(deck.kind);if(m?.walkTop!==undefined)surfaces.push({deck,top:(heights?.get(deck)??restY(items,deck,terrain))+m.walkTop});}return surfaces;}
 // Ground + deck tops blended over a short approach band: the camera never pops at a deck edge.
 export function walkHeight(x,z,terrain,surfaces=[]){
  const g=height(x,z,terrain);let h=g;
