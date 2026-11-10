@@ -1,12 +1,11 @@
 const ease=t=>{t=Math.max(0,Math.min(1,t));return t*t*t*(t*(t*6-15)+10);};
-// Zero endpoint jerk prevents the rise and landing from feeling like hard camera stops.
-const glide=t=>{t=Math.max(0,Math.min(1,t));return t*t*t*t*(35+t*(-84+t*(70-20*t)));};
+// Start the reveal immediately; smooth endpoints preserve the close-up and landing.
 export function entrancePose(progress,region,player,aspect){
- const dokdo=region==='mist',rise=glide((progress-.11)/.38),settle=glide((progress-(dokdo?.50:.52))/(dokdo?.50:.48)),wide=rise*(1-settle);
+ const motion=ease(progress),dokdo=region==='mist',rise=ease(progress/.43),settle=ease((progress-.43)/.57),wide=rise*(1-settle),arc=Math.sin(Math.PI*motion);
  const endZoom=aspect<.8?2.3:1.9,closeZoom=endZoom*1.35,wideZoom=closeZoom/(dokdo?5:3);
- return {x:player.x,z:player.z,height:21+(21*(dokdo?5:3)-21)*wide+3*settle,
-  look:dokdo?player.y+1:.8,angle:.65+(dokdo?.09:-.07)*(1-ease(progress))+(dokdo?-.04:.035)*Math.sin(Math.PI*ease(progress)),
-  zoom:closeZoom*(1+.025*ease(progress/.11)*(1-rise))*Math.pow(wideZoom/closeZoom,rise)*Math.pow(endZoom/wideZoom,settle)};
+ return {x:player.x+.35*arc,z:player.z-.2*arc,height:21+(21*(dokdo?5:3)-21)*wide+3*settle,
+  look:dokdo?player.y+1:.8,angle:.65+(dokdo?.09:-.07)*(1-motion)+(dokdo?-.12:.12)*arc,
+  zoom:closeZoom*Math.pow(wideZoom/closeZoom,rise)*Math.pow(endZoom/wideZoom,settle)};
 }
 export function applyEntrancePose(world,pose){
  world.center.set(pose.x,0,pose.z);world.cameraHeight=pose.height;world.lookHeight=pose.look;

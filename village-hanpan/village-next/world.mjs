@@ -681,7 +681,7 @@ export class World{
  }
  updateEntrance(dt){
   const e=this.entrance;if(!e)return;
-  e.t=Math.min(1,e.t+dt/6.5);
+  e.t=Math.min(1,e.t+dt/(this.dokdo?4.2:3.6));
   applyEntrancePose(this,entrancePose(e.t,this.dokdo?'mist':'main',this.player.g.position,this.aspect));
   if(e.t===1){this.entrance=null;this.welcomeView=null;}
  }
