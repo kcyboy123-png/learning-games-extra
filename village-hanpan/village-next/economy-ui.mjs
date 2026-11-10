@@ -1,4 +1,4 @@
-import {COZY_BASE_INCOME,cozyEffects,buildingSpec,metrics,TYPES,MONTH,month,monthLabel,calendarMonth,demandMonth,connected,unlocked,HARVEST,HARVEST_SECONDS} from './core.mjs?v=perf1';
+import {COZY_BASE_INCOME,cozyEffects,buildingSpec,metrics,TYPES,MONTH,month,monthLabel,calendarMonth,demandMonth,connected,unlocked,harvestStatus,HARVEST,HARVEST_SECONDS} from './core.mjs?v=perf1';
 import {PLAY_SPEED,realSeconds} from './data.mjs?v=perf1';
 
 // nextId never decreases, so cancelling or reloading cannot restart completed guidance.
@@ -90,7 +90,7 @@ export function operatingPreviewText(s,b,before=metrics(s)){
 export function fundingAdvice(s,price){
  if(s.money>=price)return '';
  const net=netIncome(metrics(s)),wait=net>0?realSeconds((price-s.money)/net*MONTH):null;
- const harvest=s.harvestAt!==null?`텃밭 돌보는 중 · 약 ${realSeconds(HARVEST_SECONDS-(s.t-s.harvestAt))}초 뒤 +${HARVEST}`:s.harvested.includes(month(s))?'텃밭 도움은 다음 달 다시 받아요.':`텃밭을 돌보면 +${HARVEST}을 보탤 수 있어요.`;
+ const hs=harvestStatus(s),harvest=hs==='ready'?`우리 마을 텃밭을 눌러 +${HARVEST}을 수확해요. 시들지 않아요.`:s.harvestAt!==null?`텃밭이 자라는 중 · 약 ${realSeconds(HARVEST_SECONDS-(s.t-s.harvestAt))}초 뒤 직접 수확해요.`:hs==='rest'?'다음 달에 텃밭에 다시 심어요.':`우리 마을 공동 텃밭에서 씨앗을 심고 +${HARVEST}을 수확해요.`;
  return (s.paused?'일시정지 중에는 기금이 늘지 않아요.':wait===null?'기다리기만 해서는 모이지 않아요. 마을 현황에서 수입·유지비를 살펴요.':`현재 순수입이 유지되면 약 ${wait>=60?Math.ceil(wait/60)+'분':wait+'초'} 뒤 지을 수 있어요.`)+'\n'+harvest;
 }
 

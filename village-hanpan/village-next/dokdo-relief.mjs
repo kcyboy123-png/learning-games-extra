@@ -6,13 +6,13 @@ export function cliffPoint(x,z){
  const h=dokdoHeight(x,z);if(h<.5)return [x,h,z];
  const path=nearestWalk(x,z);let clearance=path.d-path.width/2;
  for(const [px,pz]of plots)clearance=Math.min(clearance,Math.max(Math.abs(x-px),Math.abs(z-pz))-1.25);
- const mask=smooth(.6,1.3,clearance)*smooth(.5,2,h);
+ const mask=smooth(.6,1.45,clearance)*smooth(.5,2,h);
  if(!mask)return [x,h,z];
- const groove=Math.pow(.5+.5*Math.sin(x*.78+z*.43+Math.sin(z*.31)*.55+Math.sin(z*.19-x*.28)*.8+h*.07+Math.sin(h*.35)*.25),4);
+ const groove=Math.pow(.5+.5*Math.sin(x*.78+z*.43+Math.sin(z*.31)*.55+Math.sin(z*.19-x*.28)*.8+h*.07+Math.sin(h*.35)*.16),5);
  const shoulder=.5+.5*Math.sin(x*.46-z*.57+Math.sin(z*.23));
- const y=h+mask*(shoulder*(.85+.40*smooth(3,10,h))-groove*(x<0?2.55:1.75)+.24*Math.sin(h*1.35+x*.32-z*.21)*smooth(2,7,h));
+ const y=h+mask*(shoulder*shoulder*(.95+.48*smooth(3,10,h))-groove*(x<0?2.90:2.05)+.12*Math.sin(h*1.35+x*.32-z*.21)*smooth(2,7,h));
  const sideMask=smooth(.75,1.75,clearance)*smooth(1.5,4,h);
- const shift=.82*sideMask*Math.sin(z*.68+x*.41+Math.sin(z*.29)+h*.06);
+ const shift=.72*sideMask*Math.sin(z*.68+x*.41+Math.sin(z*.29)+h*.06);
  const px=x+shift,pz=z+shift*(x<0?.38:-.22);
  return coastlines.some(c=>insideCoast(c,px,pz))?[px,y,pz]:[x,y,z];
 }

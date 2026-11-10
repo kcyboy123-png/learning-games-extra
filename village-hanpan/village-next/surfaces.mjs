@@ -36,7 +36,7 @@ const palettes={
 palettes.wood.push('#cbb58d','#d1bb94','#dcc9a4','#e1d0ad','#e9d8b1','#9b8262','#826b50','#bda785','#d7b68e','#c8af89','#c19975','#d7c29b','#b99670','#c5a177','#c9ad83','#d5ba92','#8e7558','#bba17b','#b99a6a','#b39059','#bc9c60');
 palettes.plaster.push('#f4ddbc','#f6e5c8','#f1d6c3','#c4d8d2','#e9dfb9','#f8df9e','#f2e4cb','#f3ead6','#f1dbc5','#e7e6cf','#c67d65','#e8cfc2','#eee0c6');
 palettes.stone.push('#e4d4b6','#d8d0b9','#bcad8d','#d7d8cd','#c7c6b3','#a7b4ba');
-palettes.stone.push('#b6ad9b','#bbb19e','#b1a896','#a69b84','#a29882');
+palettes.stone.push('#aaa28f','#b5aa96','#aca18d','#b6ad9b','#bbb19e','#b1a896','#a69b84','#a29882');
 palettes.roof.push('#be6554','#a85549','#64879a','#4b6b7a','#6e99a6','#537786','#73968c','#57796f','#7b98a9','#b988a4');
 function texture(kind){
  if(maps.has(kind))return maps.get(kind);
@@ -78,12 +78,12 @@ export function surfaceOptions(color){
   shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nmeadowPoint=(modelMatrix*vec4(transformed,1.)).xyz;');
   shader.fragmentShader='varying vec3 meadowPoint; uniform float groundWinter;\n'+shader.fragmentShader;
   shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
-   float turfPatch=.5+.30*sin(meadowPoint.x*.19+sin(meadowPoint.z*.16))+.20*sin(meadowPoint.z*.27-meadowPoint.x*.13);
-   vec3 turf=mix(vec3(.64,.85,.70),vec3(1.015,1.04,.87),smoothstep(.12,.88,turfPatch));
+   float turfPatch=.5+.30*sin(meadowPoint.x*.26+sin(meadowPoint.z*.18)*1.7)+.20*sin(meadowPoint.z*.22-meadowPoint.x*.18);
+   vec3 turf=mix(vec3(.70,.86,.67),vec3(1.06,1.04,.83),smoothstep(.04,.96,turfPatch));
    diffuseColor.rgb*=mix(turf,vec3(1.),groundWinter);
    float blades=sin(meadowPoint.x*36.+sin(meadowPoint.z*24.))*sin(meadowPoint.z*42.+meadowPoint.x*13.);
    diffuseColor.rgb*=1.+blades*.028*(1.-groundWinter);`);
- },customProgramCacheKey:()=> 'meadow-ground-v3'});
+ },customProgramCacheKey:()=> 'meadow-ground-organic10'});
  if(kind==='roof'||color==='#d9d2c0')Object.assign(options,{
   onBeforeCompile(shader){
    shader.uniforms.roofWinter=surfaceWinter;

@@ -12,7 +12,7 @@ import {addNeighborDetails} from './neighbor-details.mjs?v=perf1';
 import {paintPart,applyBuildingPaint,canPaint} from './building-paint.mjs?v=perf1';
 import * as T from '../lib/three.module.min.js';
 import {expansionModels} from './expansion-models.mjs?v=perf1';
-import {TYPES,SIZE,RIVER,cells,at} from './core.mjs?v=perf1';
+import {TYPES,SIZE,RIVER,cells,at,harvestStatus} from './core.mjs?v=perf1';
 import {CELL,GROUND_Y,ROAD_Y,toWorld,facing,roadSet,origin,foot} from './grid.mjs?v=perf1';
 import {naturalFeature,growthStage} from './landscape.mjs?v=perf1';
 import {advancePersonRoute} from './residents.mjs?v=living15';
@@ -492,20 +492,20 @@ const hash=(x,y)=>((x*73856093)^(y*19349663))>>>0;
 
 export class World{
  constructor(canvas){
-  this.canvas=canvas;this.scene=new T.Scene();this.scene.background=new T.Color('#9ccfc3');this.camera=new T.OrthographicCamera();
+  this.canvas=canvas;this.scene=new T.Scene();this.scene.matrixAutoUpdate=false;this.scene.background=new T.Color('#9ccfc3');this.camera=new T.OrthographicCamera();
   this.renderer=new T.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});this.renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));this.renderer.outputColorSpace=T.SRGBColorSpace;this.renderer.toneMapping=T.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.05;this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFSoftShadowMap;this.renderer.info.autoReset=false;this.sunlight=createSunlight(this.renderer);
   // A low warm key and cool sky fill keep the late-afternoon colour in the light, not a screen filter.
   this.hemi=new T.HemisphereLight('#e1eaf0','#a6b091',1.34);this.scene.add(this.hemi);const sun=this.sun=new T.DirectionalLight('#ffdaa3',3.15);sun.position.set(-11,15,6);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-16,right:16,top:16,bottom:-16,near:1,far:60});sun.shadow.normalBias=.018;sun.shadow.bias=-.0002;sun.shadow.radius=3.5;this.scene.add(sun);this.scene.add(sun.target);
   const fill=new T.DirectionalLight('#dce8f2',.68);fill.position.set(9,10,7);this.scene.add(fill);
   this.angle=.65;this.zoom=1;this.targetZoom=1;this.center=new T.Vector3(-7.2,0,-4);this.ray=new T.Raycaster();this.plane=new T.Plane(new T.Vector3(0,1,0),-GROUND_Y);
   this.groups=new Map();this.animations=[];this.people=[];this.roads=new Set();this.natural=new Map();this.cleared=new Set();
-  const S=this.static=new T.Group();this.scene.add(S);this.terrain(S);batch(S);this.static.traverse(o=>{if(!o.isSprite){o.updateMatrix();o.matrixAutoUpdate=false;}});
-  this.nature=null;this.natureSig=null;this.built=null;this.builtSig=null;this.builtIds=null;this.dynamic=new T.Group();this.scene.add(this.dynamic);
+  const S=this.static=new T.Group();this.scene.add(S);this.terrain(S);batch(S);this.static.traverse(o=>{if(!o.isSprite){o.updateMatrix();o.matrixAutoUpdate=false;}});S.updateMatrixWorld(true);S.matrixWorldAutoUpdate=false;
+  this.nature=null;this.natureSig=null;this.built=null;this.builtSig=null;this.builtIds=null;this.dynamic=new T.Group();this.dynamic.matrixAutoUpdate=false;this.scene.add(this.dynamic);
   this.ghost=null;this.unit=.02;this.span=8.5;this.rings=new T.Group();this.scene.add(this.rings);
   this.marker=new T.Mesh(new T.RingGeometry(.17,.23,24),new T.MeshBasicMaterial({color:'#fff6bc',side:T.DoubleSide}));this.marker.rotation.x=-Math.PI/2;this.marker.position.y=GROUND_Y+.03;this.marker.visible=false;this.scene.add(this.marker);
   this.waterLines=new T.Group();this.scene.add(this.waterLines);const rx=toWorld(RIVER,0).x;for(let i=0;i<70;i++){const m=ball(this.waterLines,'#c3e8de',rx+Math.sin(i*4)*.72,-.575,(i*.47)%44-22,.075+i%3*.06,.003,.012);m.castShadow=false;m.receiveShadow=false;}
-  batch(this.waterLines);
-  this.petals=new T.InstancedMesh(geometry('petal',()=>new T.SphereGeometry(1,5,3)),new T.MeshStandardMaterial({color:'#ffe1eb',roughness:1}),96);this.petals.instanceMatrix.setUsage(T.DynamicDrawUsage);this.petals.frustumCulled=false;this.petalPose=new T.Object3D();this.petalSeeds=Array.from({length:96},(_,i)=>[i*1.618,i*3.71%18,i*2.37%18,i*.71]);this.scene.add(this.petals);
+  batch(this.waterLines);for(const o of this.waterLines.children){o.updateMatrix();o.matrixAutoUpdate=false;}
+  this.petals=new T.InstancedMesh(geometry('petal',()=>new T.SphereGeometry(1,5,3)),new T.MeshStandardMaterial({color:'#ffe1eb',roughness:1}),96);this.petals.instanceMatrix.setUsage(T.DynamicDrawUsage);this.petals.frustumCulled=false;this.petals.matrixAutoUpdate=false;this.petalPose=new T.Object3D();this.petalSeeds=Array.from({length:96},(_,i)=>[i*1.618,i*3.71%18,i*2.37%18,i*.71]);this.scene.add(this.petals);
   this.player=this.person('#5f8c9a','player');this.resize();new ResizeObserver(()=>this.resize()).observe(canvas);
  }
  terrain(S){const half=(SIZE-1)/2,rx=toWorld(RIVER,0).x,L=SIZE*CELL;
@@ -568,7 +568,7 @@ export class World{
   }
   S.add(createShoreFringe());S.add(createFrontCoast());
   // 보전 숲 (0~1열) · 마을 입구 표지 · 흩어진 풀
-  for(let gy=0;gy<SIZE;gy++)for(let gx=0;gx<2;gx++){const p=toWorld(gx,gy),h=hash(gx,gy);tree(S,p.x+(h%7-3)*.14-.30*(1+Math.sin(gy*.67)),p.z+(h%5-2)*.18+.35*Math.sin(gy*1.13),1.02+(h%4)*.12,h%9===0);if(h%3===0)tuft(S,p.x+.9,p.z-.8,1.1);}
+  for(let gy=0;gy<SIZE;gy++)for(let gx=0;gx<2;gx++){if(gx===1&&gy===10)continue;const p=toWorld(gx,gy),h=hash(gx,gy);tree(S,p.x+(h%7-3)*.14-.30*(1+Math.sin(gy*.67)),p.z+(h%5-2)*.18+.35*Math.sin(gy*1.13),(1.02+(h%4)*.12)*(gy===10&&gx===0||gy===11&&gx===1?.58:1),h%9===0);if(h%3===0)tuft(S,p.x+.9,p.z-.8,1.1);}
   const gate=toWorld(5,3);for(const x of[-1,1]){cylinder(S,'#5b6660',gate.x+x*1.3,.95,gate.z-1.4,.055,1.75);box(S,'#fff0b5',gate.x+x*1.3,1.82,gate.z-1.4,.24,.3,.24,GLOW);cone(S,'#5b6660',gate.x+x*1.3,2.04,gate.z-1.4,.24,.16);}this.gateSign=label(S,'도토리 마을',gate.x,1.35,gate.z-1.9,2.2,.5,'#fff6de','#345347',76);
  }
  setTownName(name){
@@ -595,6 +595,46 @@ export class World{
   batch(g);
  }
  // 자연물(원래 숲 나무·꽃)은 정비되거나 건물이 올라가면 사라진다. 전체를 한 묶음으로 배칭하고 바뀔 때만 다시 만든다.
+ syncHarvest(s){
+  const stage=harvestStatus(s);
+  if(this.harvestPlot)this.harvestPlot.visible=s.island!=='mist';
+  if(this.harvestStage===stage)return;
+  this.harvestStage=stage;if(this.harvestPlot)dispose(this.harvestPlot);
+  const g=this.harvestPlot=new T.Group(),p=toWorld(1.1,10);
+  g.name='community-harvest';g.position.set(p.x,GROUND_Y,p.z);this.scene.add(g);g.visible=s.island!=='mist';
+  box(g,'#b3946c',0,.12,0,1.75,.24,1.7);box(g,'#634832',0,.255,0,1.58,.05,1.53);
+  for(const z of[-.5,0,.5])box(g,'#805c3f',0,.29,z,1.5,.055,.12);
+  for(const x of[-.85,.85])box(g,'#d5bb8b',x,.27,0,.09,.22,1.8);
+  for(const z of[-.85,.85])box(g,'#d5bb8b',0,.27,z,1.8,.22,.09);
+  for(const x of[-.78,.78])for(const z of[-.78,.78]){box(g,'#b3946c',x,.28,z,.13,.32,.13);ball(g,'#efdbb0',x,.445,z,.08,.025,.08);}
+  for(let i=0;i<12;i++)ball(g,i%2?'#94704b':'#493526',Math.sin(i*7)*.65,.30,Math.cos(i*11)*.67,.025,.015,.02);
+  for(let i=0;i<6;i++){
+   const x=(i%3-1)*.48,z=(Math.floor(i/3)-.5)*.65;
+   ball(g,'#493526',x,.29,z,.19,.04,.17);
+   if(stage==='seed')ball(g,'#ead5a0',x,.33,z,.055,.035,.045);
+   if(['sprout','growing','ready'].includes(stage)){
+    const k=stage==='sprout'?.4:stage==='growing'?.72:1;
+    const leaves=stage==='sprout'?2:5;
+    for(let j=0;j<leaves;j++){
+     const a=j*Math.PI*2/leaves+i*.47,lx=x+Math.cos(a)*.14*k,lz=z+Math.sin(a)*.14*k;
+     const leaf=ball(g,j%2?'#91bc61':'#659a50',lx,.33+.12*k,lz,.105*k,.055*k,.21*k);leaf.rotation.set(-.45,Math.PI/2-a,0);
+     const vein=ball(g,'#bfd783',lx,.36+.12*k,lz,.012*k,.012*k,.16*k);vein.rotation.copy(leaf.rotation);
+    }
+    if(stage!=='sprout')ball(g,'#bfd783',x,.34+.15*k,z,.13*k,.16*k,.13*k);
+    else cylinder(g,'#659a50',x,.36,z,.025,.13);
+   }
+  }
+  box(g,'#b29570',.8,.55,-.7,.06,.65,.06);box(g,'#efdbb0',.8,.85,-.7,.34,.27,.06);
+  const signLeaf=ball(g,'#659a50',.8,.87,-.655,.085,.035,.012);signLeaf.rotation.z=.5;
+  box(g,'#659a50',.8,.80,-.655,.018,.12,.014);
+  if(stage==='rest'){
+   box(g,'#b3946c',.48,.36,.55,.40,.18,.28);
+   for(const z of[.4,.7])box(g,'#d5bb8b',.48,.43,z,.44,.08,.045);
+   for(const x of[.32,.64])box(g,'#d5bb8b',x,.43,.55,.045,.08,.28);
+   for(const x of[.38,.57])ball(g,'#91bc61',x,.48,.55,.09,.10,.09);
+  }
+  mergeStaticParts(g);batch(g);freezeBuildings(g);g.updateMatrixWorld(true);
+ }
  syncNature(s){const cleared=new Set(s.landscape?.cleared||[]),occupied=new Set();for(const b of s.buildings)for(const[x,y]of cells(b))occupied.add(`${x},${y}`);const keys=[];
   const meadowSig=[...occupied,...cleared].sort().join('|');if(meadowSig!==this.meadowSig){disposeMeadow(this.meadow);this.meadow=createMeadow(s);this.scene.add(this.meadow);this.meadowSig=meadowSig;meadowSeason(this.meadow,this.se??1);}
   const beds=gardenSites(s),gardenSig=JSON.stringify(beds);if(gardenSig!==this.gardenSig){this.gardenSig=gardenSig;if(this.gardenDecor)dispose(this.gardenDecor);const yard=this.gardenDecor=new T.Group(),flowers=new T.Group();flowers.userData.gardenFlowers=true;yard.add(flowers);this.scene.add(yard);
@@ -617,7 +657,7 @@ export class World{
  rememberBuilding(b,g){this.buildingBounds??=new Map();g.updateWorldMatrix(true,true);this.buildingBounds.set(b.id,{id:b.id,box:new T.Box3().setFromObject(g)});}
  pickObject(px,py){this.ray.setFromCamera((this.pointerNdc??=new T.Vector2()).set(px/innerWidth*2-1,1-py/innerHeight*2),this.camera);let nearest=null,distance=Infinity;const point=this.objectPickPoint??=new T.Vector3();for(const collection of [this.buildingBounds?.values()||[],this.dokdo?[]:this.natureBounds||[]])for(const item of collection){if(!this.ray.ray.intersectBox(item.box,point))continue;const d=point.distanceToSquared(this.ray.ray.origin);if(d<distance){distance=d;nearest=item;}}return nearest;}
  // 완공 건물은 한 묶음(배칭)으로, 공사 중 건물은 각각. 묶음은 구성·방향·성장단계가 바뀔 때만 다시 만든다.
- sync(s,animate=true){this.dokdo=s.island==='mist';this.dokdoHomeBuilt=this.dokdo&&s.buildings.some(b=>b.type==='dokdoHome'&&b.progress>=1);this.pickSites=new Set([...slotCells,...trailCells,...s.buildings.map(b=>[b.x,b.y])].map(p=>p.join(',')));this.pickCells=[...this.pickSites].map(k=>k.split(',').map(Number)).filter(([x,y])=>x>=2&&x<18&&y>=0&&y<18).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const buildingIds=new Set(s.buildings.map(b=>b.id));for(const id of this.buildingBounds?.keys()||[])if(!buildingIds.has(id))this.buildingBounds.delete(id);this.seasonDetailSites=this.dokdo?[]:seasonalSites(s);this.roads=roadSet(s);this.syncTownscape(s);this.syncNature(s);for(const o of [this.townscape,this.nature,this.gardenDecor])if(o&&!o.userData.transformsFrozen){freezeBuildings(o);o.userData.transformsFrozen=true;}for(const o of [this.townscape,this.nature,this.meadow,this.gardenDecor])if(o)o.visible=!this.dokdo;this.seasonAnchors=s.buildings.filter(b=>b.progress>=1&&b.type==='tree').slice(0,6).map(b=>toWorld(b.x,b.y));
+ sync(s,animate=true){this.syncHarvest(s);this.dokdo=s.island==='mist';this.dokdoHomeBuilt=this.dokdo&&s.buildings.some(b=>b.type==='dokdoHome'&&b.progress>=1);this.pickSites=new Set([...slotCells,...trailCells,...s.buildings.map(b=>[b.x,b.y])].map(p=>p.join(',')));this.pickCells=[...this.pickSites].map(k=>k.split(',').map(Number)).filter(([x,y])=>x>=2&&x<18&&y>=0&&y<18).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const buildingIds=new Set(s.buildings.map(b=>b.id));for(const id of this.buildingBounds?.keys()||[])if(!buildingIds.has(id))this.buildingBounds.delete(id);this.seasonDetailSites=this.dokdo?[]:seasonalSites(s);this.roads=roadSet(s);this.syncTownscape(s);this.syncNature(s);for(const o of [this.townscape,this.nature,this.gardenDecor])if(o&&!o.userData.transformsFrozen){freezeBuildings(o);o.userData.transformsFrozen=true;}for(const o of [this.townscape,this.nature,this.meadow,this.gardenDecor])if(o)o.visible=!this.dokdo;this.seasonAnchors=s.buildings.filter(b=>b.progress>=1&&b.type==='tree').slice(0,6).map(b=>toWorld(b.x,b.y));
   const done=s.buildings.filter(b=>b.progress>=1),pending=s.buildings.filter(b=>b.progress<1);
   const sig=done.map(b=>`${b.id}:${b.type}:${b.x},${b.y}:${facing(s,b,this.roads)}:${growthStage(s,b)}:${b.closed?1:0}:${b.opts.join(',')}:${b.paint??0}`).join('|')+'|preview:'+(this.paintPreview?.id??'');
   if(sig!==this.builtSig){if(this.built)dispose(this.built);const g=this.built=new T.Group();this.dynamic.add(g);for(const b of done)if(b.id!==this.paintPreview?.id)this.model(g,b,s,4);batch(g);mergeStaticParts(g);this.rides=[];this.lastRidePose=undefined;g.traverse(o=>{if(o.userData.ride)this.rides.push(o);});this.animateRides(0,true);freezeBuildings(g);
@@ -664,12 +704,12 @@ export class World{
    if(se===3){for(let i=0;i<3;i++){const px=x+(i-1)*.16;ball(g,'#d99a52',px,.22,z+i*.08,.14,.11,.13);cylinder(g,'#7b7951',px,.35,z+i*.08,.022,.07);}for(let i=0;i<3;i++){cylinder(g,'#e4cfab',x-.45,.2,z+i*.15,.018,.16);ball(g,'#b77b5c',x-.45,.29,z+i*.15,.08,.04,.08);}}
    if(se===2){clump(g,'#679f63',x,.25,z,.3,.22,.3);for(let i=0;i<9;i++){const t=i*2.4;ball(g,i%2?'#b4b8e0':'#9ebcdd',x+Math.sin(t)*.19,.43+(i%3)*.05,z+Math.cos(t)*.19,.09,.07,.09);}}
    if(se===1){flower(g,x,z,'#f0b1bb');flower(g,x+.18,z+.1,'#fff2ce');}
-  }batch(this.seasonDecor);}
-  this.petals.material.color.set(['#fffef6','#ffe1eb','#f5dc84','#c57b40'][se]);
+  }batch(this.seasonDecor);freezeBuildings(this.seasonDecor);}
+  this.petals.material.color.set(['#fffef6','#ffe1eb','#f5dc84','#c57b40'][se]);this.static.updateMatrixWorld(true);
  }
 
  person(color,id){const p=personRig(this.scene,color,id);p.scarf.visible=this.se===0;if(id==='player')p.g.rotation.y=1.3;addRabbitArt(p);addResidentArt(p);this.people.push(p);return p;}
- removePerson(p){dispose(p.g);this.people=this.people.filter(q=>q!==p);}
+ removePerson(p){if(p.residentArt?.fallback&&!p.residentArt.fallback.parent)dispose(p.residentArt.fallback);dispose(p.g);this.people=this.people.filter(q=>q!==p);}
  place(p,gx,gy){delete p.g.position.walkEdge;const w=toWorld(gx,gy);p.g.position.set(w.x,this.dokdo?walkHeight(w.x,w.z):GROUND_Y,w.z);p.route=[];}
  focus(gx,gy){this.followPlayer=false;const w=toWorld(gx,gy);this.center.set(w.x,0,w.z);if(this.dokdo)this.lookHeight=deckHeight(Math.round(gx),Math.round(gy))+1;}
  previewEntrance(){

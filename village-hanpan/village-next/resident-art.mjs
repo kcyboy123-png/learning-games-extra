@@ -36,7 +36,10 @@ export function addResidentArt(p){
 }
 export function updateResidentArt(p,camera,time,reduced,winter,viewTime=time){
  const a=p.residentArt;if(!a)return;
- const ready=a.e.ready&&!a.e.failed;a.fallback.visible=!ready;a.sprite.visible=ready;if(!ready)return;
+ const ready=a.e.ready&&!a.e.failed;
+ // Hidden fallback rigs need no scene traversal; retain them for load failure.
+ if(ready&&a.fallback.parent)a.fallback.removeFromParent();else if(!ready&&!a.fallback.parent)p.g.add(a.fallback);
+ a.fallback.visible=!ready;a.sprite.visible=ready;if(!ready)return;
  if(a.viewCamera!==camera||a.viewHeading!==p.g.rotation.y||a.viewPrevious!==a.view){a.viewCamera=camera;a.viewHeading=p.g.rotation.y;a.viewPrevious=a.view;a.computedView=rabbitView(camera,p.g.rotation.y,a.view);}const view=a.computedView;
  // Briefly hold the old view through tiny steering reversals at a corner.
  if(a.pendingView!==view){a.pendingView=view;a.turnAt=viewTime;}

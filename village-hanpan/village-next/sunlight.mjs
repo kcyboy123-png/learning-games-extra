@@ -14,7 +14,7 @@ export function createSunlight(renderer){
   usable=[sceneTarget,glowTarget].every(target=>{renderer.setRenderTarget(target);return gl.checkFramebufferStatus(gl.FRAMEBUFFER)===gl.FRAMEBUFFER_COMPLETE;});
  }catch{}finally{renderer.setRenderTarget(null);}
  if(!usable){sceneTarget.dispose();glowTarget.dispose();return null;}
- const camera=new T.OrthographicCamera(-1,1,1,-1,0,1),scene=new T.Scene(),quad=new T.Mesh(new T.PlaneGeometry(2,2));scene.add(quad);
+ const camera=new T.OrthographicCamera(-1,1,1,-1,0,1),scene=new T.Scene(),quad=new T.Mesh(new T.PlaneGeometry(2,2));scene.add(quad);scene.matrixAutoUpdate=false;quad.matrixAutoUpdate=false;camera.matrixAutoUpdate=false;
  const vertexShader='varying vec2 vUv; void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}';
  const blur=new T.ShaderMaterial({depthTest:false,depthWrite:false,toneMapped:false,uniforms:{source:{value:sceneTarget.texture},stepSize:{value:new T.Vector2()}},vertexShader,fragmentShader:`
   uniform sampler2D source;uniform vec2 stepSize;varying vec2 vUv;

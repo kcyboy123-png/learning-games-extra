@@ -37,7 +37,9 @@ export function addRabbitArt(p){
 }
 export function updateRabbitArt(p,camera,time,reduced,viewTime=time){
  const a=p?.rabbitArt;if(!a)return;
- const ready=a.e.ready&&!a.e.failed&&!p.sitting;a.fallback.visible=a.originalContact.visible=!ready;a.sprite.visible=a.shadow.visible=ready;if(!ready)return;
+ const ready=a.e.ready&&!a.e.failed&&!p.sitting;
+ if(ready&&a.fallback.parent)a.fallback.removeFromParent();else if(!ready&&!a.fallback.parent)p.g.add(a.fallback);
+ a.fallback.visible=a.originalContact.visible=!ready;a.sprite.visible=a.shadow.visible=ready;if(!ready)return;
  if(a.viewCamera!==camera||a.viewHeading!==p.g.rotation.y){a.view=rabbitView(camera,p.g.rotation.y,a.view);a.viewCamera=camera;a.viewHeading=p.g.rotation.y;}
  const index=a.view*4+rabbitPose(p.distance,p.moving,reduced),[, ,width,height,root,sole]=rabbitFrames[index];
  if(a.frameIndex!==index){a.frameIndex=index;a.sprite.material=a.e.materials[index];a.sprite.center.set(root,2/height);}

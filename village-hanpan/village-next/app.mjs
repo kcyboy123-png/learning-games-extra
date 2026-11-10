@@ -21,7 +21,7 @@ import {tickResidents,syncResidents,residentContext} from './residents.mjs?v=liv
 // village-next B단계 입력·안내·저장·루프. 경제는 core, 좌표는 grid, 표현은 world에만 맡긴다.
 import {World} from './world.mjs?v=living15';
 import {villagePromises,promisePreview,newlyKeptPromises} from './promises.mjs?v=perf1';
-import {COZY_BASE_INCOME,cozyEffects,enableCozy,cozyGrowth,buildingSpec,assessTier,economy,upkeepOf,annualReviews,YEAR,createState,build,demolish,rotatable,rotateBuilding,relocate,canRelocate,relocateLeft,advance,metrics,month,duration,calendarMonth,monthLabel,serialize,parseSave,continueFree,buildCost,clearingCost,canBuild,at,cells,network,connected,TYPES,OPTIONS,MONTH,RULE,SCOPE,unlocked,unlockMonth,unlockMessage,populationRequired,toggleClosed,harvest,upgrade,clearLandscape,HARVEST,HARVEST_SECONDS,demandMonth,UPGRADE_TYPES} from './core.mjs?v=perf1';
+import {COZY_BASE_INCOME,cozyEffects,enableCozy,cozyGrowth,buildingSpec,assessTier,economy,upkeepOf,annualReviews,YEAR,createState,build,demolish,rotatable,rotateBuilding,relocate,canRelocate,relocateLeft,advance,metrics,month,duration,calendarMonth,monthLabel,serialize,parseSave,continueFree,buildCost,clearingCost,canBuild,at,cells,network,connected,TYPES,OPTIONS,MONTH,RULE,SCOPE,unlocked,unlockMonth,unlockMessage,populationRequired,toggleClosed,harvest,harvestStatus,upgrade,clearLandscape,HARVEST,HARVEST_SECONDS,demandMonth,UPGRADE_TYPES} from './core.mjs?v=perf1';
 import {harborPlots,toCell,toWorld,spots,placeInfo,facing,entrance,path,walkable,inside,CELL,perimeter,foot,roadSet} from './grid.mjs?v=perf1';
 import {groundVector,inputVector,step,stickVector,PLAYER_SPEED} from './move.mjs?v=perf1';
 import {naturalFeature,clearablePlot,growthStage,isGarden} from './landscape.mjs?v=perf1';
@@ -81,7 +81,11 @@ function ui(){updateTownNameUI();updateTravelUI();sound.update(!document.hidden&
  setText('calendar',`${1+Math.floor(month(state)/12)}년 차 · ${SEASONS[season(calendarMonth(state))]} · ${monthLabel(state)} ${calendarDay(state)}일`);document.body.classList.toggle('reviewing',!!state.cozyReview);setText('left',state.cozyReview?(state.cozyReview.months.length===36?'3년 평가 완료 · 계속 가꿔요':`3년 평가까지 ${mmss(realSeconds(36*MONTH-state.t))}`):'자유롭게 가꾸는 마을');$('monthBar').style.width=`${(state.t%MONTH)/MONTH*100}%`;
  setText('money',Math.floor(state.money).toLocaleString());setText('incomeRate',`1분당 ${incomePerMinute(v)<0?'−':'+'}${effectNumber(Math.abs(incomePerMinute(v)))}`);$('incomeRate').title=state.paused?'일시정지 중 · 재개하면 이 속도로 변해요':'유지비를 뺀 현재 속도 · 진행 중인 실제 시간 기준';setText('pop',`${totalPopulation(state)}명`);setText('heartScore',`${cozyGrowth(state).score}점`);setText('ecoScore',`${v.environment}점`);setText('sat',Math.round(state.sat)+'점');setText('score',state.result?ratingName(state.result.total):growth.name);setText('scoreScope',state.result?'3년 종합 평가 · 기록 고정':'마을 성장');setText('tierName',state.result?`${state.result.total}점 · 최종 기록`:`${growth.detail}`);
  setText('pause',state.paused?'▶ 재개':'❚❚ 일시정지');$('pause').disabled=state.ended;world.season(season(calendarMonth(state)));const note=['❄ 눈 덮인 겨울 · 따뜻한 집을 준비해요','🌸 벚꽃 피는 봄 · 새로운 이웃을 맞아요','☀ 초록이 짙은 여름 · 시원한 그늘을 만들어요','🍂 단풍 드는 가을 · 마을의 결실을 살펴요'][season(calendarMonth(state))];if($('seasonNote').textContent!==note)setText('seasonNote',note);
- const hb=$('navHarvest');hb.disabled=state.ended||state.harvestAt!==null;hb.textContent=state.harvestAt!==null?`🥬 돌보는 중 ${realSeconds(HARVEST_SECONDS-(state.t-state.harvestAt))}초`:state.harvested.includes(m)?'🥬 이번 달 완료':`🥬 텃밭 돌보기 +${HARVEST}`;
+ const hs=harvestStatus(state),hb=$('navHarvest');hb.disabled=state.ended||state.island==='mist';hb.textContent=hs==='ready'?`🥬 텃밭 수확하기 +${HARVEST}`:'🥬 공동 텃밭 보기';
+ const crop=$('harvestMap');crop.textContent=hs==='empty'?'🌱 씨앗 심기':hs==='seed'?'🌱 씨앗을 심었어요':hs==='sprout'?'🌱 새싹이 났어요':hs==='growing'?`🥬 자라는 중 · ${realSeconds(HARVEST_SECONDS-(state.t-state.harvestAt))}초`:hs==='ready'?`🥬 눌러서 수확 +${HARVEST}`:'🌱 수확 완료 · 다음 달에';crop.setAttribute('aria-label','공동 텃밭: '+crop.textContent);crop.disabled=state.paused||state.ended||viewing;
+ crop.dataset.stage=hs;crop.style.setProperty('--growth',`${state.harvestAt===null?0:Math.min(100,(state.t-state.harvestAt)/HARVEST_SECONDS*100)}%`);crop.title='다 자라도 시들지 않아요 · 한 달에 한 번 수확';
+ world.syncHarvest(state);
+
  setText('reviewYears',state.result&&(state.runMonths??12)<36?'이전 규칙 기록':`성장 기록 · ${Math.min(3,(state.cozyReview?cozyReviews(state).years:annualReviews(state)).length)}/3`);
  refreshPlaceBudget();if($('buildPanel').classList.contains('open'))refreshCatalogueBudget();need(v);setText('phoneGrowth',growth.name);setText('phoneTask',$('needTitle').textContent+' ›');if($('promisesPanel').classList.contains('open'))promiseCards();if($('statusPanel').classList.contains('open'))status(v);if(infoId!==null)info(v);}
 // ---- 현재 필요 카드: 진행 불가 → 생활 수요 → 기금 → 여유 ----
@@ -166,7 +170,7 @@ function refreshPlaceBudget(){
 }
 $('confirm').onclick=()=>{if(!mode||!sel)return;const{type,moving}=mode;const price=moving?0:buildCost(state,type,sel.gx,sel.gy);const r=moving?relocate(state,moving,sel.gx,sel.gy,mode.dir):build(state,type,sel.gx,sel.gy,[],mode.dir);if(r.error){toast(r.error);return;}
  world.sync(state,!reduced);save(moving?'재배치':'건설');toast(moving?`건물을 옮겼어요(재배치 무료${r.fee?` · 자연 정비비 ${r.fee} 지불`:''}).`:`${buildingSpec(state,type).name} 공사를 시작했어요. 비용 ${price}은 지금 사용됐어요.`);endPlace();ui();};
-$('placeHarvest').onclick=()=>doHarvest(true);
+$('placeHarvest').onclick=()=>focusHarvest();
 $('cancelPlace').onclick=()=>{const previous=mode;endPlace();if(previous&&!previous.moving){openBuild();$('buildList').querySelector(`[data-type="${previous.type}"]`)?.focus();}else $('navBuild').focus();};
 function endPlace(){mode=null;sel=null;recommendedSpot=null;world.clearPreview();world.showSpots([]);$('placePanel').classList.remove('open');}
 function setRemoving(on){removing=on;$('removeMode').hidden=!on;$('navRemove').setAttribute('aria-pressed',String(on));document.body.classList.toggle('demolishing',on);if(on){world.player.route=[];world.marker.visible=false;}}
@@ -222,8 +226,28 @@ $('navBuild').onclick=()=>$('buildPanel').classList.contains('open')?closePanels
 $('closeNeed').onclick=()=>{closePanels();$('navNeed').focus();};
 $('navNeed').onclick=()=>{const open=!$('need').classList.contains('hide');closePanels();if(!open){document.body.classList.add('phone-need');$('need').classList.remove('hide');$('navNeed').setAttribute('aria-expanded','true');}};
 $('navStatus').onclick=()=>{const open=$('statusPanel').classList.contains('open');closePanels();if(!open){$('statusPanel').classList.add('open');status(metrics(state));}};
-function doHarvest(keepPlace=false){const r=harvest(state);if(r.error){toast(r.error);return;}if(keepPlace!==true){closePanels();const g=toCell(world.player.g.position.x,world.player.g.position.z);world.player.route=path(state,g,{gx:6,gy:10})||[];world.followPlayer=true;}save('텃밭');toast(`텃밭을 돌보는 중이에요. ${realSeconds(HARVEST_SECONDS)}초 뒤 기금 +${HARVEST}.`);ui();}
-$('navHarvest').onclick=doHarvest;
+function focusHarvest(){
+ if(state.island==='mist'){toast('공동 텃밭은 우리 마을에 있어요. 작물은 시들지 않아요.');return;}
+ endPlace();closePanels();const p=toWorld(1.1,10);world.center.set(p.x,0,p.z);world.followPlayer=false;world.targetZoom=1.35;
+ toast('텃밭 위 말풍선을 눌러 심고 수확해요. 놓쳐도 시들지 않아요.');
+}
+function doHarvest(){
+ if(viewing||voyage)return;
+ const r=harvest(state);if(r.error){toast(r.error);return;}
+ save(r.planted?'씨앗 심기':'텃밭 수확');
+ toast(r.planted?`씨앗을 심었어요! 약 ${realSeconds(HARVEST_SECONDS)}초 뒤 직접 수확해요. 시들지 않아요.`:`수확했어요! 기금 +${r.reward}. 다음 달에 다시 심어요.`);
+ sound.effect(r.planted?'select':'complete');ui();
+}
+$('navHarvest').onclick=focusHarvest;
+$('harvestMap').onclick=doHarvest;
+function positionHarvest(){
+ const button=$('harvestMap'),g=world.harvestPlot;
+ const hide=!g?.visible||viewing||voyage||world.entrance||document.body.classList.contains('entering')||mode||removing||document.querySelector('dialog[open],.sheet.open');
+ button.hidden=!!hide;if(hide)return;
+ const q=world.screen(g.position);button.style.left=q.x+'px';button.style.top=(q.y-46)+'px';
+ button.hidden=q.x<60||q.x>innerWidth-60||q.y<140||q.y>innerHeight-100;
+}
+
 $('closeStatus').onclick=$('closeBuild').onclick=$('closeInfo').onclick=dismissPanels;
 $('rotate').onclick=()=>world.angle+=Math.PI/2;$('zoomIn').onclick=()=>world.targetZoom=Math.min(1.8,world.targetZoom+.2);$('zoomOut').onclick=()=>world.targetZoom=Math.max(.1,world.targetZoom-.2);
 function resetView(){world.entrance=null;world.cameraHeight=36;world.lookHeight=.2;world.angle=.65;world.zoom=world.targetZoom=1.2;world.focus(4.9,5.05);}
@@ -268,7 +292,7 @@ const canvas=$('world');let drag=null,pinch=null;const touches=new Map();
 canvas.addEventListener('contextmenu',e=>e.preventDefault());
 canvas.addEventListener('pointerdown',e=>{if(voyage)return;document.activeElement?.blur();try{canvas.setPointerCapture(e.pointerId);}catch{return;}touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(touches.size===2){const[a,b]=[...touches.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:world.targetZoom};if(drag)drag.moved=true;}if(drag)return;drag={id:e.pointerId,x:e.clientX,y:e.clientY,lx:e.clientX,ly:e.clientY,started:e.timeStamp,moved:false};});
 canvas.addEventListener('pointermove',e=>{if(touches.has(e.pointerId))touches.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pinch&&touches.size===2){const[a,b]=[...touches.values()];world.targetZoom=Math.max(.45,Math.min(1.8,pinch.z*Math.hypot(a.x-b.x,a.y-b.y)/Math.max(1,pinch.d)));return;}if(!drag||e.pointerId!==drag.id)return;if(Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>8)drag.moved=true;if(drag.moved)world.pan(e.clientX-drag.lx,e.clientY-drag.ly);drag.lx=e.clientX;drag.ly=e.clientY;});
-canvas.addEventListener('pointerup',e=>{touches.delete(e.pointerId);pinch=null;if(!drag||drag.id!==e.pointerId)return;const tap=!drag.moved;drag=null;if(!tap)return;const selectedHit=state.island==='mist'&&!mode?world.pickObject(e.clientX,e.clientY):null;const selectedBuilding=selectedHit?.id?state.buildings.find(b=>b.id===selectedHit.id):null;const p=selectedBuilding?toWorld(selectedBuilding.x,selectedBuilding.y):world.point(e.clientX,e.clientY,!mode&&!removing);if(!p)return;const{gx,gy}=toCell(p.x,p.z);if(!inside(gx,gy))return;
+canvas.addEventListener('pointerup',e=>{touches.delete(e.pointerId);pinch=null;if(!drag||drag.id!==e.pointerId)return;const tap=!drag.moved;drag=null;if(!tap)return;const selectedHit=state.island==='mist'&&!mode?world.pickObject(e.clientX,e.clientY):null;const selectedBuilding=selectedHit?.id?state.buildings.find(b=>b.id===selectedHit.id):null;const p=selectedBuilding?toWorld(selectedBuilding.x,selectedBuilding.y):world.point(e.clientX,e.clientY,!mode&&!removing);if(!p)return;const{gx,gy}=toCell(p.x,p.z);if(!inside(gx,gy))return;if(!mode&&!removing&&!viewing&&state.island!=='mist'&&gx===1&&gy===10){doHarvest();return;}
  if(mode){pick(gx,gy);return;}
  const hit=selectedHit||world.pickObject(e.clientX,e.clientY),b=hit?.id?state.buildings.find(b=>b.id===hit.id):hit?null:at(state,gx,gy);
  if(removing){askRemove(b?{id:b.id}:hit||{gx,gy});return;}
@@ -317,7 +341,7 @@ function loop(now){if(document.hidden){last=now;requestAnimationFrame(loop);retu
  if(owned&&state.cozyReview&&!document.querySelector('dialog[open]')){const years=Math.floor(state.cozyReview.months.length/12);if(years>state.cozyReview.seen){state.cozyReview.seen=years;save('연차 평가');showGrowthReview();}}
 
  if(islandReveal){islandReveal.t=Math.min(1,islandReveal.t+dt/1.2);const u=islandReveal.t*islandReveal.t*(3-2*islandReveal.t);world.center.set(islandReveal.from.x+(islandScenery.farIsland.position.x-4-islandReveal.from.x)*u,0,islandReveal.from.z+(islandScenery.farIsland.position.z+4-islandReveal.from.z)*u);if(u===1)islandReveal=null;}if(!voyage){manualMove(dt);npcTick(dt);}updateVoyage(dt);if(bubble&&bubble.p.g.visible&&time<bubble.end){const p=(bubblePoint??=bubble.p.g.position.clone()).copy(bubble.p.g.position);p.y+=1.5;const s=world.screen(p);if($('bubble').textContent!==bubble.text)$('bubble').textContent=bubble.text;$('bubble').style.cssText=`display:block;left:${s.x}px;top:${s.y}px`;}else $('bubble').style.display='none';
- if(time>toastEnd)$('toast').classList.remove('show');if(!world.player.route.length)world.marker.visible=false;world.paused=state.paused;if(!$('arrivalFilm').classList.contains('playing')&&!$('travelDialog').open){islandScenery.tick(time,reduced);world.frame(dt,time,reduced);}
+ if(time>toastEnd)$('toast').classList.remove('show');if(!world.player.route.length)world.marker.visible=false;world.paused=state.paused;if(!$('arrivalFilm').classList.contains('playing')&&!$('travelDialog').open){islandScenery.tick(time,reduced);world.frame(dt,time,reduced);positionHarvest();}
  uiTick+=dt;if(uiTick>.25){const growth=state.buildings.filter(b=>b.progress>=1&&isGarden(b)).map(b=>`${b.id}:${growthStage(state,b)}`).join('|');if(growth!==gardenSignature){gardenSignature=growth;world.sync(state,false);}ui();uiTick=0;}if(!reported&&time>3){console.info('village-next render',JSON.stringify(world.renderer.info.render),'memory',JSON.stringify(world.renderer.info.memory));reported=true;}requestAnimationFrame(loop);}
 addEventListener('storage',e=>{if(viewing)return;if(e.key===OWNER){if(otherOwnerAlive()&&owned){owned=false;if(!state.ended)state.paused=true;endPlace();showPause();toast('다른 탭이 마을을 이어받아 이 탭은 멈췄어요.');ui();}return;}
  if(e.key!==KEY||!e.newValue||owned)return;try{const next=parseSave(e.newValue);state=next;state.paused=true;corrupt=null;resetSession();if($('entranceDialog').open)prepareEntrance();showPause();ui();}catch{}});

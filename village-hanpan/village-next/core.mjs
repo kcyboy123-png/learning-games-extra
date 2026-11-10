@@ -13,7 +13,7 @@ export {MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,RULE,VERSION};
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 export const COZY_BASE_INCOME=99;
 export const SCOPE={label:'B규칙'};
-export const HARVEST=35,HARVEST_SECONDS=15;
+export const HARVEST=20,HARVEST_SECONDS=90;
 export const RELOCATE_WINDOW=60; // 21절 다: 완공 후 게임시간 60초 안에 건물당 1회 무료 재배치
 export const duration=s=>(s.runMonths??12)*MONTH;
 export const month=s=>s.mode==='free'?Math.floor(s.t/MONTH):Math.min((s.runMonths??12)-1,Math.floor(s.t/MONTH));
@@ -95,8 +95,26 @@ export function upgrade(s,id,opt){const error=upgradeError(s,id,opt);if(error)re
 export function demolish(s,id){const b=s.buildings.find(b=>b.id===id);if(!b)return{error:'철거할 시설을 다시 골라 주세요.'};if(b.starter&&!isGarden(b)&&(s.cozyV!==1||s.island==='mist'))return{error:'처음부터 있던 기반 시설은 보존해요.'};if(s.paused||s.ended)return{error:'재개한 뒤 변경할 수 있어요.'};const refund=b.progress<1?Math.min(1e8-s.money,Math.floor((b.paidCost??(b.type==='harbor'?90000:cost(b.type,b.opts,{...s,cozyV:undefined})))*(1-b.progress)*.65)):0;s.money+=refund;s.buildings=s.buildings.filter(x=>x.id!==id);if(s.cozyV===1){s.landscape??={version:1,cleared:[]};for(const[x,y]of cells(b))if(clearablePlot(x,y)&&!s.landscape.cleared.includes(`${x},${y}`))s.landscape.cleared.push(`${x},${y}`);}return{refund};}
 // 휴업: 유지비와 효과가 모두 0. 순수입이 마이너스일 때의 구제 경로. 재개는 무료.
 export function toggleClosed(s,id){const b=s.buildings.find(b=>b.id===id);if(!b||b.progress<1||b.starter||['road','bridge'].includes(b.type))return{error:'이 시설은 휴업할 수 없어요.'};if(s.paused||s.ended)return{error:'재개한 뒤 바꿀 수 있어요.'};b.closed=!b.closed;if(!b.closed)delete b.closed;return{closed:!!b.closed};}
-// 텃밭 돌보기: 게임시간 15초 활동, 월 1회, +35. 시작은 즉시 기록하고 지급은 advance에서 15초 뒤에 한다(재접속·연타로 중복 불가).
-export function harvest(s){if(s.paused||s.ended)return{error:'재개한 뒤 돌볼 수 있어요.'};const m=month(s);if(s.harvestAt!==null)return{error:'지금 텃밭을 돌보는 중이에요.'};if(s.harvested.includes(m))return{error:'이번 달 텃밭은 이미 돌봤어요. 다음 달에 다시 할 수 있어요.'};s.harvestAt=s.t;return{};}
+// The existing timestamp persists growth and ready crops; collecting records this month atomically.
+export function harvestStatus(s){
+ if(s.harvestAt===null)return s.harvested.includes(month(s))?'rest':'empty';
+ const age=s.t-s.harvestAt;
+ return age>=HARVEST_SECONDS?'ready':age<15?'seed':age<45?'sprout':'growing';
+}
+export function harvest(s){
+ if(s.paused||s.ended)return{error:'재개한 뒤 텃밭을 돌볼 수 있어요.'};
+ if(s.island==='mist')return{error:'우리 마을의 공동 텃밭에서 돌봐 주세요.'};
+ const status=harvestStatus(s);
+ if(status==='ready'){
+  const m=month(s);s.harvestAt=null;
+  if(s.harvested.includes(m))return{error:'이번 달 수확은 이미 받았어요.'};
+  const reward=Math.min(HARVEST,1e8-s.money);s.money+=reward;
+  s.harvested.push(m);s.harvested=s.harvested.slice(-36);return{reward};
+ }
+ if(status==='rest')return{error:'이번 달 수확 완료! 다음 달에 다시 심어요.'};
+ if(status!=='empty')return{error:'쑥쑥 자라는 중이에요. 다 자라도 시들지 않아요.'};
+ s.harvestAt=s.t;return{planted:true};
+}
 export function canRelocate(s,b){if(!b)return '시설을 찾을 수 없어요.';if(s.paused||s.ended)return '재개한 뒤 옮길 수 있어요.';if(b.starter)return '처음부터 있던 시설은 옮기지 않아요.';if(s.island==='mist'&&DOKDO_SITES[b.type]?.length===1)return '이 시설은 독도의 정해진 자리를 지켜요.';if(['road','bridge','workshop'].includes(b.type))return '길·다리·창고 재생 공간은 옮길 수 없어요.';if(b.progress<1)return '공사가 끝난 뒤 옮길 수 있어요.';if(s.cozyV===1)return '';if(b.moved)return '이 건물은 이미 한 번 옮겼어요.';if(b.completedAt===undefined||s.t-b.completedAt>RELOCATE_WINDOW)return '완공 후 이동 가능한 시간이 지났어요.';return '';}
 export const relocateLeft=(s,b)=>b.completedAt===undefined?0:Math.max(0,RELOCATE_WINDOW-(s.t-b.completedAt));
 // 옮기는 동안 상태를 바꾸지 않고 확정 순간에만 위치·정비비·사용 여부를 한 번에 적용한다.
@@ -180,7 +198,6 @@ function advanceOtherIsland(s){
 export function advance(s,dt){if(s.paused||s.ended||!Number.isFinite(dt)||dt<0)return;const total=s.carry+dt;let steps=Math.floor(total+1e-8);s.carry=Math.max(0,total-steps);steps=Math.min(steps,86400);
  for(let i=0;i<steps&&!s.ended;i++){if(s.mode==='run'&&s.t>=duration(s)){end(s);break;}
   advanceOtherIsland(s);s.stage=stage(s);for(const b of s.buildings.filter(b=>b.progress<1).slice(0,2)){b.progress=Math.min(1,b.progress+1/buildingSpec(s,b.type).time);if(b.progress>=1-1e-9){b.progress=1;b.completedAt=s.t+1;}}
-  if(s.harvestAt!==null&&s.t+1-s.harvestAt>=HARVEST_SECONDS){const hm=Math.floor(s.harvestAt/MONTH);s.harvestAt=null;if(!s.harvested.includes(hm)){s.harvested.push(hm);s.harvested=s.harvested.slice(-36);s.money+=HARVEST;}}
   const v=metrics(s),cashBefore=s.money;s.money=clamp(s.money+(v.income-v.upkeep)/MONTH,0,1e8);
   // A small harvest pauses the shortage clock; sustainable income or a month's reserve clears it.
   if(s.scoringV===2&&s.mode==='run'){const loss=v.upkeep-v.income;if(loss<=0||cashBefore>=loss||s.money>=loss)s.cashStress=0;else if(s.money===0)s.cashStress=Math.min(CASH_STRESS_LIMIT,s.cashStress+1);}
