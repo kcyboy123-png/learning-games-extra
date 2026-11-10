@@ -4,6 +4,11 @@ export const PLAY_SPEED=1.5;
 export const realSeconds=seconds=>Math.ceil(Math.max(0,seconds)/PLAY_SPEED);
 // Costs are classroom simulation values, not actual construction estimates.
 export const TYPES={
+ cookieFactory:{name:'도토리 과자공장',cost:3000,time:90,up:0,e:0,unlock:0,stage:0,group:'공장',foot:2,pollution:5,desc:'2×2칸 생산시설 · 가동 중 친환경 −5점. 휴업하면 수입과 감점이 멈춰요.'},
+ woodFactory:{name:'숲속 목재공장',cost:5000,time:120,up:0,e:0,unlock:0,stage:0,group:'공장',foot:2,pollution:8,desc:'2×2칸 생산시설 · 가동 중 친환경 −8점. 휴업하면 수입과 감점이 멈춰요.'},
+ toyFactory:{name:'장난감공장',cost:8000,time:150,up:0,e:0,unlock:0,stage:0,group:'공장',foot:2,pollution:10,desc:'2×2칸 생산시설 · 가동 중 친환경 −10점. 휴업하면 수입과 감점이 멈춰요.'},
+ brickFactory:{name:'벽돌공장',cost:15000,time:180,up:0,e:0,unlock:0,stage:0,group:'공장',foot:2,pollution:20,desc:'2×2칸 생산시설 · 가동 중 친환경 −20점. 휴업하면 수입과 감점이 멈춰요.'},
+
  dokdoTea:{name:'바다 찻집',cost:450000,time:300,up:0,e:0,unlock:0,stage:0,group:'독도',island:'mist',food:32,desc:'원하는 정원 데크에 놓는 게임 속 상상 찻집이에요. 바다를 보며 쉬어요.'},
  dokdoGuest:{name:'바닷바람 작은집',cost:300000,time:240,up:0,e:0,unlock:0,stage:0,group:'독도',island:'mist',cap:4,desc:'원하는 정원 데크에 놓는 게임 속 상상 집이에요. 실제 독도 시설은 아니에요.'},
  dokdoSolar:{"name": "태양광 발전시설", "cost": 220000, "time": 90, "up": 0, "e": 30, "unlock": 0, "stage": 0, "group": "독도", "island": "mist", "desc": "태양광 시설에서 착안한 작은 설비예요. 전력과 친환경을 도와요."},
@@ -74,12 +79,12 @@ Object.assign(TYPES,{
 export const OPTIONS={ins:{name:'단열 보강',cost:45,desc:'겨울·여름 에너지 수요 25% 절약'},shade:{name:'차양 설치',cost:25,desc:'여름 냉방 수요 20% 절약'},reuse:{name:'재사용 자재',cost:20,desc:'자원 재사용 성과에 반영'}};
 export const TIERS=[[950,'레디언트','미래를 짓는 건축가'],[900,'이모탈','초록 도시의 거장'],[800,'다이아몬드','마을 설계의 달인'],[700,'플래티넘','빛나는 도시 설계자'],[600,'골드','든든한 마을 건축가'],[450,'실버','성장하는 건축단장'],[300,'브론즈','가능성을 짓는 설계자'],[0,'새싹','첫 마을의 개척자']];
 // 해금 달(0=1월). B규칙: 정해진 달 또는 주민 수 성과로 앞당겨진다. 에너지 시설은 부족 대응을 위해 처음부터 열려 있다.
-export const TABS={주거:['주거'],먹거리:['음식','장보기'],생활:['생활'],기반:['기반','에너지','안전'],여가:['여가'],명소:['명소'],조경:['꾸미기'],레어:['레어'],'독도':['독도']};
+export const TABS={공장:['공장'],주거:['주거'],먹거리:['음식','장보기'],생활:['생활'],기반:['기반','에너지','안전'],여가:['여가'],명소:['명소'],조경:['꾸미기'],레어:['레어'],'독도':['독도']};
 export const SEASONS=['겨울','봄','여름','가을'];
 export const season=m=>m<2||m===11?0:m<5?1:m<8?2:3;
 
 // Cozy rewards are net coins per real playing minute; happiness is a target increase.
-export const COZY_EFFECTS={dokdoTea:{income:600,happiness:4,welfare:2},dokdoGuest:{income:0,happiness:0,welfare:0},
+export const COZY_EFFECTS={cookieFactory:{income:900,happiness:0,welfare:0},woodFactory:{income:1500,happiness:0,welfare:0},toyFactory:{income:2400,happiness:0,welfare:0},brickFactory:{income:4500,happiness:0,welfare:0},dokdoTea:{income:600,happiness:4,welfare:2},dokdoGuest:{income:0,happiness:0,welfare:0},
  dokdoSolar:{"income": 160, "happiness": 0, "welfare": 4},
  dokdoDeck:{"income": 70, "happiness": 4, "welfare": 2},
  dokdoSedum:{"income": 12, "happiness": 2, "welfare": 0},
@@ -144,4 +149,4 @@ export const COZY_EFFECTS={dokdoTea:{income:600,happiness:4,welfare:2},dokdoGues
  starTree:{income:12000,happiness:25,welfare:6}
 };
 // Population unlocks persist once reached; old buildings stay usable.
-export const POPULATION_UNLOCKS={dokdoResearch:180,dokdoMemory:140,"house":0,"road":0,"snack":0,"flower":0,"avenue":0,"tree":0,"bench":0,"solar":0,"generator":0,"bridge":0,"drain":0,"duplex":12,"convenience":12,"chicken":12,"clinic":12,"lavender":12,"japanese":16,"kids":16,"hydrangea":16,"gardenhouse":20,"school":20,"fire":20,"fountain":20,"apartment":24,"library":24,"police":24,"flowerArch":24,"western":28,"terracehouse":32,"amusement":32,"workshop":32,"chinese":40,"buffet":40,"hospital":48,"supermarket":48,"cinema":64,"rosePark":64,"animalFarm":80,"moonGarden":100,"harbor":0,"rabbitTower":160,"goldFountain":160,"skyTower":200,"largePark":240,"starTree":240};
+export const POPULATION_UNLOCKS={cookieFactory:8,woodFactory:12,toyFactory:16,brickFactory:24,dokdoResearch:180,dokdoMemory:140,"house":0,"road":0,"snack":0,"flower":0,"avenue":0,"tree":0,"bench":0,"solar":0,"generator":0,"bridge":0,"drain":0,"duplex":12,"convenience":12,"chicken":12,"clinic":12,"lavender":12,"japanese":16,"kids":16,"hydrangea":16,"gardenhouse":20,"school":20,"fire":20,"fountain":20,"apartment":24,"library":24,"police":24,"flowerArch":24,"western":28,"terracehouse":32,"amusement":32,"workshop":32,"chinese":40,"buffet":40,"hospital":48,"supermarket":48,"cinema":64,"rosePark":64,"animalFarm":80,"moonGarden":100,"harbor":0,"rabbitTower":160,"goldFountain":160,"skyTower":200,"largePark":240,"starTree":240};

@@ -11,7 +11,7 @@ export const cataloguePictures=['road','house','snack','apartment','western','ja
 
 export const expansionPictures=["duplex", "gardenhouse", "terracehouse", "chicken", "buffet", "police", "cinema", "animalFarm", "rosePark", "harbor", "rabbitTower", "skyTower", "largePark", "lavender", "hydrangea", "fountain", "flowerArch", "moonGarden", "goldFountain", "starTree", "supermarket"];
 export const islandPictures=['mistHydrangea','fireflyPond','islandCafe','glassGarden','wishTree','cloudObservatory'];
-export function catalogueStyle(type){type=({dokdoTea:'dokdoMemory',dokdoGuest:'dokdoHome'})[type]||type;if(type.startsWith('dokdo'))return `background-image:url('assets/dokdo/${type}.png');background-size:contain;background-position:center;background-repeat:no-repeat;`;const island=islandPictures.indexOf(type);if(island>=0)return `background-image:url('assets/island-catalogue.png');background-size:300% 200%;background-position:${island%3*50}% ${Math.floor(island/3)*100}%;`;const next=expansionPictures.indexOf(type),i=next<0?cataloguePictures.indexOf(type):next;return `${next<0?'':"background-image:url('assets/expansion-catalogue.png');"}background-position:${i%5*25}% ${Math.floor(i/5)*25}%;`;}
+export function catalogueStyle(type){if(TYPES[type]?.pollution)return `background-image:url('assets/factories/${type}.svg');background-size:contain;background-position:center;background-repeat:no-repeat;`;type=({dokdoTea:'dokdoMemory',dokdoGuest:'dokdoHome'})[type]||type;if(type.startsWith('dokdo'))return `background-image:url('assets/dokdo/${type}.png');background-size:contain;background-position:center;background-repeat:no-repeat;`;const island=islandPictures.indexOf(type);if(island>=0)return `background-image:url('assets/island-catalogue.png');background-size:300% 200%;background-position:${island%3*50}% ${Math.floor(island/3)*100}%;`;const next=expansionPictures.indexOf(type),i=next<0?cataloguePictures.indexOf(type):next;return `${next<0?'':"background-image:url('assets/expansion-catalogue.png');"}background-position:${i%5*25}% ${Math.floor(i/5)*25}%;`;}
 export const incomeRate=v=>`${netIncome(v)<0?'−':'+'}${(Math.abs(netIncome(v))*PLAY_SPEED/MONTH).toFixed(1)}/초`;
 
 export function buildingBenefit(s,type){
@@ -101,10 +101,11 @@ const effectLine=(income,happiness,welfare)=>`매분 ${effectNumber(income)}코�
 export function cozyEffectText(s,type,compact=false,building=null){
  const d=buildingSpec(s,type);
  if(d.cap)return `인구 +${d.cap}명`;
- if(building?.closed)return '휴업 중 · 수입·행복·복지 +0';
+ if(building?.closed)return d.pollution?'가동 중지 · 수입 0 · 공장 감점 0':'휴업 중 · 수입·행복·복지 +0';
  if(building?.starter)return '시작 시설 · 추가 수입·행복·복지 +0';
  const next=building?s:{...s,buildings:[...s.buildings,{id:s.nextId,type,progress:1}]},pending=!building||building.progress<1;
  const e=cozyEffects(next,pending).effects.get(building?.id??s.nextId);
+ if(d.pollution)return `+${effectNumber(e.income)}코인/분 · ${e.count}번째\n가동 중 친환경 −${d.pollution}점`+(compact?'':'\n휴업하면 수입과 공장 감점이 멈춰요. 같은 종류의 수입만 차례로 줄고 감점은 그대로예요.');
  const order=e.count>1?`같은 시설 ${e.count}번째 · 수입 ${Math.round(e.rate.income*100)}%`:'첫 시설 · 수입 100%';
  const cap=e.limited?'\n보너스·복지 최대치 반영':'';
  if(compact)return `+${effectNumber(e.income)}코인/분 · ${e.count}번째\n행복 보너스 +${effectNumber(e.happiness)} · 복지 +${effectNumber(e.welfare)}${cap}`;
@@ -118,5 +119,5 @@ export function cozyPlacementText(s,type,x,y,moving=null){
  const planned={...s,buildings:s.buildings.map(b=>({...b,progress:1}))},future={...planned,buildings:[...planned.buildings,{id:s.nextId,type,x,y,opts:[],progress:1}]};
  const previous=metrics(planned),next=metrics(future),capped=next.targetSat+1e-6<50+after.happiness;
  const happiness=`\n목표 행복 ${effectNumber(previous.targetSat)} → ${effectNumber(next.targetSat)}점 (친환경 반영)`+(capped?'\n친환경 상태를 개선하면 행복이 더 오를 수 있어요.':'');
- return effect+happiness+`\n완공까지 약 ${constructionDuration(timing.finish)}${timing.wait?' (공사 대기 포함)':''}`;
+ return effect+`\n친환경 ${previous.environment} → ${next.environment}점`+happiness+`\n완공까지 약 ${constructionDuration(timing.finish)}${timing.wait?' (공사 대기 포함)':''}`;
 }

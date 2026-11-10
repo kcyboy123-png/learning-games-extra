@@ -65,5 +65,38 @@ export function expansionModels(h){
   for(let i=0;i<7;i++){const a=i*2.399,x=Math.sin(a)*1.5,z=Math.cos(a)*1.5,y=3.2+(i%3)*.45;const branch=taper(g,'#b29280',x*.5,y-.6,z*.5,.11,1.9);branch.rotation.set(Math.cos(a)*.8,0,-Math.sin(a)*.8);clump(g,['#bcb3db','#d5c2e5','#e8cee8'][i%3],x,y,z,.95,.7,.85);cylinder(g,'#cdbd99',x,y-.72,z,.012,.8);const ribbon=box(g,i%2?'#f5e5bc':'#c6e2df',x,y-1.15,z,.14,.37,.035);ribbon.rotation.z=.18*Math.sin(i);star(g,x+.16,y-.9,z,.15);}
   for(const x of[-2.8,2.8])beds(g,x,1.8,'#dfc8e7',.45);bench(g,0,3.1);return[];
  }
- return {islandCafe:[islandCafe,.6],glassGarden:[glassGarden,.6],cloudObservatory:[cloudObservatory,.6],mistHydrangea:[mistHydrangea,.6],fireflyPond:[fireflyPond,.6],wishTree:[wishTree,.6],duplex:[duplex,.6],gardenhouse:[gardenhouse,.6],terracehouse:[terracehouse,.6],chicken:[chicken,.6],buffet:[buffet,.6],police:[police,.6],cinema:[cinema,.6],harbor:[harbor,.6],skyTower:[skyTower,.6],rabbitTower:[rabbitTower,.6],rosePark:[rosePark,.6],animalFarm:[animalFarm,.6],largePark:[largePark,.6],lavender:[lavender,.6],hydrangea:[hydrangea,.6],fountain:[smallFountain,.6],flowerArch:[flowerArch,.6],moonGarden:[moonGarden,.6],goldFountain:[goldFountain,.6],starTree:[starTree,.6]};
+
+ // Static factory details share cached primitives and the existing building batch.
+ function factory(g,kind){
+  const colors={cookieFactory:['#f2dfbc','#bd7957'],woodFactory:['#cfb38c','#71896a'],toyFactory:['#eed5bd','#6b9792'],brickFactory:['#b87659','#8e9973']},[wall,top]=colors[kind];
+  rounded(g,'#c9b99b',0,.06,0,7.2,6.8,.13,.3);
+  flat(g,4.8,2.65,3.7,wall,top,'#b8ac90',true);
+  roof(g,0,2.95,0,5.3,4.2,top,'#806d54');
+  door(g,-.6,.85,1.88,.85,1.45);
+  for(const x of[-1.65,1.45])casement(g,x,1.35,1.88,.8,.9);
+  for(const x of[-2.15,2.15])box(g,'#947552',x,1.3,1.94,.13,2.6,.12);
+  const chimney=kind==='brickFactory'?4.3:3.55;
+  box(g,'#a47c62',1.7,chimney/2,-.8,.55,chimney,.6);box(g,'#d0b593',1.7,chimney,-.8,.76,.17,.8);
+  sign(g,({cookieFactory:'과자공장',woodFactory:'목재공장',toyFactory:'장난감공장',brickFactory:'벽돌공장'})[kind],2.45,2.15,3.1,top,'#fff0d3');
+  box(g,'#987957',1.2,.55,2.6,2.4,.14,.85);
+  if(kind==='cookieFactory'){
+   for(let i=0;i<6;i++){const x=.35+i%3*.6,z=2.35+Math.floor(i/3)*.45;cylinder(g,'#dca85f',x,.68,z,.22,.09);dot(g,'#885f43',x,.74,z,.035);}
+   for(const x of[-2.8,-2.2])ball(g,'#e4d1a5',x,.5,2.1,.34,.5,.3);
+   cylinder(g,'#b28757',0,3.65,.3,.45,.18).rotation.x=Math.PI/2;
+  }else if(kind==='woodFactory'){
+   for(let i=0;i<5;i++){const log=cylinder(g,'#a98154',-2.75+(i%2)*.48,.32+Math.floor(i/2)*.35,1.5,.22,2);log.rotation.x=Math.PI/2;}
+   for(let i=0;i<4;i++)box(g,'#dab582',1.2,.7+i*.14,2.6,2.2,.11,.7);
+   cylinder(g,'#9baba5',.8,1.18,2.5,.42,.07).rotation.x=Math.PI/2;
+  }else if(kind==='toyFactory'){
+   for(let i=0;i<4;i++)box(g,['#cc8f75','#88aaa0'][i%2],.35+i*.5,.85,2.6,.38,.4,.4);
+   ball(g,'#e6bc70',-.5,3.6,.3,.5,.32,.3);ball(g,'#e6bc70',-.12,3.95,.3,.23);cone(g,'#ce8e52',.12,3.95,.3,.12,.25).rotation.z=-Math.PI/2;
+   for(const x of[-1.4,0,1.4])box(g,'#b9d8d0',x,3.15,-.2,.7,.12,1.3);
+  }else{
+   for(let i=0;i<12;i++)box(g,i%2?'#c48866':'#b27256',-2.6+i%3*.52,.22+Math.floor(i/3)*.25,2.4,.48,.22,.65);
+   rounded(g,'#7c6252',1.4,1.1,1.95,1.15,1.3,.12,.35);box(g,'#dcab63',1.4,.9,2.05,.75,.55,.08);
+  }
+  for(const x of[-3,3])pot(g,x,-2.5);
+  return [];
+ }
+ return {cookieFactory:[g=>factory(g,'cookieFactory'),.6],woodFactory:[g=>factory(g,'woodFactory'),.6],toyFactory:[g=>factory(g,'toyFactory'),.6],brickFactory:[g=>factory(g,'brickFactory'),.6],islandCafe:[islandCafe,.6],glassGarden:[glassGarden,.6],cloudObservatory:[cloudObservatory,.6],mistHydrangea:[mistHydrangea,.6],fireflyPond:[fireflyPond,.6],wishTree:[wishTree,.6],duplex:[duplex,.6],gardenhouse:[gardenhouse,.6],terracehouse:[terracehouse,.6],chicken:[chicken,.6],buffet:[buffet,.6],police:[police,.6],cinema:[cinema,.6],harbor:[harbor,.6],skyTower:[skyTower,.6],rabbitTower:[rabbitTower,.6],rosePark:[rosePark,.6],animalFarm:[animalFarm,.6],largePark:[largePark,.6],lavender:[lavender,.6],hydrangea:[hydrangea,.6],fountain:[smallFountain,.6],flowerArch:[flowerArch,.6],moonGarden:[moonGarden,.6],goldFountain:[goldFountain,.6],starTree:[starTree,.6]};
 }

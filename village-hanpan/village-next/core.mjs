@@ -71,7 +71,7 @@ export function waterfrontError(s,type,x,y,ignoreId=0){
  if(s.buildings.some(b=>b.id!==ignoreId&&(b.type==='harbor'&&rows.some(r=>r>=b.y&&r<b.y+2)||type==='harbor'&&b.type==='bridge'&&rows.includes(b.y))))return '다리나 다른 항구와 겹쳐요. 개울 옆 다른 자리를 골라 주세요.';
  return '';
 }
-export function canBuild(s,type,x,y,ignoreId=0){const d=TYPES[type];if(!d)return '알 수 없는 시설이에요.';if(!ISLAND_OPEN&&(type==='harbor'||d.island||s.island==='mist'))return ISLAND_HOLD;if(s.paused||s.ended)return '시간을 재개한 뒤 지을 수 있어요.';if(d.island&&s.island!==d.island)return unlockMessage(s,type);if(!unlocked(s,type)&&!s.buildings.some(b=>b.id===ignoreId&&b.type===type))return unlockMessage(s,type);
+export function canBuild(s,type,x,y,ignoreId=0){const d=TYPES[type];if(!d)return '알 수 없는 시설이에요.';if(!ISLAND_OPEN&&(type==='harbor'||d.island||s.island==='mist'))return ISLAND_HOLD;if(s.paused||s.ended)return '시간을 재개한 뒤 지을 수 있어요.';if(d.pollution&&s.island==='mist')return '공장은 우리 마을에만 지을 수 있어요.';if(d.island&&s.island!==d.island)return unlockMessage(s,type);if(!unlocked(s,type)&&!s.buildings.some(b=>b.id===ignoreId&&b.type===type))return unlockMessage(s,type);
  if(!Number.isInteger(x)||!Number.isInteger(y))return '땅을 골라 주세요.';if(type==='harbor'&&!harborSite(x,y)&&!s.buildings.some(b=>b.id===ignoreId&&b.type==='harbor'&&b.x===x&&b.y===y&&(b.paidCost===undefined||b.paidCost<500000)))return '항구는 개울 입구의 항구 자리 네 곳 중 빈 곳에 지어요.';
  if(s.island==='mist'){const why=dokdoPlacement(s,type,x,y,ignoreId);if(why)return why;for(const[cx,cy]of cells({type,x,y})){const o=at(s,cx,cy);if(o&&o.id!==ignoreId)return '이미 사용 중인 땅이에요.';}return '';}
  for(const[cx,cy]of cells({type,x,y})){if(cx<0||cy<0||cx>=SIZE||cy>=SIZE)return '마을 경계 안에 놓아 주세요.';const o=at(s,cx,cy);if(o&&o.id!==ignoreId)return '이미 사용 중인 땅이에요.';if(cx<2)return '이 숲은 보전하는 구역이에요.';if(type!=='harbor'&&harborSites.some(([hx,hy])=>cx>=hx&&cx<hx+2&&cy>=hy&&cy<hy+2))return '이곳은 항구 전용 부지예요. 다른 시설은 바깥 빈 땅에 놓아 주세요.';if(type==='bridge'?cx!==RIVER:cx===RIVER)return type==='bridge'?'다리는 개울 위에 놓아요.':'개울에는 다리를 놓아 주세요.';if(terrain(cx,cy)==='warehouse'&&type!=='workshop')return '오래된 창고는 재생 공간으로 고쳐 써요.';}
@@ -132,15 +132,17 @@ function localMetrics(s){const net=network(s),live=s.buildings.filter(b=>b.progr
  return{environmentParts:[energy*40,green*15,(m<2?1:optionRate)*15,landscaping.score*.3],welfare,environmentRaw:clamp(env),environment:Math.round(clamp(env)*100),landscaping,beautyPhase,premium,net,live,production,use,energy,food,health,education,leisure,housing,service,green,comfort,targetSat,income,upkeep,D,Q,score:s.cozyV===1?cozyGrowth(s).score:Math.round(1000*D*Q),demands,popGoal,fire,drain,optionRate,foodCap:sum('food'),healthCap:sum('health'),educationCap:sum('education'),leisureCap:sum('leisure')};
 }
 // Evaluate inhabited regions together, so travelling cannot change shared happiness or grades.
+export const factoryPollution=s=>allBuildings(s).reduce((n,b)=>n+(b.progress>=1&&!b.closed?(TYPES[b.type].pollution||0):0),0);
+function applyFactoryPollution(s,v){const penalty=factoryPollution(s);v.factoryPollution=penalty;if(!penalty)return v;v.environmentRaw=clamp(v.environmentRaw-penalty/100);v.environment=Math.round(v.environmentRaw*100);v.targetSat=Math.min(v.targetSat,80+20*v.environmentRaw);return v;}
 export function metrics(s){
- const current=localMetrics(s);if(s.cozyV!==1||!s.otherIsland)return current;
+ const current=localMetrics(s);if(s.cozyV!==1||!s.otherIsland)return applyFactoryPollution(s,current);
  const other=localMetrics({...s,...s.otherIsland,otherIsland:undefined}),population=totalPopulation(s);
  const env=population?(current.environmentRaw*s.pop+other.environmentRaw*s.otherIsland.pop)/population:(current.environmentRaw+other.environmentRaw)/2;
  current.environmentParts=current.environmentParts.map((n,i)=>population?(n*s.pop+other.environmentParts[i]*s.otherIsland.pop)/population:(n+other.environmentParts[i])/2);
  current.environmentRaw=env;current.environment=Math.round(env*100);
  current.targetSat=Math.min(50+cozyEffects(s).happiness,80+20*env);
  current.upkeep+=other.upkeep;current.income+=other.upkeep;
- return current;
+ return applyFactoryPollution(s,current);
 }
 export const DEMAND_MONTH={health:2,education:3,leisure:4};
 export const demandMonth=(s,key)=>DEMAND_MONTH[key]+(s.economyV===4?1:0);
@@ -202,6 +204,7 @@ export function parseSave(text,dokdoRegion=false){if(typeof text!=='string'||tex
  const validConditions=h=>h&&Array.isArray(h.reasons)&&h.reasons.length<=Object.keys(TIER_CAPS).length&&new Set(h.reasons).size===h.reasons.length&&h.reasons.every(k=>Object.hasOwn(TIER_CAPS,k)&&TIER_CAPS[k]===h.cap)&&h.cap===(h.reasons.length?TIER_CAPS[h.reasons[0]]:1000);
  if(!s||s.v!==VERSION||s.rule!==RULE||!['run','free'].includes(s.mode)||!num(s.t,0,s.mode==='run'?duration(s):1e8)||!Number.isInteger(s.t)||!num(s.carry,0,1)||!num(s.money,0,1e8)||!Number.isInteger(s.pop)||!num(s.pop,0,10000)||!num(s.sat,0,100)||!Number.isInteger(s.stage)||!num(s.stage,0,3)||typeof s.paused!=='boolean'||typeof s.ended!=='boolean'||!Array.isArray(s.buildings)||s.buildings.length>SIZE*SIZE||!Array.isArray(s.hist)||s.hist.length>(s.runMonths??12))throw Error('저장 내용이 올바르지 않아요.');
  if(s.populationPeak!==undefined&&(!Number.isInteger(s.populationPeak)||!num(s.populationPeak,s.pop,10000)))throw Error('인구 성장 기록을 확인해 주세요.');
+ if(s.ecoGuideSeen!==undefined&&typeof s.ecoGuideSeen!=='boolean')throw Error('친환경 안내 기록을 확인해 주세요.');
  if(s.placementHintsShown!==undefined&&(!Number.isInteger(s.placementHintsShown)||!num(s.placementHintsShown,0,2)))throw Error('자리 안내 기록을 확인해 주세요.');
  if(s.cozyV!==undefined&&(s.cozyV!==1||s.mode!=='free'||s.ended))throw Error('꾸미기 기록을 확인해 주세요.');
  validateCozyReview(s);
