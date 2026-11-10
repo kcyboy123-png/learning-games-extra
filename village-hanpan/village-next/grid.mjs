@@ -3,6 +3,8 @@ import {fixedTypes,trailSet} from './dokdo-terrain.mjs';
 import {SIZE,RIVER,TYPES,cells,at,network,terrain,unlocked,canBuild} from './core.mjs?v=perf1';
 import {dokdoWalk,DOKDO_SITES} from './dokdo-layout.mjs';
 import {naturalFeature} from './landscape.mjs?v=perf1';
+import {harborSites} from './islands.mjs';
+export function harborPlots(s,ignoreId=0){return harborSites.map(([gx,gy])=>({gx,gy,error:canBuild(s,'harbor',gx,gy,ignoreId),blockers:s.buildings.filter(b=>b.id!==ignoreId&&(cells(b).some(([x,y])=>x>=gx&&x<gx+2&&y>=gy&&y<gy+2)||['bridge','harbor'].includes(b.type)&&cells(b).some(([,y])=>y>=gy&&y<gy+2))).map(b=>TYPES[b.type].name)}));}
 export const CELL=2.4, GROUND_Y=.103, ROAD_Y=.133;
 export const DIRS=[[0,1],[1,0],[0,-1],[-1,0]]; // 0 남(+z) 1 동(+x) 2 북 3 서. 모델의 문은 로컬 +z.
 export const toWorld=(gx,gy)=>({x:(gx-(SIZE-1)/2)*CELL,z:(gy-(SIZE-1)/2)*CELL});

@@ -1,7 +1,7 @@
 import {validTownName} from './town-name.mjs';
 import {fixedTypes} from './dokdo-terrain.mjs';
 import {dokdoPlacement,dokdoWalk,dokdoLand,DOKDO_SITES} from './dokdo-layout.mjs';
-import {ISLAND_OPEN,ISLAND_HOLD,allBuildings,totalPopulation,harborSite,hasPassage} from './islands.mjs';
+import {ISLAND_OPEN,ISLAND_HOLD,allBuildings,totalPopulation,harborSites,harborSite,hasPassage} from './islands.mjs';
 import {recordCozyMonth,validateCozyReview} from './cozy-review.mjs?v=perf1';
 import {buildingSpec,cityPhase,premiumIncome} from './city-rules.mjs?v=perf1';
 export {buildingSpec} from './city-rules.mjs?v=perf1';
@@ -74,7 +74,7 @@ export function waterfrontError(s,type,x,y,ignoreId=0){
 export function canBuild(s,type,x,y,ignoreId=0){const d=TYPES[type];if(!d)return '알 수 없는 시설이에요.';if(!ISLAND_OPEN&&(type==='harbor'||d.island||s.island==='mist'))return ISLAND_HOLD;if(s.paused||s.ended)return '시간을 재개한 뒤 지을 수 있어요.';if(d.island&&s.island!==d.island)return unlockMessage(s,type);if(!unlocked(s,type)&&!s.buildings.some(b=>b.id===ignoreId&&b.type===type))return unlockMessage(s,type);
  if(!Number.isInteger(x)||!Number.isInteger(y))return '땅을 골라 주세요.';if(type==='harbor'&&!harborSite(x,y)&&!s.buildings.some(b=>b.id===ignoreId&&b.type==='harbor'&&b.x===x&&b.y===y&&(b.paidCost===undefined||b.paidCost<500000)))return '항구는 개울 입구의 항구 자리 네 곳 중 빈 곳에 지어요.';
  if(s.island==='mist'){const why=dokdoPlacement(s,type,x,y,ignoreId);if(why)return why;for(const[cx,cy]of cells({type,x,y})){const o=at(s,cx,cy);if(o&&o.id!==ignoreId)return '이미 사용 중인 땅이에요.';}return '';}
- for(const[cx,cy]of cells({type,x,y})){if(cx<0||cy<0||cx>=SIZE||cy>=SIZE)return '마을 경계 안에 놓아 주세요.';const o=at(s,cx,cy);if(o&&o.id!==ignoreId)return '이미 사용 중인 땅이에요.';if(cx<2)return '이 숲은 보전하는 구역이에요.';if(type==='bridge'?cx!==RIVER:cx===RIVER)return type==='bridge'?'다리는 개울 위에 놓아요.':'개울에는 다리를 놓아 주세요.';if(terrain(cx,cy)==='warehouse'&&type!=='workshop')return '오래된 창고는 재생 공간으로 고쳐 써요.';}
+ for(const[cx,cy]of cells({type,x,y})){if(cx<0||cy<0||cx>=SIZE||cy>=SIZE)return '마을 경계 안에 놓아 주세요.';const o=at(s,cx,cy);if(o&&o.id!==ignoreId)return '이미 사용 중인 땅이에요.';if(cx<2)return '이 숲은 보전하는 구역이에요.';if(type!=='harbor'&&harborSites.some(([hx,hy])=>cx>=hx&&cx<hx+2&&cy>=hy&&cy<hy+2))return '이곳은 항구 전용 부지예요. 다른 시설은 바깥 빈 땅에 놓아 주세요.';if(type==='bridge'?cx!==RIVER:cx===RIVER)return type==='bridge'?'다리는 개울 위에 놓아요.':'개울에는 다리를 놓아 주세요.';if(terrain(cx,cy)==='warehouse'&&type!=='workshop')return '오래된 창고는 재생 공간으로 고쳐 써요.';}
  if(type==='workshop'&&(x!==14||y!==7))return '강 건너 오래된 창고(14,7)에서 개조해요.';return waterfrontError(s,type,x,y,ignoreId);
 }
 export const cost=(type,opts=[],s)=>buildingSpec(s,type).cost+opts.reduce((a,o)=>a+(OPTIONS[o]?.cost||0),0);
