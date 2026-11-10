@@ -3,7 +3,7 @@ import {SITE,BOUND,TERRAINS,DEFAULT_TERRAIN,ENTRANCE,height,insideSite,EDIT_MARG
 export {SITE,BOUND,TERRAINS,DEFAULT_TERRAIN,ENTRANCE,height,insideSite,EDIT_MARGIN,WALK_MARGIN};
 export const KEY='changyong-forest-studio-v1';
 export const LEGACY_KEY='changyong-forest-studio-v1-legacy';
-export const LIMIT=80;
+export const LIMIT=100;
 export const DRAWERS=[
  {id:'rec',name:'추천',emoji:'✿'},
  {id:'tree',name:'큰 나무',emoji:'🌳'},
@@ -76,9 +76,36 @@ export const LEGACY_IDS=['oak','birch','hydrangea','fern','daisy','lavender','po
 const byId=new Map(MATERIALS.map(m=>[m.id,m]));
 export const material=kind=>byId.get(kind);
 export const MISSIONS=[
- {name:'전학 온 친구의 쉼터',short:'친구의 쉼터',from:'새로 온 친구가',letter:'쉬는 시간에 잠깐 앉아 있을 곳이 필요해. 친구와 나란히 앉을 수 있으면 더 좋아.',focus:'둘러쌈과 개방 · 높낮이 · 균형',question:'언덕 위와 오목한 자리 중 친구는 어디에서 쉬고 싶을까요?'},
- {name:'할머니와 걷는 길',short:'함께 걷는 길',from:'할머니가',letter:'천천히 걸으며 네 이야기를 듣고 싶어. 잠깐 멈춰 풍경을 볼 자리도 있으면 좋겠어.',focus:'반복 · 리듬 · 질감',question:'입구에서 쉼터까지 어떤 길로 가면 좋을까요? 걸으며 무엇을 보게 하고 싶나요?'},
- {name:'나비에게 보내는 초대장',short:'나비의 정원',from:'작은 나비가',letter:'작은 꽃 사이를 날아다니는 정원을 상상해 줘. 어디가 가장 먼저 눈에 들어올까?',focus:'색의 대비 · 강조 · 여백',question:'아래에서 올려다볼 때와 위에서 내려다볼 때 꽃밭이 어떻게 달라 보이나요?'}
+ {
+  "name": "어릴 적 나와 함께한 친구",
+  "short": "친구와 다시 만날 숲",
+  "from": "그때의 친구가",
+  "letter": "우리, 해가 지는 줄도 모르고 놀던 날 기억나? 나란히 앉아 작은 비밀을 나누던 시간이 가끔 생각나. 다시 만나면 오래 이야기할 수 있도록, 우리 둘만의 자리를 만들어 줄래?",
+  "focus": "둘러쌈과 개방 · 높낮이 · 균형",
+  "question": "친구와 다시 앉고 싶은 자리에는 어떤 나무와 풍경이 있으면 좋을까요?",
+  "image": "friend",
+  "imageAlt": "나무 그늘 아래 벤치에 나란히 앉아 이야기를 나누는 두 어린 친구"
+ },
+ {
+  "name": "할머니와 걷는 길",
+  "short": "할머니와 천천히 걷기",
+  "from": "할머니가",
+  "letter": "네 작은 손을 잡고 걷던 날이 아직도 선하구나. 오늘은 네가 만든 길을 따라 천천히 걸어 보고 싶어. 꽃 앞에서 잠깐 멈추고, 나무 그늘에 앉아 네 이야기를 들을 수 있으면 좋겠구나.",
+  "focus": "반복 · 리듬 · 질감",
+  "question": "할머니와 나란히 걷다가 쉬어 갈 자리는 어디에 만들까요?",
+  "image": "grandmother",
+  "imageAlt": "꽃이 핀 정원 길을 손잡고 천천히 걷는 할머니와 아이"
+ },
+ {
+  "name": "우리 강아지와 마음껏 뛰노는 정원",
+  "short": "강아지와 뛰노는 정원",
+  "from": "꼬리 흔드는 강아지가",
+  "letter": "네가 신발을 신으면 나는 벌써 꼬리가 흔들려! 오늘은 너랑 공도 쫓고, 풀 냄새도 맡으며 한참 놀고 싶어. 신나게 뛰다가 지치면 네 옆 그늘에 폭 기대어 쉴 수 있는 정원을 만들어 줄래?",
+  "focus": "동선 · 여백 · 공간의 연결",
+  "question": "마음껏 뛰놀 빈자리와 함께 쉴 그늘을 어떻게 이어 줄까요?",
+  "image": "puppy",
+  "imageAlt": "햇살 가득한 잔디 정원에서 공을 따라 즐겁게 뛰노는 아이와 강아지"
+ }
 ];
 export const SCALES=[.7,.85,1,1.2,1.4];
 export const ROTATION_STEP=Math.PI/6;
@@ -165,7 +192,7 @@ const str=(x,max)=>{if(typeof x!=='string'||[...x].length>max)err('작품 글자
 const num=(x,lo,hi)=>{if(typeof x!=='number'||!Number.isFinite(x)||x<lo||x>hi)err('배치 정보가 올바르지 않아요. 기존 작품은 그대로 두었어요.');return x;};
 export const TAGS=['색','간격','높이','여백','길','기타','그대로 유지'];
 function legacyItems(a){
- if(!Array.isArray(a)||a.length>LIMIT)err('재료는 최대 80개까지 불러올 수 있어요.');const ids=new Set();
+ if(!Array.isArray(a)||a.length>LIMIT)err(`재료는 최대 ${LIMIT}개까지 불러올 수 있어요.`);const ids=new Set();
  return a.map(o=>{if(!o||typeof o.id!=='string'||o.id.length>80||ids.has(o.id)||!LEGACY_IDS.includes(o.kind)||!Number.isFinite(o.x)||!Number.isFinite(o.z)||Math.abs(o.x)>4.5||Math.abs(o.z)>4.5||![.75,1,1.3].includes(o.scale)||![0,1,2,3].includes(o.rotation))err('배치 정보가 올바르지 않아요. 기존 작품은 그대로 두었어요.');ids.add(o.id);return {id:o.id,kind:o.kind,x:o.x,z:o.z,scale:o.scale,rotation:normRot(o.rotation*Math.PI/2),group:null,on:null};});
 }
 export const LEGACY_POSE={x:0,y:1.65,z:5.6,yaw:0,pitch:Math.asin(.65/Math.hypot(.65,6.6)),fov:58,aspect:1.6};
@@ -178,7 +205,7 @@ export function migrateV1(raw){
 // v2 items must pass the same grounding/footprint/support rules as a live placement, so every
 // confirmed placement reloads and nothing floats or straddles silently. (v1 migration is separate.)
 function itemsV2(a,terrain){
- if(!Array.isArray(a)||a.length>LIMIT)err('재료는 최대 80개까지 불러올 수 있어요.');const ids=new Set();
+ if(!Array.isArray(a)||a.length>LIMIT)err(`재료는 최대 ${LIMIT}개까지 불러올 수 있어요.`);const ids=new Set();
  const out=a.map(o=>{if(!o||typeof o!=='object'||typeof o.id!=='string'||o.id.length>80||ids.has(o.id)||typeof o.kind!=='string'||!byId.has(o.kind))err('배치 정보가 올바르지 않아요. 기존 작품은 그대로 두었어요.');ids.add(o.id);
   num(o.x,-BOUND.hx,BOUND.hx);num(o.z,-BOUND.hz,BOUND.hz);
   const scale=num(o.scale,.6,1.6),rotation=normRot(num(o.rotation,-1e6,1e6));

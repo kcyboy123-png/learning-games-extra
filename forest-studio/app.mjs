@@ -23,7 +23,7 @@ try{const raw=localStorage.getItem(KEY);if(raw){let parsed=null;try{parsed=JSON.
    localStorage.setItem(key,unreadable);if(localStorage.getItem(key)!==unreadable)throw Error('backup mismatch');}
   catch(e){writeBlocked=true;console.warn('복구 사본을 만들지 못해 자동저장을 멈춥니다',e);}}}}
 catch(e){saveFailed=true;writeBlocked=true;console.warn('저장소에 접근하지 못했어요',e);}
-const history=new History();let mode='walk',tab='rec',placing=null,selected=null,startSpot=false,confirmation=null,toastTimer,thumbs=new Map(),walkSaveTimer=0,orbitFitted=false,editArrivalStamp='';
+const history=new History();let mode='walk',tab='rec',placing=null,selected=null,confirmation=null,toastTimer,thumbs=new Map(),walkSaveTimer=0,orbitFitted=false,editArrivalStamp='';
 
 export let world;
 const terrain=()=>state.terrain.id;
@@ -39,8 +39,8 @@ function setScreen(next){mode=next;$('#walkHud').hidden=next!=='walk';$('#viewHu
 function toView(){if(mode==='view')return;editArrivalStamp=world.itemStamp;$('#intro').hidden=true;$('#walkInvitation').hidden=true;$('#firstPlant').hidden=true;if(state.before===null){state.before={items:clone(state.items),pose:world.walkPose()};}
  state.walk={x:world.walk.x,z:world.walk.z,yaw:world.walk.yaw,pitch:world.walk.pitch};if(!state.intro){state.intro=true;$('#intro').hidden=true;}save();
  world.setMode('view');setScreen('view');palette();if(!orbitFitted)fitOverview();world.setMarker(state.walk.x,state.walk.z);
- if(state.tutorial===0)toast('방금 서 있던 자리에 발자국이 있어요. 아래 서랍에서 나무나 꽃을 골라 미리 보고 놓아요.',true);}
-function toWalk(){if(mode==='walk')return;const viewed=state.items.find(it=>it.id===selected)??state.items.at(-1),changed=world.itemStamp!==editArrivalStamp;$('#firstSuccess').hidden=true;cancelPlacing();clearSelection();setStartSpot(false);if($('#canopy').getAttribute('aria-pressed')==='true')toggleCanopy();
+ if(state.tutorial===0)toast('‘현재 위치’ 표시가 방금 서 있던 자리예요. 아래 서랍에서 나무나 꽃을 골라 미리 보고 놓아요.',true);}
+function toWalk(){if(mode==='walk')return;const viewed=state.items.find(it=>it.id===selected)??state.items.at(-1),changed=world.itemStamp!==editArrivalStamp;$('#firstSuccess').hidden=true;cancelPlacing();clearSelection();
  const want=walkPos();let spot=safeSpot(state.items,want.x,want.z);let note='';if(!spot){const e=ENTRANCE[terrain()];spot=safeSpot(state.items,e.x,e.z)??{x:e.x,z:e.z};note='이전 자리가 새 물건으로 막혀서 입구로 이동했어요.';}
  else if(Math.hypot(spot.x-want.x,spot.z-want.z)>.05)note='이전 자리가 막혀서 가까운 자리에서 시작해요.';
  const yaw=changed&&viewed&&Math.hypot(viewed.x-spot.x,viewed.z-spot.z)>.3?Math.atan2(spot.x-viewed.x,spot.z-viewed.z):(want.yaw??0);world.setWalkPose({x:spot.x,z:spot.z,yaw,pitch:want.pitch??.03});state.walk={x:spot.x,z:spot.z,yaw,pitch:want.pitch??.03};if(state.tutorial<2&&state.items.length)state.tutorial=2;save();world.setMode('walk');setScreen('walk');inviteWalk();if(note)toast(note);else if(state.items.length)toast('방금 놓은 것을 눈높이에서 살펴보세요. 다시 ‘숲 꾸미기’로 고칠 수 있어요.');}
@@ -61,7 +61,7 @@ document.addEventListener('keydown',e=>{if(entrancePending||world.entrance)retur
  if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();undo();return;}
  if(e.target.closest?.('.cam-tools'))return;
  if(mode==='view'&&placing){const d={ArrowLeft:[-.25,0],ArrowRight:[.25,0],ArrowUp:[0,-.25],ArrowDown:[0,.25]}[e.key];if(d){e.preventDefault();placing.x+=d[0];placing.z+=d[1];updateGhost();}if(e.key==='Enter'){e.preventDefault();confirmPlacing();}if(e.key==='Escape'){e.preventDefault();cancelPlacing();}}
- else if(mode==='view'&&e.key==='Escape'){clearSelection();setStartSpot(false);}});
+ else if(mode==='view'&&e.key==='Escape'){clearSelection();}});
 document.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;if(keys.delete(k))sendMove();});
 window.addEventListener('blur',releaseKeys);document.addEventListener('visibilitychange',()=>{if(document.hidden)releaseKeys();});
 {const joyEl=$('#joystick'),thumb=$('#joyThumb');let jid=null,joyRect;new ResizeObserver(()=>joyRect=null).observe(joyEl);joyEl.addEventListener('pointerdown',e=>{if(jid!==null)return;jid=e.pointerId;joyRect=joyEl.getBoundingClientRect();joyEl.setPointerCapture(e.pointerId);ambience.unlock();track(e);});
@@ -82,7 +82,7 @@ function palette(){const target=$('#palette');if(paletteTab===tab){for(const b o
  $$('#tabs button').forEach(t=>{t.classList.toggle('active',t.dataset.tab===tab);t.setAttribute('aria-selected',String(t.dataset.tab===tab));});}
 $('#tabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;tab=b.dataset.tab;palette();};
 // ---- placement: material → translucent preview → position/rotation/size → confirm or cancel ----
-function startPlacing(kind){clearSelection();setStartSpot(false);const keep=placing&&!placing.id?placing:null;const o=world.orbit;const spot=keep?{x:keep.x,z:keep.z}:{x:o.tx,z:o.tz};placing={kind,x:spot.x,z:spot.z,scale:keep?.scale??1,rotation:keep?.rotation??0,n:material(kind).group?(keep?.n??1):1,seed:uuid(),id:null};palette();showPlaceBar();updateGhost();if(!keep)toast(material(kind).name+' 미리보기가 나타났어요. 바닥을 누르거나 끌어서 자리를 정한 뒤 ‘여기에 놓기’를 눌러요.');}
+function startPlacing(kind){clearSelection();const keep=placing&&!placing.id?placing:null;const o=world.orbit;const spot=keep?{x:keep.x,z:keep.z}:{x:o.tx,z:o.tz};placing={kind,x:spot.x,z:spot.z,scale:keep?.scale??1,rotation:keep?.rotation??0,n:material(kind).group?(keep?.n??1):1,seed:uuid(),id:null};palette();showPlaceBar();updateGhost();if(!keep)toast(material(kind).name+' 미리보기가 나타났어요. 바닥을 누르거나 끌어서 자리를 정한 뒤 ‘여기에 놓기’를 눌러요.');}
 function showPlaceBar(){const m=material(placing.kind);$('#placeBar').hidden=false;$('#selectBar').hidden=true;$('#placeName').textContent=(placing.id?'옮기는 중 · ':'')+m.name;$('#bundle').hidden=!(m.group&&!placing.id);$$('#bundle button').forEach(b=>{b.classList.toggle('active',+b.dataset.n===placing.n);b.setAttribute('aria-pressed',String(+b.dataset.n===placing.n));});}
 function candidates(){if(placing.id)return [{id:placing.id,kind:placing.kind,x:placing.x,z:placing.z,scale:placing.scale,rotation:placing.rotation,group:placing.group,on:null}];return groupCandidates(placing.kind,placing.x,placing.z,placing.scale,placing.rotation,placing.n,placing.seed);}
 let lastEval=null,lastGhostKey='';
@@ -112,7 +112,6 @@ function undo(){const prev=history.undo();if(!prev)return;prev.walk=state.walk;p
 $('#undo').onclick=undo;
 // ---- world callbacks ----
 function onTap(x,z,id){if(mode!=='view')return;
- if(startSpot){if(insideSite(x,z,WALK_MARGIN)&&walkable(state.items,x,z,BODY+.1)){state.walk={x,z,yaw:state.walk?.yaw??0,pitch:state.walk?.pitch??.03};world.setMarker(x,z);save();setStartSpot(false);toast('출발 자리를 옮겼어요. ‘숲속 걷기’를 누르면 여기서 시작해요.');}else toast('장애물이나 빈터 밖에는 출발 자리를 둘 수 없어요. 평평한 땅을 눌러 주세요.');return;}
  if(placing){placing.x=x;placing.z=z;updateGhost();return;}
  if(id){if(id!==selected){selected=id;selection();}return;}
  clearSelection();}
@@ -131,14 +130,10 @@ for(const button of $$('[data-pan]')){const [x,z]={north:[0,-1],south:[0,1],west
  button.onclick=e=>{if(e.detail===0)panView(x,z);};
 }
 window.addEventListener('blur',stopPan);document.addEventListener('visibilitychange',()=>{if(document.hidden)stopPan();});
-function toggleCanopy(){const on=$('#canopy').getAttribute('aria-pressed')!=='true';$('#canopy').setAttribute('aria-pressed',String(on));world.setCanopyFade(on);}
-$('#canopy').onclick=toggleCanopy;
-function setStartSpot(on){startSpot=on;$('#startSpot').setAttribute('aria-pressed',String(on));if(on){cancelPlacing();clearSelection();toast('출발 자리를 둘 평평한 땅을 눌러 주세요.');}}
-$('#startSpot').onclick=()=>setStartSpot(!startSpot);
 // ---- menu, mission, intention ----
 $('#walkMenu').onclick=()=>modal('#walkMenuDialog');$('#walkArtwork').onclick=()=>modal('#menuDialog');
 $('#menu').onclick=()=>modal('#menuDialog');$('#help').onclick=()=>modal('#helpDialog');$('#menuHelp').onclick=()=>modal('#helpDialog');
-let missionChoice=state.mission;function missions(){const root=$('#missionCards');root.replaceChildren();MISSIONS.forEach((m,i)=>{const b=document.createElement('button');b.classList.toggle('active',i===missionChoice);b.setAttribute('aria-pressed',String(i===missionChoice));const title=document.createElement('strong');title.textContent=m.name;const p=document.createElement('span');p.textContent=m.letter;const small=document.createElement('small');small.textContent=m.focus+' · '+m.question;b.append(title,p,small);b.onclick=()=>{missionChoice=i;missions();};root.append(b);});}
+let missionChoice=state.mission;function missions(){const root=$('#missionCards');root.replaceChildren();MISSIONS.forEach((m,i)=>{const b=document.createElement('button');b.classList.toggle('active',i===missionChoice);b.setAttribute('aria-pressed',String(i===missionChoice));const title=document.createElement('strong');title.textContent=m.name;const p=document.createElement('span');p.textContent=m.letter;const small=document.createElement('small');small.textContent=m.focus+' · '+m.question;const image=document.createElement('img');image.src='./assets/letters/'+m.image+'.webp';image.alt=m.imageAlt;image.width=960;image.height=640;image.loading='lazy';image.decoding='async';const copy=document.createElement('div');copy.className='letter-copy';copy.append(title,p,small);b.append(image,copy);b.onclick=()=>{missionChoice=i;root.querySelectorAll('button').forEach((card,j)=>{card.classList.toggle('active',j===i);card.setAttribute('aria-pressed',String(j===i));});};root.append(b);});}
 $('#missionHint').onclick=()=>$('#missionOpen').click();$('#firstMission').onclick=()=>$('#missionOpen').click();
 $('#missionOpen').onclick=()=>{missionChoice=state.mission;missions();modal('#missionDialog');};
 $('#begin').onclick=()=>{edit(()=>state.mission=missionChoice);$('#missionDialog').close();toast(MISSIONS[state.mission].from+' 기다리고 있어요. '+MISSIONS[state.mission].question);};
