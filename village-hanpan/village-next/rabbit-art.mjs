@@ -38,14 +38,14 @@ export function addRabbitArt(p){
 export function updateRabbitArt(p,camera,time,reduced,viewTime=time){
  const a=p?.rabbitArt;if(!a)return;
  const ready=a.e.ready&&!a.e.failed&&!p.sitting;a.fallback.visible=a.originalContact.visible=!ready;a.sprite.visible=a.shadow.visible=ready;if(!ready)return;
- a.view=rabbitView(camera,p.g.rotation.y,a.view);
+ if(a.viewCamera!==camera||a.viewHeading!==p.g.rotation.y){a.view=rabbitView(camera,p.g.rotation.y,a.view);a.viewCamera=camera;a.viewHeading=p.g.rotation.y;}
  const index=a.view*4+rabbitPose(p.distance,p.moving,reduced),[, ,width,height,root,sole]=rabbitFrames[index];
  if(a.frameIndex!==index){a.frameIndex=index;a.sprite.material=a.e.materials[index];a.sprite.center.set(root,2/height);}
  a.sprite.scale.set(width*pixel,height*pixel*(1+(reduced?0:Math.sin(time*2)*.003*(1-p.moving))),1);
  a.sprite.scale.y*=1-socialAmount(p,reduced,viewTime)*.035;
- const relative=camera-p.g.rotation.y,shift=(sole-root)*width*pixel,x=Math.cos(relative)*shift,z=-Math.sin(relative)*shift;
+ if(a.shadowCamera!==camera||a.shadowHeading!==p.g.rotation.y||a.shadowFrame!==index){a.shadowCamera=camera;a.shadowHeading=p.g.rotation.y;a.shadowFrame=index;const relative=camera-p.g.rotation.y,shift=(sole-root)*width*pixel,x=Math.cos(relative)*shift,z=-Math.sin(relative)*shift;
  a.contact.position.x=x;a.contact.position.z=z;
- const heading=p.g.rotation.y;a.cast.position.x=x+Math.cos(heading)*.24-Math.sin(heading)*.14;a.cast.position.z=z+Math.sin(heading)*.24+Math.cos(heading)*.14;a.cast.rotation.y=Math.atan2(.24,.14)-heading;
+ const heading=p.g.rotation.y;a.cast.position.x=x+Math.cos(heading)*.24-Math.sin(heading)*.14;a.cast.position.z=z+Math.sin(heading)*.24+Math.cos(heading)*.14;a.cast.rotation.y=Math.atan2(.24,.14)-heading;}
  // shortcut: four painted viewing angles; add intermediate views if free camera rotation is introduced.
  a.sprite.material.rotation=reduced?0:Math.sin(time*.85)*.008*(1-p.moving);
 }

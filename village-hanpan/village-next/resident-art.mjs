@@ -37,7 +37,7 @@ export function addResidentArt(p){
 export function updateResidentArt(p,camera,time,reduced,winter,viewTime=time){
  const a=p.residentArt;if(!a)return;
  const ready=a.e.ready&&!a.e.failed;a.fallback.visible=!ready;a.sprite.visible=ready;if(!ready)return;
- const view=rabbitView(camera,p.g.rotation.y,a.view);
+ if(a.viewCamera!==camera||a.viewHeading!==p.g.rotation.y||a.viewPrevious!==a.view){a.viewCamera=camera;a.viewHeading=p.g.rotation.y;a.viewPrevious=a.view;a.computedView=rabbitView(camera,p.g.rotation.y,a.view);}const view=a.computedView;
  // Briefly hold the old view through tiny steering reversals at a corner.
  if(a.pendingView!==view){a.pendingView=view;a.turnAt=viewTime;}
  if(a.view===undefined||reduced||viewTime-a.turnAt>=.06)a.view=view;

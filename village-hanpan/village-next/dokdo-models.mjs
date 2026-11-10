@@ -8,10 +8,15 @@ export function makeFlag(g,x=0,z=0){
  part(g,'cylinder','#a5b6b4',x,1.55,z,.035,3.1,.035);part(g,'sphere','#d7b66b',x,3.15,z,.075);
  const canvas=document.createElement('canvas');canvas.width=450;canvas.height=300;const c=canvas.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,450,300);
  c.save();c.translate(225,150);c.rotate(Math.atan2(2,3));const r=75;
- c.fillStyle='#cd2e3a';c.beginPath();c.arc(0,0,r,Math.PI,0);c.arc(r/2,0,r/2,0,Math.PI);c.arc(-r/2,0,r/2,0,Math.PI,true);c.fill();
- c.fillStyle='#0047a0';c.beginPath();c.arc(0,0,r,0,Math.PI);c.arc(-r/2,0,r/2,Math.PI,0);c.arc(r/2,0,r/2,Math.PI,0,true);c.fill();c.restore();
+ c.fillStyle='#0047a0';c.beginPath();c.arc(0,0,r,0,Math.PI*2);c.fill();
+ c.fillStyle='#cd2e3a';c.beginPath();c.arc(0,0,r,Math.PI,0);c.fill();c.beginPath();c.arc(-r/2,0,r/2,0,Math.PI*2);c.fill();
+ c.fillStyle='#0047a0';c.beginPath();c.arc(r/2,0,r/2,0,Math.PI*2);c.fill();c.restore();
  // Viewed from the front: geon NW, gam NE, ri SW, gon SE.
- for(const [x,y,angle,broken]of[[95,65,-.588,[0,0,0]],[355,65,.588,[1,0,1]],[95,235,.588,[0,1,0]],[355,235,-.588,[1,1,1]]]){c.save();c.translate(x,y);c.rotate(angle);c.fillStyle='#111';for(let i=0;i<3;i++){if(broken[i]){c.fillRect(-33,(i-1)*15-5,28,10);c.fillRect(5,(i-1)*15-5,28,10);}else c.fillRect(-33,(i-1)*15-5,66,10);}c.restore();}
+ // MOIS construction: length H/4, stroke H/24, gaps H/48, inner edge 3H/8 from centre.
+ for(const [sx,sy,broken]of[[-1,-1,[0,0,0]],[1,-1,[1,0,1]],[-1,1,[0,1,0]],[1,1,[1,1,1]]]){
+  c.save();c.translate(225+sx*137.5*3/Math.sqrt(13),150+sy*137.5*2/Math.sqrt(13));c.rotate(-sx*sy*Math.atan2(3,2));c.fillStyle='#000';
+  for(let i=0;i<3;i++){const y=(i-1)*18.75-6.25;if(broken[i]){c.fillRect(-37.5,y,34.375,12.5);c.fillRect(3.125,y,34.375,12.5);}else c.fillRect(-37.5,y,75,12.5);}c.restore();
+ }
  const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;
  const geo=new T.PlaneGeometry(1.35,.9,12,3),mat=new T.MeshStandardMaterial({map:texture,side:T.DoubleSide,roughness:.8});
  const flag=new T.Mesh(geo,mat);flag.position.set(x+.71,2.65,z);flag.userData.dokdoFlag=true;flag.userData.keepArtHierarchy=true;g.add(flag);return flag;

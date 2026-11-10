@@ -14,8 +14,8 @@ export function createIslandScenery(world){
  function samplePoint(x,z){const key=`${x.toFixed(7)},${z.toFixed(7)}`;if(!heightSamples.has(key))heightSamples.set(key,cliffPoint(x,z));return heightSamples.get(key);}
  const sampleHeight=(x,z)=>samplePoint(x,z)[1];
  const shared=new T.Group();island.add(shared);
- const positions=[],colors=[],uvs=[],norm=new T.Color(),vegetationTone=new T.Color('#8d9b62'),step=.6;
- function vertex(x,z){const y=sampleHeight(x,z);positions.push(...samplePoint(x,z));uvs.push((x+24)/49,(z+25)/43);const slope=Math.hypot(sampleHeight(x+.15,z)-sampleHeight(x-.15,z),sampleHeight(x,z+.15)-sampleHeight(x,z-.15))/.3;const greenery=y>1?(1-T.MathUtils.smoothstep(slope,.55,1.7))*T.MathUtils.smoothstep(Math.sin(x*.8+z*.7)+.35*Math.sin(x*2.3-z*1.6),-.3,.6):0;norm.set(y<.6?'#607d79':'#d0c1a9');norm.lerp(vegetationTone,greenery);const hollow=(sampleHeight(x+.6,z)+sampleHeight(x-.6,z)+sampleHeight(x,z+.6)+sampleHeight(x,z-.6))*.25-y;norm.multiplyScalar(.99-.43*T.MathUtils.smoothstep(hollow,.22,1.6)+.08*T.MathUtils.smoothstep(-hollow,.18,1.1));colors.push(norm.r,norm.g,norm.b);}
+ const positions=[],colors=[],uvs=[],norm=new T.Color(),vegetationTone=new T.Color('#879669'),step=.6;
+ function vertex(x,z){const y=sampleHeight(x,z);positions.push(...samplePoint(x,z));uvs.push((x+24)/49,(z+25)/43);const slope=Math.hypot(sampleHeight(x+.15,z)-sampleHeight(x-.15,z),sampleHeight(x,z+.15)-sampleHeight(x,z-.15))/.3;const greenery=y>1?(1-T.MathUtils.smoothstep(slope,.65,1.85))*T.MathUtils.smoothstep(Math.sin(x*.8+z*.7)+.35*Math.sin(x*2.3-z*1.6),-.3,.6):0;norm.set(y<.6?'#607d79':'#d0c1a9');norm.lerp(vegetationTone,greenery);const hollow=(sampleHeight(x+.6,z)+sampleHeight(x-.6,z)+sampleHeight(x,z+.6)+sampleHeight(x,z-.6))*.25-y;norm.multiplyScalar(.99-.43*T.MathUtils.smoothstep(hollow,.22,1.6)+.08*T.MathUtils.smoothstep(-hollow,.18,1.1));colors.push(norm.r,norm.g,norm.b);}
  for(let x=-30;x<30;x+=step)for(let z=-29;z<20;z+=step){if([sampleHeight(x,z),sampleHeight(x+step,z),sampleHeight(x,z+step),sampleHeight(x+step,z+step)].every(h=>h<0))continue;for(const [dx,dz]of[[0,0],[0,1],[1,0],[1,0],[0,1],[1,1]])vertex(x+dx*step,z+dz*step);}
  // These low approach foundations are fictional construction, not added natural islands.
  for(const e of walkEdges){const mesh=bridgeFootingMesh(e);if(!mesh)continue;const {points,faces}=mesh;
@@ -26,14 +26,14 @@ export function createIslandScenery(world){
  const averaged=new Map(),normals=geometry.attributes.normal,keys=[];
  for(let i=0;i<positions.length;i+=3){const key=positions.slice(i,i+3).map(v=>v.toFixed(5)).join(',');keys.push(key);const n=averaged.get(key)||new T.Vector3();n.add(new T.Vector3().fromBufferAttribute(normals,i/3));averaged.set(key,n);}
  for(const n of averaged.values())n.normalize();
- for(let i=0;i<keys.length;i++){const n=new T.Vector3().fromBufferAttribute(normals,i).lerp(averaged.get(keys[i]),.64).normalize();normals.setXYZ(i,n.x,n.y,n.z);}
+ for(let i=0;i<keys.length;i++){const n=new T.Vector3().fromBufferAttribute(normals,i).lerp(averaged.get(keys[i]),.72).normalize();normals.setXYZ(i,n.x,n.y,n.z);}
  const texCanvas=document.createElement('canvas');texCanvas.width=texCanvas.height=1024;const tc=texCanvas.getContext('2d');tc.fillStyle='#d5cdb8';tc.fillRect(0,0,1024,1024);
  let seed=7461;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
  for(let i=0;i<70000;i++){const shade=100+Math.floor(rand()*125);tc.fillStyle=`rgba(${shade},${shade},${shade},.22)`;tc.fillRect(rand()*1024,rand()*1024,1+rand()*4,1+rand()*3);}
  for(let i=0;i<600;i++){const x=rand()*1024,y=rand()*1024;tc.strokeStyle=i%3?'rgba(88,78,63,.14)':'rgba(245,236,210,.3)';tc.lineWidth=.5+rand();tc.beginPath();tc.moveTo(x,y);tc.lineTo(x+rand()*15-7,y+8+rand()*25);tc.stroke();}
  const rockTexture=new T.CanvasTexture(texCanvas);rockTexture.colorSpace=T.SRGBColorSpace;rockTexture.anisotropy=4;
  const terrain=new T.Mesh(geometry,new T.MeshStandardMaterial({vertexColors:true,map:rockTexture,roughness:.97,flatShading:false}));terrain.receiveShadow=true;terrain.castShadow=true;shared.add(terrain);
- new T.TextureLoader().load('assets/dokdo/volcanic-rock.webp',map=>{map.colorSpace=T.SRGBColorSpace;map.wrapS=map.wrapT=T.MirroredRepeatWrapping;map.repeat.set(6,6);map.anisotropy=4;terrain.material.map=map;terrain.material.needsUpdate=true;});
+ new T.TextureLoader().load('assets/dokdo/volcanic-rock.webp',map=>{map.colorSpace=T.SRGBColorSpace;map.wrapS=map.wrapT=T.MirroredRepeatWrapping;map.repeat.set(6,6);map.anisotropy=4;terrain.material.map=map;terrain.material.needsUpdate=true;rockTexture.dispose();});
  terrain.material.onBeforeCompile=shader=>{
   shader.vertexShader='varying vec3 rockPosition; varying vec3 rockNormal;\n'+shader.vertexShader;
   shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nrockPosition=position;rockNormal=normal;');
@@ -41,24 +41,24 @@ export function createIslandScenery(world){
   shader.fragmentShader=shader.fragmentShader.replace('#include <normal_fragment_begin>',`#include <normal_fragment_begin>
    float bedding=rockPosition.y*2.6+sin(rockPosition.x*.91+rockPosition.z*.6)*3.6+sin(rockPosition.z*2.7-rockPosition.x*.4)*.7;
    float joint=rockPosition.x*1.6+rockPosition.z*1.1+rockPosition.y*.23+sin(rockPosition.y*.43);
-   float relief=(sin(bedding)*.034+pow(.5+.5*sin(joint),14.)*.075)*(1.-smoothstep(.08,.35,length(fwidth(rockPosition))));
+   float relief=(sin(bedding)*.048+pow(.5+.5*sin(joint),14.)*.055)*(1.-smoothstep(.08,.35,length(fwidth(rockPosition))));
    vec3 dpX=dFdx(vViewPosition),dpY=dFdy(vViewPosition);
    vec3 rX=cross(dpY,normal),rY=cross(normal,dpX);
    float det=dot(dpX,rX);
    if(abs(det)>.0000001)normal=normalize(abs(det)*normal-sign(det)*(dFdx(relief)*rX+dFdy(relief)*rY));`);
   shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',`#ifdef USE_MAP
-   vec3 weights=pow(abs(normalize(rockNormal)),vec3(4.)); weights/=max(.001,weights.x+weights.y+weights.z);
+   vec3 weights=abs(normalize(rockNormal));weights*=weights;weights*=weights;weights/=max(.001,weights.x+weights.y+weights.z);
    vec4 stone=texture2D(map,rockPosition.yz*.18)*weights.x+texture2D(map,rockPosition.xz*.18)*weights.y+texture2D(map,rockPosition.xy*.18)*weights.z;
-   diffuseColor*=mix(vec4(1.),stone,.40);
+   diffuseColor*=mix(vec4(1.),stone,.28);
    float strata=sin(rockPosition.y*2.6+sin(rockPosition.x*.8+rockPosition.z*.6)*3.6+sin(rockPosition.x*2.7)*.5);
    float cliff=1.-smoothstep(.35,.8,abs(normalize(rockNormal).y));
-   diffuseColor.rgb*=1.-cliff*.10*smoothstep(.35,.9,strata);
+   diffuseColor.rgb*=1.-cliff*.14*smoothstep(.40,.94,strata);
    float mineral=.5+.5*sin(rockPosition.x*.72+rockPosition.z*.48+sin(rockPosition.y*.63));
    float fissure=pow(.5+.5*sin(rockPosition.x*.95+rockPosition.z*.61+sin(rockPosition.y*.9)),12.);
-   diffuseColor.rgb*=mix(vec3(.88,.94,1.03),vec3(1.055,1.025,.97),mineral)*(1.-fissure*cliff*.19);
+   diffuseColor.rgb*=mix(vec3(.88,.94,1.03),vec3(1.055,1.025,.97),mineral)*(1.-fissure*cliff*.12);
    float creviceMoss=smoothstep(.65,.92,fissure)*(1.-smoothstep(.4,.8,cliff))*smoothstep(1.,4.,rockPosition.y);
    diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.16,.24,.09),creviceMoss*.32);
-   diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(.64,.79,.80),1.-smoothstep(-.3,1.4,rockPosition.y));
+   diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(.58,.75,.78),1.-smoothstep(-.3,1.1,rockPosition.y));
    #endif`);
  };
 
@@ -86,10 +86,10 @@ export function createIslandScenery(world){
  float islandShore=shore;shore=max(shore,mainlandShore*.82);
  diffuseColor.rgb=mix(mix(vec3(.012,.095,.23),vec3(.018,.18,.34),broad),mix(vec3(.075,.46,.43),vec3(.055,.36,.40),insideMap),smoothstep(0.,1.,shore)*.86)*(.97+w*.065);
  // A broad, irregular mainland shelf fades into the existing deep-blue channel.
- float shelfDistance=max(0.,mainlandDistance+.28*sin(seaPosition.x*.63+seaPosition.z*.41)+.17*sin(seaPosition.z*.83));
- float shelf=(1.-smoothstep(.4,11.,shelfDistance))*(1.-step(.9,seaSpace.z))*(1.-smoothstep(.10,.70,islandShore));
- vec3 nearSea=mix(vec3(.035,.29,.39),vec3(.21,.57,.51),1.-smoothstep(.3,4.5,shelfDistance));
- diffuseColor.rgb=mix(diffuseColor.rgb,nearSea*(.97+w*.045),shelf*.90);
+ float shelfDistance=max(0.,mainlandDistance+.55*sin(seaPosition.x*.37+seaPosition.z*.25)+.24*sin(seaPosition.z*.73));
+ float shelf=(1.-smoothstep(.8,14.,shelfDistance))*(1.-step(.9,seaSpace.z))*(1.-smoothstep(.10,.70,islandShore));
+ vec3 nearSea=mix(vec3(.055,.34,.43),vec3(.30,.65,.59),1.-smoothstep(.7,6.5,shelfDistance));
+ diffuseColor.rgb=mix(diffuseColor.rgb,nearSea*(.97+w*.045),shelf*.94);
  float shoalLight=(1.-smoothstep(.025,.11,abs(sin(seaPosition.x*2.8+sin(seaPosition.z*2.1)+seaTime*.16)+sin(seaPosition.z*3.2-seaTime*.21))));
  diffuseColor.rgb+=vec3(.024,.060,.050)*shoalLight*pow(shore,3.);
  float lace=sin(seaPosition.x*7.+sin(seaPosition.z*4.)+seaTime*.4)*sin(seaPosition.z*6.-seaTime*.3);
@@ -157,9 +157,9 @@ export function createIslandScenery(world){
  function plantGeometry(kind){const v=[],c=[],col=new T.Color();
   const tri=(a,b,d,color)=>{v.push(...a,...b,...d);col.set(color);for(let i=0;i<3;i++)c.push(col.r,col.g,col.b);};
   const leaf=(x,y,z,a,length,width,color)=>{const center=[x,y+.065,z],edge=[];for(let i=0;i<8;i++){const t=i*Math.PI/4,u=Math.cos(t)*width,w=(1+Math.sin(t))*length*.5;edge.push([x+Math.cos(a)*w-Math.sin(a)*u,y+.018+.075*(1-Math.cos(t)*Math.cos(t)),z+Math.sin(a)*w+Math.cos(a)*u]);}for(let i=0;i<8;i++)tri(center,edge[i],edge[(i+1)%8],i<4?color:'#8ca780');};
-  if(kind==='haeguk'){for(let i=0;i<7;i++)leaf(0,.02+i%2*.02,0,i*2.4,.42,.13,'#748f69');}
+  if(kind==='haeguk'){for(let i=0;i<7;i++)leaf(0,.02+i%2*.02,0,i*2.4,.42,.13,'#718859');}
   else if(kind==='sedum'){for(let stem=0;stem<3;stem++){const x=(stem-1)*.15,z=stem%2*.13;tri([x-.018,0,z],[x+.018,0,z],[x,.43,z],'#7a9654');for(let i=0;i<6;i++)leaf(x,.06+i*.055,z,i*2.4+stem,.19,.083,'#789963');}}
-  else if(kind==='haeguk-flower'){for(let f=0;f<3;f++){const x=(f-1)*.22,z=f%2*.18,y=.27+f%2*.08;for(let i=0;i<18;i++){const a=i*Math.PI/9,b=a+.12,d=a-.12;tri([x,y,z],[x+Math.cos(d)*.24,y+.075,z+Math.sin(d)*.24],[x+Math.cos(a)*.28,y+.045,z+Math.sin(a)*.28],'#c9b4d9');tri([x,y,z],[x+Math.cos(a)*.28,y+.045,z+Math.sin(a)*.28],[x+Math.cos(b)*.24,y+.075,z+Math.sin(b)*.24],'#e5d5ec');}for(let i=0;i<12;i++){const a=i*Math.PI/6,b=(i+1)*Math.PI/6;tri([x,y+.025,z],[x+Math.cos(a)*.085,y+.03,z+Math.sin(a)*.085],[x+Math.cos(b)*.085,y+.03,z+Math.sin(b)*.085],'#e2b348');}}}
+  else if(kind==='haeguk-flower'){for(let f=0;f<3;f++){const x=(f-1)*.22,z=f%2*.18,y=.27+f%2*.08;for(let i=0;i<18;i++){const a=i*Math.PI/9,b=a+.12,d=a-.12;tri([x,y,z],[x+Math.cos(d)*.24,y+.075,z+Math.sin(d)*.24],[x+Math.cos(a)*.28,y+.045,z+Math.sin(a)*.28],'#b6a0d0');tri([x,y,z],[x+Math.cos(a)*.28,y+.045,z+Math.sin(a)*.28],[x+Math.cos(b)*.24,y+.075,z+Math.sin(b)*.24],'#e5d5ec');}for(let i=0;i<12;i++){const a=i*Math.PI/6,b=(i+1)*Math.PI/6;tri([x,y+.025,z],[x+Math.cos(a)*.085,y+.03,z+Math.sin(a)*.085],[x+Math.cos(b)*.085,y+.03,z+Math.sin(b)*.085],'#e2b348');}}}
   else{for(let f=0;f<6;f++){const x=Math.sin(f*2.4)*.22,z=Math.cos(f*2.4)*.22;for(let i=0;i<5;i++){const a=i*Math.PI*2/5;tri([x,.43,z],[x+Math.cos(a-.35)*.04,.44,z+Math.sin(a-.35)*.04],[x+Math.cos(a)*.12,.46,z+Math.sin(a)*.12],'#f0d561');tri([x,.43,z],[x+Math.cos(a)*.12,.46,z+Math.sin(a)*.12],[x+Math.cos(a+.35)*.04,.44,z+Math.sin(a+.35)*.04],'#e8c44a');}}}
   const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(v,3));g.setAttribute('color',new T.Float32BufferAttribute(c,3));g.computeVertexNormals();return g;
  }
@@ -171,17 +171,17 @@ export function createIslandScenery(world){
  plants.count=Math.min(pi,84);sedums.count=Math.min(si,64);blooms.count=Math.min(fi,48);yellowBlooms.count=Math.min(yi,27);
  // Fixed lighthouse on Dongdo ridge. Its silhouette remains readable from the main town.
  const lx=19,lz=7,ly=sampleHeight(lx,lz);part(shared,'cylinder','#e7e3d3',lx,ly+1.45,lz,.43,2.9,.43);part(shared,'cylinder','#b7c9c7',lx,ly+3,lz,.58,.45,.58);part(shared,'cone','#536e70',lx,ly+3.42,lz,.68,.42);part(shared,'sphere','#ffe5a1',lx,ly+3.05,lz,.35,.16,.35);
- function railBetween(a,b,width=.04,parent=shared,color='#887c65'){const d=new T.Vector3().subVectors(b,a),m=part(parent,'box',color,...(a.clone().add(b).multiplyScalar(.5).toArray()),width,d.length(),width);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),d.normalize());}
+ function railBetween(a,b,width=.04,parent=shared,color='#817764'){const d=new T.Vector3().subVectors(b,a),m=part(parent,'box',color,...(a.clone().add(b).multiplyScalar(.5).toArray()),width,d.length(),width);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),d.normalize());}
  // Continuous paths follow the same edges and heights used by the rabbit.
  for(const e of walkEdges){const footing=bridgeFooting(e),stone=rockWalk(e)||!!footing,a=walkNodes[e.a],b=walkNodes[e.b],dx=b.x-a.x,dz=b.z-a.z,length=Math.hypot(dx,dz),angle=Math.atan2(dx,dz),nx=dz/length,nz=-dx/length,steps=Math.max(2,Math.ceil(length/(stone?.80:e.width===1.55?.68:.40)),Math.ceil(Math.abs(b.y-a.y)/.17));
-  for(let j=0;j<steps;j++){const u=(j+.5)/steps,flare=bridgeFlare(e,u),drift=bridgeDrift(e,u),ground=naturalHeight(a.x+dx*u,a.z+dz*u),supported=stone||(ground>.1&&ground>a.y+(b.y-a.y)*u-1.4),depth=footing?.18:supported?Math.max(.20,a.y+(b.y-a.y)*u-naturalHeight(a.x+dx*u,a.z+dz*u)+.12):.14,m=part(shared,'box',(e.width===1.55?(footing?['#979686','#a09c89','#969580']:['#8c8270','#998b76','#908571']):supported?['#b5aa94','#bfb29b','#afa78f']:['#a79c84','#b2a58d','#a2957d'])[Math.abs(Math.floor(a.x*3+j*7))%3],a.x+dx*u+nx*drift,a.y+(b.y-a.y)*u-depth/2,a.z+dz*u+nz*drift,e.width+flare+(stone?.14*(1+Math.sin(j*1.7+a.x)):0),depth,length/steps+.015);m.rotation.y=angle;}
+  for(let j=0;j<steps;j++){const u=(j+.5)/steps,flare=bridgeFlare(e,u),drift=bridgeDrift(e,u),ground=naturalHeight(a.x+dx*u,a.z+dz*u),supported=stone||(ground>.1&&ground>a.y+(b.y-a.y)*u-1.4),depth=footing?.18:supported?Math.max(.20,a.y+(b.y-a.y)*u-naturalHeight(a.x+dx*u,a.z+dz*u)+.12):.14,m=part(shared,'box',(e.width===1.55?(footing?['#a09b8a','#a59e8c','#9d9886']:['#918a7a','#998f7d','#948b79']):supported?['#b6ad9b','#bbb19e','#b1a896']:['#a79c84','#b2a58d','#a2957d'])[Math.abs(Math.floor(a.x*3+j*7))%3],a.x+dx*u+nx*drift,a.y+(b.y-a.y)*u-depth/2,a.z+dz*u+nz*drift,e.width+flare+(stone?.14*(1+Math.sin(j*1.7+a.x)):0),depth,length/steps+.015);m.rotation.y=angle;}
   for(const side of[-1,1]){
    const sheltered=[.1,.5,.9].every(u=>naturalHeight(a.x+dx*u+nx*(e.width/2+.16)*side,a.z+dz*u+nz*(e.width/2+.16)*side)>a.y+(b.y-a.y)*u+(stone?.28:.45));
    if(sheltered)continue;
    const trim=e.width===1.55?0:Math.min(.16,.22/length),count=Math.max(1,Math.ceil(length/2.5));
    const railPoint=u=>{const flare=bridgeFlare(e,u),offset=bridgeDrift(e,u)+(e.width+flare)*.5*side;return new T.Vector3(a.x+dx*u+nx*offset,a.y+(b.y-a.y)*u+.65-(e.width===1.55?.10*Math.sin(Math.PI*Math.max(0,Math.min(1,(a.x+dx*u+3.6)/12))):0),a.z+dz*u+nz*offset);};
    let previous;
-   for(let j=0;j<=count;j++){const q=railPoint(trim+(1-2*trim)*j/count);if(previous)railBetween(previous,q);part(shared,'box','#887c65',q.x,q.y-.32,q.z,.045,.71,.045);previous=q;}}
+   for(let j=0;j<=count;j++){const q=railPoint(trim+(1-2*trim)*j/count);if(previous)railBetween(previous,q);part(shared,'box','#817764',q.x,q.y-.32,q.z,.045,.71,.045);previous=q;}}
 
   if(stone||e.width===1.55)continue;
   // Cliff walks use short brackets; the low bridge alone keeps water-reaching piles.
@@ -194,7 +194,7 @@ export function createIslandScenery(world){
  }
  // One light arch replaces the central row of water-reaching piles.
  for(const side of[-1,1]){let previous;for(let j=0;j<=7;j++){const x=-3.6+12*j/7,e=walkEdges.find(e=>e.width===1.55&&walkNodes[e.a].x<=x+.001&&walkNodes[e.b].x>=x-.001);if(!e)continue;const a=walkNodes[e.a],b=walkNodes[e.b],u=(x-a.x)/(b.x-a.x),flare=bridgeFlare(e,u),q=new T.Vector3(x,a.y+(b.y-a.y)*u-.65+.40*Math.sin(Math.PI*j/7),8.4-bridgeDrift(e,u)+side*(e.width+flare)*.43);if(previous)railBetween(previous,q,.11,shared,'#756e5e');previous=q;}}
- for(const n of walkNodes){if(n.kind==='lower'&&n.z===8.4&&n.x>-3.59&&n.x<8.39)continue;const ground=naturalHeight(n.x,n.z),grounded=ground>.1&&ground>=n.y-1.4,depth=grounded?Math.max(.25,n.y-ground+.12):.16,radius=n.lookout?.76:n.kind==='lower'?.68:.56,m=part(shared,'cylinder',grounded?'#b5aa94':n.lookout?'#a69b84':'#a29882',n.x,n.y-depth/2,n.z,radius,depth,radius);m.rotation.y=Math.PI/12;if(n.lookout&&!grounded)part(shared,'cylinder','#786c57',n.x,n.y-.20,n.z,radius*.9,.12,radius*.9);}
+ for(const n of walkNodes){if(n.kind==='lower'&&n.z===8.4&&n.x>-3.59&&n.x<8.39)continue;const ground=naturalHeight(n.x,n.z),grounded=ground>.1&&ground>=n.y-1.4,depth=grounded?Math.max(.25,n.y-ground+.12):.16,radius=n.lookout?.76:n.kind==='lower'?.68:.56,m=part(shared,'cylinder',grounded?'#b6ad9b':n.lookout?'#a69b84':'#a29882',n.x,n.y-depth/2,n.z,radius,depth,radius);m.rotation.y=Math.PI/12;if(n.lookout&&!grounded)part(shared,'cylinder','#786c57',n.x,n.y-.20,n.z,radius*.9,.12,radius*.9);}
  const pier=new T.Group();shared.add(pier);pier.position.x=-5;part(pier,'box','#c4bca7',14,.05,16,2.2,.4,5);part(pier,'box','#c4bca7',13,.05,18.2,4.2,.4,1.25);
  for(const x of[12,14.9])for(const z of[17.8,18.6])part(pier,'cylinder','#737e79',x,.45,z,.07,.65,.07);
  // A short switchback joins the existing home terrace to the actual trail, not an obsolete sea-level landing.
@@ -205,7 +205,7 @@ export function createIslandScenery(world){
   for(const side of[-1,1]){const offset=new T.Vector3(d.z/length*.52*side,.7,-d.x/length*.52*side),aa=a.clone().add(offset),bb=b.clone().add(offset);railBetween(aa,bb,.065,homeAccess);for(const q of[aa,bb])part(homeAccess,'box','#826b50',q.x,q.y-.35,q.z,.075,.8,.075);}
  }
  batchParts(homeAccess);
- batchParts(shared);const farCopy=shared.clone(true);farCopy.traverse(o=>{if(o.isMesh)o.castShadow=false;if(o.name==='dokdo-plants')o.count=Math.min(100,o.count);if(o.name==='dokdo-blooms'||o.name==='dokdo-sedum-blooms')o.count=Math.min(18,o.count);if(o.name==='dokdo-sedum')o.count=Math.min(35,o.count);});farIsland.add(farCopy);farIsland.position.set(39,0,-20);farIsland.scale.setScalar(.42);
+ batchParts(shared);shared.traverse(o=>{o.updateMatrix();o.matrixAutoUpdate=false;});const farCopy=shared.clone(true);farCopy.traverse(o=>{if(o.isMesh)o.castShadow=false;if(o.name==='dokdo-plants')o.count=Math.min(100,o.count);if(o.name==='dokdo-blooms'||o.name==='dokdo-sedum-blooms')o.count=Math.min(18,o.count);if(o.name==='dokdo-sedum')o.count=Math.min(35,o.count);});farIsland.add(farCopy);farIsland.position.set(39,0,-20);farIsland.scale.setScalar(.42);
  const mist=new T.Group();farIsland.add(mist);const cv=document.createElement('canvas');cv.width=256;cv.height=128;const ctx=cv.getContext('2d');
  for(const [x,y,r]of [[35,80,30],[86,52,39],[139,79,41],[205,47,37],[164,30,24]]){const grad=ctx.createRadialGradient(x,y,0,x,y,r);grad.addColorStop(0,'rgba(224,235,244,.62)');grad.addColorStop(.5,'rgba(224,235,244,.25)');grad.addColorStop(1,'rgba(224,235,244,0)');ctx.fillStyle=grad;ctx.fillRect(0,0,256,128);}
  ctx.save();ctx.globalCompositeOperation='destination-in';ctx.scale(2,1);const fade=ctx.createRadialGradient(64,64,24,64,64,64);fade.addColorStop(0,'#fff');fade.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=fade;ctx.fillRect(0,0,128,128);ctx.restore();
@@ -226,7 +226,8 @@ export function createIslandScenery(world){
  function setHarborReady(value,immediate=false){const changed=!!value&&!ready;ready=!!value;if(immediate||!ready)amount=ready?.78:1;mist.visible=amount>0;mistMat.opacity=amount*.72;return changed&&!immediate;}
  function setIsland(value){active=!!value;seaSpace.value.set(active?0:39,active?0:-20,active?1:.42);island.visible=active;farIsland.visible=!active;}
  const perchedHeights=[sampleHeight(-17,1)+.20,sampleHeight(18,0)+.20];
- let lastSeason=-1;function tick(time,reduced){homeAccess.visible=!!world.dokdoHomeBuilt;if(lastSeason!==world.se){lastSeason=world.se;blooms.visible=world.se===3;yellowBlooms.visible=world.se===2;farCopy.traverse(o=>{if(o.name===blooms.name)o.visible=blooms.visible;if(o.name===yellowBlooms.name)o.visible=yellowBlooms.visible;});}const dt=last===null?0:Math.min(.2,Math.max(0,time-last));last=time;seaClock.value=reduced?0:time;if(ready)amount=reduced?.78:Math.max(.78,amount-dt/6);mist.visible=amount>0;if(!active)fogLayers.forEach((m,i)=>{m.quaternion.copy(world.camera.quaternion);m.material.opacity=amount*m.userData.density;m.position.x=m.userData.home.x+(reduced?0:Math.sin(time*(.07+i*.02)+i)*1.5);m.position.y=m.userData.home.y+(reduced?0:Math.sin(time*.09+i)*.28);});mist.position.x=reduced?0:Math.sin(time*.15)*2.3;mist.position.z=reduced?0:Math.cos(time*.11)*.8;if(active){gangchi.tick(time,reduced);if(reduced)gulls.children.slice(0,3).forEach(g=>poseWings(g,.08));if(!reduced)gulls.children.forEach((g,i)=>{if(i<3){const phase=(time+i*.73)%5,envelope=phase<2.4?Math.sqrt(Math.sin(phase/2.4*Math.PI)):0;poseWings(g,.08+.65*Math.sin(time*8.5+i*2.1)*envelope);const a=time*.10+i*2.1;g.position.set(Math.sin(a)*16,8+i*.8+Math.sin(time*.7+i)*.14,Math.cos(a)*10-4);g.rotation.y=-a-Math.PI/2;g.rotation.z=Math.sin(a)*.08;}else{const x=i===3?-17:18,z=i===3?1:0;g.position.set(x,perchedHeights[i-3],z);g.rotation.y=.5+Math.sin(time*.2+i)*.15;}});}foam.material.opacity=reduced?.055:.055+Math.sin(time*1.2)*.018;if(boat.visible){body.rotation.z=reduced?0:Math.sin(time*1.6)*.018;body.rotation.x=reduced?0:Math.sin(time*.9)*.012;body.position.y=reduced?0:Math.sin(time*1.3)*.025;wake.material.opacity=reduced?.65:.62+Math.sin(time*1.2)*.08;}}
+ const farFlowers=[];farCopy.traverse(o=>{if(o.name===blooms.name||o.name===yellowBlooms.name)farFlowers.push(o);});
+ let lastSeason=-1;function tick(time,reduced){homeAccess.visible=!!world.dokdoHomeBuilt;if(lastSeason!==world.se){lastSeason=world.se;blooms.visible=world.se===3;yellowBlooms.visible=world.se===2;for(const o of farFlowers)o.visible=o.name===blooms.name?blooms.visible:yellowBlooms.visible;}const dt=last===null?0:Math.min(.2,Math.max(0,time-last));last=time;seaClock.value=reduced?0:time;if(ready)amount=reduced?.78:Math.max(.78,amount-dt/6);mist.visible=amount>0;if(!active)fogLayers.forEach((m,i)=>{m.quaternion.copy(world.camera.quaternion);m.material.opacity=amount*m.userData.density;m.position.x=m.userData.home.x+(reduced?0:Math.sin(time*(.07+i*.02)+i)*1.5);m.position.y=m.userData.home.y+(reduced?0:Math.sin(time*.09+i)*.28);});mist.position.x=reduced?0:Math.sin(time*.15)*2.3;mist.position.z=reduced?0:Math.cos(time*.11)*.8;if(active){gangchi.tick(time,reduced);if(reduced)gulls.children.slice(0,3).forEach(g=>poseWings(g,.08));if(!reduced)gulls.children.forEach((g,i)=>{if(i<3){const phase=(time+i*.73)%5,envelope=phase<2.4?Math.sqrt(Math.sin(phase/2.4*Math.PI)):0;poseWings(g,.08+.65*Math.sin(time*8.5+i*2.1)*envelope);const a=time*.10+i*2.1;g.position.set(Math.sin(a)*16,8+i*.8+Math.sin(time*.7+i)*.14,Math.cos(a)*10-4);g.rotation.y=-a-Math.PI/2;g.rotation.z=Math.sin(a)*.08;}else{const x=i===3?-17:18,z=i===3?1:0;g.position.set(x,perchedHeights[i-3],z);g.rotation.y=.5+Math.sin(time*.2+i)*.15;}});}foam.material.opacity=reduced?.055:.055+Math.sin(time*1.2)*.018;if(boat.visible){body.rotation.z=reduced?0:Math.sin(time*1.6)*.018;body.rotation.x=reduced?0:Math.sin(time*.9)*.012;body.position.y=reduced?0:Math.sin(time*1.3)*.025;wake.material.opacity=reduced?.65:.62+Math.sin(time*1.2)*.08;}}
  function loadFerry(){if(loading)return loading;loading=import('./ferry-model.mjs').then(async({loadTripoFerry})=>{ferry=await loadTripoFerry();for(const p of body.children)if(p!==passenger)p.visible=false;body.add(ferry);passenger.position.set(0,-.24,.3);return true;}).catch(()=>{loading=null;return false;});return loading;}
  heightSamples.clear();
  setIsland(false);

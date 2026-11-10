@@ -58,7 +58,7 @@ export function advancePersonRoute(p,dt,people=[]){
  if(!p.route.length)return 0;
  const q=p.route[0],dx=q.x-p.g.position.x,dz=q.z-p.g.position.z,d=Math.hypot(dx,dz),slopeDistance=Number.isFinite(q.y)?Math.hypot(d,q.y-p.g.position.y):d,step=Math.min(d,dt*(p.id==='player'?PLAYER_SPEED:1.6)*d/slopeDistance);
  const x=p.g.position.x+dx/d*step,z=p.g.position.z+dz/d*step,arrived=d-step<1e-7;
- const blocker=!p.passTime&&p.id!=='player'&&people.find(o=>o!==p&&o.id!=='player'&&o.g.visible&&!o.sitting&&Math.abs(x-o.g.position.x)<.44&&Math.abs(z-o.g.position.z)<.44&&Math.hypot(x-o.g.position.x,z-o.g.position.z)<.44&&Math.hypot(x-o.g.position.x,z-o.g.position.z)<Math.hypot(p.g.position.x-o.g.position.x,p.g.position.z-o.g.position.z)-1e-5);
+ const blocker=!p.passTime&&p.id!=='player'&&people.find(o=>{if(o===p||o.id==='player'||!o.g.visible||o.sitting||Math.abs(x-o.g.position.x)>=.44||Math.abs(z-o.g.position.z)>=.44)return false;const distance=Math.hypot(x-o.g.position.x,z-o.g.position.z);return distance<.44&&distance<Math.hypot(p.g.position.x-o.g.position.x,p.g.position.z-o.g.position.z)-1e-5;});
  if(blocker){p.blockedFor=(p.blockedFor||0)+dt;
   // shortcut: one brief soft pass breaks dense crowds; use local avoidance if the cast grows beyond 24.
   if(p.blockedFor>3&&!people.some(o=>o!==p&&o.passTime>0)){p.passTime=2;p.blockedFor=0;if(q.yield)p.route.shift();return 0;}

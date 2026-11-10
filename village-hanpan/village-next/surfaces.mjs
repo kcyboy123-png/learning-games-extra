@@ -36,6 +36,7 @@ const palettes={
 palettes.wood.push('#cbb58d','#d1bb94','#dcc9a4','#e1d0ad','#e9d8b1','#9b8262','#826b50','#bda785','#d7b68e','#c8af89','#c19975','#d7c29b','#b99670','#c5a177','#c9ad83','#d5ba92','#8e7558','#bba17b','#b99a6a','#b39059','#bc9c60');
 palettes.plaster.push('#f4ddbc','#f6e5c8','#f1d6c3','#c4d8d2','#e9dfb9','#f8df9e','#f2e4cb','#f3ead6','#f1dbc5','#e7e6cf','#c67d65','#e8cfc2','#eee0c6');
 palettes.stone.push('#e4d4b6','#d8d0b9','#bcad8d','#d7d8cd','#c7c6b3','#a7b4ba');
+palettes.stone.push('#b6ad9b','#bbb19e','#b1a896','#a69b84','#a29882');
 palettes.roof.push('#be6554','#a85549','#64879a','#4b6b7a','#6e99a6','#537786','#73968c','#57796f','#7b98a9','#b988a4');
 function texture(kind){
  if(maps.has(kind))return maps.get(kind);
