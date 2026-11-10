@@ -1,17 +1,17 @@
 // Classroom client: same-origin JSON + SSE over fetch (so the token travels in a header, never in the URL).
-import {parseSSE,LIMITS} from './lib/protocol.mjs?v=forest-full-qa-20261107';
+import {parseSSE,LIMITS} from './lib/protocol.mjs?v=together-20261110';
 export class Classroom extends EventTarget{
-  constructor(base='api/'){super();this.base=base;this.token=null;this.id=null;this.role=null;this.code=null;this.start=null;this.mealSlot=-1;this.connected=false;this.abort=null;this.retry=0;this.lastSent=0;this.lastState='';this.closed=true;}
+  constructor(base='api/'){super();this.base=base;this.token=null;this.id=null;this.role=null;this.code=null;this.start=null;this.mealSlot=-1;this.connected=false;this.abort=null;this.retry=0;this.lastSent=0;this.lastState='';this.stateFlight=null;this.closed=true;}
   emit(type,detail={}){this.dispatchEvent(new CustomEvent(type,{detail}));}
   async detect(){try{const r=await fetch(this.base+'health',{cache:'no-store'});if(!r.ok)return false;const body=await r.json();return body?.classroom===true;}catch{return false;}}
   async request(path,body,method='POST'){
     const headers={'content-type':'application/json'};if(this.token)headers.authorization='Bearer '+this.token;
-    const r=await fetch(this.base+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});
+    const r=await fetch(this.base+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),signal:path==='state'?AbortSignal.timeout(4000):undefined});
     let data=null;try{data=await r.json();}catch{}
     if(!r.ok||!data?.ok)throw Object.assign(new Error(data?.error||'request-failed'),{status:r.status});
     return data;
   }
-  async create(){const r=await this.request('rooms',{});this.adopt(r);return r;}
+  async create(look){const r=await this.request('rooms',{look});this.adopt(r);return r;}
   async join(code,look){const r=await this.request('join',{code,look});this.adopt(r);return r;}
   // start = the server-assigned gate slot for this member (null on old servers → the gate itself).
   adopt(r){this.mealSlot=r.members.find(m=>m.id===r.id)?.mealSlot??-1;this.token=r.token;this.id=r.id;this.role=r.role;this.code=r.code;this.start=Number.isFinite(r.start?.x)&&Number.isFinite(r.start?.y)?{x:r.start.x,y:r.start.y}:null;this.closed=false;this.connect();}
@@ -46,15 +46,19 @@ export class Classroom extends EventTarget{
     }
   }
   // Throttled position updates; unchanged states are not resent.
+  canSendState(now){return this.connected&&!this.stateFlight&&now-this.lastSent>=1000/8;}
   sendState(state,now=performance.now()){
-    if(!this.connected||now-this.lastSent<1000/8)return false;
+    if(!this.canSendState(now))return false;
+    this.lastSent=now;
     const packed=JSON.stringify(state);if(packed===this.lastState)return false;
-    this.lastSent=now;this.lastState=packed;
-    this.request('state',state).catch(()=>{});return true;
+    const token=this.token,flight=this.request('state',state);this.stateFlight=flight;
+    flight.then(()=>{if(this.token===token)this.lastState=packed;}).catch(()=>{}).finally(()=>{if(this.stateFlight===flight)this.stateFlight=null;});return true;
   }
+  changeLook(look){return this.request('look',{look});}
   wave(){return this.request('wave',{}).catch(()=>null);}
+  activity(kind){return this.request('activity',{kind});}
   gather(section){return this.request('gather',{section});}
-  async leave(){this.closed=true;this.abort?.abort();const token=this.token;this.token=null;this.connected=false;if(token){try{await fetch(this.base+'leave',{method:'POST',headers:{authorization:'Bearer '+token}});}catch{}}this.emit('status',{state:'left'});}
+  async leave(){this.closed=true;this.abort?.abort();const token=this.token;this.token=null;this.connected=false;if(token){try{await fetch(this.base+'leave',{method:'POST',headers:{authorization:'Bearer '+token},signal:AbortSignal.timeout(4000)});}catch{}}this.id=null;this.role=null;this.code=null;this.start=null;this.mealSlot=-1;this.lastSent=0;this.lastState='';this.stateFlight=null;this.emit('status',{state:'left'});}
   resume(){if(!this.closed&&this.token&&!this.connected){this.retry=0;this.connect();}}
 }
 export const ROOM_SIZE=LIMITS.roomSize;

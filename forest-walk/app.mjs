@@ -1,21 +1,24 @@
+import {nearestWaymarker} from './lib/wayfinding.mjs?v=wayfinding23-20261110';
+import {ACTIVITIES,atActivity,photoSlot} from './lib/together.mjs?v=final13-20261110';
+import {animalTrailHint,nextDiscoveryHint,screenDirection,nearbyJournal} from './lib/discovery-hints.mjs?v=leaf-reflect10-20261110';
 import {createJoystick} from './lib/joystick.mjs?v=forest-astra-20261108';
-import {setupLobby} from './lobby.mjs?v=forest-lan-20261107';
+import {setupLobby} from './lobby.mjs?v=together-20261110';
 import * as T from './vendor/three.module.js';
 import {observationInvitation,summitInvitation} from './lib/trail-invitations.mjs';
-import {createWorld,createChild,actorActivity} from './world.mjs?v=stutter-fix-20261109';
+import {createWorld,createChild,actorActivity} from './world.mjs?v=wayfinding23-20261110';
 import {advance,worldAt,pathSlope,elevation,grade,terrain,riverX,place,nearby,LENGTH,SPEED,clamp,BRIDGE,SUMMIT,SCENIC,sections,sectionIndex,laneName,forkGap,seats,seatFor} from './trail.mjs?v=forest-full-qa-20261107';
-import {ForestSound} from './sound.mjs?v=leaf-water10-20261108';
-import {turnView,sightTarget} from './lib/look.mjs?v=forest-full-qa-20261107';
+import {ForestSound} from './sound.mjs?v=natural-walk-20261110';
+import {turnView,sightTarget} from './lib/look.mjs?v=ui23-20261110';
 import {observations,reflections,beginObservation,advanceObservation,availableChoices,reflect,chosenNote,memoryLine,resultText} from './lib/observations.mjs?v=forest-full-qa-20261107';
 import {guideSpot,guideSpots,nextExperience,distanceText,heightText,groupTarget,autoWalkInput,gatherText,gatherSpot,followLabel,followStartText,arrivedText,companionText,startText,sectionSpan,paceText,planText,stayText} from './lib/course.mjs?v=cowork2-20261108';
-import {Classroom} from './net.mjs?v=forest-full-qa-20261107';
+import {Classroom} from './net.mjs?v=wayfinding23-20261110';
 import {groupOf} from './lib/mealgroup.mjs';
-import {createExplorer} from './explore.mjs?v=leaf-water10-20261108';
+import {createExplorer} from './explore.mjs?v=leaf-reflect10-20261110';
 import {TRACKS} from './lib/exploration.mjs';
-import {createDining} from './dining.mjs';
-import {LOOK} from './lib/protocol.mjs?v=forest-full-qa-20261107';
+import {createDining} from './dining.mjs?v=final13-20261110';
+import {LOOK} from './lib/protocol.mjs?v=together-20261110';
 import {createLead,stepLead} from './lib/npcmotion.mjs?v=forest-full-qa-20261107';
-import {ANIMALS,animalById,animalNear,journalEntries,startFocus,stepFocus,focusProgress,nearestLitter,startPickup,stepPickup,litterById,walk,thirst,startDrink,stepDrink,MEALS,MEAL_KINDS,mealActions,mealLabel,startMeal,stepMeal,mealActive,mealLine,picnicLayout,NOODLE_SPOT,createLife,cancelFree,cancelCard,cancelFocus,lookButton,netPose,lifePose,lifeSnapshot,summaryLines} from './lib/life.mjs?v=cowork2-20261108';
+import {ANIMALS,animalById,animalNear,journalEntries,startFocus,stepFocus,focusProgress,nearestLitter,startPickup,stepPickup,litterById,walk,thirst,startDrink,stepDrink,MEALS,MEAL_KINDS,mealActions,mealLabel,startMeal,stepMeal,mealActive,mealLine,picnicLayout,NOODLE_SPOT,createLife,cancelFree,cancelCard,cancelFocus,lookButton,netPose,lifePose,lifeSnapshot,summaryLines} from './lib/life.mjs?v=leaf-reflect10-20261110';
 const $=id=>document.getElementById(id),canvas=$('forest');
 
 await document.fonts.load('600 16px SUIT');
@@ -26,33 +29,41 @@ const {scene,renderer,camera,panorama}=world;
 let props=null;try{props=await import('./props.mjs?v=forest-full-qa-20261107').then(m=>m.createLifeProps(scene));}catch(e){console.warn('life props unavailable',e);props=null;}
 const dining=createDining(scene,props?.mealTemplates);
 const looks=[{id:'girl-a',variant:0,hat:0,bag:0,name:'여자 A'},{id:'girl-b',variant:1,hat:0,bag:3,name:'여자 B'},{id:'boy-a',variant:2,hat:0,bag:3,name:'남자 A'},{id:'boy-b',variant:3,hat:0,bag:2,name:'남자 B'}];
+const teacherLooks=[{id:'teacher-female',variant:0,hat:0,bag:2,name:'여자 선생님'},{id:'teacher-male',variant:0,hat:0,bag:3,name:'남자 선생님'}];
+let teacherIndex=0,teacherSelecting=false;const activeLook=()=>teacherSelecting?teacherLooks[teacherIndex]:looks[lookIndex];
 let lookIndex=0;try{const saved=localStorage.getItem('forest-character-v1');const i=looks.findIndex(x=>x.id===saved);if(i>=0)lookIndex=i;}catch{}
 let hero=createChild(scene,LOOK.bags[looks[lookIndex].bag],false,looks[lookIndex].variant,0),characterBusy=false,forestReady=false,classroomAvailable=false;
-const heroModule=import('./hero.mjs?v=cast4-20261109'),heroActors=new Map();
-async function applyLook(){
-  if(characterBusy)return;characterBusy=true;$('start').disabled=true;$('join').disabled=true;$('teach').disabled=true;
-  const index=lookIndex,look=looks[index];$('character-status').textContent=look.name+' 준비 중…';
+const heroModule=import('./hero.mjs?v=swap-upload-20261110'),heroActors=new Map();
+async function applyLook(broadcast=false){
+  if(hero.root.name==='tripo-'+activeLook().id)return true;
+  if(characterBusy)return;characterBusy=true;$('solo-tab').disabled=true;$('class-tab').disabled=true;$('teacher-entry').inert=true;$('start').disabled=true;$('join').disabled=true;$('teach').disabled=true;
+  const index=lookIndex,look=activeLook();$('character-status').textContent=look.name+' 준비 중…';
   try{
     let next=heroActors.get(look.id);
     if(!next){next=await (await heroModule).loadHero(scene,look.id);next.root.visible=false;heroActors.set(look.id,next);await renderer.compileAsync(next.root,camera,scene);}renderer.initTexture(next.mesh.material.map);
+    if(broadcast&&classroom.token)await classroom.changeLook({...look,character:look.id});
     const old=hero;if(old!==next)old.mesh?.material.map?.dispose();old.root.visible=false;hero=next;hero.root.visible=true;hero.root.position.copy(old.root.position);hero.root.rotation.copy(old.root.rotation);
     if(![...heroActors.values()].includes(old))scene.remove(old.root);
-    $('character-status').textContent='';try{localStorage.setItem('forest-character-v1',look.id);}catch{}
-  }catch(error){const previous=looks.findIndex(x=>'tripo-'+x.id===hero.root.name);if(previous>=0)lookIndex=previous;$('character-status').textContent='캐릭터를 불러오지 못했어요. 다시 선택해 주세요.';console.warn('character unavailable',error);}
-  finally{characterBusy=false;$('look-name').textContent=looks[lookIndex].name;$('start').disabled=!forestReady;$('join').disabled=!classroomAvailable;$('teach').disabled=!classroomAvailable;for(const button of $('character-picker').children)button.setAttribute('aria-pressed',String(Number(button.dataset.index)===lookIndex));}
+    $('character-status').textContent='';try{!teacherSelecting&&localStorage.setItem('forest-character-v1',look.id);}catch{}if(broadcast){const savedMode=mode;try{if(mode==='paused')mode=pauseFrom;position(true);}finally{mode=savedMode;}}return true;
+  }catch(error){const previous=looks.findIndex(x=>'tripo-'+x.id===hero.root.name);if(previous>=0)lookIndex=previous;$('character-status').textContent='캐릭터를 불러오지 못했어요. 다시 선택해 주세요.';const teacherPrevious=teacherLooks.findIndex(x=>'tripo-'+x.id===hero.root.name);if(teacherPrevious>=0)teacherIndex=teacherPrevious;console.warn('character unavailable',error);return false;}
+  finally{characterBusy=false;$('solo-tab').disabled=false;$('class-tab').disabled=false;$('teacher-entry').inert=false;$('look-name').textContent=activeLook().name;$('start').disabled=!forestReady;$('join').disabled=!classroomAvailable;$('teach').disabled=!classroomAvailable;for(const button of $('character-picker').children)button.setAttribute('aria-pressed',String(Number(button.dataset.index)===lookIndex));}
 }
 const heroReady=applyLook();
+for(const [i,look] of teacherLooks.entries()){const b=document.createElement('button');b.type='button';b.dataset.index=i;b.setAttribute('aria-pressed',String(i===teacherIndex));const img=document.createElement('img');img.loading='lazy';img.src='./assets/'+look.id+'-portrait.webp';img.alt='';const label=document.createElement('span');label.textContent=look.name;b.append(img,label);b.onclick=async()=>{if(characterBusy||classroom.token)return;teacherIndex=i;await applyLook();for(const button of $('teacher-picker').children)button.setAttribute('aria-pressed',String(Number(button.dataset.index)===teacherIndex));};$('teacher-picker').append(b);}
+$('teacher-entry').ontoggle=async()=>{if(classroom.token)return;teacherSelecting=$('teacher-entry').open&&!$('classroom').hidden;$('look-row').hidden=teacherSelecting;$('character-picker').hidden=true;await applyLook();};
 for(const [i,look] of looks.entries()){const b=document.createElement('button');b.type='button';b.dataset.index=i;b.setAttribute('aria-pressed',String(i===lookIndex));const img=document.createElement('img');img.src='./assets/'+look.id+'-portrait.webp';img.alt='';img.width=180;img.height=240;const label=document.createElement('span');label.textContent=look.name;b.append(img,label);b.onclick=async()=>{if(characterBusy||classroom.token)return;lookIndex=i;await applyLook();};$('character-picker').append(b);}
 $('look-next').onclick=()=>{const open=$('character-picker').hidden;$('character-picker').hidden=!open;$('look-next').setAttribute('aria-expanded',String(open));};
 // Solo teacher: procedural at once, swapped for the Tripo teacher (npc.mjs, parent-owned) when its asset exists.
 let guide=createChild(scene,'#bba366',true);
-const npcModule=import('./npc.mjs?v=cast4-20261109').catch(()=>null);
+const npcModule=import('./npc.mjs?v=swap-upload-20261110').catch(()=>null);
 // Solo teacher motion state (lib/npcmotion.mjs): walks ahead of the child in trail coordinates; feet follow the metres the
 // placed root actually moves (guideTraveled), so the summit photo glide and the lead walk share one cadence.
 let lead=createLead(guideSpots[0]),leadSnap=true,guideTraveled=0,heroSpeed=0;const guidePrev=new T.Vector3();
 const guideReady=npcModule.then(m=>m&&m.loadNPC(scene,'teacher')).then(t=>{if(!t)return null;t.root.position.copy(guide.root.position);t.root.rotation.copy(guide.root.rotation);t.root.visible=guide.root.visible;scene.remove(guide.root);guide=t;return t;}).catch(()=>null);
 const memories=new Map();let observation=null;
-const sound=new ForestSound(),keys=new Set(),touch=new Set();let state={x:0,y:0},mode='intro',time=0,last=performance.now(),idle=0,traveled=0,reached=false,lastPlace='',noteUntil=8,pulse=null,pauseFrom='playing',waveUntil=0,autoWalk=null,lastSection=-1,forkNoted=false,lookNoted=false;let movementLearned=false,openingNote='';
+const sound=new ForestSound(),keys=new Set(),touch=new Set();let state={x:0,y:0},mode='intro',time=0,last=performance.now(),idle=0,traveled=0,reached=false,lastPlace='',noteUntil=8,pulse=null,pauseFrom='playing',waveUntil=0,autoWalk=null,lastSection=-1,forkNoted=false,lookNoted=false;let movementLearned=false,openingNote='';const discoveryHints=new Set();let nextHintCheck=0;
+function discoveryDirection(target){const p=worldAt(target.s,target.offset),m=camera.matrixWorld.elements;return screenDirection(p.x-camera.position.x,p.z-camera.position.z,m[0],m[2]);}
+function cancelWalkAction(){const observing=!!life.focus;cancelFree(life);if(observing)announce('살펴보기를 멈췄어요. 가까이에서 다시 볼 수 있어요.',4);}
 let joystick=null;
 const motionQuery=matchMedia('(prefers-reduced-motion:reduce)');let reduced=motionQuery.matches;motionQuery.addEventListener('change',e=>reduced=e.matches);
 // Hiking life (lib/life.mjs): journal, litter, water, meals. `journal` is a dialog mode of its own: the world is frozen like
@@ -63,44 +74,59 @@ function openAdventure(kind,id){if(!['playing','rest','finished','journal'].incl
 let life=createLife(),journalFrom=null,journalOpener=null,heroActivity='stand',lastThirst=-1,lastDrinkFlag=false,mealSeq=0,departAfterMeal=false;
 const diningKind=()=>picnicShown()?'picnic':noodleShown()?'noodle':null;
 function sharedMeal(){const kind=diningKind();if(!kind)return null;const st=life.meals[kind];return {kind,action:st.action?(st.action.id==='bite'?'bite':st.action.id==='pack'?'pack':'prepare'):'ready',bites:st.bites,seq:mealSeq};}
+let diningWasActive=false;
 function startDiningFrame(){
- const focus=diningKind(),nearMeal=classroom.connected?[...peers.values()].find(p=>p.online&&p.target.meal&&Math.abs(p.target.y-state.y)<15):null,kind=focus||nearMeal?.target.meal.kind;
- if(!kind){dining.begin(null,[]);return;}
+ const focus=diningKind();let nearMeal=null;
+ if(!focus&&classroom.connected)for(const p of peers.values())if(p.online&&p.target.meal&&Math.abs(p.target.y-state.y)<15){nearMeal=p;break;}
+ const kind=focus||nearMeal?.target.meal.kind;
+ if(!kind){if(diningWasActive){dining.begin(null,[]);diningWasActive=false;}return;}
+ diningWasActive=true;
  const slot=classroom.token?classroom.mealSlot:0,group=groupOf(slot),self={id:'me',slot,...sharedMeal()};
  const members=focus?[self]:[];
  if(classroom.connected){for(const p of peers.values())if(p.online&&p.target.meal?.kind===kind)members.push({id:p.id,slot:p.mealSlot,...p.target.meal});}
  else if(!classroom.token)for(const n of [1,4])members.push({id:'npc-'+n,slot:n,action:'ready',bites:0});
- dining.begin({kind,slot,group,watch:!focus},members);
+ dining.begin({kind,slot,group,watch:!focus,shared:classroom.connected},members);
  const near=members.filter(m=>groupOf(m.slot)===group).length,others=members.length-near;
  const text=(classroom.token?(group<0?'선생님 쉼터':(group+1)+'모둠'):'산책 친구')+' · 가까이 '+near+'명'+(others?' · 다른 모둠 '+others+'명도 식사 중':'')+' · 준비되면 먼저 출발해도 돼요.';
- const el=document.querySelector('.meal-active .dining-info');if(el&&el.textContent!==text)el.textContent=text;
+ const el=focus?document.querySelector('.meal-active .dining-info'):null;if(el&&el.textContent!==text)el.textContent=text;
 }
 function departMeal(){cancelCard(life);departAfterMeal=false;observation=null;resetView();modeTo('playing');renderLifeRows();focusGame();}
 function packAndLeave(kind){cancelCard(life);if(life.meals[kind].stage==='open'){departAfterMeal=true;beginMeal(kind,'pack');}else departMeal();}
 
 const handL=new T.Vector3(),handR=new T.Vector3(),teacherHand=new T.Vector3(),animalPos=new T.Vector3(),hands={heroL:null,heroR:null,teacherR:null,heroForward:new T.Vector3(),teacherForward:new T.Vector3()},lifeView={focus:null,focusT:0,picnic:{active:false,seat:0,eating:false},noodle:{active:false,eating:false},cheerUntil:-99},propView={picnicShown:false,noodleShown:false,seat:0};
-const frozen=()=>mode==='paused'||mode==='journal';
+const frozen=()=>mode==='paused'||mode==='journal'||mode==='sign';
 const picnicShown=()=>mode==='rest'&&nearby(state.y)?.s===MEALS.picnic.stop&&mealActive(life,'picnic'),noodleShown=()=>mode==='finished'&&mealActive(life,'noodle');
-const camPos=new T.Vector3(),look=new T.Vector3(),desired=new T.Vector3(),guideSlot=new T.Vector3();
+const camPos=new T.Vector3(),look=new T.Vector3(),desired=new T.Vector3(),guideSlot=new T.Vector3(),cameraTarget=new T.Vector3(),summitCamera=new T.Vector3();
 const view={yaw:0,pitch:0};let lookDrag=null;
 const canLook=()=>['playing','rest','finished'].includes(mode);
 function resetView(){view.yaw=0;view.pitch=0;}
 function endLookDrag(){const pointer=lookDrag?.id;lookDrag=null;canvas.classList.remove('dragging');if(pointer!==undefined&&canvas.hasPointerCapture(pointer))canvas.releasePointerCapture(pointer);}
-function modeTo(next){if(next==='finished'&&mode!=='paused')resetView();mode=next;document.body.dataset.mode=next;for(const id of ['intro','paused','rest','finish','error'])$(id).hidden=true;if(next==='intro')$('intro').hidden=false;if(next==='paused')$('paused').hidden=false;if(next==='rest')$('rest').hidden=false;if(next==='finished')$('finish').hidden=false;if(next==='error')$('error').hidden=false;$('journey').hidden=next==='intro'||next==='error';$('journey').inert=next!=='playing';canvas.tabIndex=canLook()?0:-1;document.querySelector('header').inert=next==='paused'||next==='error';$('pause').disabled=next==='intro';$('journal-open').disabled=next==='intro'||next==='error'||next==='explore';$('lesson').hidden=!(classroom.role==='teacher'&&next!=='intro'&&next!=='error');if(next!=='playing')closeTeacher();clearInput();}
+function modeTo(next){$('together').hidden=true;if(next==='finished'&&mode!=='paused')resetView();mode=next;document.body.dataset.mode=next;for(const id of ['intro','paused','rest','finish','error','wayfinder'])$(id).hidden=true;if(next==='intro')$('intro').hidden=false;if(next==='paused')$('paused').hidden=false;if(next==='rest')$('rest').hidden=false;if(next==='finished')$('finish').hidden=false;if(next==='error')$('error').hidden=false;if(next==='sign')$('wayfinder').hidden=false;$('journey').hidden=next==='intro'||next==='error';$('journey').inert=next!=='playing';canvas.tabIndex=canLook()?0:-1;document.querySelector('header').inert=next==='paused'||next==='error'||next==='sign';$('pause').disabled=next==='intro';$('journal-open').disabled=next==='intro'||next==='error'||next==='explore';$('lesson').hidden=!(classroom.role==='teacher'&&next!=='intro'&&next!=='error');if(next!=='playing')closeTeacher();clearInput();}
 function clearInput(){joystick?.reset();keys.clear();touch.clear();pulse=null;autoWalk=null;$('follow').setAttribute('aria-pressed','false');endLookDrag();document.querySelectorAll('#pad button').forEach(b=>b.classList.remove('active'));}
 function focusGame(){canvas.focus({preventScroll:true});}
 function announce(text,seconds=6){$('note').textContent=document.body.classList.contains('touch-controls')?text.replace('위쪽 방향키를 눌러',document.body.classList.contains('button-controls')?'위쪽 방향 버튼을 눌러':'조이스틱을 위로 밀어').replace('화면을 드래그하거나 I J K L로','오른쪽 화면을 드래그해'):text;noteUntil=time+seconds;}
 async function audioStart(){try{await sound.start();}catch{sound.enabled=false;updateSound();announce('소리를 켜려면 메뉴의 자연 소리 버튼을 눌러 주세요.');}}
 function updateSound(){$('sound').textContent=sound.enabled?'자연 소리 켜짐':'자연 소리 꺼짐';$('sound').setAttribute('aria-pressed',String(sound.enabled));$('sound').setAttribute('aria-label',sound.enabled?'자연 소리 끄기':'자연 소리 켜기');}
-function reset(){explorer.reset();closeJournal(true);resetView();memories.clear();observation=null;hideAsks();life=createLife();departAfterMeal=false;mealSeq++;props?.reset();$('journal-open').classList.remove('new');lastThirst=-1;renderLifeRows();$('observe-choices').replaceChildren();$('finish-choices').replaceChildren();world.resetWildlife();renderMemories();state=startState();idle=0;traveled=0;reached=false;time=0;lastPlace='';lastSection=-1;forkNoted=false;lookNoted=false;waveUntil=0;movementLearned=false;sound.nextBird=4;sound.lastStep=null;modeTo('playing');leadSnap=true;position(true);announce(startText(looks[lookIndex].name),9);openingNote=$('note').textContent;audioStart();focusGame();}
+function reset(){discoveryHints.clear();nextHintCheck=0;explorer.reset();closeJournal(true);resetView();memories.clear();observation=null;hideAsks();life=createLife();departAfterMeal=false;mealSeq++;props?.reset();$('journal-open').classList.remove('new');lastThirst=-1;renderLifeRows();$('observe-choices').replaceChildren();$('finish-choices').replaceChildren();world.resetWildlife();renderMemories();state=startState();idle=0;traveled=0;reached=false;time=0;lastPlace='';lastSection=-1;forkNoted=false;lookNoted=false;waveUntil=0;movementLearned=false;sound.nextBird=4;sound.lastStep=null;modeTo('playing');leadSnap=true;position(true);announce(startText(activeLook().name),9);openingNote=$('note').textContent;audioStart();focusGame();}
 // Solo walk starts at the gate itself; in a classroom the server hands each member its own gate slot (a few metres apart) so nobody spawns inside the teacher.
 function startState(){return classroom.token&&classroom.start?{x:classroom.start.x,y:classroom.start.y}:{x:0,y:0};}
-$('start').onclick=reset;$('look-next').disabled=true;
+let entryReturn=null;
+function continueEntry(){if(entryReturn===null){reset();return;}const next=entryReturn;entryReturn=null;$('entry-continue').hidden=true;modeTo(next);last=performance.now();audioStart();classroom.resume();position(true);focusGame();}
+$('start').onclick=continueEntry;$('entry-continue').onclick=continueEntry;$('look-next').disabled=true;
 $('sound').onclick=async()=>{try{await sound.toggle();updateSound();}catch{announce('브라우저에서 소리를 허용한 뒤 다시 눌러 주세요.');}if(mode==='paused')sound.pause();else if(mode==='playing')focusGame();};
 // Pausing from the journal closes it first and remembers the mode underneath, so "계속 걷기" returns there (not to the journal).
-function pause(){if(mode==='intro'||mode==='paused'||mode==='error')return;if(mode==='journal')closeJournal(true);pauseFrom=mode;$('paused').querySelector('p').textContent=$('place').textContent+' · '+Math.round(state.y)+' m 걸었어요. 이어서 출발할 수 있어요.';$('menu-journal').disabled=pauseFrom==='explore';modeTo('paused');sound.pause();$('resume').focus();}
+function pause(){if(mode==='intro'||mode==='paused'||mode==='error')return;if(mode==='journal')closeJournal(true);pauseFrom=mode;$('paused').querySelector('p').textContent=$('place').textContent+' · '+Math.round(state.y)+' m 걸었어요. 이어서 출발할 수 있어요.';$('menu-journal').disabled=pauseFrom==='explore';$('menu-cast').hidden=true;$('menu-character').setAttribute('aria-expanded','false');$('menu-cast-status').textContent='';modeTo('paused');sound.pause();$('resume').focus();}
 function resume(){modeTo(pauseFrom);last=performance.now();audioStart();classroom.resume();if(pauseFrom==='rest')$('leave-rest').focus();else if(pauseFrom==='finished')$('stay').focus();else focusGame();}
 $('pause').onclick=()=>mode==='paused'?resume():pause();$('resume').onclick=resume;$('menu-journal').onclick=()=>{resume();openJournal($('journal-open'));};
+$('menu-character').onclick=()=>{
+ const host=$('menu-cast');host.hidden=!host.hidden;$('menu-character').setAttribute('aria-expanded',String(!host.hidden));if(host.hidden)return;
+ teacherSelecting=classroom.role==='teacher';const options=teacherSelecting?teacherLooks:looks;
+ host.replaceChildren(...options.map((look,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(i===(teacherSelecting?teacherIndex:lookIndex)));const image=document.createElement('img');image.src='./assets/'+look.id+'-portrait.webp';image.alt='';const label=document.createElement('span');label.textContent=look.name;b.append(image,label);b.onclick=async()=>{if(characterBusy)return;const oldIndex=teacherSelecting?teacherIndex:lookIndex;if(teacherSelecting)teacherIndex=i;else lookIndex=i;for(const button of host.children)button.disabled=true;for(const id of ['menu-character','menu-room','resume'])$(id).disabled=true;$('menu-cast-status').textContent=look.name+' 준비 중…';const ok=await applyLook(true);if(!ok){if(teacherSelecting)teacherIndex=oldIndex;else lookIndex=oldIndex;}for(const [j,button]of [...host.children].entries()){button.disabled=false;button.setAttribute('aria-pressed',String(j===(teacherSelecting?teacherIndex:lookIndex)));}for(const id of ['menu-character','menu-room','resume'])$(id).disabled=false;$('menu-cast-status').textContent=ok?look.name+' · 걸어온 기록은 그대로예요.':'바꾸지 못했어요. 잠시 후 다시 골라 주세요.';};return b;}));
+};
+$('menu-room').onclick=async()=>{if(characterBusy)return;if(classroom.token&&!await leaveRoom())return;if(explorer.active){explorer.close();pauseFrom=mode;}entryReturn=pauseFrom;modeTo('intro');entryTab(true);$('entry-continue').hidden=false;$('start').textContent='산책 이어 걷기';position(true);$('join-code').focus();};
+let nearbyMarker=null;
+$('trail-sign').onclick=()=>{if(!nearbyMarker||mode!=='playing')return;const marker=nearbyMarker;$('wayfinder-title').textContent=marker.heading||'바람봉 숲길';$('wayfinder-boards').replaceChildren(...marker.rows.map(row=>{const board=document.createElement('div');board.className='wayfinder-board';const name=document.createElement('strong'),distance=document.createElement('span');name.textContent=row.name;distance.textContent=row.distance+' m '+(row.direction==='ahead'?'↑':'↓');board.append(name,distance);return board;}));modeTo('sign');sound.pause();$('wayfinder-close').focus();};
+function closeSign(){modeTo('playing');last=performance.now();audioStart();focusGame();}$('wayfinder-close').onclick=closeSign;
 // "풍경 더 보기" returns to free walking at the summit; the child may also walk back down and look at any place again (E),
 // Restart is deliberately absent from the menu to protect the current walk.
 $('stay').onclick=()=>{cancelCard(life);renderLifeRows();modeTo('playing');announce('바람을 느끼며 더 머물러도 좋아요. 길을 되짚어 내려가 폭포나 전망대를 다시 봐도 되고, E로 정상 카드를 다시 열 수 있어요.',8);focusGame();};
@@ -129,11 +155,11 @@ function renderSummary(host,emptyText=null){
 // blurred shadow of its tile and a hint of where to look; nothing is marked as missed.
 function renderJournal(){
   const list=$('journal-entries');list.replaceChildren();
-  for(const e of journalEntries(life)){
+  for(const e of nearbyJournal(life,state.y)){
     const li=document.createElement('li');li.className=e.seen?'seen':'unseen';
     const art=document.createElement('div');art.className='journal-art '+(e.seen?'seen':'unseen');if(e.image){art.style.backgroundImage=`url(./assets/${e.image})`;art.style.backgroundSize='cover';art.style.backgroundPosition='center';}else art.style.backgroundPosition=(e.tile*50)+'% 0';art.setAttribute('role','img');art.setAttribute('aria-label',e.seen?e.name+' 그림':'아직 만나지 못한 동물의 흐린 그림자');
     const text=document.createElement('div'),h=document.createElement('h3'),p=document.createElement('p');
-    h.textContent=e.seen?e.name:'아직 만나지 못했어요';p.textContent=e.seen?e.entry:e.where+' 근처에서 조용히 살펴보면 만날 수 있어요.';
+    h.textContent=e.seen?e.name:'아직 만나지 못했어요';p.textContent=e.seen?e.entry:animalTrailHint(e,life,state.y);
     text.append(h,p);li.append(art,text);list.append(li);
   }
   renderSummary($('journal-summary'),'오늘 한 일은 아직 없어요. 길에서 만나는 것들을 천천히 살펴봐요.');
@@ -141,7 +167,7 @@ function renderJournal(){
 function openJournal(opener=null){
   if(!['playing','rest','finished'].includes(mode))return;
   journalFrom=mode;journalOpener=opener||document.activeElement;renderJournal();
-  mode='journal';document.body.dataset.mode='journal';$('journal').hidden=false;for(const id of ['journey','rest','finish'])$(id).inert=true;
+  mode='journal';$('together').hidden=true;document.body.dataset.mode='journal';$('journal').hidden=false;for(const id of ['journey','rest','finish'])$(id).inert=true;
   $('journal-open').setAttribute('aria-expanded','true');$('journal-open').classList.remove('new');canvas.tabIndex=-1;clearInput();closeTeacher();sound.pause();$('journal-close').focus();
 }
 function closeJournal(silent=false){
@@ -223,7 +249,8 @@ function animalWorld(id){if(world.wildlife?.roots[id]){world.wildlife.roots[id].
 function readHands(){
   hands.heroForward.set(Math.sin(hero.root.rotation.y),0,Math.cos(hero.root.rotation.y));hands.teacherForward.set(Math.sin(guide.root.rotation.y),0,Math.cos(guide.root.rotation.y));
   const hl=hero.sides?hero.sides[0].hand.bone:hero.hands?.[0],hr=hero.sides?hero.sides[1].hand.bone:hero.hands?.[1],tr=guide.sides?guide.sides[1].hand.bone:guide.hands?.[1];
-  hands.heroL=hl?hl.getWorldPosition(handL):null;hands.heroR=hr?hr.getWorldPosition(handR):null;hands.teacherR=tr&&guide.root.visible?tr.getWorldPosition(teacherHand):null;
+  const pickup=!!life.litter.pickup,bag=pickup||(life.litter.picked.length>0&&time-life.litter.lastPickedAt<2.5),bite=life.meals.picnic.action?.id==='bite'||life.meals.noodle.action?.id==='bite';
+  hands.heroL=hl&&bag?hl.getWorldPosition(handL):null;hands.heroR=hr&&(pickup||life.water.drink||bite)?hr.getWorldPosition(handR):null;hands.teacherR=tr&&guide.root.visible&&life.meals.noodle.action?.id==='pour'?tr.getWorldPosition(teacherHand):null;
 }
 // Summit photo: render once more, then save the canvas. Nothing leaves the device. After "다 같이 사진 찍기" the camera is
 // still framing the group, so the saved picture is the group photo.
@@ -270,7 +297,7 @@ function interact(){
   if(!spot){
     if(nearestLitter(life,{s:state.y,x:state.x})){pickLitter();return;}
     const animal=animalNear(state.y,life);if(animal){beginFocus(animal.id);return;}
-    if(peersNear().length){sendWave();waveUntil=time+2.5;announce('친구에게 손을 흔들었어요.',3);}return;}
+    if(peersNear()){sendWave();waveUntil=time+2.5;announce('친구에게 손을 흔들었어요.',3);}return;}
   cancelFree(life);
   // Summit card: the view starts at once; "다 같이 사진 찍기" is the second toggle. The intro line shows the current action
   // and, once it has finished, the stay suggestion or the action's own result line (same <p>, so the card does not grow).
@@ -288,7 +315,9 @@ window.addEventListener('keydown',e=>{
   if(mode==='paused'&&e.code==='Tab'){const list=[...$('paused').querySelectorAll('button,summary')].filter(el=>el.getClientRects().length&&!el.disabled),first=list[0],last=list.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}return;}
   // Journal dialog: its only control is the close button (Tab stays there); Esc or J closes it and focus returns to the opener.
   if(mode==='journal'){if(e.code==='Tab'){e.preventDefault();const bs=[$('album-open'),$('journal-close')],i=bs.indexOf(document.activeElement);bs[(i+(e.shiftKey?-1:1)+bs.length)%bs.length].focus();}else if(e.code==='Escape'||e.code==='KeyN'){e.preventDefault();closeJournal();}return;}
-  if(e.code==='Escape'){e.preventDefault();if(mode==='paused')resume();else if(mode==='rest'){$('leave-rest').click();}else if(!$('teacher').hidden)closeTeacher();else pause();return;}
+  if(mode==='intro'&&entryReturn!==null&&e.code==='Escape'){e.preventDefault();continueEntry();return;}
+  if(mode==='sign'){if(e.code==='Escape'){e.preventDefault();closeSign();}else if(e.code==='Tab'){e.preventDefault();$('wayfinder-close').focus();}return;}
+  if(e.code==='Escape'){if(characterBusy)return;e.preventDefault();if(!$('teacher').hidden){closeTeacher();focusGame();}else if(mode==='paused')resume();else if(mode==='rest'){$('leave-rest').click();}else pause();return;}
   if(e.target.matches('input,textarea,[contenteditable=true]'))return;
   // N opens the notebook (J is already "look left"); F takes a sip while free walking only.
   if(e.code==='KeyN'&&!e.repeat&&['playing','rest','finished'].includes(mode)){e.preventDefault();openJournal();return;}
@@ -300,11 +329,11 @@ window.addEventListener('keydown',e=>{
   if(mode==='rest'&&!e.repeat&&['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD'].includes(e.code)&&!e.target.matches('input,textarea')){e.preventDefault();$('leave-rest').click();keys.add(e.code);return;}
   if(mode!=='playing'||e.target.matches('input,textarea'))return;
   if(e.target.closest('button')&&(e.code==='Space'||e.code==='Enter'))return;
-  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD','KeyE','Space'].includes(e.code)){e.preventDefault();if((e.code==='KeyE'||e.code==='Space')&&!e.repeat)interact();else{keys.add(e.code);stopAutoWalk();cancelFree(life);}}
+  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD','KeyE','Space'].includes(e.code)){e.preventDefault();if((e.code==='KeyE'||e.code==='Space')&&!e.repeat)interact();else{keys.add(e.code);stopAutoWalk();cancelWalkAction();}}
 });window.addEventListener('keyup',e=>keys.delete(e.code));
 window.addEventListener('blur',()=>{clearInput();if(mode!=='intro'&&mode!=='paused')pause();});document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();pause();sound.pause();}else classroom.resume();});
-for(const b of document.querySelectorAll('#pad button')){b.onpointerdown=e=>{if(mode!=='playing')return;e.preventDefault();b.setPointerCapture(e.pointerId);touch.add(b.dataset.dir);b.classList.add('active');stopAutoWalk();cancelFree(life);};const release=()=>{touch.delete(b.dataset.dir);b.classList.remove('active');};b.onpointerup=release;b.onpointercancel=release;b.onlostpointercapture=release;b.onclick=e=>{if(e.detail===0&&mode==='playing'){pulse={dir:b.dataset.dir,until:time+.22};stopAutoWalk();}};}
-joystick=createJoystick($('joystick'),$('joystick-knob'),{enabled:()=>mode==='playing',onStart:()=>{keys.clear();touch.clear();stopAutoWalk();cancelFree(life);}});
+for(const b of document.querySelectorAll('#pad button')){b.onpointerdown=e=>{if(mode!=='playing')return;e.preventDefault();b.setPointerCapture(e.pointerId);touch.add(b.dataset.dir);b.classList.add('active');stopAutoWalk();cancelWalkAction();};const release=()=>{touch.delete(b.dataset.dir);b.classList.remove('active');};b.onpointerup=release;b.onpointercancel=release;b.onlostpointercapture=release;b.onclick=e=>{if(e.detail===0&&mode==='playing'){pulse={dir:b.dataset.dir,until:time+.22};stopAutoWalk();}};}
+joystick=createJoystick($('joystick'),$('joystick-knob'),{enabled:()=>mode==='playing',onStart:()=>{keys.clear();touch.clear();stopAutoWalk();}});
 const touchQuery=matchMedia('(any-pointer: coarse)');
 function controlHelp(){
  const touchDevice=document.body.classList.contains('touch-controls'),buttons=document.body.classList.contains('button-controls');
@@ -328,24 +357,35 @@ canvas.addEventListener('pointermove',e=>{
 });
 for(const event of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(event,e=>{if(e.pointerId===lookDrag?.id)endLookDrag();});
 canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();modeTo('error');sound.pause();$('error-text').textContent='3D 화면 연결이 끊어졌어요. 다시 열면 처음부터 시작해요.';$('error').querySelector('button').focus();});
-function input(){const has=(dir,...codes)=>touch.has(dir)||(pulse?.dir===dir&&time<pulse.until)||codes.some(c=>keys.has(c));const v={x:Number(has('right','ArrowRight','KeyD'))-Number(has('left','ArrowLeft','KeyA')),y:Number(has('up','ArrowUp','KeyW'))-Number(has('down','ArrowDown','KeyS'))};return v.x||v.y?v:(joystick?.value||v);}
+const inputVector={x:0,y:0};
+function pressed(dir,a,b){return touch.has(dir)||(pulse?.dir===dir&&time<pulse.until)||keys.has(a)||keys.has(b);}
+function input(){inputVector.x=Number(pressed('right','ArrowRight','KeyD'))-Number(pressed('left','ArrowLeft','KeyA'));inputVector.y=Number(pressed('up','ArrowUp','KeyW'))-Number(pressed('down','ArrowDown','KeyS'));return inputVector.x||inputVector.y?inputVector:(joystick?.value||inputVector);}
 // ---- Classroom (only when the same origin runs server.mjs; static hosting keeps the solo walk) ----
-const classroom=new Classroom('api/'),peers=new Map();let gather=null,teacherPeer=null,roomClosedNote='';
+const classroom=new Classroom('api/'),peers=new Map();let classActivity=null,activityJoined=null,lastTogether='',nextTogether=0;let gather=null,teacherPeer=null,roomClosedNote='';
 const lobby=setupLobby(classroom,peers);
 window.addEventListener('offline',()=>classroom.abort?.abort());
 window.addEventListener('online',()=>classroom.resume());
-function entryTab(group){$('classroom').hidden=!group;$('solo-tab').setAttribute('aria-pressed',String(!group));$('class-tab').setAttribute('aria-pressed',String(group));$('start').hidden=group&&!classroom.token;$('look-row').hidden=false;$('control-help').hidden=group;}
+function entryTab(group){if(!group&&teacherSelecting){teacherSelecting=false;$('teacher-entry').open=false;applyLook();}$('classroom').hidden=!group;$('solo-tab').setAttribute('aria-pressed',String(!group));$('class-tab').setAttribute('aria-pressed',String(group));$('start').hidden=group&&!classroom.token;$('look-row').hidden=teacherSelecting;$('control-help').hidden=group;}
 $('solo-tab').onclick=()=>entryTab(false);$('class-tab').onclick=()=>entryTab(true);
 classroom.detect().then(ok=>{classroomAvailable=ok;$('class-tab').hidden=false;$('solo-note').hidden=true;if(!ok){$('join').disabled=true;$('teach').disabled=true;$('join-note').textContent='우리 반 입장은 선생님 PC의 교실 주소에서 열어 주세요.';}entryTab(ok&&new URLSearchParams(location.hash.slice(1)).has('room'));});
-$('teach').onclick=async()=>{$('teach').disabled=true;$('join').disabled=true;try{const r=await classroom.create();adoptRoom(r);$('join-note').textContent='방 코드 '+r.code+' · 학생에게 이 코드를 알려 주세요.';}catch(e){$('join-note').textContent='방을 만들지 못했어요 ('+e.message+'). 잠시 후 다시 시도해 주세요.';}$('teach').disabled=false;$('join').disabled=false;};
-$('join-form').onsubmit=async e=>{e.preventDefault();const code=$('join-code').value.trim().toUpperCase();$('join').disabled=true;$('teach').disabled=true;try{const look=looks[lookIndex];const r=await classroom.join(code,{variant:look.variant,hat:look.hat,bag:look.bag,character:look.id});adoptRoom(r);$('join-note').textContent='방 '+r.code+'에 들어왔어요. 산책 시작을 눌러요.';}catch(e){$('join-note').textContent={'no-room':'그 코드의 방이 없어요. 다시 확인해 주세요.','bad-code':'코드는 여섯 글자예요.','room-full':'방이 가득 찼어요 (30명).','too-many-attempts':'잠시 후 다시 시도해 주세요.'}[e.message]||'들어가지 못했어요 ('+e.message+').';}$('join').disabled=false;$('teach').disabled=false;};
-function adoptRoom(r){lobby.adopt();$('start').hidden=false;$('solo-tab').hidden=true;$('teach').hidden=true;$('join-form').hidden=true;$('look-next').disabled=true;$('character-picker').hidden=true;$('room-status').hidden=false;updateRoomStatus();if(r.role==='teacher'){buildLessonList();$('teacher-code').textContent=r.code;}}
+$('teach').onclick=async()=>{$('teach').disabled=true;$('join').disabled=true;try{if(characterBusy)return;teacherSelecting=true;if(!await applyLook())throw new Error('character-unavailable');const look=activeLook();$('teach').disabled=true;$('join').disabled=true;const r=await classroom.create({...look,character:look.id});adoptRoom(r);$('join-note').textContent='방 코드 '+r.code+' · 학생에게 이 코드를 알려 주세요.';}catch(e){$('join-note').textContent='방을 만들지 못했어요 ('+e.message+'). 잠시 후 다시 시도해 주세요.';}$('teach').disabled=false;$('join').disabled=false;};
+$('join-form').onsubmit=async e=>{e.preventDefault();const code=$('join-code').value.trim().toUpperCase();$('join').disabled=true;$('teach').disabled=true;try{teacherSelecting=false;$('teacher-entry').open=false;if(!await applyLook())throw new Error('character-unavailable');const look=looks[lookIndex];$('teach').disabled=true;$('join').disabled=true;const r=await classroom.join(code,{variant:look.variant,hat:look.hat,bag:look.bag,character:look.id});adoptRoom(r);$('join-note').textContent='방 '+r.code+'에 들어왔어요. 산책 시작을 눌러요.';}catch(e){$('join-note').textContent={'no-room':'그 코드의 방이 없어요. 다시 확인해 주세요.','bad-code':'코드는 여섯 글자예요.','room-full':'방이 가득 찼어요 (30명).','too-many-attempts':'잠시 후 다시 시도해 주세요.'}[e.message]||'들어가지 못했어요 ('+e.message+').';}$('join').disabled=false;$('teach').disabled=false;};
+function adoptRoom(r){if(entryReturn!==null)$('start').textContent='친구들과 이어 걷기';$('room-back').hidden=false;lobby.adopt();requestAnimationFrame(()=>{$('intro').scrollTop=0;$('room-back').focus({preventScroll:true});});$('start').hidden=false;$('solo-tab').hidden=true;$('teach').hidden=true;$('join-form').hidden=true;$('look-next').disabled=true;$('character-picker').hidden=true;$('room-status').hidden=false;updateRoomStatus();if(r.role==='teacher'){buildLessonList();$('teacher-code').textContent=r.code;}}
+async function leaveRoom(){
+ if(classroom.role==='teacher'&&peers.size&&!confirm('방을 나가면 학생들과의 연결이 종료돼요. 입장 화면으로 돌아갈까요?'))return false;
+ $('room-back').disabled=true;await classroom.leave();classActivity=null;activityJoined=null;lastTogether='';$('together').hidden=true;for(const id of [...peers.keys()])removePeer(id);gather=null;showGather();lobby.reset();
+ teacherSelecting=false;$('teacher-entry').open=false;$('teacher-entry').hidden=false;$('solo-tab').hidden=false;$('teach').hidden=false;$('join-form').hidden=false;$('look-next').disabled=false;$('room-status').hidden=true;$('room-back').hidden=true;$('room-back').disabled=false;$('join-note').textContent='';$('start').textContent='산책 시작 ▸';entryTab(true);await applyLook();$('join-code').focus();return true;
+}
+$('room-back').onclick=leaveRoom;
 function updateRoomStatus(){lobby.update();if(!classroom.token||classroom.closed)return;const n=[...peers.values()].filter(p=>p.online).length;$('room-status').textContent=companionText(classroom.role,classroom.code,n)+(classroom.connected?'':' · 연결 중…');}
 // Peers stay procedural (look variants tell classmates apart); a real teacher is upgraded to the Tripo teacher when available.
-function addPeer(m){if(m.id===classroom.id||peers.has(m.id))return;const teacher=m.role==='teacher';const child=teacher?createChild(scene,'#bba366',true):createChild(scene,LOOK.bags[m.look?.bag||0],false,m.look?.variant||0,m.look?.hat||0);const s=m.state||{x:0,y:0,yaw:0,pitch:0,pose:'stand',seat:-1};const peer={id:m.id,role:m.role,mealSlot:m.mealSlot??-1,mealAt:time,leafAt:time,child,cur:{x:s.x,y:s.y},target:{...s},yaw:Math.PI,traveled:0,waveUntil:0,online:m.online!==false,moving:false};peers.set(m.id,peer);if(!teacher&&m.look?.character){heroModule.then(n=>n.loadHero(scene,m.look.character,true)).then(t=>{if(peers.get(m.id)!==peer){scene.remove(t.root);return;}t.root.position.copy(child.root.position);t.root.rotation.copy(child.root.rotation);scene.remove(child.root);peer.child=t;}).catch(()=>{});}if(teacher){teacherPeer=peer;guide.root.visible=false;npcModule.then(n=>n&&n.loadNPC(scene,'teacher')).then(t=>{if(!t)return;if(peers.get(m.id)!==peer){scene.remove(t.root);return;}t.root.position.copy(child.root.position);t.root.rotation.copy(child.root.rotation);scene.remove(child.root);peer.child=t;}).catch(()=>{});}updateRoomStatus();}
-function removePeer(id){const p=peers.get(id);if(!p)return;scene.remove(p.child.root);peers.delete(id);if(teacherPeer===p){teacherPeer=null;guide.root.visible=true;}updateRoomStatus();}
-classroom.addEventListener('hello',e=>{for(const id of [...peers.keys()])if(!e.detail.members.some(m=>m.id===id))removePeer(id);for(const m of e.detail.members)addPeer(m);for(const m of e.detail.members){const p=peers.get(m.id);if(p){p.online=m.online!==false;p.target={...m.state};}}gather=e.detail.gather;showGather();updateRoomStatus();});
+function disposePeerActor(actor){scene.remove(actor.root);actor.root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton.dispose();});}
+function loadPeerLook(peer,look){const id=look?.character;if(!id||peer.lookId===id)return;peer.lookId=id;heroModule.then(n=>n.loadHero(scene,id,true)).then(t=>{if(peers.get(peer.id)!==peer||peer.lookId!==id){disposePeerActor(t);return;}const old=peer.child;t.root.position.copy(old.root.position);t.root.rotation.copy(old.root.rotation);t.root.visible=old.root.visible;peer.child=t;peer.nextPose=peer.nextSkeleton=0;const target=peer.target,activity=target.meal?(target.meal.action==='bite'?'eat':'sit'):target.photo?'wave':target.pose==='walk'||target.pose==='stand'?'look':target.pose;t.pose(peer.traveled,target.pose==='walk'&&!target.meal,time+peer.id*.37,target.pose!=='walk',reduced,target.meal?0:grade(peer.cur.y)*-Math.cos(peer.yaw),actorActivity(t,activity));disposePeerActor(old);}).catch(()=>{if(peer.lookId===id)peer.lookId=null;});}
+function addPeer(m){if(m.id===classroom.id)return;if(peers.has(m.id)){loadPeerLook(peers.get(m.id),m.look);return;}const teacher=m.role==='teacher';const child=teacher?createChild(scene,'#bba366',true):createChild(scene,LOOK.bags[m.look?.bag||0],false,m.look?.variant||0,m.look?.hat||0);const s=m.state||{x:0,y:0,yaw:0,pitch:0,pose:'stand',seat:-1};const peer={id:m.id,role:m.role,mealSlot:m.mealSlot??-1,mealAt:time,leafAt:time,child,cur:{x:s.x,y:s.y},target:{...s},yaw:Math.PI,traveled:0,waveUntil:0,online:m.online!==false,moving:false};peers.set(m.id,peer);loadPeerLook(peer,m.look);if(teacher){teacherPeer=peer;guide.root.visible=false;if(!m.look?.character)npcModule.then(n=>n&&n.loadNPC(scene,'teacher')).then(t=>{if(!t)return;if(peers.get(m.id)!==peer){scene.remove(t.root);return;}t.root.position.copy(child.root.position);t.root.rotation.copy(child.root.rotation);scene.remove(child.root);peer.child=t;}).catch(()=>{});}updateRoomStatus();}
+function removePeer(id){const p=peers.get(id);if(!p)return;disposePeerActor(p.child);peers.delete(id);if(teacherPeer===p){teacherPeer=null;guide.root.visible=true;}updateRoomStatus();}
+classroom.addEventListener('hello',e=>{for(const id of [...peers.keys()])if(!e.detail.members.some(m=>m.id===id))removePeer(id);for(const m of e.detail.members)addPeer(m);for(const m of e.detail.members){const p=peers.get(m.id);if(p){p.online=m.online!==false;p.target={...m.state};}}classActivity=e.detail.activity||null;gather=e.detail.gather;showGather();updateRoomStatus();});
 classroom.addEventListener('joined',e=>{addPeer(e.detail.member);if(mode==='playing')announce('친구가 숲에 들어왔어요.',3);});
+classroom.addEventListener('look',e=>{const peer=peers.get(e.detail.id);if(peer)loadPeerLook(peer,e.detail.look);});
 classroom.addEventListener('left',e=>removePeer(e.detail.id));
 classroom.addEventListener('away',e=>{const p=peers.get(e.detail.id);if(p){p.online=false;updateRoomStatus();if(classroom.role==='teacher')announce('학생 한 명의 연결이 잠시 끊겼어요.',4);}});
 classroom.addEventListener('back',e=>{const p=peers.get(e.detail.id);if(p){p.online=true;updateRoomStatus();if(classroom.role==='teacher')announce('학생이 다시 연결됐어요.',3);}});
@@ -354,9 +394,31 @@ classroom.addEventListener('wave',e=>{const p=peers.get(e.detail.id);if(p)p.wave
 classroom.addEventListener('gather',e=>{const next=e.detail.section===null?null:{section:e.detail.section};const changed=(next?.section??null)!==(gather?.section??null);gather=next;showGather();if(gather&&classroom.role!=='teacher')announce(gatherText(gather.section),8);if(changed)gatherChanged();if(classroom.role==='teacher')markLesson();});
 // When the meeting place changes or is cleared, an automatic walk toward the old place stops here and the HUD line shows the new guidance. The child decides whether to press the button again.
 function gatherChanged(){if(!autoWalk)return;stopAutoWalk();announce(gather?'모이는 곳이 바뀌어 여기서 멈췄어요. 버튼을 누르면 새로 모이는 곳으로 가요.':'모이기 안내가 끝나 여기서 멈췄어요.',6);}
-classroom.addEventListener('status',e=>{const st=e.detail.state;if(st==='reconnecting')announce('연결이 끊겼어요. 다시 연결하는 중… 혼자 계속 걸어도 돼요.',8);if(st==='connected'&&roomClosedNote!=='first'){announce('교실 방에 연결됐어요.',3);}roomClosedNote='first';if(st==='closed'){for(const id of [...peers.keys()])removePeer(id);gather=null;showGather();$('room-status').textContent={'teacher-left':'선생님이 방을 닫았어요 · 혼자 걷기','idle':'방이 오래 비어 닫혔어요 · 혼자 걷기','expired':'방 시간이 끝났어요 · 혼자 걷기'}[e.detail.reason]||'교실 연결이 끝났어요 · 혼자 걷기';}updateRoomStatus();});
-function showGather(){const line=$('gather-status');if(!gather){line.hidden=true;return;}const spot=gatherSpot(gather.section);line.hidden=false;line.textContent=(classroom.role==='teacher'?'모이기 안내: ':'선생님: ')+spot.name+'에 모여요';}
-function peersNear(radius=6){const out=[];for(const p of peers.values())if(p.online&&Math.hypot(p.cur.y-state.y,(p.cur.x-state.x)*1)<radius)out.push(p);return out;}
+classroom.addEventListener('status',e=>{const st=e.detail.state;if(st==='reconnecting')announce('연결이 끊겼어요. 다시 연결하는 중… 혼자 계속 걸어도 돼요.',8);if(st==='connected'&&roomClosedNote!=='first'){announce('교실 방에 연결됐어요.',3);}roomClosedNote='first';if(st==='closed'){classActivity=null;activityJoined=null;lastTogether='';$('together').hidden=true;for(const id of [...peers.keys()])removePeer(id);gather=null;showGather();$('room-status').textContent={'teacher-left':'선생님이 방을 닫았어요 · 혼자 걷기','idle':'방이 오래 비어 닫혔어요 · 혼자 걷기','expired':'방 시간이 끝났어요 · 혼자 걷기'}[e.detail.reason]||'교실 연결이 끝났어요 · 혼자 걷기';announce($('room-status').textContent,8);}updateRoomStatus();});
+function showGather(){const line=$('gather-status');if(!gather){line.hidden=true;$('teacher-arrivals').textContent='';return;}const spot=gatherSpot(gather.section);line.hidden=false;line.textContent=(classroom.role==='teacher'?'모이기 안내: ':'선생님: ')+spot.name+'에 모여요';}
+classroom.addEventListener('activity',e=>{classActivity=e.detail.activity;lastTogether='';if(classActivity)announce('선생님이 '+ACTIVITIES[classActivity.kind].label+'를 열었어요. 도착하면 함께할 수 있어요.',5);});
+async function inviteClass(kind){try{await classroom.request('state',{x:state.x,y:state.y,pose:'stand'});const r=await classroom.activity(kind);classActivity=r.activity;lastTogether='';if(kind)joinClassActivity();}catch{announce('이 스팟에서 연결 상태를 확인한 뒤 다시 눌러 주세요.',4);}}
+function joinClassActivity(){
+ const a=classActivity;if(!a||!atActivity(state.y,a.kind)||!['playing','rest','finished'].includes(mode)||diningKind()||life.focus)return;
+ stopAutoWalk();cancelFree(life);state={x:state.x,y:ACTIVITIES[a.kind].s};
+ resetView();hideAsks();modeTo(a.kind==='picnic'?'rest':'finished');if(a.kind==='picnic'){$('rest-title').textContent='우리 반 김밥 시간';$('rest-text').textContent='친구들과 함께 쉬어 가요.';}else renderMemories();renderChoices(state.y);chooseObservation(state.y,a.kind==='picnic'?'sit':'group');renderLifeRows();
+ if(a.kind!=='photo'){const action=mealActions(life,a.kind)[0];if(action)beginMeal(a.kind,action);}
+ activityJoined=a.id;lastTogether='';focusGame();
+}
+function updateTogether(){
+ if(time<nextTogether)return;nextTogether=time+.3;
+ if(gather&&classroom.connected){const spot=gatherSpot(gather.section),students=[...peers.values()].filter(p=>p.online&&p.role==='student'),arrived=students.filter(p=>Math.abs(p.target.y-spot.s)<=12).length+(classroom.role==='student'&&Math.abs(state.y-spot.s)<=12?1:0),total=students.length+(classroom.role==='student'?1:0);const text=spot.name+' · 학생 '+arrived+'/'+total+'명 도착';if($('gather-status').textContent!==text){$('gather-status').textContent=text;$('teacher-arrivals').textContent=text;}}
+ const host=$('together'),active=classroom.connected&&['playing','rest','finished'].includes(mode),spot=Math.abs(state.y-362)<=12?'picnic':Math.abs(state.y-712)<=12?'noodle':null;
+ host.hidden=!active||(!spot&&!classActivity);if(host.hidden)return;
+ const kind=(classroom.role==='teacher'&&spot?spot:classActivity?.kind||spot),at=atActivity(state.y,kind),online=[...peers.values()].filter(p=>p.online),arrived=online.filter(p=>p.role==='student'&&atActivity(p.target.y,kind)).length+(at&&classroom.role==='student'?1:0),total=online.filter(p=>p.role==='student').length+(classroom.role==='student'?1:0);
+ const busy=!!diningKind()||!!life.focus,signature=[kind,classActivity?.id,arrived,total,at,busy,activityJoined,classroom.role].join(':');if(signature===lastTogether)return;lastTogether=signature;
+ $('together-count').textContent=(ACTIVITIES[kind].s===362?'폭포 쉼터':'바람봉 정상')+' · 학생 '+arrived+'/'+total+'명 도착';
+ const buttons=$('together-buttons');buttons.replaceChildren();const button=(label,fn,disabled=false)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.disabled=disabled;b.onclick=fn;buttons.append(b);};
+ if(classroom.role==='teacher'){if(at)for(const k of (spot==='picnic'?['picnic']:['noodle','photo']))button(ACTIVITIES[k].label,()=>inviteClass(k),busy);if(classActivity)button('함께하기 마치기',()=>inviteClass(null));}
+ else if(classActivity)button(activityJoined===classActivity.id?'참여했어요':ACTIVITIES[kind].label,joinClassActivity,!at||busy||activityJoined===classActivity.id);
+ $('together-note').textContent=at?'먼저 온 친구는 쉬어도 좋아요. 늦게 와도 함께할 수 있어요.':'스팟까지 자유롭게 걸어와 주세요. 도착하면 참여할 수 있어요.';
+}
+function peersNear(radius=6){for(const p of peers.values())if(p.online&&Math.hypot(p.cur.y-state.y,p.cur.x-state.x)<radius)return true;return false;}
 function sendWave(){if(classroom.connected)classroom.wave();waveUntil=time+2.5;}
 function stopAutoWalk(){if(autoWalk){autoWalk=null;$('follow').setAttribute('aria-pressed','false');}}
 $('follow').onclick=()=>{if(autoWalk){stopAutoWalk();announce('여기서 멈췄어요.',3);focusGame();return;}const target=followTarget();if(!target)return;autoWalk=target;$('follow').setAttribute('aria-pressed','true');announce(followStartText(target.reason),6);focusGame();};
@@ -388,6 +450,7 @@ function position(snap=false,dt=.016,moving=false){
   if(noodling){const seat=worldAt(NOODLE_SPOT.seat.s,NOODLE_SPOT.seat.offset);hero.root.position.set(seat.x,seat.y,seat.z);}
   const dir=input();const animal=world.squirrel.position,F=world.falls,L=world.leaf.position;
   let yaw=noodling?NOODLE_SPOT.seat.yaw:sitting?seatWorld(seatIndex).yaw:focusAnimal?Math.atan2(focusAnimal.x-p.x,focusAnimal.z-p.z):pickTarget?Math.atan2(pickTarget.x-p.x,pickTarget.z-p.z):wildlife?angle+Math.atan2(Math.sin(Math.atan2(animal.x-p.x,animal.z-p.z)-angle),Math.cos(Math.atan2(animal.x-p.x,animal.z-p.z)-angle))*.52:falls?Math.atan2(F.x-p.x,F.z-p.z):followLeaf?Math.atan2(L.x-p.x,L.z-p.z):waterRest?Math.atan2(riverX(state.y-2)-p.x,2):greeting?Math.PI/2-.4:lookback?-Math.PI*.2:groupPhoto?0:angle;if(moving){const dx=dir.x+slope*dir.y,dz=-dir.y;yaw=Math.atan2(dx,dz);}
+  if(groupPhoto&&classroom.connected){const q=photoSlot(classroom.mealSlot),w=worldAt(q.s,q.x);hero.root.position.set(w.x,w.y,w.z);yaw=0;}
   if(diningNow){const q=dining.point(classroom.token?classroom.mealSlot:0);hero.root.position.set(q.x,q.y,q.z);yaw=q.yaw;}
   hero.root.rotation.y+=Math.atan2(Math.sin(yaw-hero.root.rotation.y),Math.cos(yaw-hero.root.rotation.y))*(snap?1:1-Math.exp(-dt*12));
   const activity=lifeAct||(diningNow?'sit':currentPose(moving));heroActivity=activity;
@@ -414,7 +477,7 @@ function position(snap=false,dt=.016,moving=false){
   const creekView=clamp((state.y-184)/12,0,1)*(1-clamp((state.y-218)/16,0,1));
   const ahead=worldAt(Math.min(LENGTH+6,state.y+5+creekView*2.5),0),back=worldAt(state.y-5.4+creekView*.65,state.x*.2);
   desired.set(back.x+(camera.aspect<1?.25:.55)-creekView*2.3,p.y+2.55-creekView*.05,back.z);
-  const target=new T.Vector3(p.x+(ahead.x-p.x)*(.45+creekView*.30)+(camera.aspect<1?0:.15+creekView*.65),p.y+1.5-creekView*.12+Math.min(.65,(ahead.y-p.y)*.25),ahead.z);
+  const target=cameraTarget.set(p.x+(ahead.x-p.x)*(.45+creekView*.30)+(camera.aspect<1?0:.15+creekView*.65),p.y+1.5-creekView*.12+Math.min(.65,(ahead.y-p.y)*.25),ahead.z);
   const creekShelf=T.MathUtils.smoothstep(state.y,335,345)*(1-T.MathUtils.smoothstep(state.y,425,435));
   desired.x-=creekShelf*.35;target.x-=creekShelf*.65;
   const shore=[210,362].includes(spot)?Math.sign(riverX(state.y-2)-p.x)||1:1;
@@ -472,7 +535,7 @@ function position(snap=false,dt=.016,moving=false){
     // 1.3 m to the right (pure translation, same view direction) so the child stands on the left third beside the card
     // instead of under it. Landscape and the walk up are unchanged; the deck is |offset| <= 4.4 so the camera stays on it.
     const opening=clamp((state.y-SUMMIT.from+4)/10,0,1),side=(camera.aspect<1&&mode==='finished')?1.3:0,summitBack=worldAt(state.y-6.5,state.x*.2+side),summitAhead=worldAt(state.y+6,side);
-    desired.lerp(new T.Vector3(summitBack.x,p.y+3.25,summitBack.z),opening);target.lerp(new T.Vector3(summitAhead.x,p.y+.8,summitAhead.z),opening);
+    desired.lerp(summitCamera.set(summitBack.x,p.y+3.25,summitBack.z),opening);target.lerp(summitCamera.set(summitAhead.x,p.y+.8,summitAhead.z),opening);
   }
   if(groupPhoto){
     // 정상 단체 사진: camera on the trail side looking at the row (teacher · child · friend) with the panorama behind them,
@@ -500,37 +563,45 @@ function position(snap=false,dt=.016,moving=false){
     }
     desired.y=Math.max(desired.y,terrain(desired.x,-desired.z)+1.0);}
   if(diningNow){const c=dining.center,portrait=camera.aspect<1;desired.set(c.x+1.3,c.y+(portrait?5.8:4.4),c.z+(portrait?8.7:7.2));target.set(c.x+(portrait?0:1.0),c.y+(portrait?-.55:.65),c.z);}
+  if(classroom.connected&&groupPhoto){const c=worldAt(712,0),portrait=camera.aspect<1;desired.set(c.x,c.y+(portrait?7:5),c.z+(portrait?15:12));target.set(c.x,c.y+.5,c.z);}
+  if(classroom.connected&&diningNow){const c=dining.center,portrait=camera.aspect<1;desired.set(c.x,c.y+(portrait?10:8),c.z+(portrait?14:12));target.set(c.x,c.y,c.z-3);}
   if(canLook()){
     turnView(view,(Number(keys.has('KeyL'))-Number(keys.has('KeyJ')))*dt*1.2,(Number(keys.has('KeyI'))-Number(keys.has('KeyK')))*dt*.9);
-    target.copy(sightTarget(desired,target,view));
+    sightTarget(desired,target,view,target);
   }
   const blend=snap||reduced?1:1-Math.exp(-dt*4);camPos.lerp(desired,blend);look.lerp(target,blend);camera.position.copy(camPos);camera.lookAt(look);
 }
+function posePeer(p,distance,moving,at,resting,reduced,slope,activity){const far=p.child.root.position.distanceToSquared(hero.root.position)>64;if(far&&time<(p.nextSkeleton||0))return false;p.nextSkeleton=time+1/20;p.child.pose(distance,moving,at,resting,reduced,slope,activity);return true;}
 // Peers: smoothed trail coordinates, walking phase from real displacement, gaze from the sent view, wave and seat states.
 function placePeers(dt){
+  if(!peers.size)return;
+  const k=1-Math.exp(-dt*6),turnK=1-Math.exp(-dt*8);
   for(const p of peers.values()){
     if(mode==='explore'){p.child.root.visible=false;continue;}
     const t=p.target,kind=diningKind();
-    if(kind){
+    if(kind&&t.meal?.kind===kind){
       p.child.root.visible=classroom.connected&&p.online&&t.meal?.kind===kind;
       if(p.child.root.visible){const q=dining.point(p.mealSlot,groupOf(p.mealSlot));p.child.root.position.set(q.x,q.y,q.z);p.child.root.rotation.y=q.yaw;
-        const eating=t.meal.action==='bite'&&time-p.mealAt<1.6;p.child.pose(p.traveled,false,time,true,reduced,0,actorActivity(p.child,eating?'eat':'sit'));}
+        const eating=t.meal.action==='bite'&&time-p.mealAt<1.6;posePeer(p,p.traveled,false,time,true,reduced,0,actorActivity(p.child,eating?'eat':'sit'));}
       continue;
     }
     if(t.meal){
       p.child.root.visible=classroom.connected&&p.online&&Math.abs(t.y-state.y)<15;
-      if(p.child.root.visible){const q=dining.point(p.mealSlot,groupOf(p.mealSlot));p.child.root.position.set(q.x,q.y,q.z);p.child.root.rotation.y=q.yaw;p.child.pose(p.traveled,false,time,true,reduced,0,actorActivity(p.child,t.meal.action==='bite'&&time-p.mealAt<1.6?'eat':'sit'));}
+      if(p.child.root.visible){const q=dining.point(p.mealSlot,groupOf(p.mealSlot));p.child.root.position.set(q.x,q.y,q.z);p.child.root.rotation.y=q.yaw;posePeer(p,p.traveled,false,time,true,reduced,0,actorActivity(p.child,t.meal.action==='bite'&&time-p.mealAt<1.6?'eat':'sit'));}
       continue;
     }
-    const k=1-Math.exp(-dt*6);const before={x:p.cur.x,y:p.cur.y};
+    if(t.photo&&classroom.connected&&p.online){const q=photoSlot(p.mealSlot),w=worldAt(q.s,q.x);p.child.root.visible=Math.abs(state.y-712)<55;p.child.root.position.set(w.x,w.y,w.z);p.child.root.rotation.y=0;if(p.child.root.visible)posePeer(p,p.traveled,false,time,true,reduced,0,actorActivity(p.child,'wave'));continue;}
+    const beforeX=p.cur.x,beforeY=p.cur.y;
     p.cur.x+=(t.x-p.cur.x)*k;p.cur.y+=(t.y-p.cur.y)*k;
-    const step=Math.hypot(p.cur.x-before.x,p.cur.y-before.y);p.traveled+=step;const moving=t.pose==='walk'&&step>.002;
-    const far=Math.abs(p.cur.y-state.y)>55;p.child.root.visible=!far;if(far)continue;
+    const step=Math.hypot(p.cur.x-beforeX,p.cur.y-beforeY);p.traveled+=step;const moving=t.pose==='walk'&&step>.002;
+    const far=Math.abs(p.cur.y-state.y)>55;p.child.root.visible=!far&&p.online;if(!p.child.root.visible)continue;
     const w=worldAt(p.cur.y,p.cur.x),sit=t.pose==='sit';
     if(sit&&!t.meal){const seat=seatWorld(Math.max(0,t.seat));p.child.root.position.set(seat.x,seat.y,seat.z);p.child.root.rotation.y=seat.yaw;}
-    else{p.child.root.position.set(w.x,w.y,w.z);let yaw=p.yaw;if(moving){const dx=(p.cur.x-before.x)+pathSlope(p.cur.y)*(p.cur.y-before.y),dz=-(p.cur.y-before.y);yaw=Math.atan2(dx,dz);}else yaw=Math.atan2(pathSlope(p.cur.y),-1);p.yaw+=Math.atan2(Math.sin(yaw-p.yaw),Math.cos(yaw-p.yaw))*(1-Math.exp(-dt*8));p.child.root.rotation.y=p.yaw;}
+    else{p.child.root.position.set(w.x,w.y,w.z);let yaw=p.yaw;if(moving){const dx=(p.cur.x-beforeX)+pathSlope(p.cur.y)*(p.cur.y-beforeY),dz=-(p.cur.y-beforeY);yaw=Math.atan2(dx,dz);}else yaw=Math.atan2(pathSlope(p.cur.y),-1);p.yaw+=Math.atan2(Math.sin(yaw-p.yaw),Math.cos(yaw-p.yaw))*turnK;p.child.root.rotation.y=p.yaw;}
     const waving=time<p.waveUntil||t.pose==='wave',activity=sit?'sit':waving?'wave':t.pose==='observe'?'observe':t.pose==='crouch'?'crouch':'look';
-    p.child.pose(p.traveled,moving,time+p.id*.37,!moving&&(sit||waving||t.pose==='observe'||!p.online),reduced,sit?0:grade(p.cur.y)*-Math.cos(p.yaw),actorActivity(p.child,activity));
+    // Far classmates keep their full mesh; only skeletal updates run at 15 Hz.
+    if(Math.abs(p.cur.y-state.y)>12&&time<(p.nextPose||0))continue;p.nextPose=time+1/15;
+    if(!posePeer(p,p.traveled,moving,time+p.id*.37,!moving&&(sit||waving||t.pose==='observe'||!p.online),reduced,sit?0:grade(p.cur.y)*-Math.cos(p.yaw),actorActivity(p.child,activity)))continue;
     if(!sit){p.child.head.rotation.y-=clamp(t.yaw||0,-1,1)*.55;p.child.head.rotation.x-=clamp(t.pitch||0,-.6,.6)*.5;}
   }
 }
@@ -541,8 +612,6 @@ function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);c
 // Cowork R2 (가설 A): on narrow screens the toast sits under the trail sign at a fixed CSS top. The sign grows when the next-experience
 // line wraps ("다음 · 전망대에서 바라보기 93 m" at 11 px exceeds the 156 px column) or when the room/gather lines appear, so the toast
 // now follows the sign's actual bottom edge. Wide screens keep the CSS position (the inline top is cleared there).
-{const sign=document.querySelector('.location'),note=$('note');const fitNote=()=>{if(innerWidth>700){note.style.top='';return;}const r=sign.getBoundingClientRect();if(r.height>0)note.style.top=Math.ceil(r.bottom+8)+'px';};
- if('ResizeObserver' in window)new ResizeObserver(fitNote).observe(sign);window.addEventListener('resize',fitNote);fitNote();}
 let lastIdlePaint=0,lastPaintMode='';
 for(const event of ['click','keydown','resize'])window.addEventListener(event,()=>{lastIdlePaint=0;},{passive:true});
 function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/1000,.05);last=now;if(document.hidden||mode==='error')return;
@@ -550,27 +619,24 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/10
   if((mode==='intro'||frozen())&&mode===lastPaintMode&&now-lastIdlePaint<200)return;
   lastIdlePaint=now;lastPaintMode=mode;
   let moving=false;heroSpeed=0;if(!frozen()&&mode!=='intro'){time+=dt;if(mode==='playing'){const before=state,walked=traveled;let dir=input();let scale=1;if(autoWalk){const auto=autoWalkInput({s:state.y},autoWalk);if(auto&&!dir.x&&!dir.y){dir=auto;scale=1.45;}else if(!auto){const reason=autoWalk.reason;stopAutoWalk();announce(arrivedText(reason),4);}}
-      if(dir.x||dir.y)cancelFree(life);
+      if(dir.x||dir.y)cancelWalkAction();
       else if(life.litter.pickup){const item=litterById(life.litter.pickup.id),dx=item.offset-state.x,dy=item.s-state.y,d=Math.hypot(dx,dy);if(d>.7)dir={x:dx/d,y:dy/d};}
-      state=advance(state,dir,dt,undefined,scale);moving=state.moving;const oldPos=worldAt(before.y,before.x),newPos=worldAt(state.y,state.x);traveled+=Math.hypot(newPos.x-oldPos.x,newPos.z-oldPos.z);heroSpeed=dt>0?(traveled-walked)/dt:0;if(autoWalk&&!moving)stopAutoWalk();
+      if(dir.x||dir.y){state=advance(state,dir,dt,undefined,scale);moving=state.moving;const oldPos=worldAt(before.y,before.x),newPos=worldAt(state.y,state.x);traveled+=Math.hypot(newPos.x-oldPos.x,newPos.z-oldPos.z);heroSpeed=dt>0?(traveled-walked)/dt:0;}else state.moving=false;if(autoWalk&&!moving)stopAutoWalk();
       const cue=walk(life,traveled-walked);if(cue)announce(cue,7);}idle=moving?0:idle+dt;
     const lane=laneName(state.x,state.y),current=place(state.y)+(lane?' · '+lane:'');if(current!==lastPlace){lastPlace=current;$('place').textContent=current;}
     const section=sectionIndex(state.y);if(section!==lastSection&&mode==='playing'){const first=lastSection<0;lastSection=section;if(!first)announce(sections[section].guide,7);if(section===5)sound.rustle(.5);if(classroom.role==='teacher')markLesson();}
     if(!forkNoted&&forkGap(state.y+6)>0){forkNoted=true;announce('왼쪽은 꽃길, 오른쪽은 고사리길. 어느 쪽이든 같은 쉼터에서 만나요.',8);}
     if(!lookNoted&&traveled>8&&mode==='playing'){lookNoted=true;announce('화면을 드래그하거나 I J K L로 주위를 둘러봐요.',7);}
-    const next=nextExperience(state.y,life);if($('next-experience').textContent!==next)$('next-experience').textContent=next;
-    const remaining=distanceText(state.y),height=heightText(state.y);
-    if($('distance').textContent!==remaining)$('distance').textContent=remaining;
-    if($('height').textContent!==height)$('height').textContent=height;
-    if($('progress').value!==state.y)$('progress').value=state.y;
-    const spot=nearby(state.y),reachable=mode==='playing'?nearestLitter(life,{s:state.y,x:state.x}):null,litterHere=!spot&&reachable,animalHere=!spot&&!litterHere&&mode==='playing'?animalNear(state.y,life):null,near=!spot&&!litterHere&&!animalHere&&classroom.connected&&peersNear().length>0;
+    const marker=nearestWaymarker(state.y,state.x);if(marker!==nearbyMarker){nearbyMarker=marker;$('trail-sign').hidden=!marker;}
+    const spot=nearby(state.y),reachable=mode==='playing'?nearestLitter(life,{s:state.y,x:state.x}):null,litterHere=!spot&&reachable,animalHere=!spot&&!litterHere&&mode==='playing'?animalNear(state.y,life):null,near=!spot&&!litterHere&&!animalHere&&classroom.connected&&peersNear();
     if($('action').classList.contains('animal-near')!==!!animalHere)$('action').classList.toggle('animal-near',!!animalHere);const actionHidden=!(spot||litterHere||animalHere||near)||mode!=='playing';if($('action').hidden!==actionHidden)$('action').hidden=actionHidden;const label=spot?spot.name:litterHere?'쓰레기 줍기':animalHere?animalHere.label:'손 흔들기';if($('action').dataset.spot!==label){$('action').dataset.spot=label;$('action').innerHTML=label+' <kbd>E</kbd>';}
     const pickable=!!reachable&&!life.litter.pickup;if($('pick').hidden===pickable)$('pick').hidden=!pickable;
     const th=Math.round(thirst(life)*100);if(th!==lastThirst){lastThirst=th;$('flask').style.setProperty('--thirst',String(th/100));$('flask').title='물 마시기 (F) · 걸은 만큼 목이 말라요 '+th+'%';}
     const drinkFlag=!!life.water.drink;if(drinkFlag!==lastDrinkFlag){lastDrinkFlag=drinkFlag;$('flask').setAttribute('aria-pressed',String(drinkFlag));}
     if(spot?.s===362&&mode==='playing')seatIndex=seatFor(state.x,state.y);
-    const followable=mode==='playing'&&classroom.connected&&(autoWalk||followTarget());if($('follow').hidden!==!followable)$('follow').hidden=!followable;if(followable&&!autoWalk){const t=followTarget();$('follow').textContent=followLabel(t.reason);}else if(autoWalk)$('follow').textContent='멈추기';
+    const followAt=mode==='playing'&&classroom.connected&&!autoWalk?followTarget():null,followable=mode==='playing'&&classroom.connected&&(autoWalk||followAt);if($('follow').hidden!==!followable)$('follow').hidden=!followable;const followText=autoWalk?'멈추기':followAt?followLabel(followAt.reason):'';if(followable&&$('follow').textContent!==followText)$('follow').textContent=followText;
     if(time>noteUntil&&$('note').textContent)$('note').textContent='';
+    if(mode==='playing'&&time>noteUntil&&time>=nextHintCheck&&!life.focus&&!life.litter.pickup&&!life.water.drink){nextHintCheck=time+.2;const hint=nextDiscoveryHint(life,{s:state.y,x:state.x},discoveryHints,discoveryDirection);if(hint){discoveryHints.add(hint.key);announce(hint.text,5);}}
     if((mode==='rest'||mode==='finished')&&advanceObservation(observation,dt,memories)){
       if(mode==='rest'){$('observe-feedback').textContent=observation.memory;$('observe-saved').textContent=observation.note?'이 장면과 고른 한 줄을 산책 기억에 남겼어요.':'이 장면을 산책 기억에 남겼어요.';}
       else{renderMemories();$('finish-text').textContent=resultText(observation,'발아래 숲을 보고, 친구들과 사진을 남겨요.');if(observation.id==='group'){flash();}}
@@ -580,17 +646,18 @@ function frame(now){requestAnimationFrame(frame);const dt=Math.min((now-last)/10
     if(state.y>SUMMIT.platform-2&&!reached){reached=true;announce('바람봉 정상이에요. 전망 자리에서 E를 눌러 풍경을 보고, 다 같이 사진도 찍어요. 선생님 보온병의 컵라면도 있어요.',10);}
     if(moving&&!movementLearned&&traveled>2.5){movementLearned=true;if($('note').textContent===openingNote)noteUntil=time;}
     sound.tick(time,state.y,moving,traveled,view.yaw);
-    if(classroom.connected)classroom.sendState({x:state.x,y:state.y,yaw:view.yaw,pitch:view.pitch,leaf:null,meal:sharedMeal(),pose:netPose(heroActivity),seat:mode==='rest'&&observation?.id==='sit'?seatIndex:-1},now);
+    updateTogether();
+    if(classroom.canSendState(now))classroom.sendState({x:state.x,y:state.y,yaw:view.yaw,pitch:view.pitch,leaf:null,photo:mode==='finished'&&observation?.id==='group'&&!diningKind(),meal:sharedMeal(),pose:netPose(heroActivity),seat:mode==='rest'&&observation?.id==='sit'?seatIndex:-1},now);
   }
   if(!frozen()){
     lifeView.encounters=life.encounters;lifeView.focus=explorer.focus||life.focus?.id||null;lifeView.focusT=focusProgress(life);lifeView.picnic.active=picnicShown();lifeView.picnic.seat=seatIndex;lifeView.picnic.eating=life.meals.picnic.action?.id==='bite';
     lifeView.noodle.active=noodleShown();lifeView.noodle.eating=life.meals.noodle.action?.id==='bite';lifeView.cheerUntil=life.litter.lastPickedAt+3.2;
     startDiningFrame();
-    const events=world.update(time,state.y,idle,reduced,(mode==='rest'||mode==='finished')?observation:null,{x:hero.root.position.x,z:hero.root.position.z,moving},lifeView);if(events.leafKick)sound.rustle(.6);position(false,dt,moving);placePeers(dt);
+    const events=world.update(time,state.y,idle,reduced,(mode==='rest'||mode==='finished')?observation:null,{x:hero.root.position.x,z:hero.root.position.z,moving},lifeView);if(events.leafKick)sound.rustle(.6);position(false,dt,moving);placePeers(dt);if(classroom.connected){guide.root.visible=false;for(const friend of Object.values(world.friends))friend.root.visible=false;}
     const diningNow=diningKind();if(mode==='explore')guide.root.visible=false;
-    for(const [key,npc] of Object.entries(world.friends)){npc.root.visible=!diningNow&&mode!=='explore';if(diningNow&&!classroom.token&&['shelterFriend','summitFriend'].includes(key)){
+    for(const [key,npc] of Object.entries(world.friends)){npc.root.visible=!classroom.connected&&!diningNow&&mode!=='explore';if(diningNow&&!classroom.token&&['shelterFriend','summitFriend'].includes(key)){
       const q=dining.point(key==='shelterFriend'?1:4,0);npc.root.visible=true;npc.root.position.set(q.x,q.y,q.z);npc.root.rotation.y=q.yaw;npc.pose(0,false,time,true,reduced,0,actorActivity(npc,'sit'));}}
-    if(props){propView.picnicShown=lifeView.picnic.active;propView.noodleShown=lifeView.noodle.active;propView.seat=seatIndex;props.update(time,life,hands,propView,reduced);if(diningNow)props.hideMeals();}
+    if(props){propView.picnicShown=!diningNow&&lifeView.picnic.active;propView.noodleShown=!diningNow&&lifeView.noodle.active;propView.seat=seatIndex;props.update(time,life,hands,propView,reduced);if(diningNow)props.hideMeals();}
     if(diningNow)dining.update(time,hands,life.meals[diningNow],reduced);
     explorer.update(dt,time,reduced);
   }renderer.render(scene,camera);
@@ -618,6 +685,7 @@ async function prepareStart(){
 prepareStart().catch(error=>{modeTo('error');console.error(error);});
 // ---- QA hooks: only on localhost with ?qa=1 (parent's browser checks inject their own helper; nothing in the UI uses them) ----
 if(['localhost','127.0.0.1','[::1]'].includes(location.hostname)&&new URLSearchParams(location.search).get('qa')==='1')window.forestQA={
+  waymarkers:()=>world.waymarkers.groups.map(g=>({s:g.userData.s,rows:g.userData.marker.rows,visible:g.visible})),
   animals:()=>world.wildlife.snapshot(),
   graphics:()=>({fern:!!world.fernProp,calls:world.renderer.info.render.calls,triangles:world.renderer.info.render.triangles,geometries:world.renderer.info.memory.geometries,textures:world.renderer.info.memory.textures}),
   state:()=>({mode,s:state.y,x:state.x,observation:observation&&{spot:observation.spot,id:observation.id,elapsed:observation.elapsed,done:observation.done},memories:[...memories.entries()],photoPosed:world.photoPosed(),fallsSeen:world.fallsSeen(),leafRested:world.leafRested(),bridgeAssets:world.bridge.userData.assets,bridgeSpan:world.bridge.userData.span,hero:hero.root.name,guide:guide.root.name,friends:Object.fromEntries(Object.entries(world.friends).map(([k,v])=>[k,v.root.name]))}),
@@ -627,10 +695,15 @@ if(['localhost','127.0.0.1','[::1]'].includes(location.hostname)&&new URLSearchP
   // Read-only hiking-life snapshot: pure state (life.mjs), prop visibility/positions (props.mjs), journal dialog state and the
   // pose currently applied to the hero. Nothing here changes state; actions go through the real buttons/keys (or `life` helpers below).
   life:()=>({state:lifeSnapshot(life),pose:heroActivity,journal:{open:mode==='journal',from:journalFrom},hands:Object.fromEntries(Object.entries(hands).map(([k,v])=>[k,v?{x:+v.x.toFixed(2),y:+v.y.toFixed(2),z:+v.z.toFixed(2)}:null])),props:props?props.snapshot():null,litterSpots:props?props.litterSpots():null}),
+  together:()=>({activity:classActivity,joined:activityJoined,peers:peers.size}),
   dining:()=>({...dining.snapshot(),connected:classroom.connected,mealSlot:classroom.mealSlot,peers:[...peers.values()].map(p=>({id:p.id,slot:p.mealSlot,online:p.online,meal:p.target.meal,visible:p.child.root.visible,position:p.child.root.position.toArray()}))}),
   exploration:()=>explorer.snapshot(),
   lifeDo:{drink:drinkWater,pick:pickLitter,focus:beginFocus,meal:beginMeal,journal:()=>mode==='journal'?closeJournal():openJournal()}
 };
+
+
+
+
 
 
 

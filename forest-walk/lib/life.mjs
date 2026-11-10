@@ -132,7 +132,7 @@ export function mealLine(life,kind){
   const m=MEALS[kind],st=life.meals[kind];
   if(st.completed)return m.lines.done+' · '+st.bites+'입';
   if(st.stage==='open'&&mealPieces(life,kind)===0)return '다 먹었어요. '+(kind==='picnic'?'도시락을':'빈 컵을')+' 챙기고 출발해요.';
-  if(st.stage==='open')return m.lines.open.replace('{n}',String(mealPieces(life,kind)));
+  if(st.stage==='open')return m.lines.open.replace('{n}',String(mealPieces(life,kind)))+(st.bites<m.minBites?' 두 입 먹고 정리하면 수첩에 남아요.':' 이제 정리하면 수첩에 남아요.');
   return st.stage==='packed'?m.lines.again:m.lines.none;
 }
 // Where the picnic is laid out, per shelter seat (bench 0 / log 1): the mat on the ground in front of the seat, the box on it,

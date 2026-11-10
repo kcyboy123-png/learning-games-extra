@@ -1,5 +1,5 @@
 import * as T from './vendor/three.module.js';
-import {createHero,loadCharacterAssets} from './hero.mjs?v=cast4-20261109';
+import {createHero,loadCharacterAssets} from './hero.mjs?v=swap-upload-20261110';
 
 export async function loadNPC(scene,kind){
   if(!['teacher','friend','boy'].includes(kind))throw Error('Unknown forest character');
@@ -10,7 +10,7 @@ export async function loadNPC(scene,kind){
     const colors=new Float32Array(data.position.length).fill(1);
     for(const id of data.rigidBackpack||[])colors.set([.55,.82,.7],id*3);
     actor.mesh.geometry.setAttribute('color',new T.BufferAttribute(colors,3));
-    actor.mesh.material.vertexColors=true;actor.root.scale.setScalar(.94);
+    const original=actor.mesh.material;actor.mesh.material=original.clone();actor.mesh.material.onBeforeCompile=original.onBeforeCompile;actor.mesh.material.customProgramCacheKey=original.customProgramCacheKey;actor.mesh.material.vertexColors=true;actor.root.scale.setScalar(.94);
   }
   return actor;
 }

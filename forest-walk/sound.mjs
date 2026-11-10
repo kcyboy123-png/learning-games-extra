@@ -1,5 +1,5 @@
 import {ambientMix,loadSoundscape} from './soundscape.mjs?v=perf5-sound-20261108';
-import {STRIDE} from './lib/gait.mjs?v=forest-full-qa-20261107';
+import {STRIDE} from './lib/gait.mjs?v=natural-walk-20261110';
 import {BRIDGE,RIVER,sections} from './trail.mjs?v=forest-full-qa-20261107';
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),smooth=(s,a,b)=>{const t=clamp((s-a)/(b-a),0,1);return t*t*(3-2*t);};
 // Water is loudest from the bridge approach to the shelter spring; wind takes over on the ridge and summit.

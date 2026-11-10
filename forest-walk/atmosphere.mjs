@@ -9,8 +9,8 @@ export function createAtmosphere(scene){
     g.setAttribute('uv',new T.Float32BufferAttribute([0,1,1,1,1,0,0,0],2));g.setIndex([0,1,2,0,2,3]);g.computeBoundingSphere();
     const m=new T.ShaderMaterial({transparent:true,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending,
       uniforms:{strength:{value:0}},vertexShader:'varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-      fragmentShader:'varying vec2 vUv;uniform float strength;void main(){float edge=pow(max(0.,sin(vUv.x*3.14159)),2.);float end=smoothstep(0.,.22,vUv.y)*(1.-smoothstep(.78,1.,vUv.y));gl_FragColor=vec4(.94,.89,.65,edge*end*strength);}'
+      fragmentShader:'varying vec2 vUv;uniform float strength;void main(){float edge=pow(max(0.,sin(vUv.x*3.14159)),3.5);float end=smoothstep(0.,.22,vUv.y)*(1.-smoothstep(.78,1.,vUv.y));gl_FragColor=vec4(.94,.89,.65,edge*end*strength*(.72+.28*sin(vUv.x*17.+vUv.y*4.)*sin(vUv.x*17.+vUv.y*4.)));}'
     });const mesh=new T.Mesh(g,m);mesh.position.copy(p);mesh.renderOrder=4;scene.add(mesh);return {s,mesh};
   });
-  return {beams,update(s){for(const b of beams){const d=Math.abs(s-b.s);b.mesh.visible=d<65;b.mesh.material.uniforms.strength.value=.12*(1-T.MathUtils.smoothstep(d,22,65));}}};
+  return {beams,update(s){for(const b of beams){const d=Math.abs(s-b.s);b.mesh.visible=d<65;b.mesh.material.uniforms.strength.value=.085*(1-T.MathUtils.smoothstep(d,22,65));}}};
 }

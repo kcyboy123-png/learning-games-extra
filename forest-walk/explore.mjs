@@ -5,10 +5,10 @@ import {TRACKS,CAPTIONS,PHOTO_LIMIT,LEAF_SECONDS,createExploration,noteClue,link
 export function createExplorer({world,canvas,enter,leave,running,animalAt,observe,getPeers,getS,onCapture=()=>{}}){
  const {scene,camera,renderer}=world,$=id=>document.getElementById(id);
  let records=createExploration(),active=null,stage='',animal=null,photos=[],selected=0,pending=null,busy=false,generation=0;
- let yaw=0,pitch=0,zoom=1,leafPan=204,travel=null,seq=0,drag=null,clueHint=false;
+ let followLeaf=true,yaw=0,pitch=0,zoom=1,leafPan=204,travel=null,seq=0,drag=null,clueHint=false;
  const heldKeys=new Set(),basePos=new T.Vector3(),baseAim=new T.Vector3(),temp=new T.Vector3(),projected=new T.Vector3();let baseFov=45;
  const shell=document.createElement('section');shell.id='explorer';shell.hidden=true;shell.setAttribute('aria-label','숲 체험');
- shell.innerHTML=`<div id="exp-frame" aria-hidden="true"></div><button id="exp-target" aria-label="흔적 살펴보기"></button><section class="exp-card"><span class="eyebrow" id="exp-eyebrow">내가 발견하는 숲</span><h2 id="exp-title" tabindex="-1"></h2><p id="exp-help" role="status"></p><label id="exp-range-label">확대 <input id="exp-range" type="range" min="1" max="2.2" step=".1" value="1"></label><label id="exp-lane-label">띄울 자리 <select id="exp-lane"><option value="-1">왼쪽 물길</option><option value="0" selected>가운데 물길</option><option value="1">오른쪽 물길</option></select></label><div id="exp-review"><img id="exp-preview" alt="방금 찍은 숲 사진"><label>사진에 담을 마음 <select id="exp-caption"></select></label></div><div id="exp-album" role="group" aria-label="사진 선택"></div><div class="exp-actions"><button id="exp-main" type="button"></button><button id="exp-close" type="button">산책으로</button></div></section>`;
+ shell.innerHTML=`<div id="exp-frame" aria-hidden="true"></div><button id="exp-target" aria-label="흔적 살펴보기"></button><section class="exp-card"><span class="eyebrow" id="exp-eyebrow">내가 발견하는 숲</span><h2 id="exp-title" tabindex="-1"></h2><p id="exp-help" role="status"></p><label id="exp-range-label">확대 <input id="exp-range" type="range" min="1" max="2.2" step=".1" value="1"></label><label id="exp-lane-label">띄울 자리 <select id="exp-lane"><option value="-1">왼쪽 물길</option><option value="0" selected>가운데 물길</option><option value="1">오른쪽 물길</option></select></label><div id="exp-review"><img id="exp-preview" alt="방금 찍은 숲 사진"><label>사진에 담을 마음 <select id="exp-caption"></select></label></div><div id="exp-album" role="group" aria-label="사진 선택"></div><div class="exp-actions"><button id="exp-main" type="button"></button><button id="exp-retake" type="button" hidden>다시 찍기</button><button id="exp-close" type="button">산책으로</button></div></section>`;
  document.body.append(shell);for(const text of CAPTIONS){const o=document.createElement('option');o.textContent=o.value=text;$('exp-caption').append(o);}
  const clues=new Map(),sphere=new T.SphereGeometry(1,10,7),twig=new T.CylinderGeometry(.012,.012,.7,7),mat=c=>new T.MeshStandardMaterial({color:c,roughness:.95});
  function part(g,geo,m,x,y,z,sx,sy,sz){const a=new T.Mesh(geo,m);a.position.set(x,y,z);a.scale.set(sx,sy,sz);a.castShadow=true;g.add(a);return a;}
@@ -30,14 +30,14 @@ export function createExplorer({world,canvas,enter,leave,running,animalAt,observ
  const ownRing=new T.Mesh(new T.RingGeometry(.24,.265,28),new T.MeshBasicMaterial({color:'#fff0a6',side:T.DoubleSide,transparent:true,opacity:.8,depthWrite:false}));ownRing.rotation.x=-Math.PI/2;ownRing.visible=false;scene.add(ownRing);
  function text(title,help,button){$('exp-title').textContent=title;$('exp-help').textContent=help;$('exp-main').textContent=button;}
  function controls(){
-   $('exp-frame').hidden=active!=='photo'||stage==='review';$('exp-range-label').hidden=active!=='photo'||stage==='review';$('exp-lane-label').hidden=active!=='leaf';$('exp-review').hidden=stage!=='review';$('exp-album').hidden=active!=='album';$('exp-target').hidden=active!=='track';
+   $('exp-frame').hidden=active!=='photo'||stage==='review';$('exp-range-label').hidden=active!=='photo'||stage==='review';$('exp-lane-label').hidden=active!=='leaf';$('exp-retake').hidden=active!=='photo'||stage!=='review';$('exp-review').hidden=stage!=='review';$('exp-album').hidden=active!=='album';$('exp-target').hidden=active!=='track';
    shell.dataset.kind=active||'';shell.dataset.stage=stage;document.body.dataset.exploring=active||'';
  }
  function open(kind,id){
    if(active)close();generation++;active=kind;animal=id||null;stage=kind==='track'?'clue':'ready';yaw=pitch=0;zoom=1;heldKeys.clear();baseFov=camera.fov;basePos.copy(camera.position);camera.getWorldDirection(temp);baseAim.copy(basePos).addScaledVector(temp,10);
    enter();shell.hidden=false;$('exp-main').disabled=false;clueHint=false;
    if(kind==='track'){const c=TRACKS[id],p=clues.get(id).position;basePos.set(p.x+.4,p.y+2.2,p.z+2.4);baseAim.copy(p);text(c.name+'의 주인은?','바닥의 흔적을 눌러 살펴봐요. 드래그·방향키로 둘러볼 수 있어요.','흔적 위치 찾기');}
-   if(kind==='leaf'){leafPan=204;travel=null;seq++;$('exp-lane').disabled=false;text('나뭇잎 여행','출발 자리를 고른 뒤 띄워요. 잎은 물길을 따라 흘러가요.','잎 띄우기');}
+   if(kind==='leaf'){followLeaf=true;leafPan=204;travel=null;seq++;$('exp-lane').disabled=false;text('나뭇잎 여행','출발 자리를 고른 뒤 띄워요. 잎은 물길을 따라 흘러가요.','잎 띄우기');}
    if(kind==='photo'){text('내가 담는 숲','드래그로 구도를 잡고 확대해 보세요. 밝은 테두리 안이 사진에 담겨요.','찰칵');$('exp-range').value='1';}
    if(kind==='album')renderAlbum();controls();update(0,0,true);$('exp-title').focus();
  }
@@ -77,6 +77,7 @@ export function createExplorer({world,canvas,enter,leave,running,animalAt,observ
    }catch{$('exp-help').textContent='사진을 저장하지 못했어요. 다시 시도해 주세요.';}finally{if(ticket===generation){busy=false;$('exp-main').disabled=false;}}
  }
  $('exp-close').onclick=close;
+ $('exp-retake').onclick=()=>{if(active!=='photo'||stage!=='review'||!pending)return;URL.revokeObjectURL(pending.url);pending=null;stage='ready';text('다시 구도를 잡아 봐요','드래그하거나 확대해서 원하는 풍경을 담아요.','찰칵');controls();$('exp-main').focus();};
  // Commit on contact so a moving animal cannot slide out from under a child's fingertip before release.
  $('exp-target').onpointerdown=e=>{if(e.button!==0)return;e.preventDefault();pickTarget();};$('exp-target').onclick=e=>{if(e.detail===0)pickTarget();};
  $('exp-range').oninput=e=>zoom=Number(e.target.value);
@@ -84,9 +85,9 @@ export function createExplorer({world,canvas,enter,leave,running,animalAt,observ
    if(!running())return;
    if(active==='track'){yaw=pitch=0;const p=stage==='clue'?clues.get(animal).position:animalAt(animal);baseAim.copy(p);clueHint=true;}
    if(active==='leaf'){
-     if(!travel){seq++;travel={lane:Number($('exp-lane').value),elapsed:0,seq,recorded:false};$('exp-lane').disabled=true;text('금빛 테두리가 내 잎이에요','드래그·↑↓로 물길을 따라가요. 내가 띄운 잎을 따라 천천히 둘러봐요.','내 잎 찾기');}
+     if(!travel){followLeaf=true;seq++;travel={lane:Number($('exp-lane').value),elapsed:0,seq,recorded:false};$('exp-lane').disabled=true;text('금빛 테두리가 내 잎이에요','내 잎을 따라가고 있어요. 드래그하면 자유롭게 둘러봐요. 내 잎 찾기로 다시 따라가요.','내 잎 찾기');}
      else if(travel.recorded){travel=null;leafPan=204;$('exp-lane').disabled=false;text('다른 물길도 볼까요?',records.leafRoutes.length+'가지 출발 자리에서 여행했어요. 순위는 없어요.','잎 띄우기');}
-     else leafPan=leafCourse(travel.lane,travel.elapsed).s;
+     else{followLeaf=true;leafPan=leafCourse(travel.lane,travel.elapsed).s;}
    }
    if(active==='photo'){
      if(stage==='review'&&pending){pending.caption=$('exp-caption').value;photos.push(pending);pending=null;if(photos.length>PHOTO_LIMIT)URL.revokeObjectURL(photos.shift().url);selected=photos.length-1;active='album';stage='ready';renderAlbum();controls();}
@@ -94,7 +95,7 @@ export function createExplorer({world,canvas,enter,leave,running,animalAt,observ
    }else if(active==='album')savePhoto();
  };
  canvas.addEventListener('pointerdown',e=>{if(!active||!running()||stage==='review'||active==='album'||e.button!==0)return;e.preventDefault();drag={id:e.pointerId,x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY};canvas.setPointerCapture(e.pointerId);});
- canvas.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id||!running())return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(active==='leaf')leafPan=Math.max(192,Math.min(205,leafPan+dy*.025));else{yaw=Math.max(-1.2,Math.min(1.2,yaw-dx*.004));pitch=Math.max(-.65,Math.min(.65,pitch+dy*.004));}drag.x=e.clientX;drag.y=e.clientY;});
+ canvas.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id||!running())return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(active==='leaf'){followLeaf=false;leafPan=Math.max(192,Math.min(205,leafPan+dy*.025));}else{yaw=Math.max(-1.2,Math.min(1.2,yaw-dx*.004));pitch=Math.max(-.65,Math.min(.65,pitch+dy*.004));}drag.x=e.clientX;drag.y=e.clientY;});
  for(const name of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(name,e=>{if(drag?.id!==e.pointerId)return;drag=null;});
  window.addEventListener('keydown',e=>{if(!active||!running())return;if(e.code==='Escape'){e.preventDefault();close();return;}if(e.target.matches('select,input'))return;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)){e.preventDefault();heldKeys.add(e.code);}if(e.code==='Tab'){const bs=[...shell.querySelectorAll('button,input,select')].filter(b=>!b.disabled&&b.getClientRects().length);if(bs.length){const i=bs.indexOf(document.activeElement);e.preventDefault();bs[(i+(e.shiftKey?-1:1)+bs.length)%bs.length].focus();}}});
  window.addEventListener('keyup',e=>heldKeys.delete(e.code));window.addEventListener('blur',()=>{heldKeys.clear();drag=null;});
@@ -105,9 +106,9 @@ export function createExplorer({world,canvas,enter,leave,running,animalAt,observ
    if(!active||!running())return;
    if(active==='album'||stage==='review')return;
    const x=Number(heldKeys.has('ArrowRight'))-Number(heldKeys.has('ArrowLeft')),y=Number(heldKeys.has('ArrowDown'))-Number(heldKeys.has('ArrowUp'));
-   if(active==='leaf')leafPan=Math.max(192,Math.min(205,leafPan-y*dt*3.5));else{yaw=Math.max(-1.2,Math.min(1.2,yaw-x*dt*.8));pitch=Math.max(-.65,Math.min(.65,pitch+y*dt*.6));}
+   if(active==='leaf'){if(y)followLeaf=false;leafPan=Math.max(192,Math.min(205,leafPan-y*dt*3.5));}else{yaw=Math.max(-1.2,Math.min(1.2,yaw-x*dt*.8));pitch=Math.max(-.65,Math.min(.65,pitch+y*dt*.6));}
    if(active==='leaf'){
-     if(travel)travel.elapsed=Math.min(LEAF_SECONDS,travel.elapsed+dt);
+     if(travel){travel.elapsed=Math.min(LEAF_SECONDS,travel.elapsed+dt);if(followLeaf)leafPan=leafCourse(travel.lane,travel.elapsed).s;}
      const c=leafPlace(leaves[0],travel?.lane??Number($('exp-lane').value),travel?.elapsed??0);world.leaf.visible=false;ownRing.visible=true;ownRing.position.copy(leaves[0].position);ownRing.position.y+=.012;
      basePos.set(riverX(leafPan)-.45,elevation(leafPan)+4.6,-leafPan+6.5);baseAim.set(riverX(leafPan),elevation(leafPan)-.7,-leafPan);camera.fov=innerWidth<innerHeight?60:48;camera.position.copy(basePos);camera.lookAt(baseAim);camera.updateProjectionMatrix();camera.updateMatrixWorld(true);
      if(travel&&travel.elapsed>=LEAF_SECONDS&&frameContains(leaves[0].position)&&!travel.recorded){noteLeaf(records,travel.lane,travel.elapsed,true);travel.recorded=true;text('물길 끝까지 따라왔어요',records.leafRoutes.length+'가지 출발 자리의 물길을 살펴봤어요. 다른 자리도 비교해 볼까요?','다른 자리에서 띄우기');}
@@ -124,5 +125,5 @@ export function createExplorer({world,canvas,enter,leave,running,animalAt,observ
  return {open,close,reset,update,onAnimal:id=>linkAnimal(records,id),get active(){return active;},get focus(){return active==='track'&&stage==='search'?animal:null;},
    packet:()=>active==='leaf'&&travel?{lane:travel.lane,age:Math.floor(travel.elapsed),seq:travel.seq}:null,
    summary:()=>[...records.tracked.map(id=>TRACKS[id].name+'에서 동물 찾기'),...(records.leafRoutes.length?['나뭇잎 여행 · '+records.leafRoutes.length+'가지 물길']:[]),...(photos.length?['내가 찍은 숲 사진 · '+photos.length+'장']:[])],
-   snapshot:()=>({active,stage,animal,...structuredClone(records),photos:photos.map(p=>({where:p.where,caption:p.caption})),travel:travel&&{...travel},leafPan,peerLeaves:leaves.slice(1).filter(l=>l.visible).length,target:!$('exp-target').hidden?{x:parseFloat($('exp-target').style.left),y:parseFloat($('exp-target').style.top)}:null})};
+   snapshot:()=>({active,stage,animal,...structuredClone(records),photos:photos.map(p=>({where:p.where,caption:p.caption})),travel:travel&&{...travel},leafPan,followLeaf,peerLeaves:leaves.slice(1).filter(l=>l.visible).length,target:!$('exp-target').hidden?{x:parseFloat($('exp-target').style.left),y:parseFloat($('exp-target').style.top)}:null})};
 }

@@ -37,7 +37,7 @@ export async function createBridge(scene,bridge=BRIDGE){
   if(wood){const upright=wood.clone();upright.rotation=0;upright.repeat.set(.8,1.2);shaded.map=shaded.bumpMap=upright;}
   const endCanvas=document.createElement('canvas');endCanvas.width=endCanvas.height=128;
   const ctx=endCanvas.getContext('2d');ctx.fillStyle='#bba17a';ctx.fillRect(0,0,128,128);
-  for(let r=5;r<80;r+=5){ctx.strokeStyle=r%10?'#7f654b70':'#e4cfa788';ctx.lineWidth=1.3;ctx.beginPath();ctx.ellipse(59,68,r,r*.88,.2,0,Math.PI*2);ctx.stroke();}
+  for(let r=5;r<80;r+=5){ctx.strokeStyle=r%10?'#7f654b70':'#e4cfa788';ctx.lineWidth=1.3;ctx.beginPath();ctx.ellipse(59,68,r+.6*Math.sin(r),r*(.86+.035*Math.sin(r*.6)),.2,0,Math.PI*2);ctx.stroke();}
   const endMap=new T.CanvasTexture(endCanvas);endMap.colorSpace=T.SRGBColorSpace;
   // Weathered end grain has hairline radial cracks, without extra geometry.
   for(let i=0;i<7;i++){const a=i*2.399;ctx.strokeStyle='#65523c70';ctx.lineWidth=.65;ctx.beginPath();ctx.moveTo(59+Math.cos(a)*35,68+Math.sin(a)*35);ctx.lineTo(59+Math.cos(a)*72,68+Math.sin(a)*72);ctx.stroke();}
@@ -52,13 +52,14 @@ export async function createBridge(scene,bridge=BRIDGE){
   for(let i=0;i<pp.count;i++){const top=T.MathUtils.smoothstep(pp.getY(i),.025,.075),edge=T.MathUtils.smoothstep(Math.abs(pp.getZ(i)),.11,.16),tone=.78+.22*top-.075*edge;plankColor.push(tone,tone,tone);}
   plank.setAttribute('color',new T.Float32BufferAttribute(plankColor,3));
   let plankOffset=0;
-  const plankTints=['#d0b38e','#c3ad8c','#dcc6a3','#bba58a'].map(c=>{const m=timber.clone();m.color.set(c);m.vertexColors=true;m.onBeforeCompile=shader=>{shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vBoard;').replace('#include <begin_vertex>','#include <begin_vertex>\nvBoard=position;');shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vBoard;').replace('#include <color_fragment>',`#include <color_fragment>
+  const plankTints=['#ceb18d','#c7ae8c','#d4bb98','#c2aa8a'].map(c=>{const m=timber.clone();m.color.set(c);m.vertexColors=true;m.onBeforeCompile=shader=>{shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vBoard;').replace('#include <begin_vertex>','#include <begin_vertex>\nvBoard=position;');shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying vec3 vBoard;').replace('#include <color_fragment>',`#include <color_fragment>
       float edge=smoothstep(1.0,1.5,abs(vBoard.x));
-      float wear=.5+.5*sin(vBoard.x*11.+sin(vBoard.z*37.)*.6);
-      float split=pow(max(0.,sin(vBoard.x*22.+sin(vBoard.z*34.)*.7)),28.)*smoothstep(.8,1.45,abs(vBoard.x));
-      float grain=sin(vBoard.x*63.+sin(vBoard.z*21.)*.9);
-      float grainAA=1.-smoothstep(.45,1.4,fwidth(vBoard.x*63.));
-      diffuseColor.rgb*=1.-edge*.22-(1.-wear)*.085-split*.13+grain*.018*grainAA;
+      float grainPhase=vBoard.z*95.+sin(vBoard.x*2.8+vBoard.z*11.)*1.1;
+      float wear=.5+.5*sin(vBoard.z*27.+sin(vBoard.x*1.9)*.6);
+      float split=pow(max(0.,sin(grainPhase*.62)),28.)*smoothstep(.8,1.45,abs(vBoard.x));
+      float grain=sin(grainPhase);
+      float grainAA=1.-smoothstep(.45,1.4,fwidth(grainPhase));
+      diffuseColor.rgb*=vec3(1.04,1.,.94)*(1.-edge*.12-(1.-wear)*.050-split*.11*grainAA+grain*.035*grainAA);
     `);};m.customProgramCacheKey=()=> 'worn-board-v1';if(wood){m.map=wood.clone();m.map.offset.set(.17*plankOffset++,0);m.bumpMap=m.map;}return m;});
   for(let i=0,s=from;s<=to+.01;s+=.36,i++){
     const p=worldAt(s),m=mesh(plank,plankTints[i%4],p.x,p.y+.01+.006*Math.sin(i*2.1),p.z);m.scale.set(Math.hypot(1,pathSlope(s)),1,Math.hypot(1,pathSlope(s)));m.rotation.y=-Math.atan(pathSlope(s))+.004*Math.sin(i*1.7);

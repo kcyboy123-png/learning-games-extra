@@ -1,0 +1,93 @@
+/* 1. Keep the trail visible and the entry action unmistakable. */
+:root{--trail-ink:#203d33;--trail-paper:#fffaf0;--trail-sun:#f0c75e;--trail-green:#173c32;--trail-line:#c6d0bc}
+body #intro.sheet{width:500px;gap:12px 16px;grid-template-columns:1fr 164px;bottom:max(32px,env(safe-area-inset-bottom))}
+#intro #start{border-radius:14px;min-height:62px;font-size:22px;background:var(--trail-sun);border:1px solid #ffeab1;box-shadow:0 3px 0 #967b37,0 8px 20px #10251a40}
+#intro .entry-tabs{gap:4px}#intro .entry-tabs button{font-size:14px;padding:8px 10px;border-radius:8px 8px 0 0}
+#intro #look-next{border-radius:10px;background:#173c32e8;min-height:48px}
+/* 2. Portraits form a compact selection strip with an explicit selection mark. */
+#character-picker{grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:12px;background:#173c32f5;border-radius:16px}
+#character-picker button,#teacher-picker button{position:relative;border-radius:10px;border:2px solid transparent;box-shadow:none}
+#character-picker img{height:118px}#character-picker span{font-size:13px}
+#character-picker button[aria-pressed=true]::after,#teacher-picker button[aria-pressed=true]::after{content:'✓';position:absolute;top:5px;right:5px;width:22px;height:22px;line-height:22px;border-radius:50%;background:#284f3d;color:#fff;font-weight:800}
+#character-picker button[aria-pressed=true],#teacher-picker button[aria-pressed=true]{border-color:var(--trail-sun);background:#fff3cb}
+/* 3. Classroom entry reads as one task; teacher controls stay behind disclosure. */
+body #intro #classroom{border-radius:16px;padding:18px;background:#173c32f5;border-color:#98af9366}
+#intro #join-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}#join-form label{grid-column:1/-1;font-size:12px;margin:0}
+#join-form #join-code{width:100%;min-width:0;height:50px;margin:0;border-radius:8px;letter-spacing:.16em;font-size:23px;background:var(--trail-paper);color:var(--trail-ink)}
+body #intro #join-form #join{margin:0;min-height:50px;padding:8px 14px;border-radius:8px;background:var(--trail-sun);color:var(--trail-ink);font-weight:750}
+#teacher-entry>summary{min-height:44px;display:list-item;align-content:center;font-size:13px}#teacher-picker{gap:10px;margin:8px 0}#teacher-picker img{height:100px}
+body #intro.sheet #room-back{min-height:44px;padding:8px 0;color:#ffe6a0}#join-note:empty{display:none}#join-note{font-size:13px;line-height:1.5}
+/* 4. A small field label, not a second dashboard, over the scenery. */
+body header .brand{background:none;box-shadow:none;border:0;padding:4px 0;font-size:14px;color:#fff8e8;text-shadow:0 1px 4px #183224}
+body header .brand::before,body header .brand::after{display:none}
+body header .tools button{border-radius:12px;box-shadow:0 2px 8px #10251a30;background:#173c32ed;border-color:#ccd7b96b;height:46px;min-width:46px}
+body .location{width:190px;padding:11px 13px;border-radius:12px;background:#173c32e8;border:1px solid #dce7cb55;box-shadow:none;color:#fff8e8}
+body .location #place{font-size:14px;font-weight:750}body .location #distance,body .location #next-experience{font-size:11px;line-height:1.5}
+body #note{border-radius:10px;background:#fffaf0ef;color:var(--trail-ink);box-shadow:0 2px 10px #122c2420;font-size:13px;padding:10px 14px}
+/* 5. Touch tools share clear, stable shapes without new animation. */
+body #pack button{min-width:48px;min-height:48px;border-radius:13px;background:#173c32ee;color:#fff8e8;border:1px solid #cad9bc88;box-shadow:0 2px 5px #10251a25}
+body #action{min-height:48px;border-radius:12px;background:var(--trail-sun);color:var(--trail-ink);border:1px solid #ffeab1;font-weight:750;box-shadow:0 3px 0 #947434}
+body #joystick{border-color:#f5f4da80;box-shadow:inset 0 0 0 1px #173c3266;background:#173c3260}body #joystick-knob{background:#fff6dc;box-shadow:0 3px 8px #173c3255;border:1px solid #fff}
+/* 6. Arrival count and invitation form a quiet group cue. */
+body #together{border:1px solid #b5c8a780;border-radius:13px;padding:11px 14px;box-shadow:0 3px 14px #10251a30;background:#173c32f5;width:min(440px,calc(100% - 28px))}
+#together-count{font-size:13px;line-height:1.5}#together-note{font-size:11px;line-height:1.5;color:#dce7d2}#together-buttons{margin:8px 0 6px;gap:6px}#together-buttons button{word-break:keep-all}
+body #together button{font-size:13px;line-height:1.4;border-radius:8px;border:1px solid #9fb498;background:#e8eddb;color:#203d33;min-height:44px;padding:8px 10px}
+body #together button:first-child:not(:disabled){background:var(--trail-sun);border-color:#ffe4a0;font-weight:750}
+body[data-mode=rest] #together,body[data-mode=finished] #together{width:min(330px,calc(100% - 28px))}
+/* 7. Observation card: place, choice, then departure. */
+body #rest.sheet{background:var(--trail-paper);color:var(--trail-ink);border:1px solid #d8dfcc;border-radius:16px;padding:18px 20px;box-shadow:0 4px 18px #10251a30;gap:14px;max-width:620px}
+#rest #rest-title{font-size:22px;letter-spacing:-.035em}#rest #rest-text{font-size:14px;line-height:1.6;margin-top:6px}
+#observe-choices{gap:8px}#observe-choices button{border-radius:9px;min-height:44px;font-size:13px;box-shadow:none}
+#rest #leave-rest{border-radius:10px;min-height:48px;background:var(--trail-green);color:#fff8e8;box-shadow:none}
+#observe-feedback:empty,#observe-saved:empty{display:none}
+/* 8. Food cards retain the scene and make the next bite easy to find. */
+body .meal-active .life-actions{background:none;border:0;padding:0;margin:0}
+body .meal-active .life-line{font-size:14px;line-height:1.6}body .meal-active .life-buttons{gap:8px}
+body .meal-active .life-buttons button{min-height:48px;border-radius:10px;font-size:14px;box-shadow:none}
+body .meal-active .life-buttons button:not(:disabled):first-child{background:var(--trail-sun);color:var(--trail-ink);border-color:#d1aa49;font-weight:750}
+body .meal-active .life-buttons button:disabled{background:#e8eddf;color:#52664e;opacity:1}
+body .dining-info{font-size:11px!important;line-height:1.5!important;color:#526b55;padding-top:8px;border-top:1px solid #d8dfcc}
+/* 9. Summit keeps one compact heading and a separately reachable exit. */
+body #finish.sheet{border-radius:16px;background:var(--trail-paper);color:var(--trail-ink);border:1px solid #d8dfcc;box-shadow:0 4px 18px #10251a30;padding:18px;gap:12px;width:370px}
+#finish .summit-heading svg{clip-path:none;border-radius:12px;width:44px;height:44px;padding:8px;background:#efcf79;stroke:#294e3d}
+#finish .summit-heading h2{color:var(--trail-ink);font-size:26px}#finish .summit-heading span{color:#65775e}#finish #finish-text{color:#52664e}
+#finish #finish-choices button{background:#e8eddf;color:var(--trail-ink);border:1px solid #b9c8ae;box-shadow:none;border-radius:9px}
+#finish #finish-choices button[aria-pressed=true]{background:#294f3f;color:#fff8e8}#finish #summit-play{border-color:#d1dac7}
+#finish #summit-play>summary span{color:#65775e}#finish .summit-play-content{background:#f0f2e6;border-radius:10px}
+#finish #stay{border-radius:10px;box-shadow:none;background:var(--trail-green);color:#fff8e8;border:0}
+/* 10. Menu, notebook, focus, and safe-area treatment complete the same family. */
+body #paused.sheet,body #journal.sheet,body #teacher.sheet{background:var(--trail-paper);color:var(--trail-ink);border:1px solid #d8dfcc;border-radius:18px;box-shadow:0 6px 24px #10251a40;backdrop-filter:none}
+body #paused h2,body #journal h2{font-size:28px;letter-spacing:-.04em}body #paused .menu-row{border-radius:10px;background:#edf1e5;border:1px solid #d2ddc6;min-height:48px;box-shadow:none}
+body #paused h2{color:var(--trail-ink);text-shadow:none}body #paused .menu-kicker,body #paused>p,body #paused .menu-help summary,body #paused .menu-help p{color:#52664e}body #paused .menu-row{color:var(--trail-ink)}body #paused .menu-row::after{color:#426c4f}
+body #paused #resume{background:var(--trail-green);color:#fff8e8;border:0;box-shadow:none}body #paused #resume::after{content:none}
+body #resume,body #journal-close,body #teacher-close{min-height:48px;border-radius:10px;background:var(--trail-green);color:#fff8e8;box-shadow:none}
+body #journal-entries>li{border-radius:10px;background:#edf1e5;border:1px solid #d2ddc6}body button:focus-visible,body summary:focus-visible{outline:3px solid #f0c75e;outline-offset:3px}
+body button:disabled{cursor:default}body #intro button:focus-visible{outline-color:#fff8e8}
+@media(max-width:600px){body #intro.sheet{width:420px;max-width:calc(100vw - 28px);grid-template-columns:1fr;gap:10px;bottom:max(20px,env(safe-area-inset-bottom))}#intro #look-next{justify-content:center;gap:12px}#character-picker{gap:5px;padding:8px}#character-picker img{height:92px}#character-picker span{font-size:12px}#intro #join-form{grid-template-columns:1fr}body #intro #classroom{padding:14px}body .location{width:164px;padding:9px 11px}body #rest.sheet{padding:16px;bottom:max(12px,env(safe-area-inset-bottom));max-width:calc(100% - 24px)}body #finish.sheet{width:auto;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));padding:16px}body #together{bottom:max(12px,env(safe-area-inset-bottom))}}
+@media(max-height:540px){body #intro.sheet{width:320px;left:20px;bottom:16px;transform:none;grid-template-columns:1fr;gap:6px}#character-picker img{height:60px}#intro #start{min-height:48px;font-size:20px}body #rest.sheet{padding:12px 16px;max-height:calc(100dvh - 82px)}body #finish.sheet{width:340px;left:auto;right:12px;padding:12px;gap:7px}body #finish .summit-heading h2{font-size:22px}body #paused.sheet,body #journal.sheet{max-height:calc(100dvh - 32px);top:50%}body #together{max-width:280px}body #rest.meal-active.sheet{max-width:360px;left:auto;right:12px;transform:none}}
+
+/* Wayfinding pass: the trail signs carry distances; the corner only names the walk. */
+body .location{display:none}body header .brand{width:auto;min-height:40px;align-self:center}body header .brand svg{display:none}
+body #note{top:76px;bottom:auto;left:50%;right:auto;transform:translateX(-50%);width:max-content;max-width:min(520px,calc(100% - 32px))}
+body #paused.sheet{max-height:calc(100dvh - 32px);overflow:auto;scrollbar-width:thin}
+body #paused .menu-row{margin:7px 0;min-height:48px;font-size:14px}
+#paused #menu-room::before{content:'↩';font-size:22px}#paused #menu-character::before{content:'♙';font-size:23px}
+#menu-cast{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:12px 0}
+#menu-cast:has(button:nth-child(3)){grid-template-columns:repeat(4,minmax(0,1fr))}
+#menu-cast button{position:relative;min-width:0;padding:5px;border:2px solid transparent;border-radius:10px;background:#e8eddf;color:#203d33;font-size:12px}
+#menu-cast img{display:block;width:100%;height:106px;object-fit:contain}#menu-cast button[aria-pressed=true]{border-color:#c39b36;background:#fff0c5}
+#menu-cast button[aria-pressed=true]::after{content:'✓';position:absolute;right:3px;top:3px;border-radius:50%;background:#173c32;color:#fff;width:20px;height:20px;line-height:20px}
+#menu-cast-status:empty{display:none}body #paused #menu-cast-status{font-size:12px;color:#355b46;margin:8px 0;line-height:1.5}
+#paused:has(#menu-cast:not([hidden])) .menu-help{display:none}body #paused #resume{position:sticky;bottom:0;z-index:2;box-shadow:0 -8px 0 var(--trail-paper);margin-top:14px;width:100%}
+#intro #entry-continue{order:4;grid-column:1/-1;margin:0;min-height:44px;padding:10px 12px;background:#173c32e8;color:#fff0ce;border:1px solid #becdab88;border-radius:10px}
+body #wayfinder.sheet{z-index:31;left:50%;top:50%;transform:translate(-50%,-50%);width:540px;max-width:calc(100% - 28px);max-height:calc(100dvh - 32px);background:#173c32f5;color:#fff2d8;border:1px solid #98ad8d;border-radius:16px;padding:24px;box-shadow:0 10px 40px #10251a55}
+#wayfinder h2{margin:0;font-size:23px;color:#fff2d8}#wayfinder p{font-size:12px;color:#d4dfc8;margin:8px 0 20px}#wayfinder-boards{display:grid;gap:14px}
+.wayfinder-board{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:20px 30px 20px 20px;background:linear-gradient(#68482f60,#35261690),url('./assets/target-cedar.webp') center/cover;color:#fff0ce;clip-path:polygon(0 0,94% 0,100% 50%,94% 100%,0 100%);border-block:2px solid #a78b5f;font-size:20px;text-shadow:0 2px 1px #20130a}
+.wayfinder-board span{white-space:nowrap;font-weight:750;font-variant-numeric:tabular-nums}#wayfinder #wayfinder-close{margin-top:22px;min-height:48px;width:100%;background:#f0c75e;color:#203d33;border-radius:10px}
+body #trail-sign>span:first-child{font-size:24px;line-height:24px}body #trail-sign{background:#745238;border-color:#dbc394}
+@media(max-width:700px){body #note{top:68px;max-width:calc(100% - 24px)}body #wayfinder.sheet{padding:20px 16px}.wayfinder-board{font-size:17px;padding:18px 25px 18px 14px}body #paused.sheet{padding:20px}#menu-cast img{height:88px}}
+@media(max-height:540px){body #paused.sheet{padding:16px 20px;width:440px}#paused .menu-kicker,#paused>p{display:none}body #paused h2{font-size:23px;margin:0 0 10px}body #paused .menu-row{min-height:44px;margin:5px 0;padding-block:10px}#menu-cast img{height:72px}body #wayfinder.sheet{padding:16px 20px;width:500px}#wayfinder p{margin-bottom:12px}.wayfinder-board{padding-block:12px}#wayfinder #wayfinder-close{margin-top:14px}body #note{top:66px;max-width:calc(100% - 300px)}}
+@media(max-height:540px){body #paused.sheet{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:560px}#paused h2,#paused #menu-cast,#paused .menu-help,#paused #resume,#paused #menu-cast-status{grid-column:1/-1}body #paused .menu-row{margin:0;padding-right:10px}body #paused #resume{margin-top:3px}#paused #menu-cast{margin:2px 0}body #paused #menu-cast-status{display:block;margin:0}body #paused #menu-cast-status:empty{display:none}#paused .menu-help{margin:0}}
+
+
+@media(max-height:540px){body #paused.sheet{padding:12px 20px;gap:6px}body #paused h2{margin:0}#menu-cast img{height:66px}}

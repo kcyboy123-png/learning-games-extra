@@ -32,7 +32,7 @@ export function setupLobby(classroom,peers){
     p.querySelector('select').onchange=e=>{selected=Number(e.target.value);render();};
     p.querySelector('button').onclick=async()=>{const input=p.querySelector('input');input.focus();input.select();try{if(!navigator.clipboard)throw Error();await navigator.clipboard.writeText(input.value);p.querySelector('.share-note').textContent='학생용 주소를 복사했어요.';}catch{p.querySelector('.share-note').textContent='주소를 선택했어요. Ctrl+C 또는 길게 눌러 복사해 주세요.';}};
   }
-  return {update,async adopt(){
+  return {update,reset(){choices=[];selected=0;for(const p of panels)p.hidden=true;$('lobby-status').hidden=true;$('classroom').classList.remove('joined');},async adopt(){
     update();$('start').textContent=classroom.role==='teacher'?'학생들과 산책 시작':'함께 산책 시작';
     $('teacher-entry').hidden=true;
     if(classroom.role!=='teacher')return;
