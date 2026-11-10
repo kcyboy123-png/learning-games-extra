@@ -2,7 +2,7 @@ import * as T from '../lib/three.module.min.js';
 import {treeFrames,treeAtlasSize} from './tree-frames.mjs';
 
 let atlas,ready=false,failed=false;
-const seasonMaterials=[];
+const seasonMaterials=[],sceneReadiness=new WeakMap();
 const shadowMaterial=new T.MeshStandardMaterial({color:'#74894c',colorWrite:false,depthWrite:false});
 const crownShadowMaterial=shadowMaterial.clone();
 const trunk=new T.CylinderGeometry(.10,.18,1.5,7),crown=new T.SphereGeometry(1,10,7);
@@ -37,6 +37,7 @@ export function treeArtSeason(scene,season){
 
 
 export function treeArtReady(scene){
+ const state=ready?1:failed?2:0;if(sceneReadiness.get(scene)===state)return ready||failed;sceneReadiness.set(scene,state);
  // Keep a visible 3D fallback while the local atlas loads or if it cannot be read.
  for(const m of [shadowMaterial,crownShadowMaterial]){m.colorWrite=failed||!ready;m.depthWrite=failed||!ready;}
  scene.traverse(o=>{if(o.userData.treeSprite)o.visible=ready&&!failed;});

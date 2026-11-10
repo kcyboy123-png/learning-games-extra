@@ -42,7 +42,7 @@ export function updateResidentArt(p,camera,time,reduced,winter,viewTime=time){
  if(a.pendingView!==view){a.pendingView=view;a.turnAt=viewTime;}
  if(a.view===undefined||reduced||viewTime-a.turnAt>=.06)a.view=view;
  const pose=residentPose(p,reduced,winter),index=a.view*8+pose,[,,w,h,root]=a.e.frames[index];
- a.sprite.material=a.e.materials[index];a.sprite.center.set(root,2/h);
+ if(a.frameIndex!==index){a.frameIndex=index;a.sprite.material=a.e.materials[index];a.sprite.center.set(root,2/h);}
  const moving=!p.sitting&&!p.watering&&p.moving>.08&&!reduced;
  a.sprite.scale.set(w*a.e.pixel,h*a.e.pixel*(1+(reduced?0:Math.sin(time*2)*.003*(1-p.moving))),1);
  a.sprite.position.y=.004+(moving?Math.abs(Math.sin(p.distance/.95*Math.PI*2))*.018*p.moving:0);
