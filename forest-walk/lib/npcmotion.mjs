@@ -88,17 +88,19 @@ export function leadOffset(s){
   for(let k=0;k<=3;k++){const u=Math.min(LENGTH,s+k),hw=halfWidth(u),gap=forkGap(u);best=Math.max(best,-Math.min(Math.max(2.2,gap+.7),hw-.45));}
   return best;
 }
-export function createLead(spot){return {s:spot.s,offset:spot.offset,yaw:spot.yaw,activity:spot.activity,moving:false,traveled:0,walking:false,atSpot:true};}
+export function createLead(spot){return {s:spot.s,offset:spot.offset,yaw:spot.yaw,activity:spot.activity,moving:false,traveled:0,walking:false,atSpot:true,velocity:0};}
 export function stepLead(lead,spot,child,dt,{snap=false,reduced=false}={}){
   dt=clampDt(dt);
   const ahead=child.s-lead.s,behindSpot=spot.s<lead.s-.5;
   if(snap||reduced||ahead>LEAD.catchUp||(behindSpot&&ahead<-LEAD.catchUp)){
-    Object.assign(lead,{s:spot.s,offset:spot.offset,yaw:spot.yaw,activity:spot.activity,moving:false,walking:false,atSpot:true});return lead;}
+    Object.assign(lead,{s:spot.s,offset:spot.offset,yaw:spot.yaw,activity:spot.activity,moving:false,walking:false,atSpot:true,velocity:0});return lead;}
   const from=worldXZ(lead.s,lead.offset),toSpot=spot.s-lead.s;
   if(!lead.walking&&toSpot>1e-9&&ahead>-LEAD.near&&(child.moving||ahead>0))lead.walking=true;
   if(lead.walking&&(ahead<-LEAD.far||toSpot<=1e-9))lead.walking=false;
-  if(lead.walking){
-    const speed=Math.max(LEAD.speed,(Number(child.speed)||0)*1.15);
+  const desired=lead.walking?Math.min(Math.max(LEAD.speed,(Number(child.speed)||0)*1.15),Math.sqrt(Math.max(0,toSpot)*8)):0;
+  lead.velocity=Math.max(0,(lead.velocity||0)+Math.max(-4*dt,Math.min(4*dt,desired-(lead.velocity||0))));
+  if((lead.walking||lead.velocity>.001)&&toSpot>0){
+    const speed=lead.velocity;
     lead.s=Math.min(spot.s,lead.s+speed*dt);
     const target=spot.s-lead.s<4?spot.offset:leadOffset(lead.s);
     lead.offset+=(target-lead.offset)*(1-Math.exp(-dt*LEAD.lateral));

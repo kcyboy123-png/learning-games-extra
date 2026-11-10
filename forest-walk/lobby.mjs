@@ -25,7 +25,7 @@ export function setupLobby(classroom,peers){
       p.querySelector('.share-code').textContent=classroom.code;
       select.replaceChildren(...choices.map((v,i)=>{const o=document.createElement('option');o.value=i;o.textContent=new URL(v.url).host;return o;}));select.value=selected;select.parentElement.hidden=choices.length<2;
       if(item){image.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(item.svg);link.value=item.url;}
-      p.querySelector('.share-note').textContent=item?'같은 와이파이에서 QR을 찍고, 방에 들어가기를 눌러요.':'태블릿용 주소가 없어요. 교실 실행 파일로 서버를 열고 네트워크 연결을 확인해 주세요.';
+      p.querySelector('.share-note').textContent=item?(classroom.online?'QR을 찍고 방에 들어가기를 눌러요. 다른 와이파이에서도 함께할 수 있어요.':'같은 와이파이에서 QR을 찍고, 방에 들어가기를 눌러요.'):'태블릿용 주소가 없어요. 교실 실행 파일로 서버를 열고 네트워크 연결을 확인해 주세요.';
     }
   }
   for(const p of panels){

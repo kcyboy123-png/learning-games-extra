@@ -15,16 +15,18 @@ export async function loadCharacterAssets(id,peer=false){
   if(!['girl-a','girl-b','boy-a','boy-b','teacher-female','teacher-male','hero','teacher','friend'].includes(id))throw Error('Unknown character');
   const key=id+(peer?':peer':'');
   if(!heroAssets.has(key))heroAssets.set(key,(async()=>{
-    const base=new URL('./assets/'+id+'-tripo',import.meta.url).href;
-    let mesh=heroMeshes.get(id);if(!mesh){mesh=(async()=>{let packed=typeof DecompressionStream==='function';let response=await fetch(base+(packed?'.json.gz':'.json'),{signal:AbortSignal.timeout(15000)});if(packed&&response.status===404){packed=false;response=await fetch(base+'.json',{signal:AbortSignal.timeout(15000)});}if(!response.ok)throw Error('Hero mesh unavailable');return packed?new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).json():response.json();})().catch(error=>{heroMeshes.delete(id);throw error;});heroMeshes.set(id,mesh);}
+    const base=new URL('./assets/'+id+'-tripo',import.meta.url).href,version=id.startsWith('teacher-')?'?v=teacher-polish-20261111':'';
+    let mesh=heroMeshes.get(id);if(!mesh){mesh=(async()=>{let packed=typeof DecompressionStream==='function';let response=await fetch(base+(packed?'.json.gz':'.json')+version,{signal:AbortSignal.timeout(15000)});if(packed&&response.status===404){packed=false;response=await fetch(base+'.json'+version,{signal:AbortSignal.timeout(15000)});}if(!response.ok)throw Error('Hero mesh unavailable');return packed?new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).json():response.json();})().catch(error=>{heroMeshes.delete(id);throw error;});heroMeshes.set(id,mesh);}
     // Remote classmates share 2K maps; the selected child's close-up keeps its original 4K map.
-    const [data,map]=await Promise.all([mesh,loadCharacterMap(base+(peer?'-peer':'')+'.webp')]);map.colorSpace=T.SRGBColorSpace;map.anisotropy=4;return {data,map};
+    const [data,map]=await Promise.all([mesh,loadCharacterMap(base+(peer?'-peer':'')+'.webp'+version)]);map.colorSpace=T.SRGBColorSpace;map.anisotropy=4;return {data,map};
   })().catch(error=>{heroAssets.delete(key);throw error;}));
   return heroAssets.get(key);
 }
 export async function loadHero(scene,id='girl-a',peer=false){
   if(!['girl-a','girl-b','boy-a','boy-b','teacher-female','teacher-male'].includes(id))throw Error('Unknown character');
-  const {data,map}=await loadCharacterAssets(id,peer),actor=createHero(scene,data,map,false,id.startsWith('teacher-'));actor.root.name='tripo-'+id;return actor;
+  const adult=id.startsWith('teacher-');
+  const [{data,map},walk]=await Promise.all([loadCharacterAssets(id,peer),adult?import('./lib/teacher-walk.mjs').then(m=>m.default):null]);
+  const actor=createHero(scene,data,map,false,adult,walk);actor.root.name='tripo-'+id;return actor;
 }
 const geometryCache=new WeakMap(),materialCache=new WeakMap();
 
@@ -33,8 +35,8 @@ let created=0;
 // Activities that fold the legs (sit / crouch families). `seatBlend` eases in and out so standing up to walk no longer snaps
 // the hip height; 'eat' sits, 'reach' crouches, both with the right arm doing something (arm IK below).
 const SEATED={sit:'sit',eat:'sit',crouch:'crouch',reach:'crouch'};
-export function createHero(scene,data,map=null,decorate=false,adult=false){
-  const stride=adult?1.12:STRIDE;
+export function createHero(scene,data,map=null,decorate=false,adult=false,walk=null){
+  const stride=adult?1.30:STRIDE;
   const root=new T.Group();root.name='yellow-backpack-tripo';
   let geometry=geometryCache.get(data);if(!geometry){geometry=new T.BufferGeometry();
   for(const [key,size] of [['position',3],['normal',3],['uv',2],['skinWeight',4]])geometry.setAttribute(key,new T.Float32BufferAttribute(data[key],size));
@@ -92,6 +94,8 @@ export function createHero(scene,data,map=null,decorate=false,adult=false){
   // Mouth in rest space (the head joint sits at the jaw; the mouth is a little above and in front of it). +z is forward.
   const mouth=head.rest.clone().add(new T.Vector3(0,(adult?.15:.10)*H,(adult?.25:.22)*H));
   const fingers=adult?bones.filter(b=>/Hand(Index|Middle|Ring|Pinky)[123]$/.test(b.name)):[];
+  const walkBones=walk?.names.map(name=>bones.find(b=>b.name===name)),walkQ=new T.Quaternion(),walkNextQ=new T.Quaternion(),rootInverse=new T.Matrix4();
+  const walkSoles=walk?soles.flatMap(ids=>ids.filter((_,i)=>i%Math.max(1,Math.floor(ids.length/32))===0)):[];
   let blend=0,previous=0,restBlend=0,seatBlend=0,seatKind='sit',armBlend=0,armKind=null,waveBlend=0;
   const identityQ=new T.Quaternion(),spineQ=new T.Quaternion(),pitchQ=new T.Quaternion(),pitchAxis=new T.Vector3(1,0,0),aimFrom=new T.Vector3(),aimTo=new T.Vector3();
   function aim(joint,child,direction,parentRotation=identityQ){
@@ -117,7 +121,7 @@ export function createHero(scene,data,map=null,decorate=false,adult=false){
   }
   return {root,head:head.bone,spine,mesh,bones,sides,soles,mouth,H,pose(distance,moving,time,resting=false,reduced=false,slope=0,activity='look'){
     steps[0]=footStep(distance,0,stride);steps[1]=footStep(distance,1,stride);
-    if(adult)for(const step of steps){step.lift*=1.12;step.roll*=.85;}
+    if(adult)for(const step of steps){step.lift*=.78;step.roll*=.55;}
     if(time<previous){blend=restBlend=seatBlend=armBlend=0;if(adult)waveBlend=0;}
     const waving=!moving&&['guide','greet','wave'].includes(activity);
     const dt=Math.max(0,Math.min(.05,time-previous));previous=time;
@@ -136,7 +140,7 @@ export function createHero(scene,data,map=null,decorate=false,adult=false){
     // rides highest at mid-stance and lowest at each double support (vertical cadence). Both are hip translations only, so the
     // foot targets (root space) and the stance-sole grounding below are untouched.
     const cycle=((((distance/stride)%1)+1)%1-.275)*Math.PI*2,weight=Math.cos(cycle)*blend*live,bob=Math.cos(cycle*2)*blend*live;
-    hips.bone.position.copy(hips.rest);hips.bone.position.y-=((adult?.025:.035)+Math.abs(climb)*.12)*blend-bob*(adult?.004:.005);
+    hips.bone.position.copy(hips.rest);hips.bone.position.y-=((adult?.04:.035)+Math.abs(climb)*.12)*blend-bob*(adult?.004:.005);
     hips.bone.position.x+=weight*left*(adult?.008:.012);
     // Compensate each shoe's heel/toe roll before IK, instead of moving the whole body when support changes.
     for(let i=0;i<2;i++){const step=steps[i];
@@ -147,7 +151,8 @@ export function createHero(scene,data,map=null,decorate=false,adult=false){
     // Longer steps must lower the pelvis before IK reaches its straight-leg limit.
     for(let i=0;i<2;i++){
       const s=sides[i],step=steps[i],z=step.z*blend;
-      const reach=s.upperLength+s.lowerLength-.004;
+      // Keep adult knees away from the straight-leg IK singularity at heel contact.
+      const reach=s.upperLength+s.lowerLength-(adult?.025:.004);
       const dx=s.foot.rest.x*(adult?.78:1)-s.hip.rest.x-(hips.bone.position.x-hips.rest.x),dz=s.foot.rest.z+z-s.hip.rest.z;
       const targetY=s.foot.rest.y+climb*z+step.lift*(1+Math.abs(climb))*blend-soleOffsets[i];
       const ceiling=targetY+Math.sqrt(Math.max(.001,reach*reach-dx*dx-dz*dz))-(s.hip.rest.y-hips.rest.y);
@@ -230,6 +235,14 @@ export function createHero(scene,data,map=null,decorate=false,adult=false){
       }
     }
     if(adult)for(const finger of fingers){const side=finger.name.includes('Left')?1:-1,joint=Number(finger.name.at(-1));finger.rotation.y=-side*((joint===2?.28:.18)+armBlend*.12)*(1-(side===-1?waveBlend:0));}
+    if(walk&&blend>.001){
+      const weight=blend*(1-seatBlend)*(1-armBlend),phase=((distance/walk.stride%1)+1)%1*walk.frames.length,i=Math.floor(phase),a=walk.frames[i],b=walk.frames[(i+1)%walk.frames.length];
+      for(let k=0;k<walkBones.length;k++)if(walkBones[k]){walkQ.fromArray(a,k*4);walkNextQ.fromArray(b,k*4);walkQ.slerp(walkNextQ,phase-i);walkBones[k].quaternion.slerp(walkQ,weight);}
+      hips.bone.position.lerp(ikTarget.copy(hips.rest),weight);
+      root.updateMatrixWorld(true);soleReader.update();rootInverse.copy(root.matrixWorld).invert();let low=Infinity;
+      for(const id of walkSoles){soleReader.vertex(id,v).applyMatrix4(rootInverse);low=Math.min(low,v.y-climb*v.z);}
+      if(Number.isFinite(low))hips.bone.position.y-=(low+.015)*weight;
+    }
     root.updateMatrixWorld(true);skeleton.update();
   }};
 }

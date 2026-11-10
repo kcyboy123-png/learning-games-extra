@@ -2,7 +2,7 @@ import {nearestWaymarker} from './lib/wayfinding.mjs?v=wayfinding23-20261110';
 import {ACTIVITIES,atActivity,photoSlot} from './lib/together.mjs?v=final13-20261110';
 import {animalTrailHint,nextDiscoveryHint,screenDirection,nearbyJournal} from './lib/discovery-hints.mjs?v=leaf-reflect10-20261110';
 import {createJoystick} from './lib/joystick.mjs?v=forest-astra-20261108';
-import {setupLobby} from './lobby.mjs?v=together-20261110';
+import {setupLobby} from './lobby.mjs?v=online-20261111';
 import * as T from './vendor/three.module.js';
 import {observationInvitation,summitInvitation} from './lib/trail-invitations.mjs';
 import {createWorld,createChild,actorActivity} from './world.mjs?v=wayfinding23-20261110';
@@ -11,13 +11,13 @@ import {ForestSound} from './sound.mjs?v=natural-walk-20261110';
 import {turnView,sightTarget} from './lib/look.mjs?v=ui23-20261110';
 import {observations,reflections,beginObservation,advanceObservation,availableChoices,reflect,chosenNote,memoryLine,resultText} from './lib/observations.mjs?v=forest-full-qa-20261107';
 import {guideSpot,guideSpots,nextExperience,distanceText,heightText,groupTarget,autoWalkInput,gatherText,gatherSpot,followLabel,followStartText,arrivedText,companionText,startText,sectionSpan,paceText,planText,stayText} from './lib/course.mjs?v=cowork2-20261108';
-import {Classroom} from './net.mjs?v=wayfinding23-20261110';
+import {Classroom} from './net.mjs?v=online-20261111';
 import {groupOf} from './lib/mealgroup.mjs';
 import {createExplorer} from './explore.mjs?v=leaf-reflect10-20261110';
 import {TRACKS} from './lib/exploration.mjs';
 import {createDining} from './dining.mjs?v=final13-20261110';
 import {LOOK} from './lib/protocol.mjs?v=together-20261110';
-import {createLead,stepLead} from './lib/npcmotion.mjs?v=forest-full-qa-20261107';
+import {createLead,stepLead} from './lib/npcmotion.mjs?v=teacher-polish-20261111';
 import {ANIMALS,animalById,animalNear,journalEntries,startFocus,stepFocus,focusProgress,nearestLitter,startPickup,stepPickup,litterById,walk,thirst,startDrink,stepDrink,MEALS,MEAL_KINDS,mealActions,mealLabel,startMeal,stepMeal,mealActive,mealLine,picnicLayout,NOODLE_SPOT,createLife,cancelFree,cancelCard,cancelFocus,lookButton,netPose,lifePose,lifeSnapshot,summaryLines} from './lib/life.mjs?v=leaf-reflect10-20261110';
 const $=id=>document.getElementById(id),canvas=$('forest');
 
@@ -33,7 +33,7 @@ const teacherLooks=[{id:'teacher-female',variant:0,hat:0,bag:2,name:'여자 선�
 let teacherIndex=0,teacherSelecting=false;const activeLook=()=>teacherSelecting?teacherLooks[teacherIndex]:looks[lookIndex];
 let lookIndex=0;try{const saved=localStorage.getItem('forest-character-v1');const i=looks.findIndex(x=>x.id===saved);if(i>=0)lookIndex=i;}catch{}
 let hero=createChild(scene,LOOK.bags[looks[lookIndex].bag],false,looks[lookIndex].variant,0),characterBusy=false,forestReady=false,classroomAvailable=false;
-const heroModule=import('./hero.mjs?v=swap-upload-20261110'),heroActors=new Map();
+const heroModule=import('./hero.mjs?v=teacher-polish-20261111'),heroActors=new Map();
 async function applyLook(broadcast=false){
   if(hero.root.name==='tripo-'+activeLook().id)return true;
   if(characterBusy)return;characterBusy=true;$('solo-tab').disabled=true;$('class-tab').disabled=true;$('teacher-entry').inert=true;$('start').disabled=true;$('join').disabled=true;$('teach').disabled=true;
@@ -49,13 +49,13 @@ async function applyLook(broadcast=false){
   finally{characterBusy=false;$('solo-tab').disabled=false;$('class-tab').disabled=false;$('teacher-entry').inert=false;$('look-name').textContent=activeLook().name;$('start').disabled=!forestReady;$('join').disabled=!classroomAvailable;$('teach').disabled=!classroomAvailable;for(const button of $('character-picker').children)button.setAttribute('aria-pressed',String(Number(button.dataset.index)===lookIndex));}
 }
 const heroReady=applyLook();
-for(const [i,look] of teacherLooks.entries()){const b=document.createElement('button');b.type='button';b.dataset.index=i;b.setAttribute('aria-pressed',String(i===teacherIndex));const img=document.createElement('img');img.loading='lazy';img.src='./assets/'+look.id+'-portrait.webp';img.alt='';const label=document.createElement('span');label.textContent=look.name;b.append(img,label);b.onclick=async()=>{if(characterBusy||classroom.token)return;teacherIndex=i;await applyLook();for(const button of $('teacher-picker').children)button.setAttribute('aria-pressed',String(Number(button.dataset.index)===teacherIndex));};$('teacher-picker').append(b);}
+for(const [i,look] of teacherLooks.entries()){const b=document.createElement('button');b.type='button';b.dataset.index=i;b.setAttribute('aria-pressed',String(i===teacherIndex));const img=document.createElement('img');img.loading='lazy';img.src='./assets/'+look.id+'-portrait.webp?v=teacher-polish-20261111';img.alt='';const label=document.createElement('span');label.textContent=look.name;b.append(img,label);b.onclick=async()=>{if(characterBusy||classroom.token)return;teacherIndex=i;await applyLook();for(const button of $('teacher-picker').children)button.setAttribute('aria-pressed',String(Number(button.dataset.index)===teacherIndex));};$('teacher-picker').append(b);}
 $('teacher-entry').ontoggle=async()=>{if(classroom.token)return;teacherSelecting=$('teacher-entry').open&&!$('classroom').hidden;$('look-row').hidden=teacherSelecting;$('character-picker').hidden=true;await applyLook();};
-for(const [i,look] of looks.entries()){const b=document.createElement('button');b.type='button';b.dataset.index=i;b.setAttribute('aria-pressed',String(i===lookIndex));const img=document.createElement('img');img.src='./assets/'+look.id+'-portrait.webp';img.alt='';img.width=180;img.height=240;const label=document.createElement('span');label.textContent=look.name;b.append(img,label);b.onclick=async()=>{if(characterBusy||classroom.token)return;lookIndex=i;await applyLook();};$('character-picker').append(b);}
+for(const [i,look] of looks.entries()){const b=document.createElement('button');b.type='button';b.dataset.index=i;b.setAttribute('aria-pressed',String(i===lookIndex));const img=document.createElement('img');img.src='./assets/'+look.id+'-portrait.webp?v=teacher-polish-20261111';img.alt='';img.width=180;img.height=240;const label=document.createElement('span');label.textContent=look.name;b.append(img,label);b.onclick=async()=>{if(characterBusy||classroom.token)return;lookIndex=i;await applyLook();};$('character-picker').append(b);}
 $('look-next').onclick=()=>{const open=$('character-picker').hidden;$('character-picker').hidden=!open;$('look-next').setAttribute('aria-expanded',String(open));};
 // Solo teacher: procedural at once, swapped for the Tripo teacher (npc.mjs, parent-owned) when its asset exists.
 let guide=createChild(scene,'#bba366',true);
-const npcModule=import('./npc.mjs?v=swap-upload-20261110').catch(()=>null);
+const npcModule=import('./npc.mjs?v=teacher-polish-20261111').catch(()=>null);
 // Solo teacher motion state (lib/npcmotion.mjs): walks ahead of the child in trail coordinates; feet follow the metres the
 // placed root actually moves (guideTraveled), so the summit photo glide and the lead walk share one cadence.
 let lead=createLead(guideSpots[0]),leadSnap=true,guideTraveled=0,heroSpeed=0;const guidePrev=new T.Vector3();
@@ -121,7 +121,7 @@ $('pause').onclick=()=>mode==='paused'?resume():pause();$('resume').onclick=resu
 $('menu-character').onclick=()=>{
  const host=$('menu-cast');host.hidden=!host.hidden;$('menu-character').setAttribute('aria-expanded',String(!host.hidden));if(host.hidden)return;
  teacherSelecting=classroom.role==='teacher';const options=teacherSelecting?teacherLooks:looks;
- host.replaceChildren(...options.map((look,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(i===(teacherSelecting?teacherIndex:lookIndex)));const image=document.createElement('img');image.src='./assets/'+look.id+'-portrait.webp';image.alt='';const label=document.createElement('span');label.textContent=look.name;b.append(image,label);b.onclick=async()=>{if(characterBusy)return;const oldIndex=teacherSelecting?teacherIndex:lookIndex;if(teacherSelecting)teacherIndex=i;else lookIndex=i;for(const button of host.children)button.disabled=true;for(const id of ['menu-character','menu-room','resume'])$(id).disabled=true;$('menu-cast-status').textContent=look.name+' 준비 중…';const ok=await applyLook(true);if(!ok){if(teacherSelecting)teacherIndex=oldIndex;else lookIndex=oldIndex;}for(const [j,button]of [...host.children].entries()){button.disabled=false;button.setAttribute('aria-pressed',String(j===(teacherSelecting?teacherIndex:lookIndex)));}for(const id of ['menu-character','menu-room','resume'])$(id).disabled=false;$('menu-cast-status').textContent=ok?look.name+' · 걸어온 기록은 그대로예요.':'바꾸지 못했어요. 잠시 후 다시 골라 주세요.';};return b;}));
+ host.replaceChildren(...options.map((look,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('aria-pressed',String(i===(teacherSelecting?teacherIndex:lookIndex)));const image=document.createElement('img');image.src='./assets/'+look.id+'-portrait.webp?v=teacher-polish-20261111';image.alt='';const label=document.createElement('span');label.textContent=look.name;b.append(image,label);b.onclick=async()=>{if(characterBusy)return;const oldIndex=teacherSelecting?teacherIndex:lookIndex;if(teacherSelecting)teacherIndex=i;else lookIndex=i;for(const button of host.children)button.disabled=true;for(const id of ['menu-character','menu-room','resume'])$(id).disabled=true;$('menu-cast-status').textContent=look.name+' 준비 중…';const ok=await applyLook(true);if(!ok){if(teacherSelecting)teacherIndex=oldIndex;else lookIndex=oldIndex;}for(const [j,button]of [...host.children].entries()){button.disabled=false;button.setAttribute('aria-pressed',String(j===(teacherSelecting?teacherIndex:lookIndex)));}for(const id of ['menu-character','menu-room','resume'])$(id).disabled=false;$('menu-cast-status').textContent=ok?look.name+' · 걸어온 기록은 그대로예요.':'바꾸지 못했어요. 잠시 후 다시 골라 주세요.';};return b;}));
 };
 $('menu-room').onclick=async()=>{if(characterBusy)return;if(classroom.token&&!await leaveRoom())return;if(explorer.active){explorer.close();pauseFrom=mode;}entryReturn=pauseFrom;modeTo('intro');entryTab(true);$('entry-continue').hidden=false;$('start').textContent='산책 이어 걷기';position(true);$('join-code').focus();};
 let nearbyMarker=null;
@@ -367,9 +367,9 @@ window.addEventListener('offline',()=>classroom.abort?.abort());
 window.addEventListener('online',()=>classroom.resume());
 function entryTab(group){if(!group&&teacherSelecting){teacherSelecting=false;$('teacher-entry').open=false;applyLook();}$('classroom').hidden=!group;$('solo-tab').setAttribute('aria-pressed',String(!group));$('class-tab').setAttribute('aria-pressed',String(group));$('start').hidden=group&&!classroom.token;$('look-row').hidden=teacherSelecting;$('control-help').hidden=group;}
 $('solo-tab').onclick=()=>entryTab(false);$('class-tab').onclick=()=>entryTab(true);
-classroom.detect().then(ok=>{classroomAvailable=ok;$('class-tab').hidden=false;$('solo-note').hidden=true;if(!ok){$('join').disabled=true;$('teach').disabled=true;$('join-note').textContent='우리 반 입장은 선생님 PC의 교실 주소에서 열어 주세요.';}entryTab(ok&&new URLSearchParams(location.hash.slice(1)).has('room'));});
+classroom.detect().then(ok=>{classroomAvailable=ok;if(classroom.online)$('classroom').querySelector('.hint').textContent='선생님의 방 코드를 넣거나 QR코드로 입장해요.';$('class-tab').hidden=false;$('solo-note').hidden=true;if(!ok){$('join').disabled=true;$('teach').disabled=true;$('join-note').textContent='교실 연결을 확인하지 못했어요. 새로고침 후 다시 시도해 주세요.';if(location.hostname.endsWith('.github.io')){const link=document.createElement('a');link.href='https://barambong-forest.kcyboy123.workers.dev/'+location.hash;link.textContent='온라인 교실로 이동';link.className='primary';$('join-note').replaceChildren(link);}}entryTab(ok&&new URLSearchParams(location.hash.slice(1)).has('room'));});
 $('teach').onclick=async()=>{$('teach').disabled=true;$('join').disabled=true;try{if(characterBusy)return;teacherSelecting=true;if(!await applyLook())throw new Error('character-unavailable');const look=activeLook();$('teach').disabled=true;$('join').disabled=true;const r=await classroom.create({...look,character:look.id});adoptRoom(r);$('join-note').textContent='방 코드 '+r.code+' · 학생에게 이 코드를 알려 주세요.';}catch(e){$('join-note').textContent='방을 만들지 못했어요 ('+e.message+'). 잠시 후 다시 시도해 주세요.';}$('teach').disabled=false;$('join').disabled=false;};
-$('join-form').onsubmit=async e=>{e.preventDefault();const code=$('join-code').value.trim().toUpperCase();$('join').disabled=true;$('teach').disabled=true;try{teacherSelecting=false;$('teacher-entry').open=false;if(!await applyLook())throw new Error('character-unavailable');const look=looks[lookIndex];$('teach').disabled=true;$('join').disabled=true;const r=await classroom.join(code,{variant:look.variant,hat:look.hat,bag:look.bag,character:look.id});adoptRoom(r);$('join-note').textContent='방 '+r.code+'에 들어왔어요. 산책 시작을 눌러요.';}catch(e){$('join-note').textContent={'no-room':'그 코드의 방이 없어요. 다시 확인해 주세요.','bad-code':'코드는 여섯 글자예요.','room-full':'방이 가득 찼어요 (30명).','too-many-attempts':'잠시 후 다시 시도해 주세요.'}[e.message]||'들어가지 못했어요 ('+e.message+').';}$('join').disabled=false;$('teach').disabled=false;};
+$('join-form').onsubmit=async e=>{e.preventDefault();const code=$('join-code').value.trim().toUpperCase();$('join').disabled=true;$('teach').disabled=true;try{teacherSelecting=false;$('teacher-entry').open=false;if(!await applyLook())throw new Error('character-unavailable');const look=looks[lookIndex];$('teach').disabled=true;$('join').disabled=true;const r=await classroom.join(code,{variant:look.variant,hat:look.hat,bag:look.bag,character:look.id});adoptRoom(r);$('join-note').textContent='방 '+r.code+'에 들어왔어요. 산책 시작을 눌러요.';}catch(e){$('join-note').textContent={'no-room':'그 코드의 방이 없어요. 다시 확인해 주세요.','bad-code':'코드는 여섯 글자예요.','room-full':classroom.online?'방이 가득 찼어요 (학생 25명).':'방이 가득 찼어요 (30명).','too-many-attempts':'잠시 후 다시 시도해 주세요.'}[e.message]||'들어가지 못했어요 ('+e.message+').';}$('join').disabled=false;$('teach').disabled=false;};
 function adoptRoom(r){if(entryReturn!==null)$('start').textContent='친구들과 이어 걷기';$('room-back').hidden=false;lobby.adopt();requestAnimationFrame(()=>{$('intro').scrollTop=0;$('room-back').focus({preventScroll:true});});$('start').hidden=false;$('solo-tab').hidden=true;$('teach').hidden=true;$('join-form').hidden=true;$('look-next').disabled=true;$('character-picker').hidden=true;$('room-status').hidden=false;updateRoomStatus();if(r.role==='teacher'){buildLessonList();$('teacher-code').textContent=r.code;}}
 async function leaveRoom(){
  if(classroom.role==='teacher'&&peers.size&&!confirm('방을 나가면 학생들과의 연결이 종료돼요. 입장 화면으로 돌아갈까요?'))return false;
@@ -571,7 +571,7 @@ function position(snap=false,dt=.016,moving=false){
   }
   const blend=snap||reduced?1:1-Math.exp(-dt*4);camPos.lerp(desired,blend);look.lerp(target,blend);camera.position.copy(camPos);camera.lookAt(look);
 }
-function posePeer(p,distance,moving,at,resting,reduced,slope,activity){const far=p.child.root.position.distanceToSquared(hero.root.position)>64;if(far&&time<(p.nextSkeleton||0))return false;p.nextSkeleton=time+1/20;p.child.pose(distance,moving,at,resting,reduced,slope,activity);return true;}
+function posePeer(p,distance,moving,at,resting,reduced,slope,activity){const far=p.role!=='teacher'&&p.child.root.position.distanceToSquared(hero.root.position)>64;if(far&&time<(p.nextSkeleton||0))return false;p.nextSkeleton=time+1/20;p.child.pose(distance,moving,at,resting,reduced,slope,activity);return true;}
 // Peers: smoothed trail coordinates, walking phase from real displacement, gaze from the sent view, wave and seat states.
 function placePeers(dt){
   if(!peers.size)return;

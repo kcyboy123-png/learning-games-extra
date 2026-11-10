@@ -1,8 +1,9 @@
 import * as T from './vendor/three.module.js';
-import {createHero,loadCharacterAssets} from './hero.mjs?v=swap-upload-20261110';
+import {createHero,loadHero,loadCharacterAssets} from './hero.mjs?v=teacher-polish-20261111';
 
 export async function loadNPC(scene,kind){
   if(!['teacher','friend','boy'].includes(kind))throw Error('Unknown forest character');
+  if(kind==='teacher')return loadHero(scene,'teacher-male',true);
   const file=kind==='boy'?'hero':kind;
   const {data,map}=await loadCharacterAssets(file),actor=createHero(scene,data,map);
   actor.root.name=`tripo-${kind}`;
