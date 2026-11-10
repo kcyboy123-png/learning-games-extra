@@ -112,7 +112,7 @@ export function evaluate(items,cand,terrain=DEFAULT_TERRAIN){
  const samples=m.foot?footSamples(o,m.foot):[{x:o.x,z:o.z}];
  if(samples.some(s=>!insideSite(s.x,s.z,EDIT_MARGIN)))return fail('가장자리에 걸쳐 있어요. 빈터 안쪽으로 조금 옮겨 볼까요?',{outside:true});
  let min=Infinity,max=-Infinity;for(const s of samples){s.y=height(s.x,s.z,terrain);min=Math.min(min,s.y);max=Math.max(max,s.y);}
- const onDecks=samples.map(s=>deckAt(s.x,s.z));
+ const onDecks=decks.length?samples.map(s=>deckAt(s.x,s.z)):[];
  const anyDeck=onDecks.some(Boolean);
  if(m.base==='point'){if(anyDeck)return fail('데크 위에는 심을 수 없어요. 땅 위에 놓아 볼까요?');return {ok:true,y:samples[0].y,on:null,samples};}
  if(m.base==='cover'){if(anyDeck)return fail('데크 위에는 바닥재를 겹칠 수 없어요. 데크 옆에 이어 놓아 볼까요?');return {ok:true,y:min,on:null,samples};}
@@ -144,7 +144,7 @@ export function groupOffsets(n,seed='g'){
 export function groupCandidates(kind,x,z,scale,rotation,n,seed){return groupOffsets(n,seed).map(([ox,oz],i)=>({kind,x:x+ox,z:z+oz,scale,rotation:normRot(rotation+i*.9),group:n>1?seed:null}));}
 export function evaluateGroup(items,cands,terrain=DEFAULT_TERRAIN){const results=cands.map(c=>evaluate(items,c,terrain));return {ok:results.every(r=>r.ok),results,message:results.find(r=>!r.ok)?.message??''};}
 // Whether a deck may be changed: not while something rests on it.
-export function deckLocked(items,id){return dependents(items,id).length>0;}
+export function deckLocked(items,id){return items.some(i=>i.on===id);}
 
 // ---- ground cover mask: recomputed from the confirmed covers every time items change ----
 export const MASK_RES=128;
@@ -208,8 +208,8 @@ export function validate(raw){
 export function parse(text){if(new TextEncoder().encode(text).length>2*1024*1024)err('2MB 이하의 작품 파일을 골라 주세요.');return validate(JSON.parse(text));}
 export class History{constructor(){this.states=[];}push(s){this.states.push(clone(s));if(this.states.length>20)this.states.shift();}undo(){return this.states.pop();}}
 export function observe(items){
- const flowers=items.filter(x=>material(x.kind)?.drawer==='flower');
- for(const a of flowers)for(const b of flowers)if(a.kind==='lavender'&&b.kind==='poppy'&&Math.hypot(a.x-b.x,a.z-b.z)<1.8)return '보라색 라벤더 옆에 살구색 꽃을 놓았네요. 어떤 색이 먼저 보이나요?';
+ const lavender=items.filter(x=>x.kind==='lavender'),poppies=items.filter(x=>x.kind==='poppy');
+ for(const a of lavender)for(const b of poppies)if(Math.hypot(a.x-b.x,a.z-b.z)<1.8)return '보라색 라벤더 옆에 살구색 꽃을 놓았네요. 어떤 색이 먼저 보이나요?';
  const groups=new Map();for(const it of items)if(!it.group){if(!groups.has(it.kind))groups.set(it.kind,[]);groups.get(it.kind).push(it);}
  for(const m of MATERIALS){const a=groups.get(m.id);if(a?.length>=3&&a.some(p=>{let n=0;for(const q of a)if((Math.abs(q.x-p.x)<.5||Math.abs(q.z-p.z)<.5)&&++n>=3)return true;return false;}))return `같은 ${m.name}를 세 번 이상 줄지어 놓았네요. 간격을 바꾸면 어떨까요?`;}
  if(items.some(a=>a.kind==='bench'&&items.some(b=>material(b.kind)?.drawer==='tree'&&Math.hypot(a.x-b.x,a.z-b.z)<2)))return '벤치 가까이에 키 큰 나무가 있어요. 안에서 바라보면 어떤 모습일까요?';

@@ -36,12 +36,12 @@ export class ForestAvatar {
   if(moved>.00001){const angle=w.walk.yaw+Math.atan2(w.move.x,w.move.z);a.root.rotation.y+=Math.atan2(Math.sin(angle-a.root.rotation.y),Math.cos(angle-a.root.rotation.y))*(1-Math.exp(-dt*12));}
   const action=a.actions[on&&moved>.00001?'walk':'idle'];
   if(action&&action!==a.current){action.reset().play();if(a.current)a.current.crossFadeTo(action,.26,false);a.current=action;}
-  a.mixer.update(dt);
+  if(on||a!==this.lastActor)a.mixer.update(dt);
   const night=w.environment==='night';if(this.lightEnvironment!==w.environment){this.lightEnvironment=w.environment;this.fill.color.set(night?'#e2eaff':'#fff0e5');this.rim.color.set(night?'#a9c7ff':'#fff0da');}
   this.fill.intensity=on?(night?.52:.65):0;this.rim.intensity=on?(night?.48:.7):0;
-  this.fill.position.set(w.walk.x-4,y+5,w.walk.z+6);this.rim.position.set(w.walk.x+4,y+4,w.walk.z-5);this.fill.target.position.copy(a.root.position);this.rim.target.position.copy(a.root.position);
+  if(groundChanged||a!==this.lastActor){this.fill.position.set(w.walk.x-4,y+5,w.walk.z+6);this.rim.position.set(w.walk.x+4,y+4,w.walk.z-5);this.fill.target.position.copy(a.root.position);this.rim.target.position.copy(a.root.position);}
   this.contact.position.set(w.walk.x,y+.018,w.walk.z);this.contact.material.uniforms.opacity.value=night?.12:.18;
-  if(groundChanged){const p=this.contact.geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,walkHeight(w.walk.x+p.getX(i),w.walk.z-p.getY(i),w.terrain,w.surfaces)-y);p.needsUpdate=true;this.groundX=w.walk.x;this.groundZ=w.walk.z;this.groundTerrain=w.terrain;this.groundSurfaces=w.surfaces;}
+  if(groundChanged){const p=this.contact.geometry.attributes.position;for(let i=0;i<p.count;i++)p.setZ(i,walkHeight(w.walk.x+p.getX(i),w.walk.z-p.getY(i),w.terrain,w.surfaces)-y);p.needsUpdate=true;this.groundX=w.walk.x;this.groundZ=w.walk.z;this.groundTerrain=w.terrain;this.groundSurfaces=w.surfaces;}this.lastActor=a;
  }
  camera(){
   const w=this.world;if(!this.actor)return;
@@ -54,8 +54,8 @@ export class ForestAvatar {
   else{
   // Keep the boom above slopes; tree and furniture surfaces shorten it below.
   for(let d=.2;d<=distance;d+=.12){const p=this.slopePoint.copy(target).addScaledVector(direction,d);if(p.y<height(p.x,p.z,w.terrain)+.25){distance=Math.max(.18,d-.16);break;}}
-  w.objects.updateMatrixWorld();w.scenery.updateMatrixWorld();this.ray.set(target,direction);this.ray.near=.08;this.ray.far=distance+.18;
-  const roots=this.rayRoots??=[],hits=this.rayHits??=[];if(this.raySurfaces!==w.surfaces||this.rayScenery!==w.scenery){roots.length=0;for(const root of [w.objects,w.scenery])root.traverse(o=>{if(o.isMesh||o.isLine||o.isPoints||o.isSprite)roots.push(o);});this.raySurfaces=w.surfaces;this.rayScenery=w.scenery;}hits.length=0;
+  this.ray.set(target,direction);this.ray.near=.08;this.ray.far=distance+.18;
+  const roots=this.rayRoots??=[],hits=this.rayHits??=[];if(this.raySurfaces!==w.surfaces||this.rayScenery!==w.scenery){w.objects.updateMatrixWorld();w.scenery.updateMatrixWorld();roots.length=0;for(const root of [w.objects,w.scenery])root.traverse(o=>{if(o.isMesh||o.isLine||o.isPoints||o.isSprite)roots.push(o);});this.raySurfaces=w.surfaces;this.rayScenery=w.scenery;}hits.length=0;
   const hit=this.ray.intersectObjects(roots,false,hits).find(h=>h.object.visible);
   if(hit)distance=Math.min(distance,Math.max(.18,hit.distance-.22));
   const c=this.collision??={};c.x=target.x;c.y=target.y;c.z=target.z;c.yaw=yaw;c.elev=elev;c.requested=this.distance;c.surfaces=w.surfaces;c.terrain=w.terrain;c.scenery=w.scenery;c.distance=distance;

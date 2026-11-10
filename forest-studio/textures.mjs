@@ -4,7 +4,7 @@ import * as T from './vendor/three.module.js';
 const cache=new Map();
 const CARD_NEIGHBORS=[[1,0],[-1,0],[0,1],[0,-1]];
 function rng(seed){return ()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
-function canvas(w,h){const cv=document.createElement('canvas');cv.width=w;cv.height=h;return cv;}
+function canvas(w,h){if(typeof document==='undefined')return new OffscreenCanvas(w,h);const cv=document.createElement('canvas');cv.width=w;cv.height=h;return cv;}
 function finish(cv,o={}){const t=new T.CanvasTexture(cv);t.colorSpace=o.linear?T.NoColorSpace:T.SRGBColorSpace;if(o.repeat){t.wrapS=t.wrapT=T.RepeatWrapping;}t.anisotropy=4;t.generateMipmaps=true;t.minFilter=T.LinearMipmapLinearFilter;return t;}
 // Draws a shape at the 5 wrap offsets so repeating textures have no visible seam.
 function tiled(x,w,h,fn){for(const [ox,oy] of [[0,0],[w,0],[-w,0],[0,h],[0,-h]]){x.save();x.translate(ox,oy);fn();x.restore();}}
@@ -33,9 +33,9 @@ export const woodTex=()=>get('wood',()=>{const w=1024,h=512,cv=canvas(w,h),x=cv.
  for(let i=0;i<16000;i++){x.fillStyle=`rgba(${r()<.55?'75,51,30':'246,229,194'},${.025+r()*.09})`;x.fillRect(r()*w,r()*h,1+r()*5,.5+r());}
  return finish(cv,{repeat:true});});
 export const woodRoughTex=()=>get('wood-rough',()=>{const source=woodTex().image,cv=canvas(source.width,source.height),x=cv.getContext('2d');x.drawImage(source,0,0);const im=x.getImageData(0,0,cv.width,cv.height);for(let i=0;i<im.data.length;i+=4){const v=190+(255-im.data[i])*.2;im.data[i]=im.data[i+1]=im.data[i+2]=v;}x.putImageData(im,0,0);return finish(cv,{repeat:true,linear:true});});
-export const cedarTex=()=>get('cedar',()=>{const cv=canvas(512,512),x=cv.getContext('2d'),r=rng(217);x.drawImage(woodTex().image,0,0,512,512);x.fillStyle='rgba(120,126,106,.15)';x.fillRect(0,0,512,512);
- for(let i=0;i<95;i++){const y=r()*512;x.strokeStyle=`rgba(66,54,37,${.08+r()*.15})`;x.lineWidth=.4+r()*1.2;x.beginPath();x.moveTo(0,y);x.bezierCurveTo(140,y+4,300,y-3,512,y+2);x.stroke();}
- const edge=x.createLinearGradient(0,0,512,0);edge.addColorStop(0,'rgba(245,225,182,.13)');edge.addColorStop(.18,'rgba(0,0,0,0)');edge.addColorStop(.82,'rgba(0,0,0,0)');edge.addColorStop(1,'rgba(48,43,29,.20)');x.fillStyle=edge;x.fillRect(0,0,512,512);return finish(cv,{repeat:true});});
+export const cedarTex=()=>get('cedar',()=>{const cv=canvas(512,512),x=cv.getContext('2d'),r=rng(217);x.drawImage(woodTex().image,0,0,512,512);x.fillStyle='rgba(178,133,72,.10)';x.fillRect(0,0,512,512);
+ for(let i=0;i<95;i++){const y=r()*512;x.strokeStyle=`rgba(66,54,37,${.08+r()*.15})`;x.lineWidth=.6+r()*1.3;x.beginPath();x.moveTo(0,y);x.bezierCurveTo(140,y+4,300,y-3,512,y+2);x.stroke();}
+ const edge=x.createLinearGradient(0,0,512,0);edge.addColorStop(0,'rgba(245,225,182,.13)');edge.addColorStop(.18,'rgba(0,0,0,0)');edge.addColorStop(.82,'rgba(0,0,0,0)');edge.addColorStop(1,'rgba(48,38,25,.28)');x.fillStyle=edge;x.fillRect(0,0,512,512);return finish(cv,{repeat:true});});
 export const endGrainTex=()=>get('end-grain',()=>{const cv=canvas(512,512),x=cv.getContext('2d'),r=rng(226);x.fillStyle='#d8c4a0';x.fillRect(0,0,512,512);
  for(let ring=5;ring<350;ring+=5+r()*8){x.beginPath();for(let i=0;i<=120;i++){const a=i/120*Math.PI*2,rad=ring*(1+.025*Math.sin(a*5)+.018*Math.cos(a*9));x.lineTo(256+Math.cos(a)*rad,256+Math.sin(a)*rad*.94);}x.strokeStyle='rgba(103,76,44,.28)';x.lineWidth=1+r()*2;x.stroke();}
  for(let i=0;i<4;i++){const a=r()*6.28;x.strokeStyle='rgba(86,64,41,.28)';x.lineWidth=1.1;x.beginPath();x.moveTo(256+Math.cos(a)*180,256+Math.sin(a)*180);x.lineTo(256+Math.cos(a)*255,256+Math.sin(a)*255);x.stroke();}return finish(cv);});
@@ -117,4 +117,16 @@ export const depthFor=tex=>get('depth|'+tex.uuid,()=>new T.MeshDepthMaterial({de
 // Opaque leaf detail follows the actual rounded mesh outline: soft veins, never a cutout card.
 export const foliageDetailTex=()=>get('foliage-detail',()=>{const cv=canvas(128,256),x=cv.getContext('2d'),r=rng(619),g=x.createLinearGradient(0,0,0,256);g.addColorStop(0,'#d8e4bd');g.addColorStop(.55,'#f2f3df');g.addColorStop(1,'#e0e7c6');x.fillStyle=g;x.fillRect(0,0,128,256);x.strokeStyle='rgba(91,113,63,.20)';x.lineWidth=1.2;x.beginPath();x.moveTo(64,8);x.quadraticCurveTo(61,120,64,250);x.stroke();for(let k=0;k<7;k++){const y=25+k*29;for(const side of [-1,1]){x.lineWidth=.65;x.beginPath();x.moveTo(64,y);x.quadraticCurveTo(64+side*20,y+8,64+side*(46+k%3),y+26+k%2*3);x.stroke();}}for(let k=0;k<1800;k++){x.fillStyle='rgba(110,125,80,.035)';x.fillRect(r()*128,r()*256,1,1);}return finish(cv);});
 
-export function surfaceData(source,rough=false){return get(source.uuid+(rough?'|rough':'|height'),()=>{const cv=canvas(source.image.width,source.image.height),x=cv.getContext('2d');x.drawImage(source.image,0,0);const im=x.getImageData(0,0,cv.width,cv.height);for(let i=0;i<im.data.length;i+=4){const l=im.data[i]*.2126+im.data[i+1]*.7152+im.data[i+2]*.0722;const v=rough?Math.min(250,165+(255-l)*.32):l;im.data[i]=im.data[i+1]=im.data[i+2]=v;}x.putImageData(im,0,0);return finish(cv,{repeat:true,linear:true});});}
+export function surfaceData(source,rough=false){return get((source.userData.cacheKey??source.uuid)+(rough?'|rough':'|height'),()=>{const cv=canvas(source.image.width,source.image.height),x=cv.getContext('2d');x.drawImage(source.image,0,0);const im=x.getImageData(0,0,cv.width,cv.height);for(let i=0;i<im.data.length;i+=4){const l=im.data[i]*.2126+im.data[i+1]*.7152+im.data[i+2]*.0722;const v=rough?Math.min(250,165+(255-l)*.32):l;im.data[i]=im.data[i+1]=im.data[i+2]=v;}x.putImageData(im,0,0);return finish(cv,{repeat:true,linear:true});});}
+
+// Generate exactly the same maps off the UI thread; unsupported browsers keep the original generators.
+export const texturesReady=typeof document==='undefined'||typeof Worker==='undefined'||typeof OffscreenCanvas==='undefined'?Promise.resolve():new Promise(resolve=>{
+ let worker,timer;const done=()=>{clearTimeout(timer);worker?.terminate();resolve();};
+ try{worker=new Worker(new URL('./texture-worker.mjs',import.meta.url),{type:'module'});timer=setTimeout(done,20000);worker.onerror=e=>{e.preventDefault();done();};
+  worker.onmessage=({data})=>{if(data.done){done();return;}try{if(cache.has(data.key))return;
+   const cv=canvas(data.width,data.height);cv.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(data.pixels),data.width,data.height),0,0);
+   const t=finish(cv,{repeat:true,linear:data.linear});t.userData.cacheKey=data.key;cache.set(data.key,t);
+  }catch{done();}};
+ }catch{done();}
+});
+

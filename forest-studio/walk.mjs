@@ -3,6 +3,7 @@ import {height,insideSite,WALK_MARGIN,smooth} from './terrain.mjs';
 import {material,toLocal,restY} from './core.mjs';
 export const EYE=1.5,SPEED=2.2,BODY=.32;
 const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,n));
+const GLIDES=[.5,-.5].map(k=>({c:Math.cos(k),s:Math.sin(k)}));
 const finite=n=>Number.isFinite(n)?n:0;
 export function input(x,z){x=clamp(finite(x),-1,1);z=clamp(finite(z),-1,1);const l=Math.max(1,Math.hypot(x,z));return {x:x/l,z:z/l};}
 // Walking tops resolved once per items change: decks and the pavilion floor. {deck, top}
@@ -10,12 +11,16 @@ export function deckSurfaces(items,terrain,heights){const surfaces=[];for(const 
 // Ground + deck tops blended over a short approach band: the camera never pops at a deck edge.
 export function walkHeight(x,z,terrain,surfaces=[]){
  const g=height(x,z,terrain);let h=g;
- for(const {deck,top} of surfaces){const f=material(deck.kind).foot,l=toLocal(deck,x,z);const ex=Math.max(0,Math.abs(l.x)-f.w)*deck.scale,ez=Math.max(0,Math.abs(l.z)-f.d)*deck.scale;const dist=Math.hypot(ex,ez);if(dist>.45)continue;const t=1-smooth(0,.45,dist);h=Math.max(h,g+(top-g)*t);}
+ for(const {deck,top} of surfaces){const f=material(deck.kind).foot,l=toLocal(deck,x,z);const ex=Math.max(0,Math.abs(l.x)-f.w)*deck.scale,ez=Math.max(0,Math.abs(l.z)-f.d)*deck.scale;if(ex>.45||ez>.45)continue;const dist=Math.hypot(ex,ez);if(dist>.45)continue;const t=1-smooth(0,.45,dist);h=Math.max(h,g+(top-g)*t);}
  return h;
 }
 // Collision bodies: oriented boxes per material, padded by the body radius. Footprints with rotation and scale.
+const bodyBounds=new WeakMap();
 export function blockedBy(items,x,z,radius=BODY){
- for(const it of items){const m=material(it.kind);if(!m||!m.body.length)continue;const l=toLocal(it,x,z);const pad=radius/it.scale;
+ for(const it of items){const m=material(it.kind);if(!m||!m.body.length)continue;
+  let bound=bodyBounds.get(m);if(bound===undefined){bound=Math.max(...m.body.map(b=>Math.hypot(Math.abs(b.x)+b.w,Math.abs(b.z)+b.d)));bodyBounds.set(m,bound);}
+  const reach=bound*it.scale+radius*Math.SQRT2+1e-9;if(Math.abs(x-it.x)>reach||Math.abs(z-it.z)>reach)continue;
+  const l=toLocal(it,x,z);const pad=radius/it.scale;
   for(const b of m.body)if(Math.abs(l.x-b.x)<=b.w+pad&&Math.abs(l.z-b.z)<=b.d+pad)return it;}
  return null;
 }
@@ -28,7 +33,7 @@ export function step(pos,inp,yaw,dt,items){
  else if(walkable(items,x+dx,z))x+=dx;
  else if(walkable(items,x,z+dz))z+=dz;
  else{ // glide along the boundary: try shallower directions
-  for(const k of [.5,-.5]){const c=Math.cos(k),s=Math.sin(k);const rx=dx*c-dz*s,rz=dx*s+dz*c;if(walkable(items,x+rx*.7,z+rz*.7)){x+=rx*.7;z+=rz*.7;break;}}}
+  for(const {c,s} of GLIDES){const rx=dx*c-dz*s,rz=dx*s+dz*c;if(walkable(items,x+rx*.7,z+rz*.7)){x+=rx*.7;z+=rz*.7;break;}}}
  const moved=Math.hypot(x-pos.x,z-pos.z);
  return {x,z,moved};
 }

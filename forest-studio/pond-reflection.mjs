@@ -17,7 +17,7 @@ export function reflectionMaterial(base,height){
    if(projected.w>0.0&&all(greaterThanEqual(uv,vec2(0.002)))&&all(lessThanEqual(uv,vec2(0.998)))){
     vec2 px=vec2(${(1/size).toFixed(8)});vec3 reflected=texture2D(pondReflection,uv).rgb*.6+(texture2D(pondReflection,uv+vec2(px.x,0)).rgb+texture2D(pondReflection,uv+vec2(0,px.y)).rgb)*.2;
     float fres=pow(1.0-abs(dot(normalize(normal),normalize(vViewPosition))),3.0);
-    float depth=smoothstep(.0,.85,1.0-length((vPondUv-.5)*2.0));outgoingLight=mix(outgoingLight*mix(.82,.48,depth),reflected*mix(vec3(.80,.94,.88),vec3(.57,.85,.86),depth),.52+.36*fres);diffuseColor.a=.87;
+    float depth=smoothstep(.0,.85,1.0-length((vPondUv-.5)*2.0));outgoingLight=mix(outgoingLight*mix(.82,.48,depth),reflected*mix(vec3(.88,.97,.98),vec3(.64,.89,.94),depth),.42+.48*fres);diffuseColor.a=.91;
    }
   }
   #include <opaque_fragment>`);

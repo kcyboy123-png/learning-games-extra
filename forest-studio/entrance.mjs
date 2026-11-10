@@ -46,7 +46,7 @@ export function enterGarden(world,done){
  const geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(points,3));
  const material=new T.PointsMaterial({map:sparkTex(),color:'#fff0bc',size:.10,transparent:true,opacity:0,depthWrite:false,blending:T.AdditiveBlending});
  const sparks=new T.Points(geometry,material);world.scene.add(sparks);
- const overlay=document.querySelector('#entrance'),caption=document.querySelector('#entranceCaption');overlay.hidden=false;document.querySelector('#skipEntrance').focus();
+ const overlay=document.querySelector('#entrance'),caption=document.querySelector('#entranceCaption');overlay.hidden=false;document.querySelector('#returningWork').hidden=!savedItems.length;document.querySelector('#skipEntrance').focus();
  let shownArrival=1,elapsed=0,finished=false,prepared=false,finishRequested=false;
  const finish=()=>{if(finished)return;if(!prepared){finishRequested=true;return;}finished=true;world.preparing=false;world.entrance=null;for(const [o,m,shadow,depth] of originals){o.material=m;o.castShadow=shadow;o.customDepthMaterial=depth;}for(const m of clones.values())m.dispose();for(const m of depths.values())m.dispose();world.scene.remove(sparks);geometry.dispose();material.dispose();for(const root of [world.objects,world.covers]){for(const child of [...root.children]){root.remove(child);world.constructor.disposeOwned(child);}}
  for(const child of kept.objects)world.objects.add(child);for(const child of kept.covers)world.covers.add(child);world.items=savedItems;world.itemStamp=kept.itemStamp;for(const key of fields)world[key]=kept[key];
@@ -67,12 +67,9 @@ export function enterGarden(world,done){
  world.preparing=true;caption.textContent='햇살 가득한 정원으로 들어가는 중…';overlay.style.setProperty('--arrival',1);
  // Compile both the main view and pond reflection before moving the camera, keeping the overlay responsive.
  const controller=world.entrance;
- controller.ready=(async()=>{try{await world.renderer.compileAsync(world.scene,camera);const pond=originals.find(([,m])=>m.pondReflection)?.[1].pondReflection;
+ controller.ready=(async()=>{try{await world.prepareTextures();await world.renderer.compileAsync(world.scene,camera);const pond=originals.find(([,m])=>m.pondReflection)?.[1].pondReflection;
    if(pond){const previous=world.renderer.getRenderTarget();let pending;try{world.renderer.setRenderTarget(pond.target);pending=world.renderer.compileAsync(world.scene,camera);}finally{world.renderer.setRenderTarget(previous);}await pending;}
-   // Upload the arrival-view meshes before motion, without flashing that view on screen.
-   const size=world.renderer.getDrawingBufferSize(new T.Vector2()),warm=new T.WebGLRenderTarget(size.x,size.y);
-   warm.texture.colorSpace=T.SRGBColorSpace;const previous=world.renderer.getRenderTarget();
-   try{world.renderer.setRenderTarget(warm);world.renderWith(camera);await new Promise(requestAnimationFrame);}
-   finally{world.renderer.setRenderTarget(previous);warm.dispose();}
+   await world.prepareDraw(camera);
+
   }catch(error){console.warn('연출 사전 준비를 건너뛰고 기본 렌더로 이어갑니다.',error);}finally{prepared=true;try{if(finishRequested)finish();else{controller.tick(0);world.render();}}finally{world.preparing=false;world.last=performance.now();}}})();
 }

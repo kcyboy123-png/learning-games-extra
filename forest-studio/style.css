@@ -129,3 +129,11 @@ dialog{border:1px solid #b9cabb;border-radius:12px;background:#f7f8f2;padding:28
 .loading-credit{padding:6px 11px 6px 6px;background:#163b31dc;border:1px solid #dce8dc40;border-radius:8px;box-shadow:0 3px 12px #102c2926}
 /* The loading logo primes the circular blur used by the joystick, without changing it. */
 .loading-credit img{padding:6px;box-sizing:content-box;background:#1f3a2c8c;border:2px solid #ffffff44;backdrop-filter:blur(4px);box-shadow:0 2px 8px #0005}
+
+/* The creator mark stays visible and never intercepts look gestures. */
+.hud #missionHint{margin:3px -4px -4px;padding:4px;min-height:44px;background:transparent;box-shadow:none;border:0;backdrop-filter:none;text-align:left;font-size:12px;color:#f2e2b9;text-decoration:underline;text-underline-offset:3px;max-width:40vw}
+@media(max-width:760px){#toView{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(70px,calc(env(safe-area-inset-bottom) + 62px));min-height:48px}#stage:has(#walkInvitation:not([hidden])) #toView{display:none}#walkInvitation{padding:12px 15px}#walkInvitation strong{font-size:15px}#walkInvitation p{font-size:13px;line-height:1.45;word-break:keep-all;margin:5px 0 10px}#walkInvitation button{min-height:44px;padding:8px 12px}.hud #missionHint{font-size:11px}#firstSuccess>div{flex-wrap:wrap}}
+
+/* Photo-to-artwork handoff stays readable at classroom tablet sizes. */
+#photoDoneDialog p{font-size:16px;line-height:1.65;color:#365244;word-break:keep-all}
+#photoDoneDialog .wide[data-close]{border:1px solid #b7c7af;background:#f1f4e9;min-height:44px}

@@ -1,0 +1,25 @@
+{
+  "created": "2026-11-10",
+  "purpose": "창용쌤 조경게임 배경음 및 자연 환경음",
+  "creditsBefore": 13401,
+  "creditsAfterSubmissions": 13381,
+  "purchasedDuringTask": false,
+  "assets": [
+    {
+      "file": "garden-music.mp3",
+      "provider": "Runway",
+      "task": "62222289-048f-469f-9eae-3386d37081a3",
+      "credits": 8,
+      "bytes": 2773770,
+      "sha256": "b0cef8f600b08b77a8ed2a1bebdfa968516a3932fced36ef68e11649f078465c"
+    },
+    {
+      "file": "garden-nature.mp3",
+      "provider": "Runway",
+      "task": "2f5a9c67-36fc-4d8f-b526-37dd4b476d67",
+      "credits": 12,
+      "bytes": 193140,
+      "sha256": "68d1d4c4edbad16d99e3a8f96dae0cd64498901ff9157ab2592b7de331efb35e"
+    }
+  ]
+}
