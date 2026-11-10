@@ -98,7 +98,8 @@ function need(v){
   $('needAction').onclick=()=>{closePanels();switch(idea.action){case 'flag':startPlace('dokdoFlag');break;case 'gangchi':showGangchi();break;case 'scenic':if(world.cameraHeight<=25)$('dokdoLook').click();break;case 'dokdo':openBuild('독도');break;case 'walk':$('followPlayer').click();toast('땅을 누르거나 조이스틱을 움직여 이웃과 정원을 둘러봐요.');break;case 'garden':openBuild('조경');break;case 'shop':openBuild('먹거리');break;case 'eco':showEcoGuide();break;}};return;
  }
  const b=$('needAction'),queue=state.buildings.filter(b=>b.progress<1);let title,why,action,label;
- if(queue.length){title='마을이 조금씩 자라고 있어요';why='공사가 끝나는 동안 다른 곳을 꾸며 봐요.';action=()=>openBuild('조경');label='꾸미기 열기';}
+ if(!state.harvested.length&&state.harvestAt===null){title='공동 텃밭에 씨앗을 심어 볼까요?';why=`텃밭 위 말풍선을 눌러 심어요. 약 ${realSeconds(HARVEST_SECONDS)}초 뒤 수확하면 ${HARVEST}코인을 받아요. 늦게 와도 시들지 않아요.`;action=focusHarvest;label='텃밭 가꾸러 가기';}
+ else if(queue.length){title='마을이 조금씩 자라고 있어요';why='공사가 끝나는 동안 다른 곳을 꾸며 봐요.';action=()=>openBuild('조경');label='꾸미기 열기';}
  else if(!v.live.some(b=>!b.starter&&buildingSpec(state,b.type).food)){title='어떤 가게를 열어 볼까요?';why='마음에 드는 가게를 골라 길 옆에 놓아 보세요.';action=()=>openBuild('먹거리');label='가게 둘러보기';}
  else if(v.housing<=state.pop){title='새 이웃을 맞이해 볼까요?';why='길 옆에 집을 지으면 새 이웃이 찾아와요.';action=()=>openBuild('주거');label='집 둘러보기';}
  else{title=v.energy<.9?'마을에 전기를 더 보내 볼까요?':'나만의 정원을 만들어 볼까요?';why=v.energy<.9?'태양광 설비를 길 옆에 지으면 전력과 친환경이 나아져요.':'꽃·나무·벤치를 집 가까이에 골고루 놓으면 친환경과 행복에 도움이 돼요.';action=()=>openBuild(v.energy<.9?'기반':'조경');label=v.energy<.9?'전력 시설 보기':'꾸미기 열기';}

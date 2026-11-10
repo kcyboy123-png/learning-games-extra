@@ -13,7 +13,7 @@ export {MONTH,YEAR,SIZE,RIVER,TYPES,OPTIONS,RULE,VERSION};
 const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 export const COZY_BASE_INCOME=99;
 export const SCOPE={label:'B규칙'};
-export const HARVEST=20,HARVEST_SECONDS=90;
+export const HARVEST=50,HARVEST_SECONDS=90;
 export const RELOCATE_WINDOW=60; // 21절 다: 완공 후 게임시간 60초 안에 건물당 1회 무료 재배치
 export const duration=s=>(s.runMonths??12)*MONTH;
 export const month=s=>s.mode==='free'?Math.floor(s.t/MONTH):Math.min((s.runMonths??12)-1,Math.floor(s.t/MONTH));
