@@ -235,3 +235,93 @@ body.forest-mode:not(.forest-cinema) .workspace::before{width:78px;height:67px;t
 body.forest-mode:not(.forest-cinema) .workspace::after{width:86px;height:74px;right:-3px;bottom:-15px}
 .workspace .piano .key.tone::after{content:'';position:absolute;bottom:6px;left:calc(50% - 9px);width:18px;height:3px;border-radius:2px;background:#8fa271;pointer-events:none}
 .workspace .transport .play-buttons button{border-color:transparent;background:transparent;color:#526b48;font-size:13px}
+
+/* A score on the forest's music desk: quiet paper, explicit classroom access. */
+:root{--ink:#243f35;--muted:#59695f;--line:#c5cfc3}
+body.forest-mode header{background:#fafbf6f5;border-radius:0;border-bottom:1px solid #b7c6b7;box-shadow:0 2px 12px #16332612}
+.head-actions .classroom-entry{background:#315d49;border:1px solid #315d49;color:#fff;font-weight:700;min-height:46px;padding:10px 17px;box-shadow:none}
+.head-actions .classroom-entry:hover{background:#244a39;color:white}
+body.forest-mode:not(.forest-cinema) .workspace{background:#f6f8f1f7;border:1px solid #bdcbb9;border-radius:18px 18px 0 0;box-shadow:0 4px 18px #183d281c}
+.workspace .score-book{background:#fffef8;border:1px solid #becab9;border-radius:12px;box-shadow:none;padding:12px}
+.workspace .system{background:transparent;box-shadow:none;border:0}
+.workspace .measure-select button::before{background:#edf1e3;border-radius:6px 6px 0 0}
+.workspace .measure-select button[aria-pressed=true]::before{background:#d6e3c4}
+.workspace .palette{background:transparent;border:0;padding:10px 0;gap:10px}
+.workspace .duration-group{gap:6px;flex-wrap:wrap}
+.workspace .duration-group button{background:#fffef8;border:1px solid #bdc9b7;border-radius:8px;color:#31543e;min-height:50px;box-shadow:none}
+.workspace .duration-group button[aria-pressed=true],.workspace .group-btn[aria-pressed=true]{background:#3d654e;border-color:#3d654e;color:white;box-shadow:none}
+.workspace .duration-group button[aria-pressed=true]:hover{background:#31543e}
+.workspace .duration-group button.unfit{border-style:dashed}
+.workspace .history-buttons button{color:#53654e;font-size:13px}
+.workspace .history-buttons button:disabled{opacity:.45}
+.workspace .sheet .augmentation-dot{fill:currentColor;pointer-events:none}
+.classroom-intro{font-size:17px;color:#345d48;margin:10px 0 18px}
+.classroom-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+.classroom-tabs button{min-height:48px;background:#f1f5e9;color:#31543e;border-color:#b4c5ab}
+.classroom form{padding:20px;background:#fffef8;border:1px solid #bccbb7;border-radius:12px}
+.classroom input[name=code]{font-size:24px;letter-spacing:.14em;font-weight:700}
+@media(max-width:600px){.head-actions .classroom-entry{padding:8px 12px;font-size:13px}.workspace .score-book{padding:8px}.workspace .duration-group{gap:4px}.workspace .duration-group button{padding:5px 8px;gap:4px;min-height:48px}.classroom form{padding:14px}}
+
+/* Round 2: keep the classroom action visible and the notebook inside the viewport. */
+body.forest-mode header .head-actions .classroom-entry{background:#315d49;color:white;border-color:#315d49;box-shadow:none}
+body.forest-mode:not(.forest-cinema) .workspace::before{left:0}
+body.forest-mode:not(.forest-cinema) .workspace::after{right:0;bottom:0}
+body.forest-mode .classroom{background:#fafcf6fa;border:1px solid #bdcbb9;box-shadow:0 8px 24px #19392722}
+.workspace .duration-group button.unfit[aria-pressed=true]{opacity:1}
+@media(max-width:600px){.workspace .duration-group{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));width:100%}.workspace .duration-group button{flex-direction:column;padding:4px 2px;gap:0}.workspace .duration-icon{height:29px;width:25px}.workspace .duration-group span{font-size:12px}.head-actions{flex-wrap:wrap}}
+
+/* Round 3: opaque writing surface, clear rhythmic hint, quieter piano casing. */
+body.forest-mode:not(.forest-cinema) .workspace{background:#f7f9f2}
+body.forest-mode .classroom{background:#fafcf6}
+.workspace .duration-help{font-size:13px;color:#426049;margin:-2px 0 10px;padding:0 4px}
+.workspace .piano{border-color:#a59777;background:linear-gradient(#d9cfb4,#b8aa88);box-shadow:0 2px 0 #8c8167}
+.classroom-tabs button[aria-pressed=true]{background:#315d49;color:white;border-color:#315d49}
+@media(max-width:600px){.workspace .duration-help{font-size:12px}.head-actions .classroom-entry{font-weight:800}}
+@media(max-width:600px){.classroom form{display:flex;flex-direction:column;align-items:stretch;gap:12px}.classroom form label,.classroom form input{width:100%;min-width:0}.classroom input[name=code]::placeholder{font-size:16px;letter-spacing:0}.classroom form>button{min-height:46px}}
+
+.forest-intro .loading-sound{position:fixed;z-index:45;bottom:12vh;left:50%;transform:translateX(-50%);min-height:48px;padding:12px 20px;background:#fafcf0;color:#294d39;border:1px solid #b5c8a2;border-radius:12px;white-space:nowrap}.forest-intro .loading-sound:disabled{opacity:1}
+
+/* Clear header hierarchy, preserving the existing forest palette. */
+body.forest-mode header{padding:10px 22px;gap:14px;align-items:center}
+body.forest-mode header .head-actions{gap:8px;align-items:center}
+.head-actions>button,.header-more>summary{min-height:44px;border-radius:8px;font-size:14px}
+.brand .brand-mark{width:40px;height:44px;border-radius:18px 18px 9px 9px;box-shadow:none}
+.brand-mark svg{width:32px;height:32px}.brand small{font-size:12px}
+@media(max-width:600px){body.forest-mode header{padding:10px 12px;gap:8px}.head-actions{width:100%;display:grid;grid-template-columns:1fr 1.4fr auto}.head-actions>button,.header-more>summary{padding:8px;font-size:12px}.brand small{font-size:11px}}
+/* Ivory key surfaces: crisp seams, a readable front lip, no changes to key widths. */
+.workspace .piano .key{background:linear-gradient(180deg,#d5d2c8 0,#f7f5ec 22%,#fffef7 68%,#f1eadb 96%);border-right:1px solid #9c9587;box-shadow:inset 1px 0 #fff,inset -1px 0 #e5ded0,inset 0 -6px #c7bdab,inset 0 -8px #fff8e9;color:#294638}
+.workspace .piano .key:disabled{background:linear-gradient(#d4d1c8,#f0eee5 25%,#ebe7dc 95%);color:#74766e;box-shadow:inset 0 -6px #c4bcae,inset 0 -8px #e8e3d7}
+
+
+.compose-context{display:flex;gap:10px;align-items:center;padding:3px 4px 10px;font-size:13px;color:#536558;flex-wrap:wrap}.compose-context strong{color:#2d523e}.compose-context span:nth-child(2){font-variant-numeric:tabular-nums}.compose-context span:last-child{margin-left:auto}
+@media(max-width:600px){.compose-context{font-size:12px;gap:7px}.compose-context span:last-child{width:100%;margin-left:0}}
+/* Black-key upper surface and bevel remain independent from the moving white keys. */
+.workspace .piano .black-key{background:linear-gradient(90deg,#111713 0,#434c45 12%,#242c26 22%,#202822 78%,#080d0a 100%);border:1px solid #151b16;box-shadow:inset 0 -7px #090e0b,inset 0 -9px #586058,inset 1px 0 #788074,2px 4px 3px #0005}
+.workspace .piano .black-key::after{inset:4px 4px 12px;border-top:1px solid #9aa091;background:linear-gradient(#ffffff0c,transparent 55%)}
+
+
+.workspace .note-row{border:1px solid #b7c7ae;background:#edf4e5;padding:12px;border-radius:8px;gap:8px}.workspace .duration-help{min-height:20px}.workspace .duration-group button{transition:background-color .12s,border-color .12s}.workspace .duration-group button.unfit{background:#f2f0e9;border-color:#b9b5a6}.workspace .duration-group button[aria-pressed=true]{background:#315d49;color:#fff}
+/* A thin felt strip and timber rail frame the keys without obscuring their hit areas. */
+.workspace .piano{position:relative;background:linear-gradient(#c0a079 0,#a58056 12px,#5b4431 17px,#8a694b 18px,#b08b63 100%);border-color:#7d6145;box-shadow:inset 0 2px #eed8b5,inset 0 -3px #70543d,0 2px 6px #24352120}
+.workspace .piano-keys::before{content:'';position:absolute;top:-3px;left:0;right:0;height:3px;background:#794e47;box-shadow:0 1px 2px #2d201a77;z-index:4;pointer-events:none}
+
+
+.classroom .library-head{align-items:center;gap:14px}.classroom .classroom-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px}.classroom .classroom-tabs button{padding:14px 10px;border-radius:9px;font-size:15px}.classroom .classroom-fallback{margin-top:24px;padding-top:18px;border-top:1px solid #c4d1bd}.classroom label{display:block;line-height:1.6}.classroom input:focus{outline:3px solid #91bca2;outline-offset:2px}.classroom .library-note{font-size:14px;line-height:1.7}
+/* Readable note labels are always below the black-key tips. */
+.workspace .piano .key b{font-size:19px;line-height:1.2;font-weight:700;text-shadow:0 1px #fff9}
+.workspace .piano .key small{font-size:11px;line-height:1.4;color:#6e756a}
+.workspace .piano .key.tone .dot{background:#55804e;box-shadow:0 0 0 3px #e6eddc}
+.workspace .piano .key:disabled b{text-shadow:none;color:#72766d}
+.workspace .piano .key.tone::after{height:2px;width:16px;left:calc(50% - 8px);background:#7b9866}
+
+
+.workspace .history-buttons{gap:6px}.workspace .history-buttons button{min-height:44px}.workspace .view-bar{align-items:center}.workspace .view-toggle{margin-left:auto}
+@media(max-width:600px){.workspace .view-bar{display:grid;grid-template-columns:1fr 1fr;gap:8px}.workspace .group-switch{grid-column:1;grid-row:1;width:100%}.workspace .quick-listen{grid-column:1/-1;grid-row:2;display:grid;grid-template-columns:1fr 1fr}.workspace .view-toggle{grid-column:2;grid-row:1;margin:0;min-height:44px}.workspace .palette{grid-template-columns:repeat(4,minmax(0,1fr))}.workspace .history-buttons{grid-column:2/-1;min-width:0;width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.workspace .history-buttons button{padding:7px 3px;font-size:12px}.workspace .palette>button[data-action=add-rest]{min-height:44px;width:100%}}
+/* Press feedback preserves real key alignment and separate black-key geometry. */
+.workspace .piano .key.pressing,.workspace .piano .key:active:not(:disabled){transform:translateY(2px);background:linear-gradient(#d0d6c2,#f3f7e9 45%,#e3edd7);box-shadow:inset 0 -3px #adb99d,inset 0 -5px #f9fce9}
+.workspace .piano .key:focus-visible{outline:3px solid #2e6957;outline-offset:-4px;z-index:1}
+.workspace .piano .key.current{background:linear-gradient(#e1dcc5,#fff5cc);box-shadow:inset 0 -6px #c9b681,inset 0 -8px #fff7df}
+@media(prefers-reduced-motion:reduce){.workspace .duration-group button,.workspace .piano .key{transition:none;animation:none}}
+
+
+.workspace .group-btn[aria-pressed=false]{background:#edf1e4;color:#3d5a44;border-color:#b9c8ac}

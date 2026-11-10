@@ -37,7 +37,7 @@ export function validateSong(value) {
     const notes = Array.from(bar, note => {
       if (!note || typeof note !== 'object' || Array.isArray(note)) fail();
       if (note.pitch !== null && !PITCHES.some(item => item.midi === note.pitch)) fail();
-      if (![1, 2, 4, 8].includes(note.ticks)) fail();
+      if (![1, 2, 3, 4, 8].includes(note.ticks)) fail();
       return { pitch: note.pitch, ticks: note.ticks };
     });
     if (used(notes) > 8) fail();

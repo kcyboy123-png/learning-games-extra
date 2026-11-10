@@ -1,7 +1,7 @@
-import { PITCHES, clone, used, isChordTone, chordAt } from './core.mjs';
+import { PITCHES, clone, used, isChordTone, chordAt } from './core.mjs?v=20261110-polish5';
 
 // Pure editing steps: every operation returns { song } or { error } and never mutates its input.
-export const LENGTHS = { 1: '반 박', 2: '1박', 4: '2박', 8: '4박' };
+export const LENGTHS = { 1: '반 박', 2: '1박', 3: '1.5박', 4: '2박', 8: '4박' };
 export const register = midi => midi >= 84 ? '더 높은' : midi >= 72 ? '높은' : '낮은';
 export const allowedPitches = (song, bar) => PITCHES.filter(p => song.free || isChordTone(p.midi, chordAt(song, bar)));
 const isAllowed = (song, bar, pitch) => allowedPitches(song, bar).some(p => p.midi === pitch);
@@ -39,7 +39,7 @@ export function redo(history, song) {
 
 export function addNote(song, bar, pitch, ticks) {
   return edit(song, next => {
-    if (![1, 2, 4, 8].includes(ticks)) return '음표 길이를 다시 골라 주세요.';
+    if (![1, 2, 3, 4, 8].includes(ticks)) return '음표 길이를 다시 골라 주세요.';
     if (pitch !== null && !PITCHES.some(p => p.midi === pitch)) return '다장조 건반의 음만 넣을 수 있어요.';
     if (pitch !== null && !isAllowed(song, bar, pitch)) return NOT_GUIDE;
     if (used(next.bars[bar]) + ticks > 8) return '이 마디에 남은 박보다 길어요. 짧은 음표를 고르거나 다음 마디를 눌러요.';
@@ -50,7 +50,7 @@ export function addNote(song, bar, pitch, ticks) {
 export function setNoteTicks(song, bar, index, ticks) {
   return edit(song, next => {
     const notes = next.bars[bar], note = notes?.[index];
-    if (!note || ![1, 2, 4, 8].includes(ticks)) return '바꿀 음표를 다시 골라 주세요.';
+    if (!note || ![1, 2, 3, 4, 8].includes(ticks)) return '바꿀 음표를 다시 골라 주세요.';
     if (note.ticks === ticks) return '이미 그 길이예요.';
     if (used(notes) - note.ticks + ticks > 8) return '마디에 자리가 모자라요. 다른 음표는 그대로 두었어요. 뒤 음표를 줄이거나 지운 뒤 늘려 보세요.';
     note.ticks = ticks;

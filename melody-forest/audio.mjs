@@ -1,5 +1,5 @@
-import {timing, chordAt} from './core.mjs';
-import {accompanimentPattern} from './accompaniment.mjs';
+import {timing, chordAt} from './core.mjs?v=20261110-polish5';
+import {accompanimentPattern} from './accompaniment.mjs?v=20261110-polish5';
 
 const PIANO_ROOTS = Array.from({length: 16}, (_, index) => 39 + index * 3);
 const SAMPLE_INSTRUMENTS = new Set(['piano', 'bass', 'pluck']);

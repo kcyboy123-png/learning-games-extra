@@ -1,4 +1,4 @@
-import {validateSong} from './core.mjs';
+import {validateSong} from './core.mjs?v=20261110-polish5';
 
 // Files stay in memory: presenting never writes into the student's draft or library.
 export async function readPresentations(files, existing=[]) {

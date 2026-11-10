@@ -1,10 +1,11 @@
 // '햇살이 머무는 숲' — a real-time three.js stage that follows the app; it never owns the song or the sound.
 // Illustrated cutouts live in a real 3D woodland; vegetation is instanced to keep draw calls low.
 import * as THREE from './lib/three.module.min.js';
-import {pianoKey, WHITE_KEYS, BLACK_KEY_STEPS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs?v=20261104-sixmaps';
-import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261104-sixmaps';
-import {createStorybookChild,backingKey} from './forest-character.mjs?v=20261104-sixmaps';
-import {forestInput, forestStep, forestOrbit, forestRoute, forestLook, forestEye, forestTurnToward} from './forest-controls.mjs';
+import {loadGarden} from './forest-garden.mjs?v=20261110-polish5';
+import {pianoKey, WHITE_KEYS, BLACK_KEY_STEPS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs?v=20261110-polish5';
+import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261110-polish5';
+import {createStorybookChild,backingKey} from './forest-character.mjs?v=20261110-polish5';
+import {forestInput, forestStep, forestOrbit, forestRoute, forestLook, forestEye, forestTurnToward} from './forest-controls.mjs?v=20261110-polish5';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z), C = h => new THREE.Color(h);
 // The full A0–C8 piano has 52 white keys; the existing C3–C6 animation occupies slots 16–37.
@@ -74,11 +75,15 @@ const groundY = (x, z) => {
   return flat * (.55 * Math.sin(x * .23) * Math.cos(z * .19) + .3 * Math.sin(x * .61 + z * .47) + .9 * smooth(16, 40, r));
 };
 
-function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
+function freezeTransforms(root){root.traverse(o=>{o.updateMatrix();o.matrixAutoUpdate=false;});}
+function buildScenery(...args){const steps=scenerySteps(...args);let part;do{part=steps.next();}while(!part.done);return part.value;}
+async function prepareScenery(...args){const steps=scenerySteps(...args);for(;;){const part=steps.next();if(part.done)return part.value;await prepareYield();}}
+function* scenerySteps(scene, R, leafTexture, theme=PALETTES.basic) {
   const dryGround=(x,z)=>theme!==PALETTES.moon||Math.hypot((x+5.2)/3.15,(z+3.6)/4.05)>1;
   const surfaceY=(x,z)=>groundY(x,z)-(dryGround(x,z)?0:.15)-(theme===PALETTES.journey?Math.min(25,Math.hypot(Math.max(0,Math.abs(x)-7),Math.max(0,z-15,-5-z))*4):0);
   const lambert = o => new THREE.MeshLambertMaterial({vertexColors: true, ...o});
   const breezeTime={value:0};
+  yield;
   // Sky dome with a warm low sun glow, matched to the fog for a soft woodland horizon.
   const sky = new THREE.Mesh(new THREE.SphereGeometry(95, 32, 16), new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
@@ -98,6 +103,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
     gc.push(tmp.r, tmp.g, tmp.b);
   }
   ground.setAttribute('color', new THREE.Float32BufferAttribute(gc, 3)); ground.computeVertexNormals();
+  yield;
   // Soft painted grain prevents the meadow from reading as a flat plastic plane.
   const groundCanvas = document.createElement('canvas'); groundCanvas.width = groundCanvas.height = 512;
   const paint = groundCanvas.getContext('2d'); paint.fillStyle = '#e9ebdc'; paint.fillRect(0,0,512,512);
@@ -120,6 +126,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
     m.receiveShadow = true; scene.add(m); return m;
   };
 
+  yield;
   // Stepping stones winding from the entrance to the bench.
   const stoneGeo = merge([[new THREE.LatheGeometry([[0,-.045],[.29,-.045],[.325,-.025],[.33,.015],[.30,.045],[0,.045]].map(([r,y])=>new THREE.Vector2(r,y)),28), null, 0xd9d0bc, (y, ny) => ny > .5 ? 1.08 : .78]]);
   const stones = [];
@@ -127,6 +134,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
     stones.push({p: V(p.x + side, surfaceY(p.x, p.z) + .035, p.z), r: [0, R() * 3, 0], s: [.8 + R() * .45, 1, .7 + R() * .35]}); }
   add(stoneGeo, lambert(), stones, () => C(theme.character?0xd5dcd7:0xf1e9d7).multiplyScalar(.9 + R() * .15));
 
+  yield;
   // Fine pebbles and soft moss soften the edge of the path without obstructing it.
   const edgeR=rng(6027),pebbles=[],mossPads=[];
   for(let i=0;i<130;i++){const p=PATH.getPointAt(edgeR()*.95),side=i%2?1:-1,x=p.x+side*(.48+edgeR()*.3),z=p.z+(edgeR()-.5)*.18;
@@ -135,6 +143,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   }
   add(new THREE.SphereGeometry(1,8,5),lambert({color:0xc7c0a4,vertexColors:false}),pebbles);
   add(new THREE.SphereGeometry(1,10,5),lambert({color:theme.deep,vertexColors:false}),mossPads);
+  yield;
   // Mossy rocks: faceted stone with moss baked on upward faces.
   const rockBase = lumpy(new THREE.IcosahedronGeometry(1, 3), .09, 2.3);
   const rockGeo = merge([[rockBase, null, 0xb7ae9c, (y, ny) => ny > .45 ? 1 : .82]]), rc = rockGeo.attributes.color, rn = rockGeo.attributes.normal, moss = C(0x7d9a45);
@@ -142,6 +151,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   const rocks = [[-1.9, -.4, .55], [2.3, .6, .4], [-2.6, 2.2, .35], [1.9, 5.4, .45], [-2.1, 7.4, .6], [3.1, -2.6, .7], [-3.4, -2.9, .9], [3.6, 9.5, .5], [-.4, 10.4, .38], [2.8, 2.2, .3], [-1.4, 4.0, .28]];
   add(rockGeo, lambert({flatShading: false}), rocks.map(([x, z, s]) => ({p: V(x, surfaceY(x, z) + s * .15, z), r: [R() * .4, R() * 6, 0], s: [s * 1.2, s * .65, s]})), null, true);
 
+  yield;
   // Trees: flared trunks + layered lumpy canopy clusters, placed to frame the clearing and keep sightlines clear.
   const trunkG = new THREE.CylinderGeometry(.18, .29, 1, 16, 8, true).translate(0, .5, 0), tp = trunkG.attributes.position;
   for (let i = 0; i < tp.count; i++) { const y = tp.getY(i), f = 1 + .55 * (1 - y) ** 6 + .055 * Math.sin(Math.atan2(tp.getZ(i),tp.getX(i))*9 + y*3); tp.setX(i, tp.getX(i) * f + Math.sin(y*3.8)*.09); tp.setZ(i, tp.getZ(i) * f+Math.sin(y*5)*.055); }
@@ -162,20 +172,24 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
     trunks.push({p: V(x, y, z), r: [(R() - .5) * .08, R() * 6, (R() - .5) * .08], s: [s, h, s]});
     for (let k = 0; k < 3; k++) leaves.push({p: V(x + (R() - .5) * 1.6, y + h - .3 + k * .9 + R() * .4, z + (R() - .5) * 1.6), r: [0, R() * 6, 0], s: [1.6 + R() * .9, 1.15 + R() * .5, 1.6 + R() * .9], c: greens[Math.floor(R() * 5)]});
   }
+  yield;
   // High canopy fringe so the sky reads as a clearing, and a far ring of hazy woodland that fades into the fog.
   for (let k = 0; k < (theme.farTrees ? 16 : 0); k++) { const a = k / 16 * Math.PI * 2 + R() * .2, r = 11 + R() * 4, x = Math.cos(a) * r, z = Math.sin(a) * r - 2;
     if (z > 5 && x > -1) continue; leaves.push({p: V(x, 8.8 + R() * 2.5, z), r: [0, R() * 6, 0], s: [2.6 + R(), 1.4, 2.6 + R()], c: greens[k % 5]}); }
   for (let k = 0; k < theme.farTrees; k++) { const a = R() * Math.PI * 2, r = 22 + R() * 30, x = Math.cos(a) * r, z = Math.sin(a) * r, y = surfaceY(x, z), h = 4 + R() * 5;
     trunks.push({p: V(x, y - .2, z), r: [0, R() * 6, 0], s: [1.2, h, 1.2]});
     leaves.push({p: V(x, y + h + .5, z), r: [0, R() * 6, 0], s: [2.6 + R() * 1.5, 2.4 + R() * 1.6, 2.6 + R() * 1.5], c: [0x4f7a4a, 0x5d8a52, 0x6f9a5a][k % 3]}); }
+  yield;
   // Bushes hugging the clearing edge.
   for (let k = 0; k < 34; k++) { const a = R() * Math.PI * 2, r = 4.6 + R() * 3.4, x = Math.cos(a) * r, z = Math.sin(a) * r - .8;
     if (!dryGround(x,z) || pathDist(x, z) < 1.6 || (z > 2 && Math.abs(x - 2.6) < 2.4)) continue;
     leaves.push({p: V(x, surfaceY(x, z) + .25, z), r: [0, R() * 6, 0], s: [.55 + R() * .5, .45 + R() * .3, .55 + R() * .5], c: greens[(k + 2) % 5]}); }
   add(trunkGeo, trunkMaterial, trunks, null, true);
+  yield;
   // Low woodland masses hide distant trunk ends and give the mist a middle layer.
   const distantBeds=trunks.filter(t=>Math.hypot(t.p.x,t.p.z)>28).map((t,i)=>({p:V(t.p.x,surfaceY(t.p.x,t.p.z)+.3,t.p.z),r:[0,i*2.4,0],s:[2.6+(i%3)*.6,.8+(i%4)*.12,2.3],c:i%2?theme.deep:theme.ground}));
   leaves.push(...distantBeds);
+  yield;
   // Forking limbs are visible through the small openings between the illustrated leaf cards.
   const limbParts=[];
   for(const t of trunks.filter(t=>Math.hypot(t.p.x,t.p.z)<22))for(let i=0;i<5;i++){
@@ -184,6 +198,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
     for(let n=0;n<3;n++){const [g,m]=rod(points[n],points[n+1],[.095,.06,.025][n],7);limbParts.push([g,m,0x806d50]);}
   }
   const limbs=new THREE.Mesh(merge(limbParts),lambert());limbs.castShadow=true;scene.add(limbs);
+  yield;
   // Curved leaf clusters keep depth and soft silhouettes with one instanced draw.
   const sprigs=[];
   for(const t of leaves){const bush=t.p.y<2,near=Math.hypot(t.p.x,t.p.z)<23,count=bush?10:near?18:10;
@@ -194,6 +209,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   const sprigMaterial=new THREE.MeshLambertMaterial({map:leafTexture,color:theme.leaf,emissive:theme.leaf,emissiveMap:leafTexture,emissiveIntensity:theme===PALETTES.warm?.12:.055,alphaTest:.45,side:THREE.DoubleSide});
   const sprigMesh=add(sprigGeo,sprigMaterial,sprigs,t=>C(t.c),true);
   sprigMesh.customDepthMaterial=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:leafTexture,alphaTest:.45,side:THREE.DoubleSide});
+  yield;
   // The leaf edges and their shadows follow the same slow breeze without CPU instance updates.
   for(const material of [sprigMaterial,sprigMesh.customDepthMaterial])material.onBeforeCompile=shader=>{
     shader.uniforms.breezeTime=breezeTime;shader.vertexShader='uniform float breezeTime;\n'+shader.vertexShader;
@@ -210,6 +226,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   const smallLeaf=new THREE.ShapeGeometry(leafShape,3),lp=smallLeaf.attributes.position;
   for(let i=0;i<lp.count;i++)lp.setZ(i,Math.sin(lp.getY(i)*Math.PI)*.12-Math.abs(lp.getX(i))*.18);
   smallLeaf.computeVertexNormals();
+  yield;
   // Small fern beds supply a finer foreground scale than the tree crowns.
   const fernParts=[];
   for(let f=0;f<7;f++) {
@@ -226,6 +243,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   }
   add(merge(fernParts),lambert({side:THREE.DoubleSide}),fernSpots);
 
+  yield;
   // Flowers in three tints along the path and the clearing rim; grass tufts everywhere close.
   const flower = (petal) => { const parts = [[new THREE.CylinderGeometry(.006, .008, .2, 4), mat({p: V(0, .1, 0)}), 0x5d8a3a]];
     for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2; parts.push([new THREE.SphereGeometry(.034, 6, 4), mat({p: V(Math.cos(a) * .036, .2, Math.sin(a) * .036), r: [0, -a, 0], s: [1.3, .42, .80]}), petal]); }
@@ -245,6 +263,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
       if(dryGround(x,z))list.push({p:V(x,surfaceY(x,z),z),r:[0,R()*6.28,0],s:.65+R()*.55});}
     add(flower(tint), flowerMat, list);
   });
+  yield;
   // Bell-shaped woodland flowers add a second silhouette at the edge of the clearing.
   const bells=[];for(let k=0;k<36;k++){const p=PATH.getPointAt(.15+R()*.7),side=k%2?1:-1,x=p.x+side*(1+R()*.6),z=p.z;if(Math.hypot(x,z)<2.2)continue;bells.push({p:V(x,surfaceY(x,z),z),r:[0,R()*6.28,0],s:.8+R()*.6});}
   const bellParts=[[new THREE.CylinderGeometry(.009,.012,.42,6),mat({p:V(0,.21,0)}),0x628144]];
@@ -266,6 +285,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   grassMaterial.onBeforeCompile=shader=>{shader.uniforms.grassTime=grassTime;shader.vertexShader='uniform float grassTime;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed.x += sin(grassTime*1.4 + instanceMatrix[3].x*.8 + instanceMatrix[3].z*.4)*.045*pow(clamp(position.y/.4,0.,1.),2.);');};
   add(merge(bladeParts),grassMaterial,tufts,t=>C(t.c));
 
+  yield;
   // Quiet, close-up details sit beside the path, leaving the playable clearing open.
   const detailRandom=rng(431902), mushroomBeds=[[-2.3,2.5],[2.8,2.8],[-2.2,5.5],[3.2,6.4],[-3.1,-1.8],[2.7,-2.2]];
   const caps=new THREE.LatheGeometry([[0,.18],[.05,.18],[.12,.19],[.125,.205],[.1,.255],[.045,.285],[0,.29]].map(([x,y])=>new THREE.Vector2(x,y)),12);
@@ -289,6 +309,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   }
   add(smallLeaf.clone(),new THREE.MeshLambertMaterial({side:THREE.DoubleSide}),litter,t=>C(t.c));
 
+  yield;
   // Warm sun shafts: open cones with a view-angle fade, additive, never writing depth.
   const sunDir = V(...theme.light).normalize(), shaftMat = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,
@@ -302,6 +323,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   shafts.forEach((t, i) => shaftMesh.setMatrixAt(i, new THREE.Matrix4().compose(t.p, t.q, V(...t.s))));
   shaftMesh.renderOrder = 2; scene.add(shaftMesh);
 
+  yield;
   // Drifting motes of light in the clearing.
   const N = theme.character?100:65, mp = new Float32Array(N * 3), base = [];
   for (let i = 0; i < N; i++) { const b = [(R() - .5) * 11, .3 + R() * 4.5, (R() - .5) * 11 - .5, R() * 6.3]; base.push(b); mp.set(b.slice(0, 3), i * 3); }
@@ -309,6 +331,7 @@ function buildScenery(scene, R, leafTexture, theme=PALETTES.basic) {
   const motes = new THREE.Points(mg, new THREE.PointsMaterial({map: glow, color: theme.character?0xd2def4:0xffe3a0, size: .065, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: .6}));
   motes.renderOrder = 3; scene.add(motes);
   const colliders = [...rocks.map(([x,z,s])=>({x,z,radius:s*1.2,height:s*1.2})), ...trunks.map(t=>({x:t.p.x,z:t.p.z,radius:t.s[0]*.45,height:20}))];
+  freezeTransforms(scene);
   return {sky,shaftMat, motes, moteBase: base, glow, grassTime, colliders};
 }
 
@@ -405,9 +428,11 @@ function buildPiano(scene) {
 function buildGirl(scene, atlas, seatedGirl, seatedBoy, posesGirl, posesBoy) { return createStorybookChild(scene,atlas,seatedGirl,seatedBoy,posesGirl,posesBoy); }
 
 // ---------- stage ----------
+const prepareYield=()=>new Promise(resolve=>setTimeout(resolve,0));
 export async function createForest(host, {onEvent = () => {}} = {}) {
+  const gardenReady=loadGarden();
   const loader=new THREE.TextureLoader();
-  const art=await loadForestArt(loader,['./assets/forest/children-storybook-v3.png','./assets/forest/leaf-cluster-v3.png','./assets/forest/girl-storybook-v2.png','./assets/forest/boy-seated-v4.png','./assets/forest/girl-playing-poses-v1.png','./assets/forest/boy-playing-poses-v1.png']);
+  const art=await loadForestArt(loader,['./assets/forest/children-storybook-v3.webp','./assets/forest/leaf-cluster-v3.webp','./assets/forest/girl-storybook-v2.webp','./assets/forest/boy-seated-v4.webp','./assets/forest/girl-playing-poses-v1.webp','./assets/forest/boy-playing-poses-v1.webp']);
   const [girlAtlas,leafTexture,seatedGirl,seatedBoy,posesGirl,posesBoy]=art;
   for(const t of art){t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;}
   const canvas = document.createElement('canvas'); canvas.className = 'forest-canvas'; canvas.setAttribute('aria-hidden', 'true');
@@ -429,12 +454,20 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
   const pianoRim=new THREE.SpotLight(0xc9dfff,0,10,Math.PI/4,1,2);
   pianoRim.position.set(2.5,3.8,-1.5);pianoRim.target.position.set(0,.7,-.6);scene.add(pianoRim,pianoRim.target);
   let mapId='basic',theme=PALETTES.basic,scenery=new THREE.Group();scene.add(scenery);
+  const garden=await gardenReady;
+  await prepareYield();
   const piano=buildPiano(scene);
-  let world=buildScenery(scenery,R,leafTexture,theme),landmarks=buildLandmarks(scenery,mapId,groundY,leafTexture,piano.woodMap,world.glow);
+  await prepareYield();
+  let world=await prepareScenery(scenery,R,leafTexture,theme);
+  await prepareYield();
+  let landmarks=buildLandmarks(scenery,mapId,groundY,leafTexture,piano.woodMap,world.glow);
   world.colliders.push(...landmarks.colliders);
+  await prepareYield();
+  world.colliders.push(...garden.build(scenery,groundY));
+  await prepareYield();
   const girl=buildGirl(scene,girlAtlas,seatedGirl,seatedBoy,posesGirl,posesBoy);
   girl.setEnvironment(theme.character || 0xf9f5ea);
-  girl.textures.forEach(t=>renderer.initTexture(t));
+  for(const t of girl.textures){renderer.initTexture(t);await prepareYield();}
   // Soft contact shadows under piano, bench and girl, on top of the real sun shadow.
   const shadowMat = new THREE.MeshBasicMaterial({map: radialTexture('rgba(0,0,0,1)'), transparent: true, opacity: .42, depthWrite: false, color: 0x2a3a1a, fog: false});
   const blobGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
@@ -450,7 +483,9 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     const next=pmrem.fromScene(envScene,.04);scene.environment=next.texture;env?.dispose();env=next;
     pmrem.dispose();ground.geometry.dispose();ground.material.dispose();
   }
+  await prepareYield();
   refreshEnvironment();
+  await prepareYield();
   function releaseScenery(group){
     const geometries=new Set(),materials=new Set(),textures=new Set();
     group.traverse(o=>{if(o.geometry)geometries.add(o.geometry);for(const m of [].concat(o.material||[],o.customDepthMaterial||[])){materials.add(m);for(const v of Object.values(m))if(v?.isTexture&&v!==leafTexture)textures.add(v);}});
@@ -460,7 +495,7 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     id=forestMapId(id);if(id===mapId)return;
     const nextTheme=PALETTES[id],next=new THREE.Group();
     let nextWorld,nextLandmarks;
-    try{nextWorld=buildScenery(next,rng(20261021),leafTexture,nextTheme);nextLandmarks=buildLandmarks(next,id,groundY,leafTexture,piano.woodMap,nextWorld.glow);}
+    try{nextWorld=buildScenery(next,rng(20261021),leafTexture,nextTheme);nextLandmarks=buildLandmarks(next,id,groundY,leafTexture,piano.woodMap,nextWorld.glow);nextWorld.colliders.push(...garden.build(next,groundY,id));}
     catch(error){releaseScenery(next);throw error;}
     scene.remove(scenery);releaseScenery(scenery);scenery=next;scene.add(scenery);
     mapId=id;theme=nextTheme;world=nextWorld;landmarks=nextLandmarks;world.colliders.push(...landmarks.colliders);
@@ -471,7 +506,7 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     fill.color.set(theme.character ? 0xd7e1ff : 0xd7e6ed);
     pianoRim.intensity=theme.character?16:0;
     girl.setEnvironment(theme.character || 0xf9f5ea);
-    renderer.toneMappingExposure=theme.exposure;world.shaftMat.uniforms.opacity.value=theme.shafts;
+    renderer.toneMappingExposure=theme.exposure;world.shaftMat.uniforms.opacity.value=theme.shafts;world.shaftMat.uniforms.color.value.set(theme.sun);
     input={x:0,z:0};state.moving=false;route=[];routeIndex=0;state.hands.forEach(h=>h.hit=0);
     if(forestCamera(state.phase)!=='seated'){placeOnPath(WALK_FROM);view={...FIRST_VIEW};state.openingT=motion.matches?1:0;shotFor(state.phase==='opening'?'opening':'arrive');camPos.copy(goalPos);camLook.copy(goalLook);}
     piano.press.fill(0);piano.drawKeys();refreshEnvironment();
@@ -485,15 +520,20 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
   const camPos = V(2.6, 2.1, 12.8), camLook = V(0, 1, 2), goalPos = V(), goalLook = V();
   let raf = 0, last = 0, frame = 0;
   let notebookBand = null;
+  const projectedTop=V(),projectedBottom=V();
   function measureNotebook() {
     const header=document.querySelector('#app>header'),book=document.querySelector('.workspace');
     notebookBand=header&&book?{top:header.getBoundingClientRect().bottom+scrollY+12,bottom:book.getBoundingClientRect().top+scrollY-54}:null;
   }
 
+  let lastWidth=0,lastHeight=0,lastRatio=0;
   function resize() {
     const w = host.clientWidth || innerWidth, h = host.clientHeight || innerHeight;
-    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
-    renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w / h < .8 ? 52 : 40; camera.updateProjectionMatrix();
+    const ratio=Math.min(devicePixelRatio || 1,1.5);
+    if(w!==lastWidth||h!==lastHeight||ratio!==lastRatio){
+      lastWidth=w;lastHeight=h;lastRatio=ratio;renderer.setPixelRatio(ratio);
+      renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w/h<.8?52:40;camera.updateProjectionMatrix();
+    }
     measureNotebook();
   }
   function placeOnPath(t) {
@@ -577,7 +617,7 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     if(notebook&&notebookBand){
       // Fit the seated child between the real header and book, including landscape phones.
       camera.clearViewOffset();camera.zoom=1;camera.updateProjectionMatrix();camera.updateMatrixWorld();
-      const top=V(GIRL_X,1.5,SEAT_Z).project(camera).y,bottom=V(GIRL_X,.1,SEAT_Z).project(camera).y,h=host.clientHeight;
+      const top=projectedTop.set(GIRL_X,1.5,SEAT_Z).project(camera).y,bottom=projectedBottom.set(GIRL_X,.1,SEAT_Z).project(camera).y,h=host.clientHeight;
       const available=Math.max(48,notebookBand.bottom-notebookBand.top);
       if(!orbitChanged)zoomGoal=Math.min(.72,available/(Math.abs(top-bottom)*h*.5));
       liftGoal=.5-(top+bottom)*zoomGoal*.25-(notebookBand.top+notebookBand.bottom)/(2*h);
@@ -589,11 +629,11 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     let busy = false;
     for (let i = 0; i < WHITE_KEYS; i++) if (piano.press[i] > 0) { piano.press[i] = Math.max(0, piano.press[i] - dt * 2.6); busy = true; }
     if (busy || state.keysDirty) { piano.drawKeys(); state.keysDirty = busy; }
-    pose(dt);landmarks.animate(state.time,rm,Math.max(...state.hands.map(h=>h.hit)));
+    pose(dt);landmarks.animate(state.time,rm,Math.max(state.hands[0].hit,state.hands[1].hit));
     // Hold the first impression through the wide shot, then ease into normal map lighting.
     const entrance = state.phase === 'opening' && !rm ? 1-smooth(.45, 1, state.openingT) : 0;
     world.shaftMat.uniforms.opacity.value = theme.shafts * (1.35 + entrance * 2.7);
-    world.shaftMat.uniforms.color.value.set(theme.sun);
+    // Shaft colour is set when the map changes, not on every animation frame.
     sun.intensity = theme.power * (1 + entrance * .38);
     renderer.toneMappingExposure = theme.exposure * (1 + entrance * .09);
     world.grassTime.value=rm?0:state.time;
@@ -615,6 +655,8 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
   }
   function start() { if (!raf && !state.dead) { last = 0; resize(); raf = requestAnimationFrame(tick); } }
   function halt() { cancelAnimationFrame(raf); raf = 0; }
+  const onVisibility=()=>{if(document.hidden){input={x:0,z:0};state.moving=false;halt();}else if(state.visible)start();};
+  document.addEventListener('visibilitychange',onVisibility);
   const onResize = () => { if (state.visible) resize(); };
   addEventListener('resize', onResize);
   const observer = new ResizeObserver(onResize); observer.observe(host);
@@ -625,6 +667,9 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     piano.press[index] = Math.max(piano.press[index], strength); state.keysDirty = true;
     const hand = state.hands[handIndex]; hand.key = index; hand.hit = 1;
   }
+  resize();scene.updateMatrixWorld(true);
+  if(renderer.compileAsync)await renderer.compileAsync(scene,camera);
+  await prepareYield();
   return {
     get dead() { return state.dead; },
     get nearPiano() {return forestAtPiano(girl.root.position);},
@@ -658,7 +703,7 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     strike(midi) { const i = pianoKey(midi); if (i !== null) strikeKey(i, 1, 1); },
     beat(root) { const i = pianoKey(backingKey(root)); if (i !== null) strikeKey(i, 0, .7); },
     dispose() {
-      halt(); state.dead = true; removeEventListener('resize', onResize); observer.disconnect();
+      halt(); scene.remove(scenery);releaseScenery(scenery);garden.dispose(); state.dead = true; removeEventListener('resize', onResize); observer.disconnect();document.removeEventListener('visibilitychange',onVisibility);
       scene.traverse(o => { o.geometry?.dispose(); o.customDepthMaterial?.dispose(); [].concat(o.material || []).forEach(m => { m.map?.dispose(); m.dispose(); }); });
       girl.textures.forEach(t=>t.dispose());art.forEach(t=>t.dispose());env.dispose(); world.glow.dispose(); renderer.dispose(); canvas.remove(); host.hidden = true;
     }

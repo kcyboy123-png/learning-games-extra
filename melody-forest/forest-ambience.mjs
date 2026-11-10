@@ -1,5 +1,5 @@
 // Forest sound never shares the composition player's context or scheduled notes.
-export function createForestAmbience({AudioClass=globalThis.Audio,chime=false}={}) {
+export function createForestAmbience({AudioClass=globalThis.Audio,chime=false,onPlayback=()=>{}}={}) {
   const make=(file,loop,gain)=>{
     if(typeof AudioClass!=='function')return null;
     const audio=new AudioClass(new URL(`./assets/audio/forest/${file}`,import.meta.url).href);
@@ -9,9 +9,9 @@ export function createForestAmbience({AudioClass=globalThis.Audio,chime=false}={
   const bgm=make('forest-entry.mp3',true,.18),bell=chime?make('forest-chime.mp3',false,.14):null;
   const tracks=[bgm,bell].filter(Boolean);
   let state={phase:null,screen:'edit',volume:.45,hidden:false,enabled:true},unlocked=false,dead=false,chimed=false;
-  const exploring=()=>!dead&&unlocked&&state.enabled&&!state.hidden&&state.screen==='edit'&&['opening','arrive','walk'].includes(state.phase)&&state.volume>0;
+  const exploring=()=>!dead&&unlocked&&state.enabled&&!state.hidden&&state.screen==='edit'&&['loading','opening','arrive','walk'].includes(state.phase)&&state.volume>0;
   function halt(track){
-    track.pending=null;track.playing=false;track.audio.muted=true;track.audio.volume=0;track.audio.pause();
+    track.pending=null;track.playing=false;if(track===bgm)onPlayback(false);track.audio.muted=true;track.audio.volume=0;track.audio.pause();
     try{track.audio.currentTime=0;}catch{/* Metadata may not be available yet. */}
   }
   function start(track){
@@ -21,7 +21,7 @@ export function createForestAmbience({AudioClass=globalThis.Audio,chime=false}={
     if(track===bell)chimed=true;
     const failed=()=>{
       if(track.pending!==attempt)return;
-      track.pending=null;track.playing=false;track.blocked=true;
+      track.pending=null;track.playing=false;track.blocked=true;if(track===bgm)onPlayback(false);
       track.audio.muted=true;track.audio.volume=0;track.audio.pause();
       if(track===bell)chimed=false;
     };
@@ -30,22 +30,23 @@ export function createForestAmbience({AudioClass=globalThis.Audio,chime=false}={
     Promise.resolve(play).then(()=>{
       // A late play() must never resurrect audio over the notebook or a hidden tab.
       if(!exploring()){halt(track);return;}
-      if(track.pending===attempt){track.pending=null;track.playing=true;}
+      if(track.pending===attempt){track.pending=null;track.playing=true;if(track===bgm)onPlayback(true);}
     },failed);
   }
   function reconcile(){
     if(!exploring()){tracks.forEach(halt);return;}
     if(bgm)start(bgm);
-    if(bell&&!chimed)start(bell);
+    if(bell&&!chimed&&state.phase!=='loading')start(bell);
     else if(bell&&!bell.blocked)bell.audio.volume=state.volume*bell.gain;
   }
   return {
+    get playing(){return !!bgm?.playing;},
     sync(next={}){
       if(dead)return;
       state={...state,...next};state.volume=Number.isFinite(state.volume)?Math.max(0,Math.min(1,state.volume)):0;
       reconcile();
     },
-    // The caller invokes this only from a trusted pointer/key gesture, and may retry after browser blocking.
+    // Try at loading; retry from a trusted gesture when browser autoplay is blocked.
     unlock(){if(dead)return;unlocked=true;tracks.forEach(t=>t.blocked=false);reconcile();},
     dispose(){
       if(dead)return;dead=true;tracks.forEach(t=>{halt(t);t.audio.removeAttribute?.('src');t.audio.load?.();});
