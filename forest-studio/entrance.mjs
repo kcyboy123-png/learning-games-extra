@@ -61,7 +61,7 @@ export function enterGarden(world,done){
    world.scene.fog.near=endFog.near+(1-travel)*18;world.scene.fog.far=endFog.far+(1-travel)*40;
    fade.value=world.reduced?smooth(elapsed/1.5):smooth((elapsed-7.8)/3);
    sparks.position.y=fade.value*1.8;sparks.rotation.y=fade.value*.18;material.opacity=Math.sin(fade.value*Math.PI)*.7;
-   const text=world.reduced||elapsed>=7.8?'이제, 당신의 손으로 숲을 만들어 보세요.':elapsed<3.2?'햇살 가득한 정원이 당신을 기다려요.':'이 숲에, 어떤 이야기를 담고 싶나요?';if(caption.textContent!==text)caption.textContent=text;
+   const text=world.reduced||elapsed>=7.8?'예시 숲은 사라지고, 이제 나만의 정원이 시작돼요.':elapsed<3.2?'햇살 가득한 정원이 당신을 기다려요.':'이 숲에, 어떤 이야기를 담고 싶나요?';if(caption.textContent!==text)caption.textContent=text;
    const arrival=Math.min(1,elapsed/.8);if(shownArrival!==arrival){shownArrival=arrival;overlay.style.setProperty('--arrival',arrival);};world.dirty=true;
  }};
  world.preparing=true;caption.textContent='햇살 가득한 정원으로 들어가는 중…';overlay.style.setProperty('--arrival',1);

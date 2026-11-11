@@ -151,3 +151,10 @@ dialog{border:1px solid #b9cabb;border-radius:12px;background:#f7f8f2;padding:28
 #missionCards small{font-size:12px;line-height:1.6;color:#52634e;padding-top:10px;border-top:1px solid #dbe2d0}
 #missionDialog #begin{position:sticky;bottom:0;box-shadow:0 -6px 15px #f7f8f2;min-height:48px}
 @media(max-width:600px){#missionCards button{grid-template-columns:1fr}#missionCards img{height:auto;min-height:0;aspect-ratio:1.5;object-fit:contain}#missionCards .letter-copy{padding:16px}#missionCards strong{font-size:18px}}
+
+/* Quiet reading space; no extra animation or pretend progress. */
+.loading-tips{max-width:520px;margin:14px auto 0;padding:12px 16px;border-radius:10px;background:#123b32e8}
+.loading-copy .loading-tips p{background:none;border:0;box-shadow:none;backdrop-filter:none;width:auto;padding:0;line-height:1.6}
+.loading-copy #loadingThought{font-size:16px;color:#fff9e6;font-weight:600}
+.loading-copy #loadingHint{font-size:13px;margin-top:5px;color:#dcead9}
+@media(max-height:620px){.loading-copy{bottom:54px}.loading-copy h1{font-size:30px;margin:5px 0 8px}.loading-tips{margin-top:7px;padding:7px 12px}.loading-copy #loadingThought{font-size:14px}.loading-copy #loadingHint{font-size:12px}.loading-track{margin-top:7px}.loading-copy #loadingSound{margin:7px 0 0!important}}
