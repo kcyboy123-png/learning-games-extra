@@ -1,7 +1,10 @@
 import * as T from './vendor/three.module.js';
+import {classroom} from './render-profile.mjs';
 
 // One planar view per pond; targets are released with their owned water materials.
 export function reflectionMaterial(base,height){
+ // Classroom water keeps sky tint and ripples without drawing the forest a second time.
+ if(classroom)return base;
  const material=base.clone(),compile=base.onBeforeCompile;
  const size=matchMedia('(max-width: 700px)').matches?320:512;
  const target=new T.WebGLRenderTarget(size,size,{minFilter:T.LinearFilter,magFilter:T.LinearFilter,depthBuffer:true});

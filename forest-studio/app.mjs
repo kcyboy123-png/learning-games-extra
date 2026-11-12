@@ -10,6 +10,7 @@ import {enterGarden} from './entrance.mjs';
 await Promise.all([assetsReady,modelsReady,texturesReady]);
 await new Promise(resolve=>setTimeout(resolve,0));
 const nodes=new Map();const $=s=>{if(!/^#[\w-]+$/.test(s))return document.querySelector(s);if(!nodes.has(s))nodes.set(s,document.getElementById(s.slice(1)));return nodes.get(s);},$$=s=>[...document.querySelectorAll(s)];
+import {classroom} from './render-profile.mjs';
 export let state=initial();let restored=false,saveFailed=false,writeBlocked=false,unreadable=null;
 // An unreadable or unsupported record is never overwritten: its raw text is copied to a recovery key first.
 // If that copy cannot be made, autosave to the original key is blocked and the student is told to export.
@@ -197,6 +198,8 @@ $('#firstStroll').onclick=()=>{$('#firstSuccess').hidden=true;if(firstTree){cons
 $('#dismissFirstSuccess').onclick=()=>$('#firstSuccess').hidden=true;
 world.avatar=new ForestAvatar(world);
 $('#character').onclick=()=>modal('#characterDialog');
+$('#renderProfile').textContent=classroom?'수업용 · 30fps':'고화질';
+$('#renderProfile').onclick=()=>{save();if(saveFailed){toast('먼저 작업 파일로 작품을 저장해 주세요. 화면 품질은 바꾸지 않았어요.',true);return;}try{localStorage.setItem('forest-render-profile',classroom?'quality':'classroom');location.reload();}catch{toast('설정을 저장하지 못했어요. 현재 화면을 유지합니다.',true);}};
 $('#cameraDistance').onclick=()=>{const near=world.avatar.distance>2;world.avatar.distance=near?1.9:3.4;$('#cameraDistance').textContent=near?'가까이':'여유롭게';$('#cameraDistance').setAttribute('aria-pressed',String(near));world.updateCamera();world.dirty=true;};
 async function chooseCharacter(key){
  const buttons=$$('[data-avatar]');buttons.forEach(b=>b.disabled=true);$('#characterStatus').textContent='캐릭터를 불러오는 중…';
