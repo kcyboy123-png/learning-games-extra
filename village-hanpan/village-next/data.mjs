@@ -4,6 +4,12 @@ export const PLAY_SPEED=1.5;
 export const realSeconds=seconds=>Math.ceil(Math.max(0,seconds)/PLAY_SPEED);
 // Costs are classroom simulation values, not actual construction estimates.
 export const TYPES={
+ bakery:{"name":"동네 빵집","cost":450,"time":60,"up":0,"e":0,"unlock":0,"stage":0,"group":"음식","desc":"커다란 식빵 지붕과 줄무늬 차양이 반기는 골목 빵집.","food":24},
+ florist:{"name":"꽃집","cost":1600,"time":60,"up":0,"e":0,"unlock":0,"stage":0,"group":"생활","desc":"꽃송이 지붕과 꽃바구니가 가득한 향기로운 가게.","education":12},
+ seasideCafe:{"name":"바닷가 카페","cost":8000,"time":120,"up":0,"e":0,"unlock":0,"stage":0,"group":"음식","desc":"커다란 찻잔 지붕과 파란 차양이 있는 바다빛 카페.","food":24},
+ pottery:{"name":"도예 공방","cost":3500,"time":120,"up":0,"e":0,"unlock":0,"stage":0,"group":"생활","desc":"둥근 항아리 지붕과 작은 가마에서 흙의 모양을 배워요.","education":12},
+ artGallery:{"name":"작은 미술관","cost":24000,"time":120,"up":0,"e":0,"unlock":0,"stage":0,"group":"여가","desc":"커다란 액자와 색색의 팔레트가 있는 우리 동네 미술관.","leisure":16},
+ postOffice:{"name":"마을 우체국","cost":2200,"time":60,"up":0,"e":0,"unlock":0,"stage":0,"group":"생활","desc":"봉투 지붕과 빨간 우체통이 반기는 마을 우체국.","education":12},
  cookieFactory:{name:'도토리 과자공장',cost:3000,time:90,up:0,e:0,unlock:0,stage:0,group:'공장',foot:2,pollution:5,desc:'2×2칸 생산시설 · 가동 중 친환경 −5점. 휴업하면 수입과 감점이 멈춰요.'},
  woodFactory:{name:'숲속 목재공장',cost:5000,time:120,up:0,e:0,unlock:0,stage:0,group:'공장',foot:2,pollution:8,desc:'2×2칸 생산시설 · 가동 중 친환경 −8점. 휴업하면 수입과 감점이 멈춰요.'},
  toyFactory:{name:'장난감공장',cost:8000,time:150,up:0,e:0,unlock:0,stage:0,group:'공장',foot:2,pollution:10,desc:'2×2칸 생산시설 · 가동 중 친환경 −10점. 휴업하면 수입과 감점이 멈춰요.'},
@@ -84,7 +90,7 @@ export const SEASONS=['겨울','봄','여름','가을'];
 export const season=m=>m<2||m===11?0:m<5?1:m<8?2:3;
 
 // Cozy rewards are net coins per real playing minute; happiness is a target increase.
-export const COZY_EFFECTS={cookieFactory:{income:900,happiness:0,welfare:0},woodFactory:{income:1500,happiness:0,welfare:0},toyFactory:{income:2400,happiness:0,welfare:0},brickFactory:{income:4500,happiness:0,welfare:0},dokdoTea:{income:600,happiness:4,welfare:2},dokdoGuest:{income:0,happiness:0,welfare:0},
+export const COZY_EFFECTS={bakery:{"income":60,"happiness":2,"welfare":0},florist:{"income":100,"happiness":4,"welfare":2},seasideCafe:{"income":700,"happiness":6,"welfare":2},pottery:{"income":150,"happiness":4,"welfare":6},artGallery:{"income":300,"happiness":8,"welfare":14},postOffice:{"income":50,"happiness":2,"welfare":10},cookieFactory:{income:900,happiness:0,welfare:0},woodFactory:{income:1500,happiness:0,welfare:0},toyFactory:{income:2400,happiness:0,welfare:0},brickFactory:{income:4500,happiness:0,welfare:0},dokdoTea:{income:600,happiness:4,welfare:2},dokdoGuest:{income:0,happiness:0,welfare:0},
  dokdoSolar:{"income": 160, "happiness": 0, "welfare": 4},
  dokdoDeck:{"income": 70, "happiness": 4, "welfare": 2},
  dokdoSedum:{"income": 12, "happiness": 2, "welfare": 0},
@@ -149,4 +155,4 @@ export const COZY_EFFECTS={cookieFactory:{income:900,happiness:0,welfare:0},wood
  starTree:{income:12000,happiness:25,welfare:6}
 };
 // Population unlocks persist once reached; old buildings stay usable.
-export const POPULATION_UNLOCKS={cookieFactory:8,woodFactory:12,toyFactory:16,brickFactory:24,dokdoResearch:180,dokdoMemory:140,"house":0,"road":0,"snack":0,"flower":0,"avenue":0,"tree":0,"bench":0,"solar":0,"generator":0,"bridge":0,"drain":0,"duplex":12,"convenience":12,"chicken":12,"clinic":12,"lavender":12,"japanese":16,"kids":16,"hydrangea":16,"gardenhouse":20,"school":20,"fire":20,"fountain":20,"apartment":24,"library":24,"police":24,"flowerArch":24,"western":28,"terracehouse":32,"amusement":32,"workshop":32,"chinese":40,"buffet":40,"hospital":48,"supermarket":48,"cinema":64,"rosePark":64,"animalFarm":80,"moonGarden":100,"harbor":0,"rabbitTower":160,"goldFountain":160,"skyTower":200,"largePark":240,"starTree":240};
+export const POPULATION_UNLOCKS={bakery:8,florist:12,seasideCafe:32,pottery:20,artGallery:48,postOffice:16,cookieFactory:8,woodFactory:12,toyFactory:16,brickFactory:24,dokdoResearch:180,dokdoMemory:140,"house":0,"road":0,"snack":0,"flower":0,"avenue":0,"tree":0,"bench":0,"solar":0,"generator":0,"bridge":0,"drain":0,"duplex":12,"convenience":12,"chicken":12,"clinic":12,"lavender":12,"japanese":16,"kids":16,"hydrangea":16,"gardenhouse":20,"school":20,"fire":20,"fountain":20,"apartment":24,"library":24,"police":24,"flowerArch":24,"western":28,"terracehouse":32,"amusement":32,"workshop":32,"chinese":40,"buffet":40,"hospital":48,"supermarket":48,"cinema":64,"rosePark":64,"animalFarm":80,"moonGarden":100,"harbor":0,"rabbitTower":160,"goldFountain":160,"skyTower":200,"largePark":240,"starTree":240};

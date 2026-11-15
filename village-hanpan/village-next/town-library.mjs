@@ -22,7 +22,7 @@ export function archiveTown(storage,state,{name,note,thumbnail='',now=Date.now()
  // Only exact duplicates are reused; a new student never silently replaces another work.
  const same=towns.find(t=>t.save===save&&t.name===clean(name,32,'우리 마을')&&t.note===clean(note,120));if(same)return same;
  if(towns.length>=MAX_TOWNS)throw Error('보관함에 20개 작품이 있어요. 새로 시작하기 전에 마을 파일을 별도로 보관해 주세요.');
- const entry=validateEntry({id:globalThis.crypto?.randomUUID?.()||`${now}-${Math.random().toString(36).slice(2)}`,name:clean(name,32,'우리 마을'),note,thumbnail,savedAt:now,save});
+ const entry=validateEntry({id:globalThis.crypto?.randomUUID?.()||`${now}-${Math.random().toString(36).slice(2)}`,name:clean(name,32,'우리 마을'),note,thumbnail:typeof thumbnail==='function'?thumbnail():thumbnail,savedAt:now,save});
  delete entry.state;towns.unshift(entry);const next=JSON.stringify({version:1,towns});
  if(next.length>MAX_LIBRARY_BYTES)throw Error('보관함이 가득 찼어요. 현재 마을은 그대로예요.');
  try{storage.setItem(LIBRARY_KEY,next);}catch{throw Error('작품을 보관하지 못했어요. 저장 공간을 확인해 주세요. 현재 마을은 그대로예요.');}
@@ -79,9 +79,10 @@ export function createTownLibrary({getState,onVisit,onRestore,onNew,notify=()=>{
  const shareTitle=el('b','친구에게 보내는 감상 전용 링크'),shareText=el('textarea');shareText.readOnly=true;shareText.setAttribute('aria-label','마을 감상 공유 주소');shareBox.hidden=true;
  shareBox.append(shareTitle,el('p','링크를 가진 사람은 작품을 볼 수 있어요. 실명 등 개인정보는 소개에 쓰지 않아요.'),shareText,button('링크 복사',async()=>{await navigator.clipboard.writeText(shareText.value);notify('감상 링크를 복사했어요.');}));
  const file=el('input');file.type='file';file.multiple=true;file.accept='.json,application/json';file.hidden=true;
- function archiveCurrent(title=name.value,description=note.value){return archiveTown(storage,getState(),{name:title,note:description,thumbnail:captureThumbnail()});}
+ function archiveCurrent(title=name.value,description=note.value){return archiveTown(storage,getState(),{name:title,note:description,thumbnail:captureThumbnail});}
  function startNew(){archiveCurrent();if(onNew())dialog.close();}
  function download(state=getState(),title=name.value,description=note.value){const a=el('a');const url=URL.createObjectURL(new Blob([townFile(state,title,description)],{type:'application/json'}));a.href=url;a.download='마을-전시작품.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);notify('감상용 마을 파일을 보관했어요.');}
+ async function share(){shareText.value=await createVisitLink(getState(),name.value,note.value);shareBox.hidden=false;shareText.focus();shareText.select();}
  function render(){list.replaceChildren();const towns=readLibrary(storage);
   if(!towns.length){list.append(el('p','아직 보관한 작품이 없어요. 지금 마을부터 담아 보세요.'));return;}
   for(const entry of towns){const card=el('article',null,'town-library-card');
@@ -93,7 +94,7 @@ export function createTownLibrary({getState,onVisit,onRestore,onNew,notify=()=>{
   }
  }
  file.onchange=async()=>{const files=Array.from(file.files||[]);file.value='';let added=0;try{for(const f of files){if(f.size>MAX_FILE_BYTES)throw Error('파일이 너무 커요.');const entry=parseTownFile(await f.text());archiveTown(storage,entry.state,{name:entry.name,note:entry.note});added++;}render();notify(`${added}개 작품을 전시회에 담았어요.`);}catch(e){render();notify(`${added}개 보관됨 · ${e.message}`);}};
- actions.append(button('지금 마을 보관',()=>{archiveCurrent();render();notify('현재 마을을 보관했어요.');}),button('친구 작품 모으기',()=>file.click()),button('감상 링크 만들기',async()=>{shareText.value=await createVisitLink(getState(),name.value,note.value);shareBox.hidden=false;shareText.focus();shareText.select();}),button('작품 파일 내려받기',download));
+ actions.append(button('지금 마을 보관',()=>{archiveCurrent();render();notify('현재 마을을 보관했어요.');}),button('친구 작품 모으기',()=>file.click()),button('감상 링크 만들기',share),button('작품 파일 내려받기',download));
  dialog.append(top,intro,nameLabel,noteLabel,actions,shareBox,list,file);document.body.append(dialog);
- return {open(){try{render();dialog.showModal();}catch(e){notify(e.message);}},archiveCurrent,startNew,async readSharedVisit(){return readVisitHash();},element:dialog};
+ return {open(mode){try{render();shareBox.hidden=true;dialog.showModal();if(mode==='share')share().catch(e=>notify(e.message));}catch(e){notify(e.message);}},archiveCurrent,startNew,async readSharedVisit(){return readVisitHash();},element:dialog};
 }

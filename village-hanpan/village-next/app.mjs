@@ -1,3 +1,4 @@
+import {createPhotoMode} from './photo-mode.mjs';
 import {playIdeas} from './play-ideas.mjs';
 import {ecoGuideDue,ecoGuideHTML,ecoAdvice} from './eco-guide.mjs';
 import {entrancePose,applyEntrancePose,voyagePose,voyageArrivalPose} from './entrance-camera.mjs';
@@ -244,9 +245,10 @@ $('harvestMap').onclick=doHarvest;
 function positionHarvest(){
  const button=$('harvestMap'),g=world.harvestPlot;
  const hide=!g?.visible||viewing||voyage||world.entrance||document.body.classList.contains('entering')||mode||removing||document.querySelector('dialog[open],.sheet.open');
- button.hidden=!!hide;if(hide)return;
- const q=world.screen(g.position);button.style.left=q.x+'px';button.style.top=(q.y-46)+'px';
- button.hidden=q.x<60||q.x>innerWidth-60||q.y<140||q.y>innerHeight-100;
+ if(hide){if(!button.hidden)button.hidden=true;return;}
+ const q=world.screen(g.position),offscreen=q.x<60||q.x>innerWidth-60||q.y<140||q.y>innerHeight-100;
+ if(button.hidden!==offscreen)button.hidden=offscreen;if(offscreen)return;
+ const left=q.x+'px',top=(q.y-46)+'px';if(button.style.left!==left)button.style.left=left;if(button.style.top!==top)button.style.top=top;
 }
 
 $('closeStatus').onclick=$('closeBuild').onclick=$('closeInfo').onclick=dismissPanels;
@@ -308,7 +310,7 @@ canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();if(!state.ende
 addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.querySelector('dialog[open]'))dismissPanels();});
 // ---- 화면 기준 이동(4번): 방향키·WASD·십자버튼 → 현재 카메라 각도의 화면 위/오른쪽을 지면 XZ에 투영한 연속 벡터로 이동(축 스냅 없음). 수동 입력은 탭 경로를 취소한다.
 const keys=new Set(),KEYMAP={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right'};
-addEventListener('keydown',e=>{const k=KEYMAP[e.code];if(!k||e.target.closest?.('input,select,textarea,[contenteditable="true"]'))return;e.preventDefault();keys.add(k);});addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k)keys.delete(k);});
+addEventListener('keydown',e=>{const k=KEYMAP[e.code];if(photo.active||!k||e.target.closest?.('input,select,textarea,[contenteditable="true"]'))return;e.preventDefault();keys.add(k);});addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k)keys.delete(k);});
 addEventListener('blur',()=>keys.clear());document.addEventListener('visibilitychange',()=>keys.clear());
 addEventListener('focusin',()=>keys.clear());
 let stick={ix:0,iy:0,power:0},stickPointer=null;
@@ -332,18 +334,19 @@ function npcTick(dt){if(state.paused||state.ended){npcElapsed=0;return;}npcElaps
 let lastIncomeMilestone=Math.floor(state.pop/4);
 // ---- 루프 ----
 // 시뮬레이션에는 실제 경과 시간의 1.5배를 준다(느린 기기에서 시간을 깎지 않음). 연출용 dt만 짧게 자른다.
-function loop(now){if(document.hidden){last=now;requestAnimationFrame(loop);return;}const real=document.hidden?0:Math.max(0,(now-last)/1000),dt=Math.min(.25,real);last=now;time+=dt;
+const pendingConstruction=[],completedConstruction=[];
+function loop(now){if(photo.active){last=now;requestAnimationFrame(loop);return;}if(document.hidden){last=now;requestAnimationFrame(loop);return;}const real=document.hidden?0:Math.max(0,(now-last)/1000),dt=Math.min(.25,real);last=now;time+=dt;
  if(world.entrance){world.updateEntrance(dt);if(!world.entrance)finishEntrance();}
- const previousPopulation=state.populationPeak??state.pop,before=state.buildings.filter(b=>b.progress<1);if(owned)advancePlay(Math.min(real,60));const done=before.filter(b=>b.progress>=1).map(b=>b.id);
+ const previousPopulation=state.populationPeak??state.pop,before=pendingConstruction,done=completedConstruction;before.length=0;done.length=0;for(const b of state.buildings)if(b.progress<1)before.push(b);if(owned)advancePlay(Math.min(real,60));for(const b of before)if(b.progress>=1)done.push(b.id);
  if(!state.cozyV&&state.economyV===4&&!done.length&&month(state)===lastMonth&&Math.floor(state.pop/4)>lastIncomeMilestone){lastIncomeMilestone=Math.floor(state.pop/4);if(state.pop===12||state.pop===16)toast(`이웃 ${state.pop}명! 지금 순수입 ${incomeRate(metrics(state))} · 손님과 생활시설이 함께 늘면 수입도 자라요.`);}
  if(done.length){sound.effect('complete');world.sync(state,!reduced);save('완공');const b=state.buildings.find(b=>b.id===done[0]);toast(completionMessage(state,done));if(buildingSpec(state,b.type).cap)npcHomes();}
  if(state.cozyV===1&&state.populationPeak>previousPopulation){const opened=Object.keys(TYPES).filter(t=>populationRequired(t)>previousPopulation&&populationRequired(t)<=state.populationPeak);if(opened.length){toast(`인구 ${state.pop}명! ${opened.slice(0,2).map(t=>TYPES[t].name).join('·')}${opened.length>2?` 외 ${opened.length-2}종`:''}이 열렸어요.`);save('인구 해금');}}
  const m=month(state);if(m!==lastMonth){lastMonth=m;world.sync(state,false);save(monthLabel(state));}
- if(owned&&state.cozyReview&&!document.querySelector('dialog[open]')){const years=Math.floor(state.cozyReview.months.length/12);if(years>state.cozyReview.seen){state.cozyReview.seen=years;save('연차 평가');showGrowthReview();}}
+ if(owned&&state.cozyReview){const years=Math.floor(state.cozyReview.months.length/12);if(years>state.cozyReview.seen&&!document.querySelector('dialog[open]')){state.cozyReview.seen=years;save('연차 평가');showGrowthReview();}}
 
- if(islandReveal){islandReveal.t=Math.min(1,islandReveal.t+dt/1.2);const u=islandReveal.t*islandReveal.t*(3-2*islandReveal.t);world.center.set(islandReveal.from.x+(islandScenery.farIsland.position.x-4-islandReveal.from.x)*u,0,islandReveal.from.z+(islandScenery.farIsland.position.z+4-islandReveal.from.z)*u);if(u===1)islandReveal=null;}if(!voyage){manualMove(dt);npcTick(dt);}updateVoyage(dt);if(bubble&&bubble.p.g.visible&&time<bubble.end){const p=(bubblePoint??=bubble.p.g.position.clone()).copy(bubble.p.g.position);p.y+=1.5;const s=world.screen(p);if($('bubble').textContent!==bubble.text)$('bubble').textContent=bubble.text;$('bubble').style.cssText=`display:block;left:${s.x}px;top:${s.y}px`;}else $('bubble').style.display='none';
- if(time>toastEnd)$('toast').classList.remove('show');if(!world.player.route.length)world.marker.visible=false;world.paused=state.paused;if(!$('arrivalFilm').classList.contains('playing')&&!$('travelDialog').open){islandScenery.tick(time,reduced);world.frame(dt,time,reduced);positionHarvest();}
- uiTick+=dt;if(uiTick>.25){const growth=state.buildings.filter(b=>b.progress>=1&&isGarden(b)).map(b=>`${b.id}:${growthStage(state,b)}`).join('|');if(growth!==gardenSignature){gardenSignature=growth;world.sync(state,false);}ui();uiTick=0;}if(!reported&&time>3){console.info('village-next render',JSON.stringify(world.renderer.info.render),'memory',JSON.stringify(world.renderer.info.memory));reported=true;}requestAnimationFrame(loop);}
+ if(islandReveal){islandReveal.t=Math.min(1,islandReveal.t+dt/1.2);const u=islandReveal.t*islandReveal.t*(3-2*islandReveal.t);world.center.set(islandReveal.from.x+(islandScenery.farIsland.position.x-4-islandReveal.from.x)*u,0,islandReveal.from.z+(islandScenery.farIsland.position.z+4-islandReveal.from.z)*u);if(u===1)islandReveal=null;}if(!voyage){manualMove(dt);npcTick(dt);}updateVoyage(dt);if(bubble&&bubble.p.g.visible&&time<bubble.end){const p=(bubblePoint??=bubble.p.g.position.clone()).copy(bubble.p.g.position);p.y+=1.5;const s=world.screen(p);if($('bubble').textContent!==bubble.text)$('bubble').textContent=bubble.text;const style=$('bubble').style,left=s.x+'px',top=s.y+'px';if(style.display!=='block')style.display='block';if(style.left!==left)style.left=left;if(style.top!==top)style.top=top;}else if($('bubble').style.display!=='none')$('bubble').style.display='none';
+ if(toastEnd&&time>toastEnd){$('toast').classList.remove('show');toastEnd=0;}if(!world.player.route.length)world.marker.visible=false;world.paused=state.paused;if(!$('arrivalFilm').classList.contains('playing')&&!$('travelDialog').open){islandScenery.tick(time,reduced);world.frame(dt,time,reduced);positionHarvest();}
+ uiTick+=dt;if(uiTick>.25){let growth='';for(const b of state.buildings)if(b.progress>=1&&isGarden(b)){if(growth)growth+='|';growth+=`${b.id}:${growthStage(state,b)}`;}if(growth!==gardenSignature){gardenSignature=growth;world.sync(state,false);}ui();uiTick=0;}if(!reported&&time>3){console.info('village-next render',JSON.stringify(world.renderer.info.render),'memory',JSON.stringify(world.renderer.info.memory));reported=true;}requestAnimationFrame(loop);}
 addEventListener('storage',e=>{if(viewing)return;if(e.key===OWNER){if(otherOwnerAlive()&&owned){owned=false;if(!state.ended)state.paused=true;endPlace();showPause();toast('다른 탭이 마을을 이어받아 이 탭은 멈췄어요.');ui();}return;}
  if(e.key!==KEY||!e.newValue||owned)return;try{const next=parseSave(e.newValue);state=next;state.paused=true;corrupt=null;resetSession();if($('entranceDialog').open)prepareEntrance();showPause();ui();}catch{}});
 function prepareEntrance(){
@@ -374,6 +377,10 @@ $('visitIsland').onclick=()=>{if(!ISLAND_OPEN||!viewing||!state.otherIsland)retu
 $('returnVisit').onclick=()=>{if(sharedVisit){location.hash='';location.reload();return;}viewing=false;state=visitReturn;try{const latest=localStorage.getItem(KEY);if(latest)state=parseSave(latest);}catch{toast('최신 저장을 읽지 못해 귀환 전 기록을 보존했어요.');storageOK=false;}visitReturn=null;state.paused=true;resetSession();setVisitUI();ui();showPause();};
 $('townLibrary').onclick=()=>{if(viewing||voyage)return;closePanels();townLibrary.open();};
 $('entranceLibrary').onclick=()=>townLibrary.open();
+const photo=createPhotoMode({world,getState:()=>state,getTime:()=>time,name:()=>townName(state),notify:toast});
+for(const id of ['photoOpen','photoQuick'])$(id).onclick=()=>{if(voyage||world.entrance)return;closePanels();photo.open();};
+$('townSave').onclick=()=>{if(viewing||otherOwnerAlive())return;try{if(save('직접 저장')){townLibrary.archiveCurrent(townName(state));toast('현재 마을을 저장하고 보관함에도 담았어요.');}}catch(e){toast(e.message);}};
+$('townShare').onclick=()=>{if(voyage)return;closePanels();townLibrary.open('share');};
 $('entranceNew').onclick=()=>{if(viewing)return;$('entranceDialog').close();document.body.classList.remove('entering');modal($('newDialog'));};
 // Capture prevents hidden controls from editing a borrowed snapshot.
 document.addEventListener('click',e=>{if(!viewing)return;const button=e.target.closest('button');if(button&&!['returnVisit','visitIsland','zoomIn','zoomOut','rotate','followPlayer','homeView','overview','pause','resume','enterVillage','skipEntrance','toggleSound'].includes(button.id)){e.preventDefault();e.stopImmediatePropagation();}},true);
