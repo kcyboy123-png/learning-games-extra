@@ -19,10 +19,10 @@ export function availableVisit(s,b,net){const d=TYPES[b.type];return b.progress>
 const residentCache=new WeakMap();
 const dokdoStops=trailCells.filter(([x,y],i,a)=>a.findIndex(p=>p[0]===x&&p[1]===y)===i);
 export function residentContext(s){
- const net=network(s),key=s.buildings.map(b=>`${b.id}:${b.type}:${b.x},${b.y}:${b.dir}:${b.progress>=1}:${!!b.closed}:${b.type==='tree'?growthStage(s,b):0}`).join('|');
+ const net=network(s);let key='';for(const b of s.buildings){if(key)key+='|';key+=`${b.id}:${b.type}:${b.x},${b.y}:${b.dir}:${b.progress>=1}:${!!b.closed}:${b.type==='tree'?growthStage(s,b):0}`;}
  let value=residentCache.get(s);
  // File reload replaces the state; no cached building objects enter a different save.
- if(!value||value.key!==key||value.net!==net||value.buildings!==s.buildings){value={key,net,buildings:s.buildings,roads:roadSet(s),roadSig:[...net].join('|'),byId:new Map(s.buildings.map(b=>[b.id,b])),homes:s.buildings.filter(b=>TYPES[b.type].cap&&b.progress>=1&&!b.closed&&connected(s,b,net)),destinations:s.buildings.filter(b=>availableVisit(s,b,net))};value.poses=new Map();value.homeIds=new Set(value.homes.map(h=>h.id));residentCache.set(s,value);}
+ if(!value||value.key!==key||value.net!==net||value.buildings!==s.buildings){value={key,net,buildings:s.buildings,roads:roadSet(s),roadSig:[...net].join('|'),byId:new Map(s.buildings.map(b=>[b.id,b])),homes:s.buildings.filter(b=>TYPES[b.type].cap&&b.progress>=1&&!b.closed&&connected(s,b,net)),destinations:s.buildings.filter(b=>availableVisit(s,b,net))};value.roadCells=[...net].map(k=>{const[gx,gy]=k.split(',').map(Number);return{gx,gy};});value.poses=new Map();value.homeIds=new Set(value.homes.map(h=>h.id));residentCache.set(s,value);}
  return value;
 }
 export function syncResidents(s,people,world,context=residentContext(s)){
@@ -43,9 +43,9 @@ export function syncResidents(s,people,world,context=residentContext(s)){
   const e=entrance(s,home);world.place(n.p,e.gx,e.gy);Object.assign(n.p.g.position,homeWaitingPoint(s,home,i));
  }
 }
+const waitingRoads=new WeakMap();
 export function homeWaitingPoint(s,home,i){
- const e=home?entrance(s,home):{gx:5,gy:3},net=network(s),roads=[...net].map(k=>k.split(',').map(Number));
- roads.sort((a,b)=>(Math.abs(a[0]-e.gx)+Math.abs(a[1]-e.gy))-(Math.abs(b[0]-e.gx)+Math.abs(b[1]-e.gy))||a[1]-b[1]||a[0]-b[0]);
+ const e=home?entrance(s,home):{gx:5,gy:3},net=network(s),key=`${e.gx},${e.gy}`;let cache=waitingRoads.get(s);if(!cache||cache.net!==net){cache={net,points:new Map()};waitingRoads.set(s,cache);}let roads=cache.points.get(key);if(!roads){roads=[...net].map(k=>k.split(',').map(Number));roads.sort((a,b)=>(Math.abs(a[0]-e.gx)+Math.abs(a[1]-e.gy))-(Math.abs(b[0]-e.gx)+Math.abs(b[1]-e.gy))||a[1]-b[1]||a[0]-b[0]);cache.points.set(key,roads);}
  const [gx,gy]=roads[Math.floor(i/2)%Math.max(1,roads.length)]||[e.gx,e.gy],p=toWorld(gx,gy),side=i%2?.92:-.92,horizontal=net.has(`${gx+1},${gy}`)&&!net.has(`${gx},${gy+1}`);
  const along=Math.floor(i/Math.max(2,roads.length*2))*.52;
  return{x:p.x+(horizontal?along:side),z:p.z+(horizontal?side:along)};
@@ -96,7 +96,7 @@ export function tickResidents(s,people,dt,time,world,context=residentContext(s))
  // Rotate visit priority so a few early residents cannot reserve the only shop forever.
  for(let slot=0;slot<people.length;slot++){
   const i=(slot+Math.floor(time/8))%people.length,n=people[i],p=n.p,home=byId.get(n.home),target=byId.get(n.target);
-  const recover=()=>{p.g.visible=true;p.sitting=false;p.watering=false;p.carry.visible=false;p.route=[];n.phase='home';n.target=null;n.pose=null;n.wait=2+i;const nearest=[...net].map(k=>k.split(',').map(Number)).sort((a,b)=>{const x=toWorld(...a),y=toWorld(...b);return Math.hypot(x.x-p.g.position.x,x.z-p.g.position.z)-Math.hypot(y.x-p.g.position.x,y.z-p.g.position.z);})[0]||[5,3];world.place(p,...nearest);};
+  const recover=()=>{p.g.visible=true;p.sitting=false;p.watering=false;p.carry.visible=false;p.route=[];n.phase='home';n.target=null;n.pose=null;n.wait=2+i;let nearest=[5,3],distance=Infinity;for(const k of net){const cell=k.split(',').map(Number),point=toWorld(...cell),d=Math.hypot(point.x-p.g.position.x,point.z-p.g.position.z);if(d<distance){distance=d;nearest=cell;}}world.place(p,...nearest);};
   if(n.target&&(!target||!availableVisit(s,target,net)||!n.pose||poseOf(target).key!==n.pose.key)){recover();continue;}
   if(n.roadSig!==roadSig){n.roadSig=roadSig;if(p.route.some(q=>{const c=toCell(q.x,q.z);return q.road&&!net.has(`${c.gx},${c.gy}`);})){recover();continue;}}
   if(p.social>0||p.route.length)continue;if(n.phase==='observe'&&target){const o=origin(target.type,target.x,target.y),a=Math.atan2(o.x-p.g.position.x,o.z-p.g.position.z),d=Math.atan2(Math.sin(a-p.g.rotation.y),Math.cos(a-p.g.rotation.y));p.g.rotation.y+=d*(1-Math.exp(-dt*4));}n.wait-=dt;if(n.wait>0)continue;
@@ -109,7 +109,7 @@ export function tickResidents(s,people,dt,time,world,context=residentContext(s))
     n.pose=poseOf(b);n.target=b.id;n.phase='approach';p.route=outdoorPlace(b.type)?r:[...r,n.pose.front];n.wait=0;break;
    }
    if(!n.target){
-    n.wait=3+i;const from=toCell(p.g.position.x,p.g.position.z),near=[...net].map(k=>{const[gx,gy]=k.split(',').map(Number);return{gx,gy,d:Math.abs(gx-from.gx)+Math.abs(gy-from.gy)};}).filter(q=>q.d>0&&q.d<=3);
+    n.wait=3+i;const from=toCell(p.g.position.x,p.g.position.z),near=context.roadCells.filter(q=>{const d=Math.abs(q.gx-from.gx)+Math.abs(q.gy-from.gy);return d>0&&d<=3;});
     if(near.length)p.route=roadRoute(s,from,near[(i+n.turn)%near.length]);
    }
   }else if(n.phase==='approach'){if(outdoorPlace(target.type)){n.phase='observe';n.wait=7+(i+n.turn)%6;p.watering=gardenPlace(target.type)&&personality(n)==='gardener';bubble={p,text:residentDialogue(s,n,target.type),end:time+4};}else{p.route=[n.pose.at];n.phase='arrive';}}

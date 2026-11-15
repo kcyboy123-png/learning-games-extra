@@ -34,6 +34,7 @@ export function addResidentArt(p){
  p.residentArt={e,fallback,sprite};
  updateResidentArt(p,.65,0,false,false);
 }
+let breathTime=NaN,breath=0;
 export function updateResidentArt(p,camera,time,reduced,winter,viewTime=time){
  const a=p.residentArt;if(!a)return;
  const ready=a.e.ready&&!a.e.failed;
@@ -45,9 +46,10 @@ export function updateResidentArt(p,camera,time,reduced,winter,viewTime=time){
  if(a.pendingView!==view){a.pendingView=view;a.turnAt=viewTime;}
  if(a.view===undefined||reduced||viewTime-a.turnAt>=.06)a.view=view;
  const pose=residentPose(p,reduced,winter),index=a.view*8+pose,[,,w,h,root]=a.e.frames[index];
- if(a.frameIndex!==index){a.frameIndex=index;a.sprite.material=a.e.materials[index];a.sprite.center.set(root,2/h);}
+ if(a.frameIndex!==index){a.frameIndex=index;a.sprite.material=a.e.materials[index];a.sprite.center.set(root,2/h);a.width=w*a.e.pixel;a.height=h*a.e.pixel;}
  const moving=!p.sitting&&!p.watering&&p.moving>.08&&!reduced;
- a.sprite.scale.set(w*a.e.pixel,h*a.e.pixel*(1+(reduced?0:Math.sin(time*2)*.003*(1-p.moving))),1);
+ if(!reduced&&breathTime!==time){breathTime=time;breath=Math.sin(time*2)*.003;}
+ a.sprite.scale.set(a.width,a.height*(1+(reduced?0:breath*(1-p.moving))),1);
  a.sprite.position.y=.004+(moving?Math.abs(Math.sin(p.distance/.95*Math.PI*2))*.018*p.moving:0);
  const greeting=socialAmount(p,reduced,viewTime),style=p.id.charCodeAt(0)%3;
  a.sprite.scale.y*=1-greeting*(style===0?.045:.025);

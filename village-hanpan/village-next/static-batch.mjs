@@ -3,14 +3,13 @@ import * as T from '../lib/three.module.min.js';
 // Keep live paths to sprites/rides; skip world-matrix traversal only on static branches.
 export function freezeStaticTransforms(group){
  group.updateWorldMatrix(true,true);
- const empty=[];
  function visit(o,moving=false){
   const keep=moving||o.isSprite||!!o.userData.keepArtHierarchy||!!o.userData.ride;
-  let live=keep;for(const child of o.children)live=visit(child,keep)||live;
-  if(!keep){o.updateMatrix();o.matrixAutoUpdate=false;if(o!==group&&o.isGroup&&!o.children.length)empty.push(o);}
+  let live=keep;for(let i=o.children.length-1;i>=0;i--)live=visit(o.children[i],keep)||live;
+  if(!keep){o.updateMatrix();o.matrixAutoUpdate=false;if(o!==group&&o.isGroup&&!o.children.length)o.removeFromParent();}
   o.matrixWorldAutoUpdate=live;return live;
  }
- visit(group);group.updateMatrixWorld(true);for(const o of empty)o.removeFromParent();
+ visit(group);group.updateMatrixWorld(true);
 }
 
 // Unique rounded/extruded parts cannot share an instance buffer, but can share a draw.

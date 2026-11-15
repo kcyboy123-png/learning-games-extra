@@ -82,9 +82,9 @@ function ui(){updateTownNameUI();updateTravelUI();sound.update(!document.hidden&
  setText('calendar',`${1+Math.floor(month(state)/12)}년 차 · ${SEASONS[season(calendarMonth(state))]} · ${monthLabel(state)} ${calendarDay(state)}일`);document.body.classList.toggle('reviewing',!!state.cozyReview);setText('left',state.cozyReview?(state.cozyReview.months.length===36?'3년 평가 완료 · 계속 가꿔요':`3년 평가까지 ${mmss(realSeconds(36*MONTH-state.t))}`):'자유롭게 가꾸는 마을');$('monthBar').style.width=`${(state.t%MONTH)/MONTH*100}%`;
  setText('money',Math.floor(state.money).toLocaleString());setText('incomeRate',`1분당 ${incomePerMinute(v)<0?'−':'+'}${effectNumber(Math.abs(incomePerMinute(v)))}`);$('incomeRate').title=state.paused?'일시정지 중 · 재개하면 이 속도로 변해요':'유지비를 뺀 현재 속도 · 진행 중인 실제 시간 기준';setText('pop',`${totalPopulation(state)}명`);setText('heartScore',`${cozyGrowth(state).score}점`);setText('ecoScore',`${v.environment}점`);setText('sat',Math.round(state.sat)+'점');setText('score',state.result?ratingName(state.result.total):growth.name);setText('scoreScope',state.result?'3년 종합 평가 · 기록 고정':'마을 성장');setText('tierName',state.result?`${state.result.total}점 · 최종 기록`:`${growth.detail}`);
  setText('pause',state.paused?'▶ 재개':'❚❚ 일시정지');$('pause').disabled=state.ended;world.season(season(calendarMonth(state)));const note=['❄ 눈 덮인 겨울 · 따뜻한 집을 준비해요','🌸 벚꽃 피는 봄 · 새로운 이웃을 맞아요','☀ 초록이 짙은 여름 · 시원한 그늘을 만들어요','🍂 단풍 드는 가을 · 마을의 결실을 살펴요'][season(calendarMonth(state))];if($('seasonNote').textContent!==note)setText('seasonNote',note);
- const hs=harvestStatus(state),hb=$('navHarvest');hb.disabled=state.ended||state.island==='mist';hb.textContent=hs==='ready'?`🥬 텃밭 수확하기 +${HARVEST}`:'🥬 공동 텃밭 보기';
- const crop=$('harvestMap');crop.textContent=hs==='empty'?'🌱 씨앗 심기':hs==='seed'?'🌱 씨앗을 심었어요':hs==='sprout'?'🌱 새싹이 났어요':hs==='growing'?`🥬 자라는 중 · ${realSeconds(HARVEST_SECONDS-(state.t-state.harvestAt))}초`:hs==='ready'?`🥬 눌러서 수확 +${HARVEST}`:'🌱 수확 완료 · 다음 달에';crop.setAttribute('aria-label','공동 텃밭: '+crop.textContent);crop.disabled=state.paused||state.ended||viewing;
- crop.dataset.stage=hs;crop.style.setProperty('--growth',`${state.harvestAt===null?0:Math.min(100,(state.t-state.harvestAt)/HARVEST_SECONDS*100)}%`);crop.title='다 자라도 시들지 않아요 · 한 달에 한 번 수확';
+ const hs=harvestStatus(state),hb=$('navHarvest');hb.disabled=state.ended||state.island==='mist';setText('navHarvest',hs==='ready'?`🥬 텃밭 수확하기 +${HARVEST}`:'🥬 공동 텃밭 보기');
+ const crop=$('harvestMap');setText('harvestMap',hs==='empty'?'🌱 씨앗 심기':hs==='seed'?'🌱 씨앗을 심었어요':hs==='sprout'?'🌱 새싹이 났어요':hs==='growing'?`🥬 자라는 중 · ${realSeconds(HARVEST_SECONDS-(state.t-state.harvestAt))}초`:hs==='ready'?`🥬 눌러서 수확 +${HARVEST}`:'🌱 수확 완료 · 다음 달에');const cropLabel='공동 텃밭: '+crop.textContent;if(crop.getAttribute('aria-label')!==cropLabel)crop.setAttribute('aria-label',cropLabel);crop.disabled=state.paused||state.ended||viewing;
+ if(crop.dataset.stage!==hs)crop.dataset.stage=hs;const growthValue=`${state.harvestAt===null?0:Math.min(100,(state.t-state.harvestAt)/HARVEST_SECONDS*100)}%`;if(crop.style.getPropertyValue('--growth')!==growthValue)crop.style.setProperty('--growth',growthValue);if(!crop.title)crop.title='다 자라도 시들지 않아요 · 한 달에 한 번 수확';
  world.syncHarvest(state);
 
  setText('reviewYears',state.result&&(state.runMonths??12)<36?'이전 규칙 기록':`성장 기록 · ${Math.min(3,(state.cozyReview?cozyReviews(state).years:annualReviews(state)).length)}/3`);
@@ -98,13 +98,13 @@ function need(v){
   setText('needTitle',idea.title);setText('needWhy',idea.why);setText('needAction',idea.label);$('needAction').hidden=false;
   $('needAction').onclick=()=>{closePanels();switch(idea.action){case 'flag':startPlace('dokdoFlag');break;case 'gangchi':showGangchi();break;case 'scenic':if(world.cameraHeight<=25)$('dokdoLook').click();break;case 'dokdo':openBuild('독도');break;case 'walk':$('followPlayer').click();toast('땅을 누르거나 조이스틱을 움직여 이웃과 정원을 둘러봐요.');break;case 'garden':openBuild('조경');break;case 'shop':openBuild('먹거리');break;case 'eco':showEcoGuide();break;}};return;
  }
- const b=$('needAction'),queue=state.buildings.filter(b=>b.progress<1);let title,why,action,label;
+ const b=$('needAction'),constructing=state.buildings.some(b=>b.progress<1);let title,why,action,label;
  if(!state.harvested.length&&state.harvestAt===null){title='공동 텃밭에 씨앗을 심어 볼까요?';why=`텃밭 위 말풍선을 눌러 심어요. 약 ${realSeconds(HARVEST_SECONDS)}초 뒤 수확하면 ${HARVEST}코인을 받아요. 늦게 와도 시들지 않아요.`;action=focusHarvest;label='텃밭 가꾸러 가기';}
- else if(queue.length){title='마을이 조금씩 자라고 있어요';why='공사가 끝나는 동안 다른 곳을 꾸며 봐요.';action=()=>openBuild('조경');label='꾸미기 열기';}
+ else if(constructing){title='마을이 조금씩 자라고 있어요';why='공사가 끝나는 동안 다른 곳을 꾸며 봐요.';action=()=>openBuild('조경');label='꾸미기 열기';}
  else if(!v.live.some(b=>!b.starter&&buildingSpec(state,b.type).food)){title='어떤 가게를 열어 볼까요?';why='마음에 드는 가게를 골라 길 옆에 놓아 보세요.';action=()=>openBuild('먹거리');label='가게 둘러보기';}
  else if(v.housing<=state.pop){title='새 이웃을 맞이해 볼까요?';why='길 옆에 집을 지으면 새 이웃이 찾아와요.';action=()=>openBuild('주거');label='집 둘러보기';}
  else{title=v.energy<.9?'마을에 전기를 더 보내 볼까요?':'나만의 정원을 만들어 볼까요?';why=v.energy<.9?'태양광 설비를 길 옆에 지으면 전력과 친환경이 나아져요.':'꽃·나무·벤치를 집 가까이에 골고루 놓으면 친환경과 행복에 도움이 돼요.';action=()=>openBuild(v.energy<.9?'기반':'조경');label=v.energy<.9?'전력 시설 보기':'꾸미기 열기';}
- $('needTitle').textContent=title;$('needWhy').textContent=why;b.hidden=false;b.textContent=label;b.onclick=action;
+ setText('needTitle',title);setText('needWhy',why);b.hidden=false;setText('needAction',label);b.onclick=action;
 }
 $('needOther').onclick=()=>{const ideas=playIdeas(state);ideaIndex=(Math.max(state.island==='mist'?0:-1,ideaIndex)+1)%ideas.length;need(metrics(state));};
 function showEcoGuide(automatic=false){if(viewing||voyage)return;if(automatic){state.ecoGuideSeen=true;save('친환경 안내');}closePanels();$('ecoGuideBody').innerHTML=ecoGuideHTML(metrics(state));modal($('ecoGuideDialog'));}

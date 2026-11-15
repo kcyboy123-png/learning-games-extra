@@ -23,7 +23,7 @@ export function createPhotoMode({world:w,getState,getTime,name,notify}){
   const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=`${name().replace(/[\\/:*?"<>|]/g,'')}-${getState().island==='mist'?'독도':'마을'}-${Date.now()}.png`;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);
   status.textContent=`사진을 저장했어요 · ${c.width} × ${c.height}px`;dialog.classList.remove('photo-flash');void dialog.offsetWidth;dialog.classList.add('photo-flash');
  }catch(e){status.textContent=e.message;notify(e.message);}finally{button.disabled=false;}};
- // Canvas resizing clears WebGL after window.resize; redraw once its actual size is settled.
- new ResizeObserver(()=>{if(active)scheduleRender();}).observe(w.canvas);
+ // World's earlier observer resizes first; redraw before paint so the cleared canvas never flashes.
+ new ResizeObserver(()=>{if(active)render();}).observe(w.canvas);
  return {get active(){return active;},open(){if(active)return;saved={center:w.center.clone(),focus:document.activeElement,marker:w.marker.visible};for(const k of ['zoom','targetZoom','angle','cameraHeight','lookHeight','followPlayer','paused'])saved[k]=w[k];active=true;w.marker.visible=false;document.body.classList.add('taking-photo');dialog.querySelector('.photo-top b').textContent=getState().island==='mist'?'독도 사진관':'우리 마을 사진관';dialog.querySelector('[data-pose=lane]').textContent=getState().island==='mist'?'둘레길 풍경':'골목 풍경';dialog.querySelector('[data-pose=dokdo]').disabled=getState().island!=='mist';dialog.querySelector('[data-pose=wide]').disabled=getState().island==='mist';status.textContent='메뉴 없이 풍경만 저장해요.';dialog.showModal();preset('rabbit');},close};
 }
