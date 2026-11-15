@@ -171,7 +171,7 @@ footer nav{background:#fff8e6;border-color:#c9ab77;box-shadow:0 4px 0 #92754c33,
 
 #statusBody>div>span{flex:0 0 105px;word-break:keep-all}#statusBody>div>b{min-width:0;word-break:keep-all}#statusBody>div:first-child{display:block}#statusBody>div:first-child>b{display:block;text-align:left;font-weight:400;margin-top:6px}
 
-body.entering> :not(canvas):not(#entranceDialog):not(#error){visibility:hidden!important}
+body.entering> :not(canvas):not(#entranceDialog):not(dialog[open]):not(#toast):not(#saveRecovery):not(#error){visibility:hidden!important}
 #entranceDialog{inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:hidden}
 #entranceDialog::backdrop{background:transparent;backdrop-filter:none}
 .entrance-caption{position:absolute;bottom:max(28px,env(safe-area-inset-bottom));left:16px;right:16px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;color:#fff;font-weight:700;text-shadow:0 2px 5px #183c31}
