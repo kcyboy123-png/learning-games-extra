@@ -1,0 +1,110 @@
+body{background:#3c574b}.workspace,.workspace.crafted{background:linear-gradient(#f5f1db33,#f5f1db55),url(assets/post-packing.webp) center/cover!important}.mat{background:#fff8e7ed!important;border-color:#b3ae8a!important;box-shadow:0 12px 35px #375c4230!important}.banner{background:#fff8e9!important;color:#405d4d!important;border-color:#c9c49e!important}.hud .card{background:#fff9eeef!important;color:#405d4d!important;border-color:#c9c49e!important}.bubble{background:#fff9ee!important;border-color:#bbbf9b!important;color:#405d4d!important}.primary{background:#4c735f!important;border-color:#3c5c4b!important;color:#fffbed!important}.workspace .bubble small{font-size:0}.workspace .bubble small:after{content:'우체국 친구';font-size:13px}.subbar{background:#fff9eddd;border-radius:12px;padding:8px 14px;left:24px;top:94px;max-width:450px}.summary-box{background:#fff8e8!important}.workspace .progress-side .panel{background:#fff9efee}.workspace .stage{background:transparent}.workspace .tools{background:#fff8e8ed;border-radius:16px;padding:8px}#leave{min-height:48px;background:#fff9ee;border:2px solid #b7bd9b;color:#405d4d;border-radius:16px;padding:10px 18px;font:700 16px sans-serif}.draft-compare{position:absolute;right:18px;top:155px;width:130px;background:#fff9ee;border-radius:14px;padding:8px;font-size:12px}.draft-compare svg{max-width:110px;height:95px}
+
+.parcel-record{padding:12px 18px;background:#efe5cb;border-radius:18px;display:grid;grid-template-columns:60px 1fr;gap:5px 12px;text-align:left}.parcel-icon{grid-row:span 3;background:#b89968;border:3px solid #967b51;border-radius:9px;font-size:36px;text-align:center;color:#fff5d4}.parcel-dots{color:#557b62;letter-spacing:5px}.parcel-record small{color:#687557}
+
+#parcelSymbol{float:left;display:grid;place-items:center;width:40px;height:40px;margin-right:9px;border-radius:12px;background:#e6dbc0;color:#586f56;font-size:28px}
+
+.summary-box{animation:none!important;max-height:690px;overflow:auto;overscroll-behavior:contain}.summary-box .stamp{width:60px;height:60px;font-size:24px}.summary-box h2{font-size:23px}.summary-box p{font-size:17px}
+.hud .card.loc{min-width:230px;max-width:270px}.hud .card.loc strong{white-space:nowrap}.summary-box .stamp{animation:none!important}
+
+.workspace.postal,.story-welcome{background:url(assets/post-desk-v2.webp) center/cover!important}
+.postal .mat{background:transparent!important;border:0!important;box-shadow:none!important}
+.postal .banner{top:109px;max-width:780px;font-size:19px;padding:12px 22px;border-radius:24px;box-shadow:0 4px 0 #9d815b40}
+.postal .stage{top:191px;bottom:207px}
+.postal .progress-side{right:24px;top:195px;max-width:205px}
+.postal .parcel-item{position:absolute;left:25px;top:200px;width:125px;height:112px;transform:rotate(-7deg);pointer-events:none;filter:drop-shadow(0 7px 5px #573e3825)}
+.postal:has(.net-layout) .parcel-item{display:none}
+.postal .bubble{padding-left:98px;min-height:88px;bottom:21px;background:#fff7e7f5!important;overflow:visible;max-height:120px}
+.postal .bubble small{font-size:13px}.postal .bubble small:after{content:none}
+.resident-portrait{position:absolute;left:0;bottom:0;width:96px;height:116px;object-fit:contain}
+.postal .tools{bottom:132px;max-width:970px;gap:3px;padding:7px 12px}
+.postal .tools .btn{min-height:44px;font-size:15px}
+.postal .solid-view svg{filter:drop-shadow(0 8px 3px #7253351a)}
+.postal .edge.selected{stroke:#d4c5a1;stroke-width:9;stroke-linecap:round}
+.postal .selection-pattern{opacity:.35}
+.cap-ghost{position:fixed;z-index:999;pointer-events:none;transform:translate(-50%,-50%);font:42px sans-serif;color:#f5e8c5;text-shadow:0 2px 3px #665b3f}.postal .tools .cap-tray{background:#dfcba7;border:2px solid #b49971;touch-action:none}
+.subbar{top:82px;padding:5px 12px;font-size:14px}.subbar:empty{display:none}.hud .card.goal:has(strong:empty){display:none}
+
+/* Soft parcel materials keep the exact assessed edges and hit areas. */
+.postal .solid-view .face{stroke:#ad926b;stroke-width:1.3}
+.postal .solid-view .edge{stroke:#967f60;stroke-width:2;stroke-linecap:round}
+.postal .solid-view .edge.selected{stroke:#9fb78d;stroke-width:10}
+.postal .solid-view .edge.wrong{stroke:#c76458;stroke-width:9}
+.postal .solid-view .vertex{fill:#fff8e8;stroke:#9c896b;stroke-width:1.6}
+.postal .solid-view .vertex.wrong{fill:#ffd6cc;stroke:#b95648;stroke-width:3}
+.postal .solid-view .face.selected{stroke:#66865a;stroke-width:3.5}
+.postal .solid-view .face.wrong{stroke:#c76458;stroke-width:4.5}
+.postal .paper-grain{opacity:.27}
+.postal .progress-side .panel{background:#fff9e9!important;border:2px solid #e3d2ac;border-radius:29px 29px 29px 9px;box-shadow:0 5px 0 #bca47730;padding:18px}
+.postal .progress-side h3{font-size:16px;color:#688258;font-weight:700}
+.postal .progress-side .chip{background:#e4ecd9;color:#47613d;border:1px solid #c2d1b2;border-radius:18px;padding:9px 16px}
+.postal .tools .cap-tray{background:#e5ecd9;border:2px dashed #9caf88;border-radius:16px;color:#526c46}
+.cap-ghost{color:#c5d6b3;text-shadow:0 2px 3px #64784b;font-size:48px}
+.postal .banner{top:108px;width:calc(100% - 48px);max-width:976px;text-align:left;padding:12px 22px;background:#fffaf0!important;border-left:7px solid #92ac78}
+.postal .banner strong{display:block;font-size:26px;line-height:1.25;color:#34583f}.postal .banner small{display:block;font-size:15px;line-height:1.4;margin-top:5px;font-weight:500;color:#5b6651}
+.postal .stage{top:213px;bottom:207px}.postal .progress-side{top:219px;width:190px;max-width:190px}.postal .progress-side .chip{white-space:normal;line-height:1.5;max-width:100%;display:block}.postal .component-checklist{display:flex;flex-direction:column;align-items:stretch;gap:7px;margin:8px 0}.postal .component-checklist .btn{width:100%;justify-content:flex-start;min-height:44px;font-size:17px}.postal .component-checklist .btn[aria-pressed="true"]{background:#dceacb;border:2px solid #668950}.postal .progress-side h3{margin:0 0 8px}.postal .progress-side .note{font-size:13px;margin:8px 0 0}
+.postal .stage{top:210px;bottom:178px}.postal .tools{bottom:112px}
+.story-welcome{position:absolute;inset:0;padding:120px 170px 60px;text-align:center;color:#425d4c;overflow:auto}
+.story-welcome h2,.story-welcome p{background:#fff7e9f5;padding:12px 24px;margin:0;line-height:1.7}
+.story-welcome h2{border-radius:24px 24px 0 0;font-size:27px}
+.story-welcome p:last-of-type{border-radius:0 0 24px 24px;padding-bottom:22px}
+.story-welcome button{font:700 19px sans-serif;border:2px solid #637d63;border-radius:18px;min-height:56px;background:#fff5dd;color:#476551;padding:12px 25px;margin:18px 8px;cursor:pointer}
+.story-welcome button:first-of-type{background:#4b735b;color:#fff9e7}
+.story-art{height:205px;display:flex;justify-content:center;gap:35px;align-items:end}.story-art img{width:180px;height:205px;object-fit:contain}
+.parcel-turntable{background:radial-gradient(ellipse at 50% 65%,#c6a47a 0 28%,transparent 29%);display:flex;flex-direction:column;align-items:center}
+.parcel-turntable .rot{display:flex}.parcel-turntable small{font-size:13px;color:#66705b}
+.summary-box:has(.parcel-turntable){max-height:710px;padding:20px 28px}.summary-box:has(.parcel-turntable) .stamp{display:none}.summary-box:has(.parcel-turntable) p{margin:8px 0;font-size:15px}.summary-box:has(.parcel-turntable) .parcel-record{padding:7px 12px}
+
+/* A linen work surface separates the interactive parcel from the scenery. */
+.postal[data-task="solid"] .mat{left:176px;right:235px;top:228px;bottom:182px;background:#eff0dce8!important;border:2px solid #c1cba6!important;border-radius:48% 45% 43% 46% / 16% 18% 15% 18%;box-shadow:0 8px 0 #846e4933,inset 0 0 0 7px #f6f4df!important}
+.postal[data-task="solid"] .mat:after{content:'';position:absolute;inset:12px;border:2px dashed #b7c19f;border-radius:inherit;opacity:.7}
+.postal[data-task="solid"] .stage{left:166px;right:226px}
+.postal .banner{border:2px solid #e1cda6;border-left:8px solid #87a57a;border-radius:12px 26px 26px 12px;box-shadow:0 5px 0 #715c3526}
+.postal .banner strong{font-size:28px;letter-spacing:-.7px}
+.postal .banner small{font-size:16px;color:#52634f}
+.postal .parcel-item{left:40px;top:275px;width:120px;height:115px;transform:rotate(-5deg)}
+.postal[data-task="solid"]:before{content:'오늘 보낼 선물';position:absolute;left:34px;top:249px;width:132px;text-align:center;font-size:15px;font-weight:700;color:#4f674e;background:#fff9e9;padding:7px 0;border-radius:7px;transform:rotate(-5deg)}
+.postal .progress-side .panel{border-radius:14px 26px 26px 14px;background:#fff9e9f5!important;box-shadow:0 6px 0 #725a3526}
+.postal .progress-side .panel:before{content:'';display:block;width:58px;height:13px;margin:-25px auto 15px;transform:rotate(5deg);background:#b8c9a3d9}
+.postal .progress-side .chip{font-size:20px;text-align:center;background:#e4edd7;border:2px solid #b5caa2;box-shadow:none}
+.postal .tools{background:#fff8e9f5;border:2px solid #cbb78e;border-radius:20px;box-shadow:0 5px 0 #715c3526;padding:8px 12px;gap:6px}
+.postal .tools .btn{min-height:48px;border-radius:12px}
+.postal .tools .cap-tray{font-size:18px;min-height:50px;padding:10px 16px;background:#dce9cd;box-shadow:inset 0 0 0 3px #f6f4df}
+.postal .bubble{border-radius:26px 26px 26px 8px;border:2px solid #d9c59e;box-shadow:0 5px 0 #745c3426}
+.postal .bubble strong{font-size:18px;line-height:1.5}.postal .bubble small{color:#647e58;font-weight:700}
+.postal .primary-slot .primary{min-width:175px;min-height:66px;border-radius:23px;box-shadow:0 5px 0 #304e3d;font-size:23px}
+.postal .bubble.good{background:#edf5df!important;border-color:#96b27c}.postal .bubble.alert{background:#fff4e9!important;border-color:#c77d62}
+.postal .stage .item,.postal .stage .panel{background:#fff9eaf2;border-color:#d4c49f;border-radius:20px;box-shadow:0 4px 0 #7b654825}
+.postal .stage .item.picked{background:#e8f1dc;border-color:#709563;box-shadow:0 4px 0 #91ac7d}
+.postal button:focus-visible{outline:3px solid #345d42;outline-offset:3px}
+.postal .primary-slot{width:218px;right:26px;justify-content:flex-end}
+.postal .primary-slot .primary{max-width:100%;padding:10px 16px}
+.postal .net-board>svg{background:#8caa92!important;border:2px solid #668571;box-shadow:0 5px 0 #725c3830}
+.postal .net-board .cell{stroke:#eef2dc;stroke-opacity:.55}
+.postal:not([data-task="solid"]):not([data-task="peel"]) .parcel-item{display:none}.postal .component-checklist .btn{font-size:15px;padding:8px 10px}.postal .card-match .link-table .cell svg{width:96px;height:64px}.postal .card-match .link-table select{width:100%;min-width:80px}
+
+/* Portrait tablets use their height instead of shrinking the whole desk into a strip. */
+.portrait .btn,.portrait .btn.small,.portrait #leave,.portrait select,.portrait input{font-size:var(--reading-size);min-width:var(--touch-size);min-height:var(--touch-size)}
+.portrait .postal .banner{top:128px}.portrait .postal .banner strong{font-size:34px}.portrait .postal .banner small{font-size:var(--reading-size)}
+.portrait .hud .card small{font-size:var(--small-size)}.portrait .hud .card strong{font-size:26px}.portrait .subbar{top:99px;font-size:var(--small-size)}
+.portrait .postal .stage{top:274px;bottom:330px;overflow:auto;overscroll-behavior:contain;align-items:safe center;scrollbar-color:#91aa7e #eef0dd;scrollbar-width:thin}
+.portrait .postal .tools{bottom:204px;max-height:118px;overflow-y:auto;overscroll-behavior:contain}
+.portrait .postal .tools .btn{font-size:var(--reading-size);min-height:var(--touch-size);min-width:var(--touch-size)}
+.portrait .postal .bubble{bottom:24px;max-height:168px;min-height:142px;overflow-y:auto;right:250px;font-size:var(--reading-size)}
+.portrait .postal .bubble strong{font-size:var(--reading-size)}.portrait .postal .bubble small{font-size:var(--small-size)}
+.portrait .postal .primary-slot{bottom:49px;width:215px}.portrait .postal .primary-slot .primary{font-size:var(--reading-size);min-height:var(--touch-size)}
+.portrait .postal .note,.portrait .postal .mini,.portrait .postal .field,.portrait .postal .name,.portrait .postal .tag{font-size:var(--small-size)}
+.portrait .postal .progress-side{top:280px;width:250px;max-width:250px}.portrait .postal .progress-side .chip,.portrait .postal .progress-side h3{font-size:var(--reading-size)}
+.portrait .postal .component-checklist .btn{font-size:var(--reading-size)}
+.portrait .postal[data-task="solid"] .stage{left:72px;right:294px}.portrait .postal[data-task="solid"] .mat{left:72px;right:294px;top:280px;bottom:330px}
+.portrait .postal[data-task="solid"] .solid-view>svg{width:600px;height:600px;max-height:none}.portrait .postal .parcel-item,.portrait .postal:before{display:none}
+.portrait .postal .card-match{grid-template-columns:1fr!important;align-self:flex-start;gap:24px!important}.portrait .card-match>.row .cell>svg{width:210px;height:210px}
+.portrait .card-match .link-table .head{font-size:var(--reading-size)}.portrait .card-match .link-table .cell svg{width:120px;height:80px}
+.portrait .story-welcome{padding:125px 90px 45px}.portrait .story-welcome p,.portrait .story-welcome button{font-size:var(--reading-size)}
+.portrait .summary-box{max-height:calc(100% - 100px);overflow:auto}.portrait .summary-box p{font-size:var(--reading-size)}
+.portrait .draft-compare{top:274px;width:160px;font-size:var(--small-size)}.portrait .postal:has(.draft-compare) .stage{right:200px}
+.portrait .postal[data-task="link"] .stage{display:block}.portrait .postal[data-task="link"] .stage:before{content:'작업대를 위아래로 밀어 그림과 선택 칸을 살펴봐요';display:block;font-size:var(--small-size);color:#456447;background:#fff9e9;padding:8px 12px;border-radius:12px;margin-bottom:12px}
+.portrait .net-layout .net-board>svg{width:600px;height:auto}.portrait .net-layout>.panel{min-width:250px!important;max-width:250px!important}
+.portrait .postal:has(.draft-compare) .net-board>svg{width:500px}
+.portrait .postal[data-task="net-points"] .net-board>svg{width:520px;height:auto}
+@media(pointer:coarse) and (orientation:landscape){.postal .tools .btn{font-size:17px}.postal .progress-side .note{font-size:15px}}

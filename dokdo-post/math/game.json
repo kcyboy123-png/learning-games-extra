@@ -1,0 +1,12 @@
+{
+  "id": "box-delivery",
+  "title": "상자 배송 대작전",
+  "subject": "수학 5-2 직육면체",
+  "layout": "1024x768",
+  "scoring": {"start": 1000, "success": 10, "wrong": -10, "hint": -3, "max": 1430},
+  "activities": {"missions": 24, "reviews": 18, "final": 1},
+  "saveKey": "box-delivery:progress:v1",
+  "settingsKey": "box-delivery:settings:v1",
+  "content": "data/workshops.mjs",
+  "bgm": ""
+}

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>상자 배송 대작전</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="viewport">
+  <div id="app" class="app">
+    <div id="scene" class="scene"></div>
+    <div class="hud hud-top" id="hud">
+      <div class="card loc">
+        <span class="loc-icon" aria-hidden="true"></span>
+        <div><small>상자 배송 대작전</small><strong id="location">배송 마을</strong></div>
+      </div>
+      <div class="card goal">
+        <span class="bang" aria-hidden="true">!</span>
+        <div><small>지금 할 일</small><strong id="goal"></strong></div>
+      </div>
+      <div class="hud-right">
+        <span class="chip" id="stamps" role="status">도장 0 / 6</span>
+        <span class="chip light" id="score">1,000점</span>
+        <button class="round" id="help" type="button" aria-label="도움말">?</button>
+        <button class="round" id="pause" type="button" aria-label="메뉴">≡</button>
+      </div>
+    </div>
+    <div id="subbar" class="subbar"></div>
+    <div id="overlay" class="overlay" hidden></div>
+    <div id="loading" class="loading" role="status" aria-live="polite">
+      <div class="loading-box"><div class="loading-logo" aria-hidden="true"></div><strong>상자 배송 대작전</strong><div class="bar"><div id="loading-fill"></div></div><small id="loading-text">마을을 준비하고 있어요…</small></div>
+    </div>
+    <p id="live" class="sr-only" aria-live="polite"></p>
+    <p id="save" class="save-status" role="status"></p>
+  </div>
+</div>
+<noscript>이 게임은 자바스크립트가 필요해요.</noscript>
+<script type="module" src="app.mjs"></script>
+</body>
+</html>

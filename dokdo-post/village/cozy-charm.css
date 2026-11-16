@@ -1,0 +1,152 @@
+/* Paper calendar, coin purse and workshop tools share a quieter village palette. */
+.cozy footer{gap:12px}
+.cozy footer nav{padding:7px 10px;gap:6px;background:#dfc6a0;border:0;border-bottom:4px solid #b79b73;border-radius:25px 15px 24px 14px;box-shadow:0 6px 15px #394b3030}
+.cozy footer nav button{min-width:80px;min-height:62px;flex-direction:column;gap:3px;padding:5px 12px;border-radius:18px 12px 17px 12px;background:#fff7e3;color:#586344;box-shadow:0 2px 0 #bba27b;font-size:13px}
+.cozy footer .nav-icon{display:block;width:27px;height:27px;stroke-width:1.6}
+.cozy footer #navBuild{background:#e6efcf;color:#456a4b}.cozy footer #navNeed .nav-icon{color:#a47f9b}.cozy footer #navRemove .nav-icon{color:#a67553}.cozy footer #phoneMenuOpen .nav-icon{color:#758b8a}
+.cozy footer nav button:hover{background:#fffdf3;transform:translateY(-2px)}.cozy footer nav button:active{transform:translateY(1px);box-shadow:none}
+.cozy footer #navRemove[aria-pressed=true]{background:#a85c45;color:#fff9e8}.cozy footer #navRemove[aria-pressed=true] .nav-icon{color:inherit}
+.cozy .zoom-controls{background:none;border:0;box-shadow:none;padding:0;gap:7px}.cozy .zoom-controls button{border:0;border-radius:50%;width:46px;min-width:46px;height:46px;background:#fff8e5;box-shadow:0 3px 0 #bda77f,0 5px 12px #344b2924;color:#637555;font-size:24px}
+.cozy .zoom-controls #rotate{width:70px;min-width:70px;border-radius:23px;font-size:13px}
+@media(max-width:600px){.cozy footer{gap:6px}.cozy footer nav{padding:5px 7px;gap:5px}.cozy footer nav button{min-width:44px;min-height:56px;padding:4px 6px;font-size:12px}.cozy footer .nav-icon{width:24px;height:24px}.cozy .zoom-controls button{width:44px;min-width:44px;height:44px}.cozy .zoom-controls #rotate{width:68px;min-width:68px;flex-direction:row}.cozy .sheet,.cozy #placePanel,.cozy #need{bottom:150px}}
+.cozy header{gap:16px}
+.cozy .clock{position:relative;gap:10px;padding:12px 14px 10px;background:#fff9e9;border:0;border-top:6px solid #d09b80;border-radius:6px 6px 18px 6px;box-shadow:0 3px 0 #bb99745c,0 7px 18px #344e2925}
+.cozy .clock::before,.cozy .clock::after{content:"";position:absolute;top:-11px;width:6px;height:15px;background:#8a7053;border-radius:5px;box-shadow:1px 1px 0 #fff1c7}
+.cozy .clock::before{left:23px}.cozy .clock::after{right:23px}
+.cozy .clock b{font:700 15px/1.45 SUIT,sans-serif;color:#4c5b43;letter-spacing:-.3px}
+.season-seal{width:30px;height:34px;flex:none;fill:#dcad90;stroke:#998361;stroke-width:1.2}
+.cozy #pause{border:0;border-radius:50%;width:44px;height:44px;min-width:44px;padding:0;font-size:0;background:#eee9d7;box-shadow:none}
+.cozy #pause::after{content:'Ⅱ';font:700 18px SUIT;color:#637256}.cozy #pause[aria-label="이어서 하기"]::after{content:'▶'}
+.cozy .stats{background:#fff9e9;border:0;border-radius:12px 26px 12px 26px;padding:8px 12px;gap:4px;box-shadow:0 3px 0 #bba27d66,0 7px 18px #344e2925}
+.cozy .stats .money-pocket{position:relative;background:#f1dfab;padding:5px 12px;min-width:104px;border-radius:12px 12px 19px 19px;box-shadow:inset 0 -3px 0 #d6bd7e45}
+.cozy .stats .money-pocket small{color:#735b31}.cozy .stats .money-pocket b{font:22px/1.25 Wanted,SUIT;color:#5a4b2e}
+.cozy .stats .village-stat{border:0;padding:4px 8px;min-width:70px}.cozy .stats .village-stat small{color:#647057;font-size:12px}.cozy .stats .village-stat b{font:19px/1.35 Wanted,SUIT;color:#405a43}
+.cozy .stats .village-stat:last-child b{color:#9b5f59}.cozy .stats .village-stat:nth-child(3) b{color:#8a6c39}
+@media(max-width:820px){.cozy header{gap:8px}.cozy .clock{gap:6px;padding:10px}.cozy .clock b{font-size:13px}.season-seal{width:24px}.cozy .stats .village-stat{min-width:62px;padding:4px 6px}.cozy .stats .money-pocket{min-width:94px;padding:5px 8px}}
+@media(max-width:700px){.cozy .clock{flex:1 1 100%;padding:7px 12px;justify-content:flex-start}.cozy #pause{margin-left:auto}.cozy .stats{padding:5px;gap:0;flex:1 1 100%}.cozy .stats .village-stat{min-width:0;padding:3px}.cozy .stats .village-stat b{font-size:16px}.cozy .stats .money-pocket{min-width:0;padding:4px 7px}.cozy .stats .money-pocket b{font-size:19px}}
+
+/* A small illustrated building notebook: the picture leads, conditions stay readable. */
+.cozy #buildPanel{background:#fffaf0;border:0;border-left:9px solid #c9ad81;border-radius:7px 22px 20px 7px;padding:16px 18px;box-shadow:0 5px 0 #b49c7566,0 12px 30px #33432935;max-height:calc(100dvh - 230px)}
+.cozy #buildPanel>.row{background:#fffaf0;border-bottom:1px solid #ded6bc;padding-bottom:10px}.cozy #buildPanel>.row b{font-size:20px;color:#576349}.cozy #closeBuild{border:0;background:#eee8d7;border-radius:50%;width:44px;height:44px;min-width:44px;padding:0;font-size:13px}
+.cozy #buildGuide{font-size:13px;color:#626d57;margin:10px 0}
+.cozy #buildPanel .tabs{gap:5px;padding:0 0 6px;border-bottom:2px solid #d7c9a8}
+.cozy #buildPanel .tabs button{background:#f1ebd9;color:#59664b;border:0;border-radius:13px 13px 3px 3px;box-shadow:none;min-height:44px;font-weight:700}
+.cozy #buildPanel .tabs button.on{background:#648363;color:#fffdf4;box-shadow:inset 0 -3px #476447}
+.cozy #buildList{gap:12px}.cozy #buildList button{grid-template-columns:64px minmax(0,1fr);gap:6px 8px;padding:10px;background:#fffdf6;border:1px solid #e7dfc9;border-bottom:3px solid #ddd0af;border-radius:15px 8px 15px 8px;box-shadow:none}
+.cozy #buildList button:not(:disabled):hover{background:#f1f4df;border-color:#a5b78e;transform:translateY(-1px)}
+.cozy #buildList .build-thumb{width:64px;height:64px;border-radius:50%;box-shadow:none}
+.cozy #buildList .build-head{gap:4px}.cozy #buildList .build-head b{font-size:16px;color:#415c48}.cozy #buildList .build-price{font:700 15px/1.4 SUIT,sans-serif;color:#805d29}.cozy #buildList .build-price small{font-size:11px;color:#7b6743}
+.cozy #buildList .build-effects{padding:7px 0 0;border-top:1px dotted #d5cbb0;border-radius:0;background:transparent;color:#5b684e;font-size:13px;font-weight:400;line-height:1.5}
+.cozy #buildList .build-effects::first-line{font-weight:700;color:#6e572e}
+.cozy #buildList button.population-locked{background:#f3f1e8;border-style:solid;border-color:#e1ddcf;box-shadow:none}.cozy #buildList .population-locked .build-thumb{filter:saturate(.65);opacity:.85}.cozy #buildList .population-locked .build-action{font-size:12px;color:#6b6656;line-height:1.4}
+@media(max-width:700px){.cozy #buildPanel{padding:12px;border-left-width:6px;max-height:calc(100dvh - 315px);bottom:150px}.cozy #buildPanel>.row b{font-size:18px}.cozy #buildPanel .tabs{gap:5px}.cozy #buildList{gap:8px}.cozy #buildList button{grid-template-columns:1fr;padding:10px;gap:6px}.cozy #buildList .build-thumb{width:72px;height:72px;justify-self:center}.cozy #buildList .build-head b{font-size:15px}.cozy #buildList .build-effects{font-size:12px}.cozy #buildList .build-action{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.cozy footer nav button:hover,.cozy #buildList button:not(:disabled):hover{transform:none}}
+
+/* Walking stays in the same corner; the action dock reserves its space. */
+.cozy #dpad{display:flex;position:fixed;left:max(16px,env(safe-area-inset-left));bottom:calc(18px + env(safe-area-inset-bottom));width:104px;gap:5px;z-index:4}
+.cozy #dpad #moveStick{display:block;position:relative;left:auto;bottom:auto;width:104px;height:104px;min-height:104px;border:3px solid #fff8e5;background:radial-gradient(circle at 45% 38%,#fff8e9ee,#d9d9b6d9);box-shadow:0 3px 0 #8a936655,0 5px 16px #37533c25,inset 0 2px 7px #68764a24}
+.cozy #stickKnob{left:29px;top:29px;width:40px;height:40px;background:radial-gradient(circle at 35% 25%,#a9c38f,#66875e);border:2px solid #f9f5d8;box-shadow:0 3px 0 #4e6e4e66,0 4px 8px #344c3533;box-sizing:border-box}
+.cozy .stick-cross{font:64px/98px SUIT,sans-serif;color:#7a906b45}
+.cozy #moveHint{display:block;font-size:12px;color:#39553e;background:#fff8e7e8;padding:2px 9px;border-radius:9px}
+.cozy #dpad #followPlayer{width:104px;height:44px;min-height:44px;font:700 13px SUIT,sans-serif;background:#fff8e7;border-radius:14px;border:1px solid #d0bc93}
+.cozy #dpad #moveStick:focus-visible{outline:3px solid #40664a;outline-offset:3px}
+.cozy:has(#placePanel.open) #moveStick,.cozy:has(#pauseOverlay:not([hidden])) #moveStick{filter:saturate(.35);opacity:.65}
+.cozy #need{bottom:210px;max-height:calc(100dvh - 320px)}
+@media(max-width:980px){.cozy footer{left:136px;right:12px;transform:none;width:auto;max-width:none;justify-content:flex-end}.cozy footer nav{flex:1}.cozy footer nav button{min-width:44px;padding:5px 7px}}
+@media(max-width:700px){.cozy footer{left:116px;right:8px;flex-wrap:wrap;gap:7px}.cozy footer nav{order:2;flex-basis:100%;gap:4px;padding:5px}.cozy footer nav button{min-width:44px;min-height:56px;padding:4px 2px;font-size:12px}.cozy .zoom-controls{margin-left:auto}.cozy #dpad{left:max(10px,env(safe-area-inset-left));bottom:calc(14px + env(safe-area-inset-bottom));width:92px;gap:3px}.cozy #dpad #moveStick{width:92px;height:92px;min-height:92px}.cozy #stickKnob{left:23px;top:23px}.cozy .stick-cross{font-size:55px;line-height:86px}.cozy #dpad #followPlayer{width:92px}.cozy #need{bottom:180px;max-height:calc(100dvh - 325px)}.cozy .village-sign{bottom:175px}}
+@media(max-width:370px){.cozy footer{left:104px}.cozy footer nav{gap:2px;padding:4px}.cozy footer nav button{min-width:44px}.cozy #dpad{left:6px}.cozy footer .nav-icon{width:22px;height:22px}}
+@media(max-height:480px){.cozy #dpad{bottom:calc(8px + env(safe-area-inset-bottom));width:92px}.cozy #dpad #moveStick{width:92px;height:92px;min-height:92px}.cozy #stickKnob{left:23px;top:23px}.cozy .stick-cross{line-height:86px}.cozy #moveHint{display:none}.cozy #dpad #followPlayer{width:92px}.cozy #need{left:118px;bottom:95px;max-height:calc(100dvh - 180px)}}
+@media(max-width:700px) and (min-height:481px){.cozy .sheet,.cozy #placePanel,.cozy #buildPanel{bottom:190px;max-height:calc(100dvh - 350px)}}
+@media(min-width:701px) and (max-width:1100px) and (min-height:481px){.cozy .sheet,.cozy #buildPanel{bottom:210px;max-height:calc(100dvh - 340px)}}
+@media(min-width:821px) and (min-height:481px){body.cozy #placePanel,body.cozy #infoPanel{max-height:calc(100dvh - 320px)}}
+@media(max-height:480px){.cozy .sheet,.cozy .sheet.open,.cozy #buildPanel,.cozy #buildPanel.open,.cozy #placePanel{left:132px;right:12px;top:auto;transform:none;width:auto;bottom:108px;max-height:calc(100dvh - 200px)}}
+
+.balance-note{max-width:420px;margin:0;padding:10px 14px;border-radius:12px;background:#fff8e8;color:#34503f;font:600 14px/1.6 SUIT,sans-serif;text-shadow:none}
+@media(max-height:480px){.balance-note{max-width:460px;font-size:12px;padding:6px 10px}}
+
+/* Original creator mark, sized to remain secondary to the village. */
+.maker-credit{display:flex!important;align-items:center;gap:7px;line-height:1.3}.maker-credit img{width:28px;height:28px;object-fit:contain;border-radius:50%;background:#fffdf4;flex:none}.village-sign .maker-credit{justify-content:flex-end;margin-top:5px}.village-sign .maker-credit span{font-size:12px;letter-spacing:0}.entrance-welcome .maker-credit img{width:32px;height:32px}
+
+.cozy.reviewing #left{display:block!important;font-size:11px;color:#5c6953;margin-top:2px}#reviewDialog{max-height:85dvh;overflow:auto}#reviewDialog .year-records{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}#reviewDialog .year-record p{font-size:14px;line-height:1.5}#reviewDialog .year-record small{display:block;line-height:1.6}@media(max-width:700px){#reviewDialog .year-records{grid-template-columns:1fr}}
+
+.place-more-short{display:none}#placeQuick{display:none}.place-actions{display:contents}#placeMore summary{min-height:44px;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;cursor:pointer}#placeMore summary::before{content:'＋'}#placeMore[open] summary::before{content:'−'}
+/* On phones, keep the map clear and pin placement actions outside the scrolling details. */
+@media(max-width:700px), (max-height:480px) and (max-width:1000px){
+ .cozy:has(#buildPanel.open,#placePanel.open) #dpad,.cozy:has(#buildPanel.open,#placePanel.open) footer nav,.cozy:has(#buildPanel.open,#placePanel.open) .village-sign{display:none}
+ .cozy:has(#buildPanel.open,#placePanel.open) footer{left:auto;right:max(8px,env(safe-area-inset-right));bottom:auto;top:164px;width:auto;transform:none}
+ .cozy:has(#buildPanel.open,#placePanel.open) .zoom-controls{flex-direction:row;gap:8px}
+ .cozy #buildPanel,.cozy #buildPanel.open,.cozy #placePanel,.cozy #placePanel.open{left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));top:auto;bottom:calc(8px + env(safe-area-inset-bottom));width:auto;max-width:none;transform:none;max-height:min(300px,40dvh);padding:6px 12px;border-radius:18px;box-sizing:border-box}
+ .cozy #buildPanel.open,.cozy #placePanel.open{display:flex;flex-direction:column;overflow:hidden}
+ .cozy #buildPanel>.row,.cozy #placePanel>.row{position:static;flex:none;margin:0;padding:0 0 6px;min-height:44px}
+ .cozy #buildPanel>.row b,.cozy #placePanel>.row b{font-size:16px}
+ .cozy #buildPanel .tabs{flex:none;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:4px 0;padding:0 0 6px}
+ .cozy #buildGuide{display:none}
+ .cozy #buildList{overflow:auto;overscroll-behavior:contain;min-height:0;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:max-content;align-content:start;gap:8px;margin:4px 0;padding-bottom:4px}
+ .cozy #buildList button{grid-template-columns:40px minmax(0,1fr);gap:4px 6px;padding:8px;min-width:0}
+ .cozy #buildList .build-thumb{width:40px;height:40px;align-self:start}
+ .cozy #buildList .build-head b{font-size:14px;line-height:1.35}
+ .cozy #buildList .build-price{font-size:14px;flex-wrap:wrap;white-space:normal}
+ .cozy #buildList .build-effects{font-size:12px;padding-top:4px;line-height:1.4}
+ .cozy #placePanel,.cozy #placePanel.open{height:auto;max-height:200px;background:#fffaf0}
+ .cozy #placePanel:has(#placeMore[open]){height:min(390px,46dvh);max-height:46dvh}
+ .cozy #placePanel .place-body{flex:1;overflow:auto;overscroll-behavior:contain;min-height:0}
+ .cozy #placePanel #placeHint,.cozy #placePanel #placeCost{font-size:13px;line-height:1.4;margin:4px 0}
+ .cozy #placePanel #placeBudget{font-size:13px;margin:4px 0;padding:5px 8px}
+ .cozy #placeQuick{display:block;white-space:pre-line;font-size:14px;font-weight:700;line-height:1.5;margin:6px 0;color:#594219}
+ .cozy #placeMore summary{font-size:13px;color:#536c4b}
+ .cozy #placePanel #placeDecision,.cozy #placePanel #fundingAdvice{font-size:13px;line-height:1.5;padding:8px;margin:4px 0}
+ .cozy #placePanel #placeDecision::first-line{font-size:14px}
+ .cozy #placePanel .place-actions{display:flex;flex:none;gap:8px;padding-top:6px;background:#fffdf3}
+ .cozy #placePanel .place-actions button{min-height:48px;margin:0;padding:8px;font-size:14px}
+ .cozy #placePanel #rotatePlace{flex:0 0 auto}
+ .cozy #placePanel #confirm{position:static;flex:1;min-width:0;box-shadow:none}
+ .cozy #placePanel #confirm[hidden]{display:none}
+ .cozy #placePanel #cancelPlace{min-height:44px;padding:8px;font-size:14px}
+ .cozy:has(#buildPanel.open,#placePanel.open) .clock{display:none}
+ .cozy #placePanel>.row b{margin-right:68px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .cozy #placeMore{margin:0}
+ .cozy #placeMore summary{position:absolute;top:6px;right:88px;z-index:4;width:60px;min-height:44px;justify-content:center;gap:3px;border-radius:12px;background:#eee8d7}
+ .cozy .place-more-long{display:none}.cozy .place-more-short{display:inline}
+ .cozy #placePanel:not(:has(#placeMore[open])) .place-body>:not(#placeCost):not(#placeBudget):not(#placeHint):not(#placeMore){display:none}
+ .cozy #placePanel:not(:has(#placeMore[open])) #placeBudget:not(.short){display:none}
+ .cozy #placePanel:not(:has(#placeMore[open])):has(#confirm:not([hidden])) #placeHint{display:none}
+ .cozy #placePanel:not(:has(#placeMore[open])):has(#confirm[hidden]) #placeCost{display:none}
+
+}
+@media(max-width:370px) and (min-height:481px){
+ .cozy #buildPanel,.cozy #placePanel{padding-inline:8px}
+ .cozy #buildList button{grid-template-columns:32px minmax(0,1fr);padding:6px;gap:4px}
+ .cozy #buildList .build-thumb{width:32px;height:32px}
+}
+@media(max-width:700px) and (min-height:481px){
+ .cozy:has(#buildPanel.open,#placePanel.open) footer{top:auto;bottom:calc(min(300px,40dvh) + 20px + env(safe-area-inset-bottom))}
+ .cozy:has(#placePanel.open) footer{bottom:calc(200px + 20px + env(safe-area-inset-bottom))}
+ .cozy:has(#placePanel.open #placeMore[open]) footer{bottom:calc(46dvh + 20px + env(safe-area-inset-bottom))}
+}
+@media(max-width:700px) and (min-height:481px){
+ .cozy #buildPanel .tabs{display:flex;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior:contain;scroll-padding-inline:4px}
+ .cozy #buildPanel .tabs button{flex:0 0 23%;min-width:62px}
+}
+@media(max-height:480px) and (max-width:1000px){
+ .cozy #buildPanel,.cozy #buildPanel.open,.cozy #placePanel,.cozy #placePanel.open{left:auto;right:max(8px,env(safe-area-inset-right));top:8px;bottom:calc(8px + env(safe-area-inset-bottom));width:min(290px,44vw);height:auto;max-height:none}
+ .cozy #placePanel,.cozy #placePanel.open{top:auto;max-height:200px}
+ .cozy #placePanel:has(#placeMore[open]){height:calc(100dvh - 16px);max-height:calc(100dvh - 16px)}
+ .cozy:has(#buildPanel.open,#placePanel.open) footer{top:auto;bottom:12px;right:calc(min(290px,44vw) + 20px)}
+ .cozy:has(#buildPanel.open,#placePanel.open) .zoom-controls{flex-direction:row}
+ .cozy:has(#buildPanel.open,#placePanel.open) header{right:calc(min(290px,44vw) + 20px);width:auto;flex-wrap:wrap;gap:8px}
+ .cozy:has(#buildPanel.open,#placePanel.open) .clock{padding:4px 8px;gap:6px}
+ .cozy:has(#buildPanel.open,#placePanel.open) .stats{flex-basis:100%;padding:5px;gap:0}
+ .cozy:has(#buildPanel.open,#placePanel.open) .stats .village-stat{flex:1;min-width:0;padding:3px}
+ .cozy:has(#buildPanel.open,#placePanel.open) .stats .village-stat b{font-size:15px}
+ .cozy:has(#buildPanel.open,#placePanel.open) .stats .village-stat small{font-size:11px}
+ .cozy:has(#buildPanel.open,#placePanel.open) .stats .money-pocket{flex:1.3;min-width:0;padding:4px}
+}
+
+/* Small illustrated tools retain the existing touch targets and map space. */
+.cozy footer .nav-icon{width:30px;height:30px;fill:none;stroke-width:1.25;stroke-linecap:round;stroke-linejoin:round;margin:0}
+.season-seal{width:32px;height:36px;fill:none;stroke-width:1.25;stroke-linecap:round;stroke-linejoin:round}
+.coin-stamp{width:22px;height:22px;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}.coin-stamp path[fill="#d0ab54"]{fill:#d0ab54}
+.cozy #pause{background:linear-gradient(#f8f4e7,#e5e9d1);border:1px solid #cbd2b5;box-shadow:inset 0 1px #fffdf2,0 2px 0 #52634212}
+.cozy #pause::after{display:block;width:12px;height:15px;margin:auto;content:'';background:linear-gradient(90deg,#5f7960 0 30%,transparent 30% 70%,#5f7960 70%);border-radius:1px}
+.cozy #pause[aria-label="이어서 하기"]::after{content:'';background:#5f7960;clip-path:polygon(12% 0,100% 50%,12% 100%)}
+@media(max-width:600px){.cozy footer .nav-icon{width:26px;height:26px}.season-seal{width:26px}.coin-stamp{width:19px;height:19px}}

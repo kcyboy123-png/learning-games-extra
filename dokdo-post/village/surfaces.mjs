@@ -1,0 +1,97 @@
+import * as T from '../lib/three.module.min.js';
+
+// Small, deterministic, shared material maps: no network assets or per-building textures.
+export const surfaceTime={value:0},surfaceWinter={value:0};
+const maps=new Map();
+let architectureArt;
+function paintArchitecture(kind,ctx,map){
+ if(kind==='stone'){
+  const image=new Image();image.onload=()=>{ctx.globalAlpha=.26;ctx.drawImage(image,40,25,140,55,0,0,256,256);ctx.globalAlpha=1;map.needsUpdate=true;};
+  image.src=new URL('./assets/scenario-stone.webp',import.meta.url).href;return;
+ }
+ const quadrant={plaster:[0,0],wood:[1,0],roof:[0,1],stone:[1,1]}[kind];
+ if(!quadrant||typeof Image==='undefined')return;
+ architectureArt??=new Promise(resolve=>{
+  const image=new Image();image.onload=()=>resolve(image);image.onerror=()=>resolve(null);
+  image.src=new URL('./assets/architecture-study-20261102.png',import.meta.url).href;
+ });
+ architectureArt.then(image=>{
+  if(!image)return;
+  const w=image.naturalWidth/2,h=image.naturalHeight/2;
+  // Preserve the existing palette and seasonal shaders beneath the shared painted grain.
+  ctx.globalAlpha=kind==='plaster'?.16:kind==='wood'?.34:kind==='roof'?.24:.32;
+  ctx.drawImage(image,quadrant[0]*w,quadrant[1]*h,w,h,0,0,256,256);
+  ctx.globalAlpha=1;map.needsUpdate=true;
+ });
+}
+const palettes={
+ fabric:['#f6e7c3','#d9846d','#b23a3a'],
+ wood:['#d4c3a1','#e6d6b5','#b59467','#ab855b','#6b4f3a','#3f2e22','#8c7a63','#8e6b4a','#a9805a','#8e6a4a','#8b6a4a','#956e51','#bd9869','#b28b60','#7a5b41','#6f5139','#c9a97a','#d6bb8d'],
+ plaster:['#f7f7f2','#f4f1e8','#ecebe4','#fff2c9','#f1e7d2','#eadfc9','#f1e3c3','#f6e4c0','#e6d4b0','#efdcb6','#e8dcc4','#f5e9d2','#e9e4d4','#d9d2c0'],
+ stone:['#b3aa90','#c6bba0','#e0cfaa','#b8bcad','#eadbb9','#eedfc0','#e5d6b5','#edddba','#e8d7b3','#ead7ac','#eedfb9','#e5cf9f','#b8ac90','#bfb294','#a9a99c','#9e8f78','#a39276','#c8b693','#9d9480','#a09374','#cdc6a6'],
+ leaf:['#7fa857','#97ba67','#6a9850','#e9a4b4','#f4c0ca','#d9929f'],
+ roof:['#53646a','#3d5056','#8c5545','#6c4039','#719784','#618b79','#5c8170','#4d7362','#52745e','#385443','#4a6a70','#3a5459','#5f7b6b','#4b6457','#3d4247','#2c3034','#7a3b32','#5a2a24','#7d8b8e','#a77760','#825743','#7b926a','#5c7653','#7d6b52','#7d7d74','#6fa08a','#4a7fa6']
+};
+// Expansion buildings share the same grain and winter roof treatment as the first cottages.
+palettes.wood.push('#cbb58d','#d1bb94','#dcc9a4','#e1d0ad','#e9d8b1','#9b8262','#826b50','#bda785','#d7b68e','#c8af89','#c19975','#d7c29b','#b99670','#c5a177','#c9ad83','#d5ba92','#8e7558','#bba17b','#b99a6a','#b39059','#bc9c60');
+palettes.plaster.push('#f4ddbc','#f6e5c8','#f1d6c3','#c4d8d2','#e9dfb9','#f8df9e','#f2e4cb','#f3ead6','#f1dbc5','#e7e6cf','#c67d65','#e8cfc2','#eee0c6');
+palettes.stone.push('#e4d4b6','#d8d0b9','#bcad8d','#d7d8cd','#c7c6b3','#a7b4ba');
+palettes.stone.push('#aaa28f','#b5aa96','#aca18d','#b6ad9b','#bbb19e','#b1a896','#a69b84','#a29882');
+palettes.roof.push('#be6554','#a85549','#64879a','#4b6b7a','#6e99a6','#537786','#73968c','#57796f','#7b98a9','#b988a4');
+function texture(kind){
+ if(maps.has(kind))return maps.get(kind);
+ const c=document.createElement('canvas');c.width=c.height=kind==='grass'?1024:256;const ctx=c.getContext('2d');let seed=1729;
+ const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+ ctx.fillStyle='#f4f3ef';ctx.fillRect(0,0,c.width,c.height);
+ for(let i=0;i<2400;i++){const v=175+Math.floor(rand()*75);ctx.fillStyle=`rgba(${v},${v},${v},${kind==='grass'||kind==='leaf'?.08:kind==='plaster'?.18:.27})`;ctx.fillRect(rand()*256,rand()*256,1+rand()*3,1+rand()*3);}
+ if(kind==='grass'||kind==='leaf'){
+  for(let i=0;i<160;i++){const x=rand()*256,y=rand()*256,r=3+rand()*21;const gr=ctx.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,'#7d9e6020');gr.addColorStop(1,'#ffffff00');ctx.fillStyle=gr;ctx.fillRect(x-r,y-r,r*2,r*2);}
+  for(let i=0;i<400;i++){const x=rand()*256,y=rand()*256;ctx.strokeStyle=i%3?'#a0ab7825':'#ffffff40';ctx.lineWidth=.6+rand();ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+rand()*3-1.5,y-2-rand()*4);ctx.stroke();}
+ }
+ if(kind==='fabric'){for(let i=0;i<256;i+=4){ctx.fillStyle=i%8?'#77705c0b':'#fffbea38';ctx.fillRect(i,0,1,256);ctx.fillRect(0,i,256,1);}for(let i=4;i<256;i+=10){ctx.fillStyle='#9b87633b';ctx.fillRect(i,6,5,1);ctx.fillRect(i,248,5,1);}}
+ if(kind==='wood')for(let i=0;i<90;i++){ctx.strokeStyle=i%4?'#775d3933':'#fff4d077';ctx.lineWidth=.4+rand();ctx.beginPath();let x=rand()*256;ctx.moveTo(x,0);for(let y=0;y<=256;y+=8)ctx.lineTo(x+Math.sin(y*.04+i)*2,y);ctx.stroke();}
+ if(kind==='wood')for(const [x,y] of [[65,70],[192,184]]){for(let k=1;k<10;k++){ctx.strokeStyle='#71523730';ctx.lineWidth=.7;ctx.beginPath();ctx.ellipse(x,y,2+k*1.5,5+k*3.3,.1,0,Math.PI*2);ctx.stroke();}}
+ if(kind==='plaster')for(let y=0;y<256;y++){const eave=.14*Math.exp(-y/30),base=.04*Math.exp(-(255-y)/20);ctx.fillStyle=`rgba(100,76,44,${eave+base})`;ctx.fillRect(0,y,256,1);}
+ if(kind==='roof')for(let y=0;y<256;y+=32){ctx.fillStyle='#3b4c5735';ctx.fillRect(0,y,256,2);ctx.fillStyle='#ffffff40';ctx.fillRect(0,y+2,256,1);for(let x=(y/32%2)*32;x<256;x+=64){ctx.fillStyle='#3b4c5720';ctx.fillRect(x,y,1,32);}}
+ if(kind==='stone'){
+  for(let i=0;i<22;i++){const x=rand()*256,y=rand()*256,r=12+rand()*34,g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,i%3?'#8b999318':'#ffffff55');g.addColorStop(1,'#ffffff00');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}
+  for(let i=0;i<240;i++){ctx.strokeStyle=i%4?'#7f8b861f':'#fff8df66';ctx.lineWidth=.7;const x=rand()*256,y=rand()*256;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+rand()*6,y+rand()*2);ctx.stroke();}
+ }
+ const map=new T.CanvasTexture(c);map.colorSpace=T.SRGBColorSpace;map.wrapS=map.wrapT=T.RepeatWrapping;map.anisotropy=4;map.userData.shared=true;
+ if(kind==='grass'){
+  map.repeat.set(.12,.12);
+  // Detailed neutral meadow albedo is softly blended so paths and buildings remain legible.
+  const art=new Image();art.onload=()=>{ctx.fillStyle='#fffef5';ctx.fillRect(0,0,1024,1024);ctx.globalAlpha=.36;ctx.drawImage(art,0,0,1024,1024);ctx.globalAlpha=1;for(let i=0;i<120;i++){const x=rand()*1024,y=rand()*1024,r=24+rand()*70,g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,i%3?'#8d995718':'#fff8ce22');g.addColorStop(1,'#ffffff00');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}map.needsUpdate=true;};
+  art.src=new URL('./assets/scenario-meadow.webp',import.meta.url).href;
+ }
+ paintArchitecture(kind,ctx,map);maps.set(kind,map);return map;
+}
+export function surfaceOptions(color){
+ if(color==='#7cc5be')return{onBeforeCompile(shader){shader.uniforms.streamTime=surfaceTime;shader.uniforms.streamWinter=surfaceWinter;shader.vertexShader='varying vec2 vStreamUv;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvStreamUv=uv;');shader.fragmentShader='varying vec2 vStreamUv;uniform float streamTime,streamWinter;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nfloat flow=streamTime*(1.-streamWinter);float wave=sin(vStreamUv.y*96.-flow*1.05+sin(vStreamUv.x*10.+flow*.35)*1.2)*.72+sin(vStreamUv.y*165.+vStreamUv.x*24.-flow*.75)*.28;float streamCenter=.5+.07*sin(vStreamUv.y*15.)+.025*sin(vStreamUv.y*37.);float edge=clamp(pow(abs(vStreamUv.x-streamCenter)*2.,2.),0.,1.);diffuseColor.rgb*=mix(vec3(.58,.88,1.06),vec3(1.13,1.09,.97),edge);float crossing=sin(vStreamUv.x*26.+sin(vStreamUv.y*50.-flow*.4))+sin(vStreamUv.y*210.-flow*.7);float caustic=1.-smoothstep(.02,.13,abs(crossing));diffuseColor.rgb+=vec3(.10,.16,.14)*smoothstep(.82,1.,wave)*(1.-streamWinter);diffuseColor.rgb+=vec3(.045,.068,.054)*caustic*(1.-edge*.65)*(1.-streamWinter);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.66,.82,.84),streamWinter*.28);');},customProgramCacheKey:()=> 'village-stream-v2'};
+
+ const kind=color==='#9cbd6e'?'grass':Object.keys(palettes).find(k=>palettes[k].includes(color));
+ if(!kind){if(['#ddc990','#9cab83','#8fd1c7','#c1d9cb','#dbe1bf'].includes(color))return{roughness:.32,onBeforeCompile(shader){shader.vertexShader='varying vec3 vWindowPoint;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvWindowPoint=position;');shader.fragmentShader='varying vec3 vWindowPoint;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nfloat reflection=pow(max(0.,sin((vWindowPoint.x+vWindowPoint.y*.55)*13.)),12.);float sky=smoothstep(-.35,.45,vWindowPoint.y);diffuseColor.rgb=mix(diffuseColor.rgb,mix(vec3(.91,.74,.46),vec3(.69,.87,.90),sky),.10);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.94,.97,.92),reflection*.18);');},customProgramCacheKey:()=> 'village-window-v2'};return{};}const map=texture(kind);
+ const options={map,bumpMap:map,bumpScale:kind==='roof'?.018:kind==='stone'?.018:kind==='wood'?.024:kind==='plaster'?.002:kind==='fabric'?.006:0,roughness:kind==='roof'?.64:kind==='fabric'?.99:.92};
+ if(kind==='grass')Object.assign(options,{onBeforeCompile(shader){
+  shader.uniforms.groundWinter=surfaceWinter;
+  shader.vertexShader='varying vec3 meadowPoint;\n'+shader.vertexShader;
+  shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nmeadowPoint=(modelMatrix*vec4(transformed,1.)).xyz;');
+  shader.fragmentShader='varying vec3 meadowPoint; uniform float groundWinter;\n'+shader.fragmentShader;
+  shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+   float turfPatch=.5+.30*sin(meadowPoint.x*.26+sin(meadowPoint.z*.18)*1.7)+.20*sin(meadowPoint.z*.22-meadowPoint.x*.18);
+   vec3 turf=mix(vec3(.70,.86,.67),vec3(1.06,1.04,.83),smoothstep(.04,.96,turfPatch));
+   diffuseColor.rgb*=mix(turf,vec3(1.),groundWinter);
+   float blades=sin(meadowPoint.x*36.+sin(meadowPoint.z*24.))*sin(meadowPoint.z*42.+meadowPoint.x*13.);
+   diffuseColor.rgb*=1.+blades*.028*(1.-groundWinter);`);
+ },customProgramCacheKey:()=> 'meadow-ground-organic10'});
+ if(kind==='roof'||color==='#d9d2c0')Object.assign(options,{
+  onBeforeCompile(shader){
+   shader.uniforms.roofWinter=surfaceWinter;
+   shader.vertexShader='varying float vRoofUp;\n'+shader.vertexShader;
+   shader.vertexShader=shader.vertexShader.replace('#include <defaultnormal_vertex>','#include <defaultnormal_vertex>\nvRoofUp=dot(normalize(transformedNormal),normalize(mat3(viewMatrix)*vec3(0.,1.,0.)));');
+   shader.fragmentShader='varying float vRoofUp;uniform float roofWinter;\n'+shader.fragmentShader;
+   shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>','#include <color_fragment>\nfloat snow=roofWinter*smoothstep(.28,.82,vRoofUp);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.84,.91,.92),snow*.96);');
+  },customProgramCacheKey:()=> 'village-roof-snow-v1'
+ });
+ return options;
+}

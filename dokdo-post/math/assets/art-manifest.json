@@ -1,0 +1,212 @@
+{
+  "world": {
+    "width": 1536,
+    "height": 1024,
+    "start": [
+      890,
+      455
+    ],
+    "places": [
+      {
+        "id": "w1",
+        "door": [
+          550,
+          290
+        ]
+      },
+      {
+        "id": "w2",
+        "door": [
+          875,
+          290
+        ]
+      },
+      {
+        "id": "w3",
+        "door": [
+          1218,
+          290
+        ]
+      },
+      {
+        "id": "w4",
+        "door": [
+          565,
+          805
+        ]
+      },
+      {
+        "id": "w5",
+        "door": [
+          892,
+          805
+        ]
+      },
+      {
+        "id": "w6",
+        "door": [
+          1250,
+          805
+        ]
+      },
+      {
+        "id": "final",
+        "door": [
+          180,
+          670
+        ]
+      }
+    ],
+    "walkRects": [
+      [
+        32,
+        320,
+        1440,
+        96
+      ],
+      [
+        448,
+        256,
+        192,
+        128
+      ],
+      [
+        800,
+        256,
+        160,
+        128
+      ],
+      [
+        1120,
+        256,
+        192,
+        128
+      ],
+      [
+        736,
+        320,
+        288,
+        256
+      ],
+      [
+        512,
+        320,
+        96,
+        288
+      ],
+      [
+        1184,
+        320,
+        96,
+        288
+      ],
+      [
+        416,
+        544,
+        864,
+        96
+      ],
+      [
+        416,
+        544,
+        64,
+        320
+      ],
+      [
+        1408,
+        320,
+        96,
+        544
+      ],
+      [
+        416,
+        800,
+        1088,
+        96
+      ],
+      [
+        480,
+        768,
+        160,
+        96
+      ],
+      [
+        800,
+        768,
+        160,
+        96
+      ],
+      [
+        1152,
+        768,
+        192,
+        96
+      ],
+      [
+        32,
+        320,
+        96,
+        192
+      ],
+      [
+        0,
+        416,
+        64,
+        288
+      ],
+      [
+        0,
+        608,
+        256,
+        128
+      ]
+    ]
+  },
+  "sprites": {
+    "hero": {
+      "columns": 4,
+      "rows": 2,
+      "foot": [
+        192,
+        460
+      ],
+      "frameWidth": 384,
+      "frameHeight": 512,
+      "screenHeight": 128,
+      "order": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ]
+    },
+    "moa": {
+      "columns": 4,
+      "rows": 2,
+      "foot": [
+        192,
+        460
+      ],
+      "frameWidth": 384,
+      "frameHeight": 512,
+      "screenHeight": 88,
+      "order": [
+        "down",
+        "left",
+        "right",
+        "up"
+      ]
+    }
+  },
+  "provenance": {
+    "provider": "Scenario",
+    "model": "model_openai-gpt-image-2-5-sunburst",
+    "assets": {
+      "world": "asset_HDpGnoycStXexnJb8SDwjE8g",
+      "hero": "asset_pUQ6UtDtZAo73gNXHQooT6Ni",
+      "moa": "asset_orBdPu8u5SNZoGtB8XdeYoym",
+      "workshop": "asset_yUqhLR15tK6ya59vzctPVubY"
+    },
+    "generationCU": 52
+  }
+}

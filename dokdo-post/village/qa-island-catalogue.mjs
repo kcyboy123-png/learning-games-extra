@@ -1,0 +1,9 @@
+import * as T from '../lib/three.module.min.js';
+import {World} from './world.mjs';
+import {createState,TYPES} from './core.mjs?v=perf1';
+const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true,alpha:true});renderer.setSize(256,256);renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+const scene=new T.Scene();scene.add(new T.HemisphereLight('#dce5ed','#b7ad98',1.3));const sun=new T.DirectionalLight('#ffdbac',3.35);sun.position.set(-11,15,6);scene.add(sun);const fill=new T.DirectionalLight('#dce4f2',.6);fill.position.set(9,10,7);scene.add(fill);
+const w=Object.create(World.prototype);w.roads=new Set();w.buildingBounds=new Map();const state=createState(),models=[];
+for(const type of Object.keys(TYPES).filter(t=>TYPES[t].island)){const group=w.model(scene,{type,id:1,x:8,y:8,dir:0,progress:1,opts:[],starter:false},state,4);group.visible=false;models.push({type,group});}
+function render(){const atlas=document.createElement('canvas');atlas.width=768;atlas.height=512;const ctx=atlas.getContext('2d');models.forEach(({group},i)=>{group.visible=true;const bounds=new T.Box3().setFromObject(group),center=bounds.getCenter(new T.Vector3()),size=bounds.getSize(new T.Vector3()),span=Math.max(size.x,size.z,size.y)*.8;const camera=new T.OrthographicCamera(-span,span,span,-span,.1,100);camera.position.copy(center).add(new T.Vector3(8,7,10));camera.lookAt(center);renderer.render(scene,camera);ctx.drawImage(renderer.domElement,(i%3)*256,Math.floor(i/3)*256);group.visible=false;});document.querySelector('#atlas').src=atlas.toDataURL('image/png');document.querySelector('#status').textContent='실제 게임 모델 6종 · 768×512 · '+JSON.stringify(renderer.info.render);}
+document.querySelector('#render').onclick=render;await document.fonts.ready;render();

@@ -1,0 +1,209 @@
+/* Forest post office: quiet linen, paper tools, one clear action. */
+.workspace.postal{background:linear-gradient(180deg,#f8f4e51c 0 22%,#f3ecd9e8 33% 100%),url(assets/post-desk-v2.webp) center/cover!important}
+.postal .banner{top:108px;padding:16px 24px 16px 83px;border:0;border-radius:24px;background:#fffdf4!important;box-shadow:0 3px 0 #d3c7ab,0 10px 25px #5a684518}
+.postal .banner:before{content:'✉';position:absolute;left:20px;top:21px;width:46px;height:46px;display:grid;place-items:center;border-radius:50%;background:#e5edda;color:#42674e;font-size:30px;transform:rotate(-8deg)}
+.postal .banner strong{font-size:29px;line-height:1.3;color:#284d3c;letter-spacing:-.6px}
+.postal .banner small{font-size:17px;line-height:1.5;color:#4b594a;margin-top:6px;font-weight:500}
+.postal .mat,.postal[data-task="solid"] .mat{left:24px;right:24px;top:231px;bottom:183px;border-radius:32px;background:repeating-linear-gradient(0deg,transparent 0 4px,#fff5 4px 5px),linear-gradient(120deg,#edf0df,#dfe8d1)!important;border:2px solid #b7c3a3!important;box-shadow:0 7px 0 #9eac8f33,inset 0 0 0 7px #f5f4e7!important}
+.postal .mat:after,.postal[data-task="solid"] .mat:after{content:'';position:absolute;inset:13px;border:2px dashed #a7b894;border-radius:24px;opacity:.7;pointer-events:none}
+.postal .stage{top:246px;bottom:202px;left:48px;right:48px}
+.postal[data-task="solid"] .stage{left:180px;right:245px;top:237px;bottom:188px}
+.postal .progress-side{top:249px;right:40px}
+.postal .progress-side .panel{background:#fffdf5!important;border:1px solid #d4c9ac;box-shadow:0 5px 12px #5b65441a;border-radius:18px;padding:16px}
+.postal .progress-side .panel:before{height:10px;margin:-22px auto 12px;background:#aec59abf}
+.postal .progress-side .chip{color:#254e38;background:#e8f0dc;border-color:#b7cba2;font-size:22px}
+.postal .progress-side h3{color:#4a6246}.postal .progress-side .note{color:#4d5948;line-height:1.55}
+.postal .parcel-item{left:38px;top:315px;width:128px;height:135px;filter:drop-shadow(0 8px 5px #53664326)}
+.postal[data-task="solid"]:before{top:273px;left:34px;color:#405c46;background:#fffbed;border:1px solid #d6c8a4}
+.postal .tools{left:26px;bottom:111px;background:#fdfbf2!important;border:1px solid #c6c3a7;box-shadow:0 5px 0 #b8baa133;border-radius:21px;padding:9px;gap:7px}
+.postal .tools .btn{background:#edf1e3;border:1px solid #c3ceb3;border-bottom:3px solid #b6c4a6;box-shadow:none;color:#35513b;font-weight:700}
+.postal .tools .btn:hover{background:#ddeacb}.postal .tools .btn:active{transform:translateY(1px)}
+.postal .tools .cap-tray{background:#dceacb;border:2px solid #829e69;box-shadow:inset 0 0 0 3px #f8faed}
+.postal .bubble{bottom:17px;border:1px solid #d3c9af;background:#fffdf5!important;box-shadow:0 3px 0 #c8bea533;min-height:82px;padding-top:10px;padding-bottom:10px}
+.postal .bubble strong{color:#34523f;font-weight:600;font-size:18px;line-height:1.5}
+.postal .primary-slot{bottom:29px}.postal .primary-slot .primary{background:#39644c!important;border:2px solid #31583f!important;box-shadow:0 5px 0 #234832,inset 0 2px 0 #71977b;border-radius:22px}
+.postal .net-board>svg{background:#e9efdf!important;border:3px solid #8ca780;border-radius:15px;box-shadow:0 5px 0 #8fa27d55}
+.postal .net-board .cell{stroke:#93aa86;stroke-opacity:.65}
+.postal .net-board .piece{fill:#f0d5a3;stroke:#8c6c42;stroke-width:2}
+.postal .net-board .piece.selected{fill:#cfe2b6;stroke:#426b3e;stroke-width:3}
+.postal .net-board .piece.wrong{fill:#f6c4ae;stroke:#b64d37}
+.postal .net-board .fold{stroke:#6e593c;stroke-width:2.5;stroke-dasharray:7 5}
+.postal .stage .label{fill:#304936;paint-order:stroke;stroke:#fff9e9;stroke-width:3px}
+.postal .stage .panel,.postal .stage .item{background:#fffdf3!important;border:2px solid #c5c6a9;border-radius:18px;box-shadow:0 4px 0 #89977722}
+.postal .stage .item.picked{background:#e0edcf!important;border-color:#668b54}
+.postal .stage select,.postal .stage input{background:#fffef8;border:2px solid #9eb18e;color:#294634;border-radius:12px;font-weight:700}
+.postal .stage .head{color:#34553f;font-weight:800}.postal .stage .mini{color:#465744}
+.postal .solid-view .face{stroke:#947749;stroke-width:1.8}.postal .solid-view .edge{stroke:#8e7751;stroke-width:2.3}
+.postal .solid-view .vertex{fill:#fffdf0;stroke:#7d925e;stroke-width:2.2}
+.postal .solid-view .edge.selected{stroke:#6f9b60;stroke-width:10}.postal .solid-view .face.selected{stroke:#466b3e;stroke-width:4}
+.postal .solid-view .edge.wrong{stroke:#ba573f}.postal .solid-view .vertex.wrong{fill:#ffd6cc;stroke:#b95648}
+.postal .solid-view>svg:focus:not(:focus-visible){outline:none}
+.postal .card-match .cell{background:#fffdf5;border-color:#bdc9ab}.postal .card-match .link-table{gap:9px}
+.postal .summary-box{border:2px solid #a8bd95;border-radius:30px;box-shadow:0 15px 60px #2f4c3b44;background:#fffdf2!important}
+.postal .summary-box h2{color:#345b40}.postal .parcel-record{background:#edf1df;border:1px dashed #91a67c}
+.portrait .postal .banner{top:128px;padding:17px 23px 17px 83px}
+.portrait .postal .banner strong{font-size:34px}.portrait .postal .banner small{font-size:var(--reading-size)}
+.portrait .postal .mat,.portrait .postal[data-task="solid"] .mat{left:24px;right:24px;top:283px;bottom:330px}
+.portrait .postal .stage{top:302px;bottom:350px;left:44px;right:44px}
+.portrait .postal[data-task="solid"] .stage{left:48px;right:294px;top:300px;bottom:350px}
+.portrait .postal .progress-side{top:306px;right:40px;width:235px;max-width:235px}
+.portrait .postal .tools{bottom:204px}.portrait .postal .bubble{bottom:24px}
+.portrait .postal .primary-slot{bottom:49px}.portrait .postal .bubble strong{font-size:var(--reading-size)}
+.portrait .postal:has(.draft-compare) .stage{right:200px}.portrait .draft-compare{top:300px}
+
+.postal{--focus:#658649}.postal .solid-view>svg:focus-visible{outline:2px dashed #8ca776;outline-offset:-5px}.postal .solid-view .face.wrong{stroke:#bc543e;stroke-width:4.5}.postal .felt-cap{filter:drop-shadow(0 2px 1px #52643c33)}
+.postal .net-board .cell.cursor{fill:#c6dca7;stroke:#416437;stroke-width:3}.postal .net-board .cell.ghost{fill:#d5bb80;fill-opacity:.65;stroke:#765c37;stroke-dasharray:5 4}
+/* Keep sorting actions and the unfolded face inside the physical work mat. */
+.postal[data-task="sort"] .shelf .item>.row{flex-wrap:nowrap;gap:4px}
+.postal[data-task="sort"] .shelf .item>.row .btn{min-width:44px;min-height:48px;padding:4px}
+.postal[data-task="sort"] .shelf .tags{min-height:22px}
+.postal[data-task="sort"] .shelf .item>button{min-height:48px;font-size:15px;padding:7px}
+.postal[data-task="sort"] .shelf .item .solid-view>svg{height:112px}
+.postal[data-task="peel"] .stage>.row>.panel{padding:12px;min-width:300px}
+.postal[data-task="peel"] .stage>.row>.panel>svg{height:160px;width:240px;display:block;margin:auto}
+.postal[data-task="peel"] .stage .panel h3{margin:0 0 6px}
+.postal[data-task="peel"] .stage .panel .note{margin:7px 0;font-size:15px}
+.postal[data-task="peel"] .stage .panel .btn{min-height:48px}
+.portrait .postal[data-task="sort"] .stage{align-items:flex-start}
+.portrait .postal[data-task="sort"] .shelf{grid-template-columns:repeat(3,minmax(0,1fr))}
+.portrait .postal[data-task="sort"] .shelf .item>button{font-size:var(--reading-size);min-height:var(--touch-size)}
+.portrait .postal[data-task="peel"] .stage>.row{flex-direction:column;max-height:none;align-self:flex-start}
+.portrait .postal[data-task="peel"] .stage>.row>.panel{width:100%}
+.portrait .postal[data-task="peel"] .stage .panel .note{font-size:var(--small-size)}
+.portrait .postal[data-task="peel"] .stage .panel .btn{font-size:var(--reading-size)}
+
+.postal.step-checked .banner:before{content:'✓';background:#d9e9c5;color:#365e35;transform:none}.postal.step-checked .banner{border:2px solid #98b480}.postal .shelf .item.picked .tags .tag{background:#51734b;color:#fffbe8}.postal .shelf .item.picked>button{background:#e1ecd2;border-color:#86a574;color:#344d31}
+.postal[data-task="peel"] .stage{top:235px;bottom:184px}.postal[data-task="peel"] .stage .solid-view>svg{height:320px;max-height:320px}.postal[data-task="peel"] .stage>.row>.panel>svg{height:180px}.portrait .postal[data-task="peel"] .stage{top:302px;bottom:350px}
+.postal .stage{overflow:auto;align-items:safe center;overscroll-behavior:contain;scrollbar-color:#91aa7e #eef0dd;scrollbar-width:thin}.postal .net-layout{align-self:flex-start}.postal .net-layout .net-board>svg{max-height:300px;width:auto}.portrait .postal .net-layout .net-board>svg{max-height:none;width:600px}.portrait .postal:has(.draft-compare) .net-board>svg{width:500px}.postal .net-layout .panel.compact .note{font-size:14px;line-height:1.4}
+
+.postal .parcel-record .parcel-icon{display:grid;place-items:center;background:#e2cc9e;border:1px solid #ac9466;border-radius:10px;box-shadow:inset 0 0 0 4px #f2e3be;min-height:76px}.postal .packed-item{width:58px;height:72px;object-fit:contain;filter:drop-shadow(0 3px 2px #72572f33)}.postal .parcel-record{background:#fff9e9;border:2px dashed #b9aa85}.postal .parcel-dots{letter-spacing:4px;font-size:18px}
+
+/* A parcel receipt above a bright, tactile packing desk. */
+.hud .card.loc{min-width:440px;max-width:440px;border-radius:12px 24px 24px 12px;padding:8px 16px!important;border:1px solid #c6ba98;box-shadow:0 4px 12px #4d513124}
+.hud .card.loc>div{min-height:65px}.hud .card.loc strong{font-size:25px;color:#314e3d;line-height:1.25}
+#parcelSymbol{width:70px;height:68px;margin-right:15px;background:#edf0dc;border:1px dashed #9eae83;border-radius:14px;transform:rotate(-4deg)}
+#parcelSymbol img{width:64px;height:64px;object-fit:contain;filter:drop-shadow(0 3px 2px #6b684433)}
+#sender{font-size:14px!important;font-weight:600;color:#526450}
+#recipient{font-size:12px!important;color:#586449;line-height:1.5;margin-top:2px}
+.hud .card.goal{max-width:260px;min-width:0;background:#fffdf0e8!important;box-shadow:none;padding:10px 15px;border-radius:17px}
+.hud .card.goal strong{font-size:20px;line-height:1.35}.hud .card.goal small{font-size:12px}
+.subbar{left:42px;top:88px;padding:3px 10px;font-size:13px;background:#f7f4e4}
+.workspace.postal{background:linear-gradient(180deg,#f4f0d900 0 10%,#e6d7bccc 28%,#dac5a6f5 100%),url(assets/post-desk-v2.webp) center/cover!important}
+.postal .banner{top:120px;left:24px;transform:none;width:calc(100% - 48px);padding:14px 22px 14px 79px;background:#365e48!important;border:1px solid #2d513a;border-radius:21px;box-shadow:0 5px 0 #203d2b25,inset 0 1px 0 #6d9276}
+.postal .banner:before{content:'✉';top:19px;left:18px;background:#e9edcf;color:#416346;border-radius:15px;box-shadow:0 3px 0 #1a352333}
+.postal .banner strong{color:#fffdec;font-size:29px;font-weight:800;text-shadow:0 1px 1px #214030}
+.postal .banner small{color:#f4f4df;font-size:17px;font-weight:500;line-height:1.45}
+.postal .mat,.postal[data-task="solid"] .mat{background:radial-gradient(ellipse at 47% 35%,#fffef5,#f5f0de 80%)!important;border:3px solid #c1b08e!important;box-shadow:0 8px 0 #b3a080,inset 0 0 0 7px #fff9e9,0 16px 25px #66553818!important;border-radius:34px}
+.postal .mat:after,.postal[data-task="solid"] .mat:after{border-color:#c4c8a6;border-radius:24px;inset:14px;opacity:.65}
+.postal .parcel-item{background:#ecead6;border-radius:50%;padding:10px;width:136px;height:136px;box-shadow:0 5px 0 #c1ba9b44}
+.postal .progress-side .panel{background:#f2f1dd!important;box-shadow:0 5px 0 #b1b79c44;border:1px solid #bbc4a7}
+.postal .progress-side .chip{background:#fffdf3;border:2px solid #9cb182;font-size:25px;padding:10px}
+.postal .stage .panel,.postal .stage .item{background:#fffdf7!important;box-shadow:0 5px 0 #c5bd9f66;border-color:#c3bb9e}
+.postal .shelf .item{border-radius:24px 24px 16px 16px;padding:10px 7px}
+.postal .shelf .item.picked{background:#e4eed5!important;border:2px solid #5b7f4d;box-shadow:0 5px 0 #8caa71}
+.postal .net-board>svg{background:#f2f4e7!important;border:3px solid #7b9c6f;box-shadow:0 5px 0 #9bab8a;border-radius:15px}
+.postal .net-board .cell{stroke:#9caf8b;stroke-opacity:.7}
+.postal .net-board .piece{fill:#efd5a5;stroke:#86653b;stroke-width:2.4}
+.postal .net-board .piece.fixed{fill:#dcc18c}.postal .net-board .piece.wrong{fill:#f3bba6;stroke:#b54e37}
+.postal .tools{background:#405b49!important;border:1px solid #344d3b;box-shadow:0 5px 0 #2a422d33;padding:8px;gap:7px;border-radius:19px}
+.postal .tools .btn{background:#fffdf0;border:1px solid #cbd2b9;border-bottom:3px solid #b6c39d;color:#2e4935;border-radius:11px}
+.postal .tools .btn:hover{background:#e5efd5}.postal .tools .cap-tray{background:#e5efc9;border-color:#9cba6d}
+.postal .tools .field,.postal .tools .unit{color:#fffdec}.postal .tools input{color:#294634}
+.postal .bubble{border:0;border-left:5px solid #8aa773;border-radius:12px 24px 24px 12px;background:#fffdf2!important;box-shadow:0 4px 0 #baa98744}
+.postal .primary-slot .primary{background:#e9bd66!important;color:#3e3c27!important;border:2px solid #b38b3f!important;box-shadow:0 5px 0 #997039,inset 0 2px 0 #fff0b9;font-weight:800}
+.postal.step-checked .banner{background:#456d4c!important;border-color:#aec693}.postal.step-checked .banner:before{content:'✓';color:#385f35}
+.portrait .hud .card.loc{min-width:480px;max-width:480px}.portrait .hud .card.goal{max-width:270px}
+.portrait #sender{font-size:18px!important}.portrait #recipient{font-size:16px!important}.portrait #parcelSymbol{height:78px;width:76px}.portrait #parcelSymbol img{height:74px;width:72px}
+.portrait .subbar{top:109px;font-size:var(--small-size)}
+.portrait .postal .banner{top:150px;padding:16px 22px 16px 79px}.portrait .postal .banner strong{font-size:34px}.portrait .postal .banner small{font-size:var(--reading-size)}
+.portrait .postal .progress-side .chip{font-size:var(--reading-size)}
+.hud .card.loc>div{width:100%;display:grid;grid-template-columns:70px minmax(0,1fr);column-gap:15px;align-items:center}.hud #parcelSymbol{grid-column:1;grid-row:1/4;float:none;margin:0}.hud #sender,.hud #location,.hud #recipient{grid-column:2;min-width:0}.hud #recipient{white-space:nowrap}.portrait .hud .card.loc>div{grid-template-columns:76px minmax(0,1fr)}.subbar{top:94px}.portrait .subbar{top:120px}
+
+.postal .parcel-address{align-self:stretch;margin:8px 0 3px;padding:10px 15px 10px 20px;text-align:left;background:repeating-linear-gradient(135deg,#678567 0 8px,#f7efda 8px 16px,#bd9270 16px 24px,#f7efda 24px 32px) left/6px 100% no-repeat,#fffdf3;border:1px solid #c4b596;border-radius:7px}.postal .parcel-address span{font-size:12px;color:#687456;display:block}.postal .parcel-address strong{font-size:17px;color:#33543c;display:block}.postal .parcel-address small{display:block;color:#5b604d}.portrait .postal .parcel-address strong{font-size:var(--reading-size)}
+
+/* Keep the receipt progress clear of the heading; preserve real touch sizes. */
+.subbar{top:93px;line-height:1.3;padding:2px 10px}
+.portrait .subbar{top:118px;line-height:1.2;padding:2px 10px}
+.portrait .postal[data-task="sort"] .shelf .item>.row .btn{min-width:var(--touch-size);min-height:var(--touch-size)}
+.portrait .postal[data-task="peel"] .stage .panel .btn{min-height:var(--touch-size)}
+.portrait .postal[data-task="peel"] .stage>.row{gap:12px!important}
+.portrait .postal[data-task="peel"] .stage>.row>.panel>svg{height:220px;width:300px}
+.portrait .postal[data-task="peel"] .stage .panel svg .label{font-size:22px}
+
+/* A long instruction reserves its own space instead of covering the work. */
+.postal .stage{top:max(246px,var(--instruction-bottom,0px))}.postal[data-task="solid"] .stage{top:max(237px,var(--instruction-bottom,0px))}.postal[data-task="peel"] .stage{top:max(235px,var(--instruction-bottom,0px))}
+.postal .mat,.postal[data-task="solid"] .mat{top:max(231px,calc(var(--instruction-bottom,0px) - 12px))}.postal .progress-side{top:max(249px,var(--instruction-bottom,0px))}.postal .draft-compare{top:max(235px,var(--instruction-bottom,0px))}
+.portrait .postal .stage,.portrait .postal[data-task="solid"] .stage,.portrait .postal[data-task="peel"] .stage{top:max(302px,var(--instruction-bottom,0px))}.portrait .postal .mat,.portrait .postal[data-task="solid"] .mat{top:max(283px,calc(var(--instruction-bottom,0px) - 12px))}.portrait .postal .progress-side{top:max(306px,var(--instruction-bottom,0px))}.portrait .postal .draft-compare{top:max(300px,var(--instruction-bottom,0px))}
+
+.postal .held-piece{background:#e8efda;border:2px dashed #839f68;border-radius:12px;padding:10px;color:#355638;font-weight:700;line-height:1.5}.postal .held-piece:before{content:'▱';display:inline-block;font-size:25px;margin-right:8px;color:#9a7947}.portrait .postal .net-layout .panel.compact .note{font-size:var(--small-size);line-height:1.5}
+
+/* Keep geometry readable; distinguish movable paper without giving away its destination. */
+.postal .net-layout .panel.compact{word-break:keep-all;overflow-wrap:anywhere}
+.postal .net-board .piece.movable:not(.wrong){stroke:#426b3e;stroke-width:3.5;stroke-dasharray:5 3}
+
+/* A tactile paper edge and stitched linen remain behind assessed shapes. */
+.postal .mat{background:repeating-linear-gradient(0deg,transparent 0 5px,#b2aa8120 5px 6px),repeating-linear-gradient(90deg,transparent 0 5px,#fff8 5px 6px),#f5efd9!important;box-shadow:0 8px 0 #b5a48166,inset 0 0 0 7px #fff9e9!important}.postal .stage .item{background:linear-gradient(135deg,#fffdf4,#f2ead4)!important;box-shadow:0 5px 0 #b7ad8c44,inset 0 0 0 4px #fffdf6}.postal .tools>.chip{background:#e8efd9;color:#35533d;font-size:16px;line-height:1.4;white-space:normal}.portrait .postal .tools>.chip{font-size:var(--small-size)}
+
+/* Paper choices lift on selection; assessed outlines and all touch targets stay intact. */
+.postal .stage .item:focus-within{outline:3px solid #8c9e63;outline-offset:3px}.postal .btn:focus-visible{outline:3px solid #92672d;outline-offset:3px}.postal .parcel-address{box-shadow:0 3px 0 #b9aa8540}.postal .held-piece{box-shadow:0 3px 0 #9eae7d35}.postal .tools .btn:active{filter:brightness(.94)}
+
+/* A finished parcel gets a quiet postal seal instead of another task panel. */
+.postal .summary-box .stamp{border-style:double;border-width:5px;box-shadow:0 2px 0 #a2ad8326;transform:rotate(-7deg)}.postal .summary-box .parcel-record{border-style:solid;border-color:#d2c49f;background:linear-gradient(90deg,#eef0dd 0 7px,#fff9e9 7px);padding-left:18px}.postal .summary-box .parcel-dots{color:#597848;letter-spacing:6px}.postal .summary-box h2{line-height:1.45;word-break:keep-all}.postal .summary-box>.row:last-child{position:sticky;bottom:0;background:#fffdf2;padding:10px 0 2px;border-top:1px solid #d9dfc6}
+
+.postal.has-parcel-record>.stage,.postal.has-parcel-record>.tools,.postal.has-parcel-record>.progress-side{opacity:.18}.postal.has-parcel-record>.parcel-item{visibility:hidden}
+
+.postal .summary-box small,.postal .summary-box .parcel-address span{font-size:var(--small-size,15px);line-height:1.5}.postal .summary-box .parcel-address strong{font-size:var(--reading-size,18px)}.postal .summary-box:has(.parcel-turntable) p{font-size:var(--reading-size,18px);line-height:1.6}
+
+/* Empty selection marks stay empty; portrait cards use the available height. */
+.postal .cards .btn:not([aria-pressed="true"]) .mark{color:transparent}.portrait .postal[data-task="choice"] .cards .btn svg{height:160px}
+
+.story-welcome .first-move{color:#3d6047;font-weight:700;border-top:1px dashed #c4caa9}.story-welcome .start-note{font-size:var(--small-size,15px);border-radius:16px;padding:10px 18px;line-height:1.6}.story-welcome button:focus-visible{outline:3px solid #a27636;outline-offset:3px}
+
+.story-welcome .story-art{border-radius:22px 22px 0 0}.story-welcome h2{word-break:keep-all}.story-welcome .first-move{border-radius:0 0 20px 20px}.story-welcome button{min-height:var(--touch-size,56px)}.story-welcome .start-note{color:#50664e}
+
+/* Keep the desk visible around the smaller, calm linen work surface. */
+.workspace.postal{background:linear-gradient(#f8f4e510,#f3ecd932),url(assets/post-desk-v2.webp) center/cover!important}
+.postal .mat,.postal[data-task="solid"] .mat{left:38px;right:38px;background:repeating-linear-gradient(0deg,transparent 0 5px,#b2aa8116 5px 6px),#f3eddacc!important}
+.postal[data-task="solid"] .mat{left:174px;right:238px;border-radius:32px!important}
+.portrait .postal[data-task="solid"] .mat{left:40px;right:280px}
+.postal.ready-to-check .primary-slot .primary{outline:3px solid #8ca777;outline-offset:4px}
+.postal.ready-to-check .progress-side .note{visibility:hidden}
+.hud .card.goal{box-shadow:none!important;border:0!important;background:#fff9e9bc!important}
+
+/* Two full touch rows: the free coach must not be clipped below the tray. */
+.portrait .postal .tools{max-height:176px;bottom:186px}
+.portrait .postal .stage,.portrait .postal[data-task="solid"] .stage{bottom:380px}
+.portrait .postal .mat,.portrait .postal[data-task="solid"] .mat{bottom:364px}
+
+/* Keep the no-penalty coach beside the scored hint, away from rotation controls. */
+.postal .help-tools{display:flex;gap:8px;flex-wrap:nowrap;padding-left:10px;border-left:1px solid #b9c9a5}
+.portrait .postal .help-tools{flex-basis:100%;padding:5px 0 0;border-left:0;border-top:1px solid #b9c9a5}
+.postal.ready-to-check .primary-slot .primary{background:#426d51!important;color:#fffced!important;border-color:#355b40!important;box-shadow:0 5px 0 #284732,inset 0 2px 0 #9db789}
+
+.postal .desk-gift{margin:14px 0 0;padding:10px 8px;background:#fff9e7;border:1px dashed #c4b48f;border-radius:10px;text-align:center;pointer-events:none}
+.postal .desk-gift img{width:100px;height:86px;object-fit:contain;display:block;margin:auto}
+.postal .desk-gift figcaption{color:#4f6249;font-size:15px;line-height:1.4;word-break:keep-all}
+.portrait .postal .desk-gift figcaption{font-size:var(--small-size)}
+.postal:has(.desk-gift)>.parcel-item{display:none}
+
+.postal .review-condition{font-size:16px;line-height:1.5;color:#f8f5e7;margin-top:6px}
+.postal .review-condition summary{cursor:pointer;min-height:32px;display:flex;align-items:center;text-decoration:underline;text-underline-offset:4px}
+.postal .review-condition summary:before{content:'＋';margin-right:8px}.postal .review-condition[open] summary:before{content:'−'}
+.postal .review-condition p{margin:6px 0 0}.portrait .postal .review-condition{font-size:var(--small-size)}
+.portrait .postal .review-condition summary{min-height:var(--touch-size)}
+
+/* Reclaim the hidden tip space when the parcel is ready for inspection. */
+.postal.ready-to-check .progress-side .note{display:none}
+.postal .review-condition summary{min-height:var(--touch-size,48px)}
+
+/* Keyboard discovery without a persistent touch-focus ring. */
+.postal button:focus-visible,.postal summary:focus-visible,.postal select:focus-visible,.postal input:focus-visible{outline:3px solid #365e55;outline-offset:3px}
+.postal .tools button[aria-pressed="true"]{background:#426d5b;color:#fff9df;box-shadow:inset 0 0 0 2px #f6e4aa,0 2px 0 #2b4e41}
+
+.postal .cap-tray.dragging{background:#426d5b;color:#fff9df;box-shadow:inset 0 0 0 2px #f6e4aa}
+.postal .desk-gift{border:1px solid #cfc6a4;box-shadow:0 3px 5px #66583d14;background:linear-gradient(135deg,#fff9e7,#f2e7ca)}
+
+.postal .progress-side button[aria-pressed="true"]{background:#426d5b;color:#fff9df;box-shadow:inset 0 0 0 2px #f6e4aa}
+
+/* A quiet, optional route back to controls; no automatic mathematical hint. */
+.postal.needs-review .help-tools button:first-child{outline:3px solid #62846c;outline-offset:2px;background:#f3edc9}
