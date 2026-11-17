@@ -47,6 +47,16 @@ export function createNetBoard(opts = {}) {
       gCells.append(rect);
     }
     if (state.held && state.cursor) ghost(gCells, state.cursor[0], state.cursor[1]);
+    if(opts.postal&&build&&!state.pieces.length){
+      const hint=svg('g',{'pointer-events':'none',class:'first-paper-guide'});
+      if(state.held&&!state.cursor){
+        const c=Math.floor((cols-state.held.w)/2),r=Math.floor((rows-state.held.h)/2);
+        ghost(hint,c,r);
+        hint.append(svg('text',{x:(c+state.held.w/2)*cell,y:(r+state.held.h/2)*cell+6,'text-anchor':'middle',text:`${state.held.w} × ${state.held.h}`}));
+        hint.append(svg('text',{x:(c+state.held.w/2)*cell,y:Math.max(24,r*cell-12),'text-anchor':'middle',text:'예시 자리 · 다른 칸에 놓아도 돼요'}));
+      }else if(!state.held)hint.append(svg('text',{x:W/2,y:H/2,'text-anchor':'middle',text:'① 옆에서 종이 한 장을 골라요'}));
+      gLabels.append(hint);
+    }
     const {full} = adjacency(state.pieces);
     for (const p of state.pieces) {
       const [dx, dy] = toDisp(p.x, p.y);
@@ -58,7 +68,7 @@ export function createNetBoard(opts = {}) {
       }
       gPieces.append(rect);
       gLabels.append(svg('rect', {x: dx + 2, y: dy + 2, width: Math.max(0, p.w * cell - 4), height: Math.max(0, p.h * cell - 4), rx: 2, fill: grain, stroke: '#fbe7bf', 'stroke-width': 1, class: 'paper-grain', 'pointer-events': 'none'}));
-      if (opts.postal && mode === 'build' && fixedIds.has(p.id)) gLabels.append(svg('rect', {x: dx + p.w * cell / 2 - 7, y: dy + 2, width: 14, height: 5, rx: 1, fill: '#96ad78', opacity: .85, class: 'fixed-tape', 'pointer-events': 'none'}));
+      if (opts.postal && mode === 'build') gLabels.append(svg('rect', {x: dx + p.w * cell / 2 - 7, y: dy + 2, width: 14, height: 5, rx: 1, fill: '#96ad78', opacity: .85, class: 'fixed-tape', 'pointer-events': 'none'}));
       if (opts.pieceLabels?.[p.id]) gLabels.append(svg('text', {x: dx + p.w * cell / 2, y: dy + p.h * cell / 2 + 7, class: 'label', 'text-anchor': 'middle', text: opts.pieceLabels[p.id]}));
       if (opts.showLengths) {
         const blank = opts.blank && opts.blank.piece === p.id;
@@ -187,11 +197,14 @@ export function createNetBoard(opts = {}) {
   function refreshTray() {
     clear(trayEl);
     if (mode !== 'build') return;
+    bRotate.disabled=!state.held;
+    bReturn.disabled=!state.held;
     state.tray.forEach((t, i) => {
       const b = button('', () => {
         if (t.count <= 0) return;
         if (state.held) { const back = state.tray.find(s => s.w === state.held.w && s.h === state.held.h); if (back) back.count++; else state.tray.push({w: state.held.w, h: state.held.h, count: 1}); }
         t.count--; state.held = {id: `t${crypto.randomUUID()}`, w: t.w, h: t.h, fromTray: true};
+        if(opts.postal&&!state.pieces.length)state.cursor=null;
         say(`${t.w}×${t.h} 조각을 들었어요. 모눈의 칸을 눌러 놓아요.`); draw(); refreshTray();
       }, {cls: 'small', attrs: {'aria-label': `${t.w}×${t.h} 조각, 남은 수 ${t.count}`}});
       b.disabled = t.count <= 0;
@@ -203,12 +216,19 @@ export function createNetBoard(opts = {}) {
       trayEl.append(b);
     });
     const heldInfo = node('p', {class: state.held?'mini held-piece':'mini', text: state.held ? `들고 있는 조각: ${state.held.w}×${state.held.h}` : '들고 있는 조각 없음'});
+    if(opts.postal&&state.held){
+      const preview=svg('svg',{viewBox:'0 0 120 74',class:'held-preview','aria-hidden':'true'});
+      const scale=Math.min(100/state.held.w,54/state.held.h);
+      preview.append(svg('rect',{x:60-state.held.w*scale/2,y:37-state.held.h*scale/2,width:state.held.w*scale,height:state.held.h*scale,rx:2,fill:'#e8cc98',stroke:'#7e6035','stroke-width':2}));
+      heldInfo.prepend(preview);heldInfo.append(node('small',{text:'모눈 칸을 눌러 붙여요'}));
+    }
     trayEl.append(heldInfo);
   }
   // 키보드 커서
   el.addEventListener('keydown', e => {
     if (mode !== 'build') return;
-    const cur = state.cursor || [0, 0];
+    const cur = state.cursor || (opts.postal&&state.held&&!state.pieces.length
+      ? [Math.floor((cols-state.held.w)/2),Math.floor((rows-state.held.h)/2)] : [0, 0]);
     const map = {ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1]};
     if (map[e.key]) { e.preventDefault(); state.cursor = [Math.max(0, Math.min(cols - 1, cur[0] + map[e.key][0])), Math.max(0, Math.min(rows - 1, cur[1] + map[e.key][1]))]; draw(); return; }
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); actOn(cur[0], cur[1]); }

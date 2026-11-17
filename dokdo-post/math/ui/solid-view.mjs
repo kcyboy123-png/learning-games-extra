@@ -32,7 +32,12 @@ export function meshFor(desc) {
   }
   if (desc.kind === 'cylinder') { const m = prism(regularPolygon(28, 1.5), 3); return {...m, smoothSides: true}; }
   if (desc.kind === 'tri-prism') { const m = prism([[-1.6, 1.2], [1.6, 1.2], [0, -1.4]], 3); return {...m, strokeAll: true}; }
-  if (desc.kind === 'oblique') { const m = prism([[-1.8, -1], [1.8, -1], [1.8, 1], [-1.8, 1]], 2.6, {shear: [1.3, 0]}); return {...m, strokeAll: true}; }
+  if (desc.kind === 'oblique') {
+    const m = prism([[-1.8, -1], [1.8, -1], [1.8, 1], [-1.8, 1]], 2.6, {shear: [2.2, 0]});
+    // Keep the stronger slant centred inside the rotating card.
+    m.vertices.forEach(v => v[0] -= 1.1);
+    return {...m, strokeAll: true};
+  }
   if (desc.kind === 'hex-prism') { const m = prism(regularPolygon(6, 1.6), 2.8); return {...m, strokeAll: true}; }
   if (desc.kind === 'pyramid') {
     const b = 1.7, h = 2.8;
@@ -55,8 +60,9 @@ export function createSolidView(opts = {}) {
   const solid = opts.dims ? cuboid(opts.dims.x, opts.dims.y, opts.dims.z) : null;
   const mesh = opts.mesh ? opts.mesh : null;
   const root = node('div', {class: 'solid-view', style: {position: 'relative', display: 'inline-block'}});
-  const el = svg('svg', {viewBox: `${-size / 2} ${-size / 2} ${size} ${size}`, width: size, height: size, tabindex: '0', role: 'group', 'aria-label': opts.ariaLabel || '돌려 볼 수 있는 상자. 화살표 키로 회전해요.', style: 'touch-action:none;outline-offset:2px'});
+  const el = svg('svg', {viewBox: `${-size / 2} ${-size / 2} ${size} ${size}`, width: size, height: size, tabindex: '0', role: 'group', 'aria-label': opts.ariaLabel || '상자를 끌면 회전하고 짧게 누르면 선택해요. 화살표 키로도 회전해요.', style: 'touch-action:none;outline-offset:2px'});
   root.append(el);
+  if(opts.postal&&opts.mode!=='none')root.append(node('div',{class:'turn-hint',text:'끌어서 회전 · 톡 눌러 선택'}));
   const pid = `stamp${patternSeq++}`;
   let paperFill;
 
@@ -262,16 +268,29 @@ export function createSolidView(opts = {}) {
   }
 
   // 회전: 드래그, 버튼, 키보드
-  let drag = null;
-  el.addEventListener('pointerdown', e => { if (e.target.classList.contains('pressable')) return; drag = {x: e.clientX, y: e.clientY}; el.setPointerCapture(e.pointerId); });
+  let drag = null, suppressClick = false;
+  // Decide tap versus rotation before a selectable face can activate.
+  el.addEventListener('pointerdown', e => {
+    if(!e.isPrimary||e.button!==0)return;
+    suppressClick=false;drag={id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};
+  },true);
   el.addEventListener('pointermove', e => {
-    if (!drag) return;
-    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-    drag = {x: e.clientX, y: e.clientY};
-    api.rotate(dx * 0.012, dy * 0.012);
-  });
-  el.addEventListener('pointerup', () => { drag = null; });
-  el.addEventListener('pointercancel', () => { drag = null; });
+    if(!drag||e.pointerId!==drag.id)return;
+    const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+    if(!drag.moved&&Math.hypot(dx,dy)<=10)return;
+    if(!drag.moved){drag.moved=true;el.setPointerCapture(e.pointerId);root.classList.add('turning','has-turned');}
+    e.preventDefault();e.stopPropagation();
+    drag.x=e.clientX;drag.y=e.clientY;api.rotate(dx*.012,dy*.012);
+  },true);
+  const endDrag=e=>{
+    if(!drag||e.pointerId!==drag.id)return;
+    if(drag.moved){suppressClick=true;e.preventDefault();e.stopPropagation();}
+    drag=null;root.classList.remove('turning');
+  };
+  el.addEventListener('pointerup',endDrag,true);
+  el.addEventListener('pointercancel',endDrag,true);
+  el.addEventListener('lostpointercapture',()=>{drag=null;root.classList.remove('turning');});
+  el.addEventListener('click',e=>{if(suppressClick&&e.detail!==0){suppressClick=false;e.preventDefault();e.stopPropagation();}},true);
   el.addEventListener('keydown', e => {
     const map = {ArrowLeft: [-0.25, 0], ArrowRight: [0.25, 0], ArrowUp: [0, -0.2], ArrowDown: [0, 0.2]};
     if (map[e.key]) { e.preventDefault(); api.rotate(...map[e.key]); }

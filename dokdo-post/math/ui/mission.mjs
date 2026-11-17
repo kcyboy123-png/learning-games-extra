@@ -1,14 +1,15 @@
+import {parcelCustomizer,parcelDimensions,packingMilestone} from '../../parcel-life.mjs?v=ten-rounds-20261118';
 // 미션 실행기(업그레이드): 위 목표 한 줄, 가운데 큰 조작 도형, 오른쪽 작은 진행 상태, 아래 모아의 짧은 말과 명확한 제출.
 // 상황 한 문장 → 직접 조작 → 명시적 제출 → 피드백(오답 시 조작 보존) → 학습 정리 → 명시적 다음 버튼.
-import {STORIES,portrait,itemImage,coachFor} from '../../story.mjs?v=refine-20261116-r5';
-import {createSolidView} from './solid-view.mjs?v=refine-20261116-r5';
-import {netFigure} from './net-board.mjs?v=refine-20261116-r5';
-import {actionFor} from './postal-instructions.mjs?v=refine-20261116-r5';
-import {renderStep} from './steps.mjs?v=refine-20261116-r5';
+import {STORIES,portrait,itemImage,coachFor} from '../../story.mjs?v=resident-polish-20261117';
+import {createSolidView} from './solid-view.mjs?v=ten-rounds-20261118';
+import {netFigure} from './net-board.mjs?v=ten-rounds-20261118';
+import {actionFor,questionFor,moveFor,hasResponse} from './postal-instructions.mjs?v=resident-polish-20261117';
+import {renderStep} from './steps.mjs?v=ten-rounds-20261118';
 import {newEventId, answerSignature} from '../lib/progress.mjs';
-import {sfx} from './audio.mjs';
+import {sfx} from './audio.mjs?v=audio-journey-20261117';
 import {createRobotView} from './robot-view.mjs';
-import {node, button, clear, announce, reducedMotion} from './dom.mjs?v=refine-20261116-r5';
+import {node, button, clear, announce, reducedMotion} from './dom.mjs?v=resident-polish-20261117';
 import {frameRect} from './assets.mjs';
 
 export function runMission({activity, workshop, progress, scored = true, container, hud, assets, onDone, onSave}) {
@@ -44,15 +45,25 @@ export function runMission({activity, workshop, progress, scored = true, contain
   const activityKind=progress.activities.find(a=>a.id===activity.id)?.kind;
   const draftKey='draft:'+activity.id;const draft=progress.getExtra(draftKey)||{};
   const stepAnswers = Array.isArray(draft.answers)?draft.answers:[];
-  let guideTimer,focusTimer;
+  let guideTimer,focusTimer,captureTimer,explainCurrent;
   let index = Number.isInteger(draft.index)&&draft.index>=0?Math.min(draft.index,steps.length-1):0, view = null, solvedStep = false,restoring=true;
   function snapshot(){if(restoring||solvedStep||!view)return;progress.setExtra(draftKey,{index,answers:stepAnswers,answer:view.getAnswer()});onSave?.();}
-  const capture=()=>queueMicrotask(()=>{if(!solvedStep)snapshot();});ws.addEventListener('click',capture);ws.addEventListener('input',capture);ws.addEventListener('change',capture);ws.addEventListener('pointerup',capture);ws.addEventListener('keyup',capture);
+  function syncResponse(){
+    if(!activity.postal||!view||solvedStep)return;
+    const step=steps[index],answer=view.getAnswer(),ready=hasResponse(step,answer);
+    const submit=primarySlot.querySelector('button');if(!submit)return;
+    const pending=step.kind==='net-build'?(answer.board?.held?'종이를 놓아요':step.blankLength&&!String(answer.values?.blank??'').trim()?'길이를 적어요':'종이를 붙여요'):({fill:'빈칸을 채워요',link:'그림을 모두 골라요',solid:'상자에 표시해요',sketch:'그림을 완성해요','tray-count':'종이를 준비해요'}[step.kind]||'먼저 답을 골라요');
+    submit.disabled=!ready;submit.title=ready?'내 답을 확인해요':pending;
+    submit.querySelector('span:last-child').textContent=ready?submitLabel(step):pending;
+  }
+  // A selectable SVG node can be replaced by its handler; read state after that event finishes.
+  const capture=()=>{clearTimeout(captureTimer);captureTimer=setTimeout(()=>{if(!solvedStep){syncResponse();snapshot();}},0);};ws.addEventListener('click',capture);ws.addEventListener('input',capture);ws.addEventListener('change',capture);ws.addEventListener('pointerup',capture);ws.addEventListener('keydown',capture,true);ws.addEventListener('keyup',capture);
   window.addEventListener('pagehide',snapshot);
   hud.setLocation(workshop ? workshop.name : activity.name || '배송장');
   hud.setGoal(activity.title.replace(/^복습 \d · /, '복습 · '));
 
   function speak(text, tone = '') {
+    ws.classList.toggle('show-feedback',Boolean(tone));
     bubble.classList.toggle('good', tone === 'good'); bubble.classList.toggle('alert', tone === 'alert');
     bubble.querySelector('strong').textContent = text;
     announce(text);
@@ -63,9 +74,10 @@ export function runMission({activity, workshop, progress, scored = true, contain
     if (step.kind === 'sketch') return '설계도 확인';
     if (step.kind === 'solid') return activity.postal ? '포장 확인' : '검사 확인';
     if (step.kind === 'sort') return activity.postal ? '고른 상자 확인' : '분류 확인';
-    return activity.postal ? ({fill:'기록 확인',choice:'선택 확인',link:'연결 확인',peel:'모양 확인','tray-count':'종이 장수 확인','cut-plan':'자르는 선 확인'}[step.kind] || '확인') : '확인';
+    return activity.postal ? ({fill:'기록 확인',choice:'선택 확인',link:'연결 확인',peel:'내 답 확인','tray-count':'종이 장수 확인','cut-plan':'자르는 선 확인'}[step.kind] || '확인') : '확인';
   }
   function renderCurrent() {
+    view?.destroy?.();
     clearTimeout(guideTimer);clearTimeout(focusTimer);
     const step = steps[index];
     solvedStep = false;
@@ -80,44 +92,49 @@ export function runMission({activity, workshop, progress, scored = true, contain
       if(!activity.postal)return;
       const ready=['ready','check'].includes(kind);
       ws.classList.toggle('ready-to-check',ready);
-      if(liveGuide())speak(activity.situation);
-      if(step.kind==='peel'&&kind==='shape')speak('펼친 면을 보고 알맞은 모양을 모두 골라요. 두 가지가 맞을 수도 있어요.');
-      const condition=step.mode==='all'?'면 → 모서리 → 꼭짓점을 모두 표시해요. 종류 버튼으로 바꿔요.':step.instruction.replace('정사각형 5/6.','정사각형 한 장을 더 붙이는 작업이에요.');
-      banner.replaceChildren(node('strong',{text:actionFor(step,kind)}));
-      if(ready){
-        banner.append(node('small',{text:'아직 정답 확인 전이에요. 고치고 싶으면 표시나 종이를 다시 눌러요.'}));
-        banner.append(node('details',{class:'review-condition'},[node('summary',{text:'작업 조건 다시 보기'}),node('p',{text:condition})]));
-      }else banner.append(node('small',{text:condition}));
+      if(liveGuide())speak(moveFor(step,kind));
+      if(step.kind==='peel'){
+        ws.dataset.peelPhase=kind||'face';
+        speak(kind==='selected'?'답을 골랐어요. 아래에서 확인해요.':'종이에 적힌 네 변의 길이를 비교해요.');
+        const submit=primarySlot.querySelector('button');if(submit)submit.disabled=kind!=='selected';
+        banner.replaceChildren(node('strong',{text:'네 변의 길이가 모두 같나요?'}),node('small',{text:'상자에서 떼어 낸 면이에요. 길이가 같은지 골라요.'}));
+        return;
+      }
+      const question=questionFor(step,kind),condition=step.instruction.replace(/^[①②③④⑤]\s*[^:]+:\s*/, '').replace('정사각형 5/6.','정사각형 한 장을 더 붙여요.');
+      banner.replaceChildren(node('strong',{text:question}));
+      banner.append(node('small',{text:moveFor(step,kind)}));
+      if(ready)speak(moveFor(step,kind)+' 아직 정답 확인 전이에요.');
     };guide(step.mode);
-    view = renderStep(step, {stepAnswers,postal:activity.postal,onGuide:guide,draft: index===(draft.index||0)?draft.answer:null});
+    view = renderStep(step, {stepAnswers,postal:activity.postal,activityId:activity.id,onGuide:guide,draft: index===(draft.index||0)?draft.answer:null});
     ws.querySelector('.draft-compare')?.remove();if(index>0&&step.kind==='net-build'&&!step.base.length&&stepAnswers[0]?.pieces){const card=node('div',{class:'draft-compare'},[node('b',{text:'첫 번째 완성안'}),netFigure(stepAnswers[0].pieces,{size:110})]);ws.append(card);}
-    stage.append(view.el);
+    stage.append(view.el);stage.scrollTop=0;
     if (view.side) side.append(view.side);
-    if(activity.postal&&['solid','net-build'].includes(step.kind)){
-      const gift=node('figure',{class:'desk-gift'},[node('img',{src:itemImage(activity.postalResident),alt:''}),node('figcaption',{text:activity.parcelItem})]);
-      (step.kind==='solid'?side:stage.querySelector('.net-layout .panel.compact'))?.append(gift);
+    for (const t of view.tools || []) {
+      if(activity.postal&&t.classList.contains('rot')) tools.append(node('details',{class:'rotation-tools'},[node('summary',{text:'상자 돌려보기'}),t]));
+      else tools.append(t);
     }
-    for (const t of view.tools || []) tools.append(t);
     const hintLabel=()=>activity.postal?(scored&&!progress.hinted(activity.id)?'수학 힌트 −3':'힌트 다시 보기'):'도움';
     const hintBtn = button(hintLabel(), () => {
       const r = scored ? progress.hint(activity.id, newEventId()) : {accepted: true, charged: false};
       if (!r.accepted) return;
-      speak(step.hint || '천천히 다시 살펴봐요.', 'good');
+      speak(step.hint || '천천히 다시 살펴봐요.', 'help');
       hintBtn.querySelector('span:last-child').textContent = hintLabel();
       if(activity.postal)hintBtn.title='이 활동의 힌트는 다시 봐도 추가로 점수가 줄지 않아요.';
       hud.update(); onSave?.();
     }, {cls: 'small', icon: '?'});
     if(activity.postal){
       hintBtn.title=scored&&!progress.hinted(activity.id)?'수학 힌트 · 이 활동에서 처음 사용하면 3점이 줄어요. 조작 안내는 점수가 줄지 않아요.':'이 활동의 힌트는 다시 봐도 추가로 점수가 줄지 않아요.';
-      const coach=coachFor(step),explain=()=>{ws.classList.remove('needs-review');speak(coach.moves.join(' ')+' 조작 안내는 점수가 줄지 않아요.');};
-      tools.append(node('div',{class:'help-tools',role:'group','aria-label':'도움말'},[button('무료 조작 안내',explain,{cls:'small'}),hintBtn]));
+      const coach=coachFor(step),explain=()=>{ws.classList.remove('needs-review');speak(coach.moves.join(' '),'help');};explainCurrent=explain;
+      tools.append(node('details',{class:'help-tools'},[node('summary',{text:'도움이 필요해요'}),node('p',{class:'full-task',text:step.kind==='peel'?'종이의 위쪽과 옆쪽 길이를 비교해요. 같아요 / 달라요 중 하나를 골라요.':step.instruction}),node('div',{class:'help-options'},[button('조작 방법 · 무료',explain,{cls:'small'}),hintBtn])]));
       if(activity.postalGuide)guideTimer=setTimeout(explain,60);
     }else tools.append(hintBtn);
     hud.setSub(steps.length > 1 ? [`단계 ${index + 1} / ${steps.length}`] : []);
     const submit = button(submitLabel(step), onSubmit, {primary: true, icon: '✓'});
     primarySlot.append(submit);
-    speak(activity.postal ? activity.situation : (index === 0 && activity.situation ? activity.situation + ' ' : '') + (step.moa || '먼저 위의 행동을 해 보고, 확인 버튼을 눌러요.'));
-    focusTimer=setTimeout(() => (view.focusFirst ? view.focusFirst() : stage.querySelector('button, [tabindex="0"], input, select')?.focus()), 50);
+    syncResponse();
+    speak(activity.postal ? moveFor(step,lastGuide) : (index === 0 && activity.situation ? activity.situation + ' ' : '') + (step.moa || '먼저 위의 행동을 해 보고, 확인 버튼을 눌러요.'));
+    if(activity.postal&&step.kind==='peel')guide(lastGuide);
+    focusTimer=setTimeout(() => (view.focusFirst ? view.focusFirst() : stage.querySelector('button:not([disabled]), [tabindex="0"], input, select')?.focus({preventScroll:true})), 50);
   }
   function sparkle(target) {
     if (reducedMotion() || !target) return;
@@ -136,6 +153,7 @@ export function runMission({activity, workshop, progress, scored = true, contain
     if (solvedStep) return;
     const step = steps[index];
     const answer = view.getAnswer();
+    if(activity.postal&&!hasResponse(step,answer))return;
     const result = step.check(answer, {stepAnswers});
     view.afterCheck?.(result);
     if (result.ok) {
@@ -144,7 +162,7 @@ export function runMission({activity, workshop, progress, scored = true, contain
       if(activity.postal){ws.classList.add('step-checked');banner.replaceChildren(node('strong',{text:index<steps.length-1?'점검했어요! 다음 작업을 해요':'이 포장 작업을 마쳤어요'}),node('small',{text:index<steps.length-1?'‘다음 단계’를 눌러 이어서 준비해요.':'포장 기록을 확인하고 다음으로 이어가요.'}));}
       stepAnswers[index]=answer;progress.setExtra(draftKey,{index:Math.min(index+1,steps.length-1),answers:stepAnswers});onSave?.();
       sfx.success(); sparkle(stage.querySelector('svg') || stage);
-      speak(result.message || (index < steps.length - 1 ? '좋아요! 다음 단계로 가요.' : '좋아요! 이 작업을 마쳤어요.'), 'good');
+      speak(activity.postal&&step.kind==='peel'?(index===0?'가로와 세로가 다른 직사각형이에요.':'네 변이 같은 정사각형이에요. 정사각형도 직사각형에 속해요.'):(result.message || (index < steps.length - 1 ? '좋아요! 다음 단계로 가요.' : '좋아요! 이 작업을 마쳤어요.')), 'good');
       clear(primarySlot);
       if (index < steps.length - 1) primarySlot.append(button('다음 단계', () => { index++; draft.answer=null; renderCurrent();snapshot(); }, {primary: true, icon: '→'}));
       else {
@@ -158,8 +176,19 @@ export function runMission({activity, workshop, progress, scored = true, contain
     const penalty = scored ? progress.wrong(activity.id, newEventId(), answerSignature({step: index, answer})) : null;
     sfx.wrong();
     hud.update(); onSave?.();
-    view.markWrong(result);if(activity.postal)ws.classList.add('needs-review');
-    speak(result.message + (activity.postal?' 고른 답은 그대로 있어요. 바꾼 뒤 다시 확인해요.':'') + (penalty?.accepted ? penalty.repeated ? ' (같은 답이라 추가 감점 없음)' : ' (−10)' : ''), 'alert');
+    view.markWrong(result);if(activity.postal){ws.classList.add('needs-review');if(progress.wrongCount(activity.id)>=2&&!tools.querySelector('.free-coach'))tools.append(button('조작 같이 보기 · 무료',()=>explainCurrent?.(),{cls:'free-coach'}));}
+    let review=({peel:'위쪽과 옆쪽 길이를 다시 비교해요.',solid:'붉게 표시된 곳을 다시 살펴봐요. 빠진 표시도 확인해요.',sort:'붉은 상자를 돌려서 면을 살펴봐요.',choice:'표시된 카드를 다시 살펴봐요.',fill:'표시된 빈칸을 다시 확인해요.',link:'표시된 그림과 연결을 다시 확인해요.',sketch:'붉은 선과 점을 다시 살펴봐요.','tray-count':'표시된 종이의 크기와 장수를 다시 봐요.','net-build':'종이의 연결과 겹치는 곳을 살펴봐요.','net-points':'기준 표시에서 접히는 자리를 따라가 봐요.','net-predict':'접히는 모습을 보고 다시 골라요.'})[step.kind]||'표시된 곳을 다시 살펴봐요.';
+    if(activity.postal){
+      if(result.message)review=result.message;
+      tools.querySelector('.review-detail')?.remove();
+      tools.querySelector('.help-tools')?.append(node('p',{class:'review-detail',text:result.message||review}));
+      if(step.kind==='peel')view.el.classList.add('review-lengths');
+      const target=stage.querySelector('.wrong')||side.querySelector('.wrong');
+      if(!result.message&&!target&&['solid','sort','choice','fill','link','sketch','tray-count'].includes(step.kind))review='빠뜨린 곳이 없는지 문제와 답을 비교해요.';
+      target?.scrollIntoView({block:'nearest',inline:'nearest'});
+      const condition=banner.querySelector('small');if(condition)condition.textContent=review;
+    }
+    speak((activity.postal?review:result.message)+(penalty?.accepted?penalty.repeated?' (같은 답이라 추가 감점 없음)':' (−10)':''),'alert');
   }
   function showSummary() {
     ws.classList.add('has-parcel-record');
@@ -168,7 +197,24 @@ export function runMission({activity, workshop, progress, scored = true, contain
     const box = node('div', {class: 'summary-box', role: 'dialog', 'aria-label': '학습 정리'});
     const wi = progress.activities.find(a => a.id === activity.id)?.workshop;
     const total=progress.activities.filter(a=>a.workshop===wi),done=total.filter(a=>progress.isComplete(a.id)).length;
+    if(activity.postal&&done<total.length){
+      ws.classList.add('inline-complete');box.classList.add('inline-record');box.setAttribute('role','region');
+      const details=node('details',{class:'lesson-recap'},[node('summary',{text:'이번에 알아낸 것'}),node('p',{text:activity.summary}),view.summaryArt?.()]);
+      if(activity.id==='w6-m4'){const assembled=createRobotView({size:180});details.append(assembled.el,assembled.controls);}
+      box.append(node('strong',{text:`✓ 포장 ${done}/${total.length}`}),packingMilestone(activity.postalResident,activity.steps.at(-1)),details,button(nextLabel(),()=>{box.remove();onDone();},{primary:true,icon:'→'}));
+      ws.append(box);box.querySelector('button.primary').focus({preventScroll:true});return;
+    }
     const parcel=activity.postal?node('div',{class:'parcel-record'},[node('div',{class:'parcel-icon'},[node('img',{src:itemImage(activity.postalResident),alt:'',class:'packed-item'})]),node('strong',{text:activity.parcelItem||'마음을 담은 소포'}),node('div',{class:'parcel-dots','aria-label':`전체 ${total.length}개 중 ${done}개 포장 완료`,text:total.map((_,i)=>i<done?'●':'○').join(' ')}),node('small',{text:`포장 기록 ${done}/${total.length} · ${done===total.length?'봉인 준비 완료':'이만큼 준비했어요'}`})]):null;
+    if(parcel){
+      const phase=done===total.length?'sealed':done>=4?'protected':done>=2?'wrapped':'box';
+      const picture=parcel.querySelector('.parcel-icon');picture.dataset.phase=phase;
+      const label={box:'상자 준비',wrapped:'포장지 두르기',protected:'모서리 보호',sealed:'봉인 완료'}[phase];
+      picture.setAttribute('role','img');picture.setAttribute('aria-label',label);
+      for(let i=0;i<4;i++)picture.append(node('span',{class:'parcel-corner','aria-hidden':'true'}));
+      picture.append(node('span',{class:'parcel-lid','aria-hidden':'true'}));
+      picture.append(node('span',{class:'parcel-seal',text:'✓','aria-hidden':'true'}));
+      parcel.querySelector('small').textContent=`포장 기록 ${done}/${total.length} · ${label}`;
+    }
     const stamped = workshop && progress.workshopDone(wi);
     if (stamped) sfx.stamp();
     let robot = null;
@@ -178,12 +224,17 @@ export function runMission({activity, workshop, progress, scored = true, contain
       node('h2', {text: stamped ? `${activity.postal?activity.parcelItem:workshop.name} · 포장 완료!` : activity.postal ? '포장 기록에 하나 더!' : activity.title}),
       robot ? node('div', {class: 'row', style: {justifyContent: 'center'}}, [robot.el, robot.controls]) : null,
       parcel,
+      activity.postal ? view.summaryArt?.() : null,
       node('p', {text: activity.summary}),
       activity.postal ? node('p',{class:'note',text:stamped?'상자 점검을 마쳤어요. 소포에 송장을 붙이고 배송해요.':activityKind==='review'?'새 상자에도 배운 방법을 써 봤어요. 출발 점검을 이어가요.':'배운 내용을 포장 기록에 남겼어요. 다음 작업도 직접 시작해요.'}):null,
       stamped&&!activity.postal ? node('p', {class: 'note', text: `${workshop.name}의 미션 4개와 복습 3문항을 모두 마쳤어요.`}) : null,
       node('div', {class: 'row', style: {justifyContent: 'center'}}, [button(nextLabel(), () => { box.remove(); onDone(); }, {primary: true, icon: '→'})])
     ].filter(Boolean));
-    if(activity.postal&&done===total.length){const parcelView=createSolidView({dims:{x:4,y:3,z:3},size:190,scale:31,postal:true,mode:'none'});const turn=node('div',{class:'parcel-turntable'},[parcelView.el,parcelView.controls,node('small',{text:'쓸어서 소포를 돌려 볼 수 있어요 · 추가 문제는 없어요'}),node('div',{class:'parcel-address'},[node('span',{text:'받는 이'}),node('strong',{text:STORIES[activity.postalResident].to}),node('small',{text:activity.parcelItem})])]);box.insertBefore(turn,box.children[2]);box.querySelector('p.note').textContent=STORIES[activity.postalResident].finish;}
+    if(activity.postal&&done===total.length){const parcelView=createSolidView({dims:parcelDimensions(activity.postalResident),size:190,scale:130/Math.max(...Object.values(parcelDimensions(activity.postalResident))),postal:true,mode:'none'});const turn=node('div',{class:'parcel-turntable'},[parcelView.el,node('details',{class:'rotation-tools'},[node('summary',{text:'소포 돌려보기'}),parcelView.controls]),node('small',{text:'쓸어서 소포를 돌려 볼 수 있어요 · 추가 문제는 없어요'}),node('div',{class:'parcel-address'},[node('span',{text:'받는 이'}),node('strong',{text:STORIES[activity.postalResident].to}),node('small',{text:activity.parcelItem})])]);const peek=node('details',{class:'completed-preview'},[node('summary',{text:'상자 입체로 살펴보기'}),turn]);box.insertBefore(peek,box.lastElementChild);box.querySelector('p.note').textContent=STORIES[activity.postalResident].finish;}
+    if(activity.postal){
+      if(done===total.length)box.insertBefore(parcelCustomizer(progress,activity.postalResident,onSave),box.lastElementChild);
+      else if(parcel){parcel.classList.add('packing-progress');parcel.querySelector('.parcel-icon').classList.add('packing-arrival');}
+    }
     ws.append(box);
     if (robot && !reducedMotion()) robot.spin();
     box.querySelector('button.primary').focus({preventScroll:true});
@@ -198,6 +249,7 @@ export function runMission({activity, workshop, progress, scored = true, contain
     return activity.postal ? '소포 들고 나가기' : '마을로 돌아가기';
   }
   renderCurrent();restoring=false;
-  return {destroy() { clearTimeout(guideTimer);clearTimeout(focusTimer);instructionSize.disconnect();window.removeEventListener('resize',fitInstruction);if(!solvedStep)snapshot();window.removeEventListener('pagehide',snapshot);clear(container); },get view(){return view;}};
+  return {destroy() { view?.destroy?.();clearTimeout(guideTimer);clearTimeout(focusTimer);clearTimeout(captureTimer);instructionSize.disconnect();window.removeEventListener('resize',fitInstruction);if(!solvedStep)snapshot();window.removeEventListener('pagehide',snapshot);clear(container); },get view(){return view;}};
 }
+
 

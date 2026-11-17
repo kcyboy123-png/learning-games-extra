@@ -207,3 +207,315 @@
 
 /* A quiet, optional route back to controls; no automatic mathematical hint. */
 .postal.needs-review .help-tools button:first-child{outline:3px solid #62846c;outline-offset:2px;background:#f3edc9}
+
+/* First parcel: select a face, then compare it with illustrated answer cards. */
+.postal[data-task="peel"]>.parcel-item{display:none}
+.postal[data-task="peel"] .banner{background:#fffdf3!important;box-shadow:0 3px 0 #c8bea2}
+.postal[data-task="peel"] .banner strong{color:#294c38;text-shadow:none}
+.postal[data-task="peel"] .banner small{color:#4b604b}
+.postal[data-task="peel"] .stage{left:48px;right:48px;bottom:190px;overflow:auto}
+.postal .peel-workflow{display:grid;grid-template-columns:280px minmax(0,1fr);align-items:center;width:100%;height:100%;gap:20px!important}
+.postal .peel-workflow>.solid-view{width:100%}
+.postal .peel-workflow>.solid-view>svg{width:100%;height:280px!important;max-height:none!important}
+.postal .peel-workflow>.panel{min-width:0!important;width:100%;padding:12px 18px;border-radius:24px;box-sizing:border-box;text-align:center}
+.postal .peel-workflow>.panel>svg{display:block;margin:auto;width:230px;height:145px}
+.postal .peel-workflow>.panel h3{font-size:23px;color:#2e503c}
+.postal .peel-workflow>.panel .note{font-size:17px;line-height:1.4;margin:8px 0}
+.postal .peel-workflow[data-phase="face"]{grid-template-columns:1fr 1fr}
+.postal .peel-workflow[data-phase="face"]>.solid-view>svg{height:350px!important}
+.postal .peel-preview{padding:28px 16px;border:2px dashed #a6b98d;border-radius:20px;color:#647451;font-size:20px;line-height:1.6}
+.postal .shape-answers{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.postal .shape-answer{display:flex;flex-direction:column;gap:4px;padding:9px!important;min-height:110px;border:2px solid #9cad8c!important;background:#fffef6!important;color:#2d4837!important;white-space:normal;box-shadow:0 4px 0 #d3d7bf}
+.postal .shape-answer>svg{width:72px;height:44px;flex-shrink:0}
+.postal .shape-answer>span{font-size:21px;font-weight:800}
+.postal .shape-answer>small{font-size:14px;line-height:1.3}
+.postal .shape-answer[aria-pressed="true"]{background:#dbeacf!important;border-color:#355c40!important;box-shadow:inset 0 0 0 2px #355c40}
+.postal .shape-answer[aria-pressed="true"]>span:before{content:'✓ ';color:#355c40}
+.postal .shape-answer.wrong{border-color:#b34a35!important;background:#fff0e8!important;box-shadow:inset 0 0 0 2px #b34a35}
+.postal .peel-rotate summary{cursor:pointer;min-height:48px;padding:10px;box-sizing:border-box;color:#fffbe7;font-size:18px}
+.postal .peel-rotate[open]{position:relative}.postal .peel-rotate[open]>.rot{position:absolute;bottom:100%;left:0;min-width:290px;background:#fffdf2;padding:10px;border:2px solid #8c9e77;border-radius:16px}
+.postal[data-task="peel"] .primary-slot button:disabled{opacity:.5;box-shadow:none;cursor:default}
+.portrait .postal[data-task="peel"] .stage{bottom:370px}
+.portrait .postal .peel-workflow,.portrait .postal .peel-workflow[data-phase="face"]{grid-template-columns:1fr;align-content:start;height:auto;gap:12px!important}
+.portrait .postal .peel-workflow>.solid-view>svg{height:240px!important}
+.portrait .postal .peel-workflow[data-phase="face"]>.solid-view>svg{height:360px!important}
+.portrait .postal .peel-workflow>.panel>svg{height:200px;width:280px}
+.portrait .postal .peel-workflow>.panel h3{font-size:var(--reading-size)}
+.portrait .postal .shape-answer{min-height:150px}.portrait .postal .shape-answer>span{font-size:var(--reading-size)}
+.portrait .postal .shape-answer>small{font-size:var(--small-size)}
+@media(prefers-reduced-motion:no-preference){.postal .peel-workflow[data-phase="shape"]>.panel>svg{animation:face-unpack .3s ease-out}@keyframes face-unpack{from{transform:translateX(-25px) rotate(-5deg);opacity:.3}to{transform:none;opacity:1}}}
+
+/* The question and the work surface lead; parcel identity stays in the header. */
+.postal>.parcel-item{display:none}
+.postal[data-task="solid"]:before{display:none}
+.postal .banner{background:#fffdf3!important;box-shadow:0 3px 0 #c8bea2;padding-top:12px;padding-bottom:12px}
+.postal .banner strong{color:#294c38;text-shadow:none;font-size:26px;line-height:1.35;word-break:keep-all}
+.postal .banner small{color:#4b604b;font-size:17px;line-height:1.4}
+.postal .banner:before{content:'?';font-weight:900;transform:none}
+.postal .mat{background:#f5f0de!important}
+.postal .primary-slot button:disabled{opacity:.48;box-shadow:none!important;cursor:default}
+.postal .component-progress h3{font-size:19px;line-height:1.4;margin-top:0}
+.postal .component-progress .note{font-size:16px;line-height:1.55}
+.postal .component-checklist{display:grid;grid-template-columns:1fr;gap:8px}
+.postal .component-checklist button{width:100%;justify-content:flex-start;min-height:48px}
+.postal .component-checklist .btn[aria-pressed="true"]{background:#365d42;color:#fffdf0;border-color:#294b35;box-shadow:inset 0 0 0 1px #fff6}
+.postal .component-checklist button[data-kind="faces"] span:before{content:'▱ ';font-size:22px}
+.postal .component-checklist button[data-kind="edges"] span:before{content:'━ ';font-size:22px}
+.postal .component-checklist button[data-kind="vertices"] span:before{content:'● ';font-size:22px}
+.postal .shelf .item .name{font-size:20px;color:#36563d}
+.postal .shelf .item.picked .name:before{content:'✓ ';color:#315739}
+.postal .stage .cards .btn{border:2px solid #b8c3a3;background:#fffdf3;box-shadow:0 4px 0 #b7bd9e44}
+.postal .stage .cards .btn[aria-pressed="true"]{border-color:#365d42;background:#deebd1;box-shadow:inset 0 0 0 2px #365d42}
+.postal .stage .cards .btn.wrong{border-color:#ae4b35;background:#fff0e8;box-shadow:inset 0 0 0 2px #ae4b35}
+.postal .stage .cards .btn .mark{min-width:22px;flex-shrink:0}
+.postal .answer-fields .field{padding:10px 12px;border-bottom:1px dashed #c6ceb4;gap:12px;align-items:center}
+.postal .answer-fields label{font-size:19px;line-height:1.4;flex:1}
+.postal .answer-fields input,.postal .answer-fields select{border:2px solid #819b70;background:#fffef6;min-height:48px}
+.postal .answer-fields .wrong{background:#fff0e8;border-color:#ae4b35}
+.postal .line-key{display:grid;gap:10px;margin-top:16px;font-size:17px;color:#3c5d45}
+.postal .line-key span:before{content:'';display:inline-block;width:36px;border-top:3px solid #41615b;margin:0 10px 4px 0}
+.postal .line-key .hidden-line:before{border-top-style:dashed}
+.postal .predict-answer .row{display:grid;grid-template-columns:1fr;gap:12px}
+.postal .predict-answer button{min-height:58px;font-size:21px}
+.postal .predict-answer button[aria-pressed="true"]{background:#deebd1;color:#2f513b;border:2px solid #365d42}
+.postal .predict-answer button[aria-pressed="true"] span:before{content:'✓ '}
+.postal .held-piece{padding:10px!important;border:2px solid #658351;border-radius:12px;background:#e0edce!important;color:#2f5037!important;font-weight:800;font-size:18px!important;line-height:1.4}
+.postal .card-match .answered{background:#e3edd6;border-color:#6d8b56}
+.postal .card-match select{min-height:48px;border:2px solid #819b70;background:#fffef6;font-size:18px}
+.app:not(.portrait) .postal .card-match>.row .cell>svg{height:112px;width:150px}
+.app:not(.portrait) .postal .card-match>.row .cell .sketch-view>svg{height:112px;width:150px}
+.app:not(.portrait) .postal .card-match .link-table .cell svg{height:50px;width:96px}
+.app:not(.portrait) .postal .card-match .link-table{gap:6px}
+.app:not(.portrait) .postal .card-match .link-table .mini{font-size:14px;line-height:1.2}
+.portrait .postal .banner strong{font-size:30px}
+.portrait .postal .component-progress h3,.portrait .postal .answer-fields label,.portrait .postal .predict-answer button{font-size:var(--reading-size)}
+.portrait .postal .line-key,.portrait .postal .component-progress .note{font-size:var(--small-size)}
+.portrait .postal .answer-fields input,.portrait .postal .answer-fields select,.portrait .postal .card-match select{min-height:var(--touch-size);font-size:var(--reading-size)}
+.portrait .postal .tray .mini,.portrait .postal .tray .cnt{font-size:var(--small-size);line-height:1.5}
+.portrait .postal .held-piece{font-size:var(--reading-size)!important}
+.portrait .postal .tray button{min-height:var(--touch-size)}
+/* One question, one paper sample, one answer. */
+.postal .one-choice-face{display:block;width:min(650px,100%)}
+.postal .one-choice-face>.panel{min-width:0!important;width:100%;padding:18px 30px;background:#fffdf2;border:1px solid #d2c8a8;border-radius:24px;text-align:center}
+.postal .one-choice-face>.panel>svg{display:block;margin:auto;width:280px;height:220px}
+.postal .one-choice-face .shape-answers{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.postal .one-choice-face .shape-answer{min-height:72px;font-size:23px;display:flex;flex-direction:column;justify-content:center;gap:5px}
+.postal .one-choice-face .shape-answer>svg{display:none}
+.postal .one-choice-face .shape-answer small{font-size:16px;font-weight:400}
+.postal[data-task="peel"] .stage{left:90px;right:90px}
+.postal[data-task="peel"] .parcel-item{display:none}
+/* Reveal coaching only on request or after checking an answer. */
+.hud .card.goal,#recipient{display:none!important}.hud .card.loc{min-width:320px;max-width:380px;border:0;background:#fffbedee!important;box-shadow:0 3px 0 #7d896329;border-radius:22px;padding:8px 14px!important}.hud .card.loc>div{grid-template-columns:48px minmax(0,1fr);min-height:48px;column-gap:10px}.hud #parcelSymbol{width:48px;height:48px;border:0;background:none;transform:none}.hud #parcelSymbol img{width:46px;height:46px}.hud #location{font-size:23px}.hud #sender{font-size:14px!important}.subbar{top:84px;background:#fffbeedb;border-radius:10px;font-size:14px}
+.postal .banner{top:116px;background:#fffbed!important;border:1px solid #d6c8a5;box-shadow:0 4px 0 #8c967030;border-radius:24px;padding:16px 24px}.postal .banner:before{display:none}.postal .banner strong{color:#35563f;text-shadow:none;font-size:30px}.postal .banner small{color:#52644b;font-size:18px}.postal .parcel-item{display:none}.postal .bubble{visibility:hidden}.postal.show-feedback .bubble{visibility:visible}.postal .tools{background:#fffbeded!important;border-color:#d0c5a8;box-shadow:0 3px 0 #71826930}.postal .tools .field,.postal .tools .unit{color:#35563f}
+.postal .help-tools{color:#3e5c45;position:relative}.postal .help-tools summary{cursor:pointer;min-height:48px;display:flex;align-items:center;padding:8px 15px;font-size:17px;font-weight:700;border:1px solid #b8c5a4;border-radius:14px;background:#eef2e3}.postal .help-tools summary:before{content:'?';display:grid;place-items:center;width:25px;height:25px;border:1px solid #9bae88;border-radius:50%;margin-right:8px}.postal .help-options{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.postal .help-tools[open]{max-width:550px}.postal .help-tools .btn{color:#35563f}
+.postal[data-task="peel"] .stage{top:max(220px,var(--instruction-bottom,0px));bottom:168px;left:60px;right:60px}.postal .one-choice-face>.panel{padding:12px 24px;background:#fffdf2d9}.postal .one-choice-face>.panel>h3,.postal .one-choice-face>.panel>.note{display:none}.postal .one-choice-face>.panel>svg{height:205px;width:280px}.postal .one-choice-face .shape-answer{min-height:64px}.postal .one-choice-face .shape-answer small{display:none}.postal .one-choice-face .shape-answers{margin:8px 0}.postal[data-task="peel"] .tools{bottom:87px}.postal[data-task="peel"] .bubble{bottom:18px;min-height:54px;padding:10px 16px 10px 65px}.postal[data-task="peel"] .bubble small{display:none}.postal[data-task="peel"] .bubble strong{font-size:18px}.postal[data-task="peel"] .resident-portrait{width:42px;height:48px}.postal .primary-slot .primary{background:#55764e!important;color:#fffbed!important;border:1px solid #3e623d!important;box-shadow:0 4px 0 #345035}
+.portrait .hud .card.loc{min-width:400px;max-width:500px}.portrait .hud .card.loc>div{grid-template-columns:60px minmax(0,1fr);min-height:65px}.portrait .hud #parcelSymbol,.portrait .hud #parcelSymbol img{width:60px;height:60px}.portrait #sender{font-size:var(--small-size)!important}.portrait .subbar{top:102px}.portrait .postal .banner{top:142px;padding:20px 24px}.portrait .postal .banner strong{font-size:34px}.portrait .postal .banner small{font-size:var(--reading-size)}.portrait .postal[data-task="peel"] .stage{top:max(275px,var(--instruction-bottom,0px));bottom:300px;left:60px;right:60px}.portrait .postal .one-choice-face>.panel>svg{width:420px;height:340px}.portrait .postal .one-choice-face .shape-answer{min-height:var(--touch-size);font-size:var(--reading-size)}.portrait .postal[data-task="peel"] .tools{bottom:205px}.portrait .postal[data-task="peel"] .bubble{bottom:24px;min-height:120px}.portrait .postal[data-task="peel"] .bubble strong{font-size:var(--reading-size)}.portrait .postal .help-tools summary{min-height:var(--touch-size);font-size:var(--reading-size)}
+.postal .summary-box>p.note{display:none}.postal .summary-box .parcel-dots{display:none}.postal .summary-box h2{font-size:27px}
+.postal .help-tools summary,.postal .help-options .btn{min-height:max(48px,var(--touch-size,48px));font-size:max(17px,var(--small-size,17px))}.postal .one-choice-face>.panel>svg{animation:none!important}
+.postal[data-task="peel"] .stage .one-choice-face .panel .shape-answer{min-height:max(64px,var(--touch-size,48px))}
+.postal[data-task="peel"] .bubble .resident-portrait{top:50%;bottom:auto;transform:translateY(-50%);left:9px;width:44px;height:54px}
+/* Only the active comparison blank is shown; answers remain in the same draft. */
+.postal .field-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px}.postal .field-position{font-size:20px;font-weight:700;white-space:nowrap}.postal .field-nav .btn{min-height:var(--touch-size,48px);font-size:var(--small-size,17px)}
+.postal .answer-fields .field{font-size:22px;line-height:1.6}.postal .answer-fields h3{font-size:18px;color:#5b7054}.postal .answer-fields select,.postal .answer-fields input{font-size:22px;min-height:var(--touch-size,48px)}
+.postal .component-progress .note{display:none}.postal .component-checklist .btn{opacity:.7}.postal .component-checklist .btn[aria-pressed=true]{opacity:1;border:2px solid #52754b;background:#e1eccf;color:#2f5136;box-shadow:0 3px 0 #7c9661}.postal .full-task{font-size:var(--small-size,17px);line-height:1.5;max-width:550px;color:#38513d}
+.postal .card-match.one-match{grid-template-columns:1fr!important;gap:14px!important;max-width:780px;margin:auto}.postal .one-match .match-label{font-size:23px;color:#36573f;text-align:center}.postal .one-match .link-table{grid-template-columns:1fr 1fr;width:100%;gap:16px}.postal .one-match .link-table .cell{min-height:70px}.postal .one-match>.row .cell>svg,.postal .one-match>.row .cell .sketch-view>svg{height:140px!important;width:180px!important}.postal .one-match .link-table .cell svg{height:85px!important;width:140px!important}.postal .one-match .link-table select{font-size:21px;min-height:var(--touch-size,48px);width:100%}.postal .one-match .field-nav{margin-top:0}.portrait .postal .one-match .match-label{font-size:var(--reading-size)}.portrait .postal .one-match>.row .cell>svg,.portrait .postal .one-match>.row .cell .sketch-view>svg{height:190px!important;width:210px!important}
+.app:not(.portrait) .postal .card-match.one-match{grid-template-columns:1.4fr 1fr!important;gap:10px 16px!important}.app:not(.portrait) .one-match .match-label,.app:not(.portrait) .one-match>.field-nav{grid-column:1/-1}.app:not(.portrait) .one-match>.row{grid-column:1;grid-row:2}.app:not(.portrait) .one-match .link-table{grid-column:2;grid-row:2;grid-template-columns:1fr}.app:not(.portrait) .one-match .link-table .cell{min-height:50px}.app:not(.portrait) .one-match .link-table .cell svg{height:60px!important}.app:not(.portrait) .one-match>.row .cell>svg,.app:not(.portrait) .one-match>.row .cell .sketch-view>svg{width:130px!important;height:125px!important}.postal .one-match .match-label{line-height:1.35}.postal .one-match .link-table .cell .mini{font-size:16px!important}
+.app:not(.portrait) .postal .card-match.one-match{max-width:900px;grid-template-columns:1.8fr 1fr!important}.app:not(.portrait) .one-match>.row .cell>svg,.app:not(.portrait) .one-match>.row .cell .sketch-view>svg{width:160px!important;height:150px!important}
+
+/* Keep optional help readable without squeezing its disclosure title. */
+.postal .help-tools[open]{display:block!important}.postal .help-tools summary{white-space:nowrap}.postal .help-tools .full-task{margin:10px 0}.postal .help-tools[open] summary{min-height:var(--touch-size,48px)}
+.postal .tools:has(.help-tools[open]){max-height:min(420px,50vh);overflow-y:auto;align-items:flex-start}.postal .tools:has(.help-tools[open]) .help-tools{flex:1 1 100%}
+
+/* Pending actions remain readable; only the submission is disabled. */
+.postal .primary-slot button.primary:disabled{opacity:1;background:#e3e9d9!important;color:#38513d!important;border:2px dashed #9cae89!important;box-shadow:none!important}
+
+/* A single postage label keeps the gift, sender and progress together. */
+.hud .card.loc{min-width:420px;max-width:560px;padding:10px 16px!important;border:1px solid #d8cba9;background:#fffbedf5!important;border-radius:20px;box-shadow:0 3px 0 #b4a48244}
+.hud .card.loc>div{grid-template-columns:64px minmax(0,1fr);column-gap:14px;row-gap:1px}
+.hud #parcelSymbol{width:62px;height:66px;border:1px dashed #99ac80;border-radius:12px;background:#e8eedc;display:grid;place-items:center}
+.hud #parcelSymbol img{width:52px;height:52px}.hud #location{font-size:25px;line-height:1.15;color:#36573e}.hud #sender{font-size:16px!important;line-height:1.2;color:#52674b}
+.hud #subbar{position:static;grid-column:2;top:auto;left:auto;margin:3px 0 0;padding:0;background:none;border:0;border-radius:0;font-size:16px;line-height:1.3;color:#52674b;white-space:normal}
+.portrait .hud .card.loc{min-width:460px;max-width:600px}.portrait .hud #sender,.portrait .hud #subbar{font-size:var(--small-size)!important}.portrait .hud #location{font-size:30px}.portrait .hud #parcelSymbol{width:70px;height:78px}.portrait .hud .card.loc>div{grid-template-columns:70px minmax(0,1fr)}
+.postal .solid-view>svg{cursor:grab}.postal .solid-view.turning>svg{cursor:grabbing}.postal .turn-hint{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);white-space:nowrap;background:#fffbedec;color:#486544;border:1px solid #b8c8a3;border-radius:16px;padding:6px 12px;font-size:16px;pointer-events:none}.portrait .postal .turn-hint{font-size:var(--small-size)}
+/* Pass 1: a quiet shipment label, followed by the action to take. */
+.hud #subbar{display:flex;flex-wrap:wrap;gap:6px 12px;font-variant-numeric:tabular-nums}
+.hud #subbar span+span{border-left:1px solid #aebc9d;padding-left:12px}
+.hud #sender{color:#41583e!important;font-weight:600}
+.postal .banner strong{line-height:1.4;letter-spacing:0;word-break:keep-all;overflow-wrap:anywhere}
+.postal .banner small{line-height:1.55;color:#43583f;font-weight:500;word-break:keep-all;overflow-wrap:anywhere}
+/* Pass 2: readable tools and unmistakable selected/focused controls. */
+.postal .component-checklist .btn{opacity:1;color:#41583e;background:#fffdf2;border:1px solid #b4c2a3;box-shadow:0 2px 0 #c6ceb6;font-size:18px;line-height:1.4;min-height:48px;font-variant-numeric:tabular-nums}
+.postal .component-checklist .btn[aria-pressed=true]{border:2px solid #52754b;background:#e1eccf;box-shadow:inset 5px 0 #52754b;color:#2f5136}
+.postal .tools .btn{min-height:max(48px,var(--touch-size,48px));font-size:max(17px,var(--small-size,17px))}
+.postal .tools .rot{gap:6px}
+.postal .btn:focus-visible,.postal summary:focus-visible,.hud button:focus-visible,.postal select:focus-visible,.postal input:focus-visible{outline:3px solid #77501f;outline-offset:3px}
+.postal .progress-side h3{line-height:1.4;color:#36543d;margin-bottom:10px}
+.postal .progress-side .chip{font-variant-numeric:tabular-nums;line-height:1.4}
+.portrait .postal .component-checklist .btn{font-size:var(--reading-size);min-height:var(--touch-size)}
+/* Pass 3: keep the gesture cue and action labels inside the visible desk. */
+.postal[data-task="solid"] .solid-view{position:static!important}
+.postal[data-task="solid"] .turn-hint{top:4px;bottom:auto;max-width:100%;white-space:normal;text-align:center;line-height:1.4;margin:0;padding:5px 10px;background:#fffbed;color:#36543d}
+.postal .primary-slot,.portrait .postal .primary-slot{width:275px}
+.postal .primary-slot .primary{word-break:keep-all;line-height:1.4;text-wrap:balance}
+.postal .bubble{right:320px}
+.postal .full-task{line-height:1.7;word-break:keep-all;color:#304e39}
+.postal .help-options .btn{line-height:1.4}
+.postal .summary-box p,.postal .summary-box small{color:#40583d;line-height:1.65;word-break:keep-all}
+.postal .summary-box button{min-height:max(48px,var(--touch-size,48px));line-height:1.4;word-break:keep-all}
+/* Parcel cards, pass 1: make the gift and geometric object the focal points. */
+.hud #parcelSymbol{background:#e7efdd;border-color:#8ca279;box-shadow:inset 0 0 0 4px #f8faee;border-radius:14px}
+.hud #parcelSymbol img{width:60px;height:60px;object-fit:contain;filter:drop-shadow(0 3px 2px #54704a20)}
+.portrait .hud #parcelSymbol img{width:68px;height:68px}
+.hud #sender{letter-spacing:0;color:#486140!important}.hud #location{font-weight:800}
+.postal[data-task="sort"] .shelf .item .solid-view>svg{height:144px;width:100%;max-width:170px}
+.postal[data-task="sort"] .shelf .item .name{font-size:19px;color:#34543d;line-height:1.4}
+.postal[data-task="sort"] .shelf .item{padding:10px 8px;gap:6px}
+/* Pass 2: fit the complete card, distinguish turning from choosing. */
+.postal[data-task="sort"] .shelf .item{padding:8px;gap:4px;background:#fffdf3!important;box-shadow:0 3px 0 #c7bea0;border-color:#c5b995}
+.postal[data-task="sort"] .shelf .item .solid-view>svg{height:128px}
+.postal[data-task="sort"] .shelf .item>.row{width:100%;gap:6px;margin:0;padding:0}
+.postal[data-task="sort"] .shelf .item>.row .btn{flex:1;min-width:0;min-height:48px;background:#edf1e3;border:1px solid #becba9;border-radius:14px;box-shadow:none;color:#436044}
+.postal[data-task="sort"] .shelf .item>button{width:100%;margin-top:auto;min-height:48px;background:#507356;color:#fffbed;border:1px solid #3e6244;box-shadow:0 3px 0 #35533b;font-size:16px;line-height:1.3}
+.postal[data-task="sort"] .shelf .item>button:hover{background:#3b6044}
+/* Pass 3: selected cards read as picked parcels, including without colour. */
+.postal[data-task="sort"] .shelf .item.picked{background:#edf3e1!important;border-color:#567b49;box-shadow:inset 0 0 0 2px #b7cba2,0 3px 0 #8ea577}
+
+.postal[data-task="sort"] .shelf .item.picked>button{background:#e6eedb;color:#345439;border-color:#7d9b69;box-shadow:0 3px 0 #9eaf8c}
+.postal[data-task="sort"] .shelf .item.wrong{border-color:#a34f35;box-shadow:inset 0 0 0 2px #c68162}
+.postal[data-task="sort"] .shelf .item .tags{line-height:1.3}
+.portrait .postal[data-task="sort"] .stage{bottom:350px}.portrait .postal[data-task="sort"] .mat{bottom:334px}
+.portrait .postal[data-task="sort"] .shelf .item .name{font-size:var(--reading-size)}
+.hud #subbar{color:#3c583e}.hud #subbar span:first-child{font-weight:600}
+
+/* Resident cards, pass 1: generous picture space, the same postal label. */
+.hud .card.loc>div{grid-template-columns:72px minmax(0,1fr)}
+.hud #parcelSymbol{width:70px;height:72px}.hud #parcelSymbol img{width:66px;height:66px}
+.portrait .hud #parcelSymbol{width:74px;height:78px}.portrait .hud #parcelSymbol img{width:72px;height:72px}
+.portrait .hud .card.loc>div{grid-template-columns:76px minmax(0,1fr)}
+.postal .stage .cards{max-width:860px;gap:14px}
+.postal .stage .cards .btn{padding:12px 16px;gap:10px;border-radius:20px;word-break:keep-all}
+.postal .stage .cards .btn svg{height:148px;object-fit:contain}
+.postal .stage .cards .btn>.row{flex-wrap:nowrap;align-items:flex-start;gap:8px;line-height:1.5}
+.postal .stage .cards .btn>.row .mark{margin:2px 0 0}
+.portrait .postal .stage .cards .btn svg{height:180px}
+/* Resident cards, pass 2: paper diagrams and counting controls have room to read. */
+.postal[data-task="net-predict"] .stage>.row>.panel:first-child>svg{width:250px;height:230px}
+.portrait .postal[data-task="net-predict"] .stage>.row>.panel:first-child>svg{width:330px;height:310px}
+.postal .predict-answer{min-width:270px}.postal .predict-answer .btn{background:#fffdf2;border-color:#9aae87;color:#37553d}
+.postal .counter{gap:6px}.postal .counter .item{padding:4px 8px;border-radius:16px;gap:6px}
+.postal .counter svg{width:72px;height:50px;flex:none}.postal .counter svg .label{font-size:16px!important}
+.postal .counter .count-row{gap:8px}.postal .counter .num{min-width:24px;text-align:center;font-size:23px;font-variant-numeric:tabular-nums;color:#34543d}
+.postal .counter .count-row button{min-width:48px;min-height:48px;padding:4px;background:#edf1e3;border:1px solid #b4c5a0;box-shadow:none}
+.postal .counter .count-row button:last-child{background:#507356;border-color:#3e6244;color:#fffbed}
+.portrait .postal .counter .count-row button{min-width:var(--touch-size);min-height:var(--touch-size)}
+.postal .answer-fields,.postal .one-match .link-table{background:#fffdf2;border-radius:20px}
+.postal .answer-fields input,.postal .answer-fields select,.postal .one-match select{color:#34543d;border-radius:12px}
+/* Resident cards, pass 3: explicit selected answers and calm field navigation. */
+.postal .predict-answer .btn[aria-pressed="true"]{background:#deebd1;border:2px solid #456a42;box-shadow:inset 4px 0 #456a42;color:#294b32}
+.postal .stage .cards .btn .mark{border-color:#8ea47b;background:#fffef6;border-radius:7px}
+.postal .stage .cards .btn[aria-pressed="true"] .mark{background:#456a42;border-color:#456a42;color:#fffbed}
+.postal .field-nav{gap:10px;padding-top:10px;border-top:1px solid #c8d2b7}
+.postal .field-nav .btn{background:#edf1e3;border:1px solid #aabd96;border-radius:14px;color:#36543d;line-height:1.4}
+.postal .field-nav .btn:disabled{opacity:1;color:#5e6b55;background:#f0f0e7;border-color:#cbd1bf;box-shadow:none}
+.postal .field-position{color:#36543d;font-size:18px;font-variant-numeric:tabular-nums}
+.postal .one-match .link-table .cell.answered{background:#e4eed7;border-color:#6d8d59}
+.postal .answer-fields label,.postal .one-match .match-label{word-break:keep-all}
+.portrait .postal .field-position{font-size:var(--small-size)}
+/* Direct packing: optional rotation, held paper and visible parcel progress. */
+.postal .rotation-tools{border:1px solid #b7c5a4;border-radius:14px;background:#edf1e3;padding:0 10px}
+.postal .rotation-tools summary{cursor:pointer;font-size:max(17px,var(--small-size,17px));font-weight:700;min-height:var(--touch-size,48px);padding:12px 3px;color:#36543d}
+.postal .rotation-tools .rot{padding:4px 0 10px;flex-wrap:wrap}
+.postal .tools:has(.rotation-tools[open]){max-height:min(420px,50vh);overflow-y:auto;align-items:flex-start}
+.postal .rotation-tools summary:focus-visible{outline:3px solid #77501f;outline-offset:2px}
+.postal .held-preview{display:block;width:100%;height:74px;margin-bottom:4px;filter:drop-shadow(0 3px 2px #70542a25)}
+.postal .held-piece small{display:block;font-size:var(--small-size,15px);line-height:1.5;margin-top:5px;color:#36543d}
+.postal .review-detail{font-size:var(--reading-size,18px);line-height:1.6;border-left:4px solid #a65a3b;padding-left:12px;color:#703e2b}
+.postal.needs-review .review-lengths .panel>svg text{fill:#8f3e25;stroke:#fff5df;stroke-width:3px;paint-order:stroke;font-weight:800}
+.postal.needs-review .wrong{outline:2px dashed #a65a3b;outline-offset:3px}
+.postal .parcel-record .parcel-icon{position:relative;isolation:isolate;overflow:hidden;width:116px;height:102px;min-height:0;background:#dcc49d;border:2px solid #a58b61;box-shadow:inset 0 0 0 5px #ebdbba;transition:background-color .2s}
+.postal .parcel-icon[data-phase="wrapped"],.postal .parcel-icon[data-phase="protected"],.postal .parcel-icon[data-phase="sealed"]{background:repeating-linear-gradient(35deg,#edf1db 0 14px,#e0e8c9 14px 28px)}
+.postal .parcel-icon:not([data-phase="box"]):before{content:'';position:absolute;inset:0 44px;background:#a9bf92;border-inline:2px solid #fbf6df;z-index:0}
+.postal .parcel-icon .packed-item{z-index:1;position:relative;width:62px;height:68px}
+.postal .parcel-corner{display:none;position:absolute;width:25px;height:25px;border:2px dashed #71895c;background:#b9cca7;z-index:2}
+.postal .parcel-icon:is([data-phase="protected"],[data-phase="sealed"]) .parcel-corner{display:block}
+.postal .parcel-corner:nth-of-type(1){top:0;left:0;border-radius:0 0 14px 0}.postal .parcel-corner:nth-of-type(2){top:0;right:0;border-radius:0 0 0 14px}.postal .parcel-corner:nth-of-type(3){bottom:0;left:0;border-radius:0 14px 0 0}.postal .parcel-corner:nth-of-type(4){bottom:0;right:0;border-radius:14px 0 0 0}
+.postal .parcel-seal{display:none;position:absolute;bottom:3px;right:33px;width:36px;height:36px;border-radius:50%;place-items:center;background:#4f7651;color:#fffbed;border:3px double #fff0bb;z-index:3;font-size:23px}
+.postal .parcel-icon[data-phase="sealed"] .parcel-seal{display:grid}
+@media(prefers-reduced-motion:reduce){.postal .parcel-record .parcel-icon{transition:none}}
+.postal .card-turn{width:100%;border:1px solid #b7c5a4;border-radius:12px;background:#edf1e3}
+.postal .card-turn summary{min-height:48px;padding:12px 3px;cursor:pointer;font-size:16px;font-weight:700;color:#36543d}
+.postal .card-turn .row{flex-wrap:nowrap;gap:4px;padding:4px}
+.postal .card-turn .btn{flex:1;min-width:0;min-height:48px;padding:4px}
+.portrait .postal .card-turn summary,.portrait .postal .card-turn .btn{min-height:var(--touch-size);font-size:var(--small-size)}
+.postal .parcel-record{grid-template-columns:116px minmax(0,1fr);align-items:center;gap:6px 16px}
+.postal .parcel-record>strong,.postal .parcel-record>small{grid-column:2}
+.postal.step-checked .banner{background:#fffbed!important}
+.postal .parcel-turntable>.rotation-tools{max-width:360px;margin:8px auto}
+.postal .parcel-turntable{background:none}
+
+/* Six-mission pass: use the table for the object, not empty margins. */
+.postal .cut-workbench{display:grid;grid-template-columns:210px 1fr;width:100%;gap:12px;align-items:center}
+.postal .cut-choices{display:grid;gap:8px}.postal .cut-choices>.btn{min-height:78px;display:flex;align-items:center;justify-content:flex-start;padding:4px 12px;gap:12px;font-size:18px;background:#fffdf4;border:2px solid #bdc6a0;border-radius:18px}
+.postal .cut-choices>.btn[aria-pressed=true]{background:#e6efd9;border-color:#4f7554;box-shadow:inset 0 0 0 2px #bed3a4}.postal .cut-choices .solid-view{pointer-events:none}.postal .cut-choices svg{width:76px;height:76px}
+.postal .cut-preview{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 16px;min-width:0;background:#fffaf0;border-radius:24px;padding:8px;border:1px solid #c9bb94}
+.postal .cut-preview>strong{flex-basis:100%;text-align:center;font-size:20px;color:#365440}.postal .cut-preview>.solid-view{width:280px!important;height:255px}.postal .cut-preview>.solid-view>svg{width:280px;height:255px}.postal .cut-preview>small{font-size:17px;max-width:210px;line-height:1.4}.postal .cut-preview>.btn{min-height:48px}.postal .cut-feedback:empty{display:none}.postal .cut-feedback{grid-column:1/-1;background:#fff0dd;color:#733c24;padding:9px 16px;border-left:5px solid #b97044;border-radius:12px;font-size:18px;line-height:1.4}
+.postal .cut-success{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}.postal .cut-success>strong{max-width:180px}.postal .cut-success .fold-view{max-width:100%}
+.postal[data-task="cut-plan"] .stage{overflow:auto;align-items:flex-start}
+.postal .paper-workbench{display:grid;grid-template-columns:320px 1fr;width:100%;gap:16px!important;align-items:start}.postal .paper-workbench .panel{min-width:0;max-width:none;padding:12px}.postal .paper-workbench .order-box>svg{width:290px;height:220px;max-width:100%}.postal .paper-workbench .order-box .note{font-size:17px;margin:0 0 5px}.postal .paper-workbench .counter{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.postal .paper-workbench .counter .item{display:flex;flex-direction:column;padding:6px;gap:2px}.postal .paper-workbench .counter svg{width:105px;height:57px}.postal .paper-workbench .counter svg .label{font-size:16px!important}.postal .paper-workbench .count-row{justify-content:center}.postal .paper-workbench .num{font-size:24px}.postal .paper-preview svg{width:210px;height:115px;display:block;margin:auto}.postal .paper-preview small{display:block;font-size:16px;line-height:1.35}.postal .paper-preview{min-height:55px;color:#46634d;font-size:16px;padding-top:6px;border-top:1px dashed #b4bd98}.postal .paper-face-tabs{display:flex;gap:5px;justify-content:center}.postal .paper-face-tabs .btn{min-height:44px;padding:4px 12px;font-size:16px}.postal[data-task="tray-count"] .stage{align-items:flex-start;overflow:auto}
+.postal .loading-dock{display:flex;align-items:center;justify-content:center;gap:12px;min-height:78px;margin-top:10px;padding:4px 12px;background:linear-gradient(#e6c79b,#d4ac78);border:2px solid #ad8657;border-bottom:8px solid #967047;border-radius:12px;box-shadow:0 5px 0 #785a3520;color:#493c29}.postal .loading-dock>strong{font-size:18px}.postal .loading-dock>small{font-size:17px}.postal .dock-box{display:flex;align-items:center;gap:2px;animation:dock-place .3s ease-out}.postal .dock-box svg{width:60px;height:60px}.postal .dock-box span{font-size:15px}.postal[data-task="sort"] .stage{overflow:auto;align-items:flex-start}.postal[data-task="sort"] .shelf .item{min-height:280px}.postal[data-task="sort"] .shelf .item>.solid-view{height:115px}.postal[data-task="sort"] .shelf .item>.solid-view>svg{height:115px}.postal[data-task="sort"] .shelf .item>button{min-height:48px}
+.postal .solid-view:not(.has-turned)>.turn-hint:before{content:'☝';display:inline-block;margin-right:8px;animation:show-swipe 1.2s ease-in-out 2}.postal .solid-view.has-turned>.turn-hint:before{content:'↔';margin-right:5px}.postal .parcel-record.packing-progress .parcel-icon{width:160px;height:125px}.postal .packing-arrival .packed-item{animation:gift-settle .65s ease-out}.postal .packing-arrival .parcel-corner{animation:press-wrap .65s ease-out}.postal .packing-arrival:before{animation:press-wrap .65s ease-out}
+#parcelSymbol[data-phase="wrapped"],#parcelSymbol[data-phase="protected"]{background:repeating-linear-gradient(35deg,#edf1db 0 12px,#dce7c7 12px 24px)!important;border-style:solid!important;position:relative}#parcelSymbol[data-phase="protected"]{box-shadow:inset 0 0 0 5px #a3bb89}#parcelSymbol[data-phase="wrapped"]:after,#parcelSymbol[data-phase="protected"]:after{content:'✉';position:absolute;bottom:-4px;right:-4px;background:#507356;color:#fff;border-radius:50%;font-size:18px;width:25px;height:25px;text-align:center}
+@keyframes dock-place{from{transform:translateY(-16px);opacity:.3}to{transform:translateY(0);opacity:1}}@keyframes show-swipe{0%,100%{transform:translateX(-8px)}50%{transform:translateX(10px)}}@keyframes gift-settle{from{transform:translateY(-32px) scale(.9);opacity:.4}to{transform:none;opacity:1}}@keyframes press-wrap{from{opacity:.2;transform:scale(1.2)}to{opacity:1;transform:none}}
+.portrait .postal .cut-workbench{grid-template-columns:1fr;gap:12px}.portrait .postal .cut-choices{grid-template-columns:repeat(3,1fr)}.portrait .postal .cut-choices>.btn{padding:6px;gap:4px;flex-direction:column;font-size:var(--reading-size)}.portrait .postal .cut-preview>.solid-view,.portrait .postal .cut-preview>.solid-view>svg{width:370px!important;height:330px}.portrait .postal .cut-preview>strong{font-size:26px}.portrait .postal .cut-preview>small,.portrait .postal .cut-feedback{font-size:var(--reading-size)}
+.portrait .postal .paper-workbench{grid-template-columns:1fr}.portrait .postal .paper-workbench .order-box{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;align-items:center}.portrait .postal .paper-workbench .order-box>h3{grid-column:1/-1}.portrait .postal .paper-workbench .order-box>svg{grid-row:2/5;width:100%;height:260px}.portrait .postal .paper-workbench .counter{grid-template-columns:repeat(3,minmax(0,1fr))}.portrait .postal .paper-workbench .counter svg{width:125px;height:70px}.portrait .postal .paper-workbench .counter .item{padding:8px}.portrait .postal .paper-preview small,.portrait .postal .paper-workbench .order-box .note{font-size:var(--small-size)}.portrait .postal .paper-face-tabs .btn{min-height:var(--touch-size);font-size:var(--small-size)}.portrait .postal .paper-preview svg{width:240px;height:135px}.portrait .postal[data-task="sort"] .shelf .item{min-height:300px}.portrait .postal .loading-dock{flex-wrap:wrap;min-height:96px}.portrait .postal .loading-dock>small{font-size:var(--small-size)}
+@media(prefers-reduced-motion:reduce){.postal .dock-box,.postal .turn-hint:before,.postal .packing-arrival *,.postal .packing-arrival:before{animation:none!important}}
+.postal .cut-choices>.btn>span{white-space:nowrap;font-size:17px}.postal .cut-choices>.btn{gap:4px;padding:4px}
+.postal .sorting-workbench .loading-dock{margin:0 0 8px;min-height:68px;height:68px;padding:0 10px}.postal .sorting-workbench .shelf .item{min-height:0;height:246px;padding:6px;gap:4px}.postal .sorting-workbench .shelf .item .tags{display:none}.postal .sorting-workbench .shelf .item>.solid-view,.postal .sorting-workbench .shelf .item>.solid-view>svg{height:94px}.postal .sorting-workbench .shelf .item .card-turn summary{min-height:44px;padding:7px}.postal .sorting-workbench .shelf .item:has(details[open]){height:auto;min-height:246px}
+.postal .paper-workbench .counter .item{flex-direction:row;min-height:65px;padding:4px;gap:2px;justify-content:center}.postal .paper-workbench .counter svg{width:76px;height:50px}.postal .paper-workbench .counter .count-row{gap:4px}.postal .paper-workbench .order-box>svg{height:184px}.postal .paper-workbench .panel>h3{margin:0 0 8px}.postal .paper-preview{height:184px;padding:0;border:0}.postal .paper-preview svg{width:240px;height:140px}.postal .paper-preview small{font-size:15px}.postal .paper-face-tabs{flex-wrap:wrap;gap:3px}.postal .paper-face-tabs .btn{min-width:0;font-size:15px;padding:4px 8px}
+.portrait .postal .paper-workbench .order-box{display:block}.portrait .postal .paper-workbench .order-box>svg{width:100%;height:260px}.portrait .postal .paper-workbench .counter .item{flex-direction:column;min-height:125px}.portrait .postal .paper-workbench .counter svg{width:110px;height:60px}.portrait .postal .paper-preview{height:260px}.portrait .postal .paper-preview svg{width:330px;height:200px}.portrait .postal .paper-preview small{font-size:var(--small-size)}.portrait .postal .paper-face-tabs .btn{min-height:var(--touch-size);font-size:var(--small-size);padding:6px 16px}.portrait .postal .sorting-workbench .shelf .item{height:300px}.portrait .postal .sorting-workbench .loading-dock{min-height:100px;height:auto}.portrait .postal .cut-choices>.btn>span{font-size:var(--reading-size)}
+.postal[data-task="tray-count"] .stage{top:240px;bottom:186px}.postal .paper-workbench .order-box>.sketch-view{width:100%!important;height:180px!important}.postal .paper-workbench .order-box>.sketch-view>svg{width:100%;height:180px}.postal .paper-workbench .order-box .note{line-height:1.3;margin:4px 0 8px}.postal .paper-workbench .counter .item{min-height:62px}.postal .paper-workbench .panel{padding:10px}.postal .paper-preview{height:180px}
+.portrait .postal[data-task="tray-count"] .stage{top:294px;bottom:270px}.portrait .postal[data-task="tray-count"] .mat{bottom:255px}.portrait .postal .paper-workbench .order-box{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;align-items:center}.portrait .postal .paper-workbench .order-box>h3{grid-column:1/-1}.portrait .postal .paper-workbench .order-box>.sketch-view{grid-column:1;grid-row:2/4;height:220px!important}.portrait .postal .paper-workbench .order-box>.sketch-view>svg{height:220px}.portrait .postal .paper-preview{grid-column:1;grid-row:2/4;height:220px}.portrait .postal .paper-preview svg{width:250px;height:145px}.portrait .postal .paper-workbench .order-box .note,.portrait .postal .paper-face-tabs{grid-column:2}.portrait .postal .paper-workbench .counter .item{min-height:110px}
+.postal.needs-review svg .wrong{outline:none}
+.postal[data-task="cut-plan"] .stage{top:240px;bottom:186px}.postal .cut-preview>.solid-view,.postal .cut-preview>.solid-view>svg{height:230px}.postal .cut-feedback{padding:6px 12px}.postal .paper-face-tabs .btn{min-height:48px}
+.portrait .postal[data-task="cut-plan"] .stage{top:294px;bottom:330px}.portrait .postal .cut-preview>.solid-view,.portrait .postal .cut-preview>.solid-view>svg{height:330px}
+.postal .parcel-lid{position:absolute;inset:0;background:repeating-linear-gradient(35deg,#edf1db 0 14px,#dde8c8 14px 28px);border:2px solid #bbca9e;z-index:1;transform-origin:top;pointer-events:none}.postal .parcel-icon[data-phase="box"] .parcel-lid{display:none}.postal .parcel-icon:not([data-phase="box"]) .packed-item{z-index:2;width:40px;height:44px;background:#fff9e8;padding:3px;border-radius:8px;transform:rotate(-6deg)}.postal .packing-arrival .parcel-lid{animation:close-paper .7s ease-out}.postal .parcel-icon .parcel-seal{z-index:4}.postal .parcel-icon .parcel-corner{z-index:3}
+@keyframes close-paper{from{transform:scaleY(.05);opacity:.3}to{transform:scaleY(1);opacity:1}}
+.postal .parcel-record.packing-progress{grid-template-columns:160px minmax(0,1fr)}.postal .cut-success{display:flex;flex-direction:column;gap:4px}.postal .cut-success>strong{max-width:none;font-size:18px}.postal .cut-success .fold-view>svg{height:150px}.postal .cut-success>.btn{min-height:48px}.postal .uncut-preview .edge.wrong{stroke:#c47b24;stroke-width:7}.postal .cut-success .slider-row[hidden]{display:none!important}
+.postal .cut-success .fold-view>svg{width:290px;height:180px}
+/* Keep fold controls beside the matching edges in both tablet orientations. */
+.postal[data-task="net-points"] .stage{align-items:flex-start;overflow:auto}.postal .net-point-workbench{width:100%;justify-content:center;gap:14px!important}.postal .net-point-workbench>.panel{padding:10px;min-width:0}.postal .net-point-workbench h3{margin:0 0 8px;font-size:18px}.postal .net-point-workbench .net-board>svg{height:250px;width:auto;max-width:100%}.postal .net-point-workbench .slider-row{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.postal .net-point-workbench .slider-row>.btn{flex:1;min-height:48px;padding:6px;font-size:16px}.postal .net-point-workbench .slider-row input{width:110px;min-height:44px}.postal .net-point-workbench .note{margin:5px 0 0;font-size:15px;line-height:1.3}.postal .net-point-workbench .fold-view>svg{height:140px}
+.portrait .postal .net-point-workbench{flex-direction:column;align-items:center!important}.portrait .postal .net-point-workbench h3{font-size:var(--reading-size)}.portrait .postal .net-point-workbench .net-board>svg{height:320px}.portrait .postal .net-point-workbench>.panel{width:100%;text-align:center}.portrait .postal .net-point-workbench .fold-view{width:100%!important;display:flex!important;align-items:center;gap:12px}.portrait .postal .net-point-workbench .fold-view>svg{width:220px;height:180px;flex:none}.portrait .postal .net-point-workbench .slider-row{flex:1}.portrait .postal .net-point-workbench .slider-row>.btn{min-height:var(--touch-size);font-size:var(--small-size)}.portrait .postal .net-point-workbench .note{font-size:var(--small-size)}
+.app:not(.portrait) .postal .one-match .link-table .cell svg{height:90px!important}
+.postal .turn-hint{word-break:keep-all}.postal .net-point-workbench>.panel>.note{display:none}.postal .net-point-workbench .slider-row{display:grid;grid-template-columns:auto 1fr 1fr auto;align-items:center;gap:6px}.postal .net-point-workbench .slider-row>.btn:first-child{grid-column:1/3}.postal .net-point-workbench .slider-row>.btn:nth-child(2){grid-column:3/5}.postal .net-point-workbench .slider-row>.mini:first-of-type{grid-row:2;grid-column:1}.postal .net-point-workbench .slider-row>input{grid-row:2;grid-column:2/4;width:100%;accent-color:#567b57}.postal .net-point-workbench .slider-row>.mini:last-child{grid-row:2;grid-column:4}
+/* A small workbench receipt keeps the completed work visible. */
+.postal.inline-complete>.stage{opacity:1;bottom:235px!important;pointer-events:none}
+.postal.inline-complete>.tools,.postal.inline-complete>.progress-side,.postal.inline-complete>.bubble,.postal.inline-complete>.primary-slot{visibility:hidden}
+.postal .summary-box.inline-record{left:24px;right:24px;top:auto;bottom:22px;transform:none;width:auto;max-height:205px;padding:14px 18px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px 16px;text-align:left;border-radius:20px;box-shadow:0 5px 18px #314a3920;overflow:auto}
+.postal .inline-record>strong{font-size:20px;color:#426449}.postal .inline-record>.btn{grid-column:3;grid-row:1;font-size:var(--reading-size,18px)}
+.lesson-recap{grid-column:1/-1;border-top:1px dashed #c7cfb5;padding-top:4px}.lesson-recap>summary{cursor:pointer;min-height:var(--touch-size,48px);display:flex;align-items:center;font-size:var(--small-size,16px);color:#52664b}.lesson-recap p{margin:4px 0}.lesson-recap svg{max-height:160px}
+.packing-milestone{display:flex;align-items:center;gap:12px;min-width:0;color:#526448;font-size:var(--small-size,16px)}.milestone-art{position:relative;width:110px;height:70px;flex:none}.milestone-art .personal-parcel{position:absolute;left:18px;top:6px;transform:scale(.5);transform-origin:top left}.milestone-gift{position:absolute;left:22px;top:-8px;width:52px;height:50px;object-fit:contain}.packing-milestone[data-phase=filled] .parcel-band,.packing-milestone[data-phase=filled] .parcel-bow,.packing-milestone[data-phase=filled] .personal-stamp{visibility:hidden}.packing-milestone[data-phase=protected] .personal-parcel{outline:9px solid #9eb38c;outline-offset:-9px}
+@media(prefers-reduced-motion:no-preference){.packing-milestone[data-phase=filled] .milestone-gift{animation:gift-tuck 1s ease-out both}.packing-milestone[data-phase=wrapped] .milestone-gift,.packing-milestone[data-phase=protected] .milestone-gift{opacity:0}.packing-milestone[data-phase=wrapped] .parcel-band{animation:wrap-band .9s ease-out both}@keyframes gift-tuck{from{transform:translateY(-15px);opacity:1}to{transform:translateY(27px) scale(.65);opacity:.35}}@keyframes wrap-band{from{transform:scaleY(0)}to{transform:scaleY(1)}}}
+@media(prefers-reduced-motion:reduce){.milestone-gift{transform:translateY(20px) scale(.65);opacity:.35}}
+.portrait .postal .summary-box.inline-record{max-height:230px}.portrait .postal.inline-complete>.stage{bottom:270px!important}
+.postal .sorting-workbench .loading-dock{min-height:44px;height:auto;padding:4px 10px;gap:8px}
+.postal .sorting-workbench .shelf .item{position:relative;height:auto;min-height:270px;gap:3px}
+.postal .sorting-workbench .shelf .item>.solid-view,.postal .sorting-workbench .shelf .item>.solid-view>svg{width:120px!important;height:120px!important;max-width:100%;flex:none;align-self:center}
+.postal .sorting-workbench .shelf .inspect-box{min-height:44px;padding:4px 8px;font-size:15px;background:#eef2df!important;color:#385d43!important}
+.postal .sorting-workbench[data-station=stamp] .loading-dock{background:#e6ecd7;border-color:#8da57c}
+.postal .sorting-workbench[data-station=review] .loading-dock{background:#f3e8ce;border-style:dashed}
+.postal .sorting-workbench[data-station=turn] .loading-dock{background:#e4eeea;border-color:#91aaa2}
+.cube-seal{position:absolute;top:66px;right:6px;pointer-events:none;background:#507554;color:#fff8de;border:3px double #e6efd3;border-radius:50%;padding:12px 6px;font-size:14px;transform:rotate(9deg)}
+.parcel-inspector{width:min(520px,92vw);max-height:90vh;overflow:auto;border:2px solid #b4a87f;border-radius:24px;background:#fff8e8;color:#365541;padding:18px;text-align:center;box-shadow:0 12px 50px #233c4255}
+.parcel-inspector::backdrop{background:#263f3b88}
+.parcel-inspector h2{font-size:23px;margin:0 0 8px}.parcel-inspector p{font-size:18px;line-height:1.5;margin:8px 0}
+.parcel-inspector>.solid-view{display:flex;justify-content:center}.parcel-inspector>.solid-view>svg{width:270px!important;height:270px!important;max-width:100%}
+.parcel-inspector .btn{min-height:48px;margin:4px;font-size:17px}.parcel-inspector .flat-face{display:block;width:240px;height:125px;margin:auto}.parcel-inspector .flat-face text{font-size:14px;fill:#684d2c}
+.first-paper-guide text{fill:#4f7053;font-size:17px;font-weight:700;paint-order:stroke;stroke:#faf8e9;stroke-width:4px;stroke-linejoin:round}
+.first-paper-guide .ghost{fill:#d6e4b7!important;stroke:#648859!important;stroke-width:3;stroke-dasharray:7 5;opacity:.65}
+.packing-milestone[data-phase=checked] .parcel-band,.packing-milestone[data-phase=checked] .parcel-bow,.packing-milestone[data-phase=checked] .personal-stamp{visibility:hidden}
+.packing-milestone[data-phase=checked] .milestone-gift{left:68px;top:12px;width:40px;height:40px}
+@media(orientation:portrait){.portrait .postal .sorting-workbench .shelf .item{height:auto;min-height:300px}.portrait .postal .sorting-workbench .shelf .item>.solid-view,.portrait .postal .sorting-workbench .shelf .item>.solid-view>svg{width:145px!important;height:145px!important}}
+.parcel-inspector .inspector-actions{position:sticky;bottom:-18px;z-index:2;background:#fff8e8;border-top:1px solid #dacdac;padding:8px 0;margin-top:8px;display:flex;justify-content:center;flex-wrap:wrap}.parcel-inspector .inspector-actions .btn{flex:1;min-width:170px}@media(max-height:650px){.parcel-inspector>.solid-view>svg{width:210px!important;height:210px!important}.parcel-inspector .flat-face{height:100px}.parcel-inspector h2{font-size:20px}}
+.cube-seal{background:#f8e7b9;color:#775b31;border-color:#ba9f64;border-style:dashed}.cube-seal.confirmed{background:#507554;color:#fff8de;border-style:double;border-color:#e6efd3}
+.postal .loading-dock .dock-box{display:flex;align-items:center;min-height:44px;padding:2px 7px;margin:0;background:#fff5dc;color:#4c5f40;border:1px solid #b3a17e;box-shadow:none}.postal .loading-dock .dock-box svg{width:40px;height:40px}.postal .loading-dock .dock-box>span{font-size:15px;white-space:nowrap}
+.postal .sorting-workbench.needs-more .item:not(.picked) .inspect-box{outline:2px dashed #af8a47;outline-offset:-4px}

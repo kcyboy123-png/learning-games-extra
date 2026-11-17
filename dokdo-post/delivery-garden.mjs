@@ -49,6 +49,10 @@ export function deliveryGarden(stops){
   if(id===6){g.position.set(q.x-.75,q.y+1.02,q.z-.25);for(let j=0;j<3;j++)box('#f8e9c7',0,j*.018,0,.27,.015,.19);box('#8fa989',0,.06,0,.04,.01,.2);}
   batchParts(g);g.visible=false;gifts.push(g);
  }
+ let use=null;
+ garden.userData.stop=()=>{if(use){use.g.position.copy(use.start);use.g.rotation.copy(use.rotation);use=null;}};
+ garden.userData.use=(id,actor)=>{garden.userData.stop();const g=gifts[id];if(!g?.visible||!actor)return;use={g,actor,start:g.position.clone(),rotation:g.rotation.clone(),time:performance.now()};};
+ garden.userData.tick=reduced=>{if(!use)return;const t=(performance.now()-use.time)/1000;if(t>4.5||reduced){garden.userData.stop();return;}const lift=Math.sin(Math.min(1,t/4.5)*Math.PI),hand=new T.Vector3();use.actor.limbs[3].getWorldPosition(hand);hand.y+=.25;use.g.position.copy(use.start).lerp(hand,lift);use.g.rotation.z=-.18*lift;};
  garden.userData.update=ids=>gifts.forEach((g,i)=>g.visible=ids.includes(i));
  return garden;
 }

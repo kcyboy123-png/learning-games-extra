@@ -145,8 +145,11 @@ export function orthoFigure(dims, which, {size = 150} = {}) {
   el.append(svg('rect', {x: -w / 2, y: -h / 2, width: w, height: h, fill: '#e8d3a8', stroke: '#4a3418', 'stroke-width': 3}));
   return el;
 }
-export function sketchFigure(dims, {size = 150, view = STANDARD_VIEW, showLengths = false, edges = null} = {}) {
-  const v = createSketchView({dims, view, width: size, height: size, scale: Math.min(26, 70 / Math.max(dims.x, dims.y, dims.z), showLengths ? (size-80)/Math.max(dims.x+dims.z*.45,dims.y+dims.z*.32) : Infinity), tool: 'none', showLengths, edges: edges || fullEdges(dims, view)});
+export function sketchFigure(dims, {size = 150, view = STANDARD_VIEW, showLengths = false, edges = null, fit = false} = {}) {
+  const scale = fit ? (size-(showLengths?76:40))/Math.max(dims.x+dims.z*.45,dims.y+dims.z*.32) : Math.min(26,70/Math.max(dims.x,dims.y,dims.z),showLengths?(size-80)/Math.max(dims.x+dims.z*.45,dims.y+dims.z*.32):Infinity);
+  const v = createSketchView({dims,view,width:size,height:size,scale,tool:'none',showLengths,edges:edges||fullEdges(dims,view)});
+  // Oblique depth shifts the projected center; preserve equal margins when enlarged.
+  if(fit)v.el.querySelector('svg').setAttribute('viewBox',`${dims.z*.225*scale*view.x-size/2} ${-dims.z*.16*scale*view.y-size/2} ${size} ${size}`);
   return v.el;
 }
 export function fullEdges(dims, view = STANDARD_VIEW) {

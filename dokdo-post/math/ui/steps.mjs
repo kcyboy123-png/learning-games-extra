@@ -1,13 +1,14 @@
+import {postalCut} from './postal-cut.mjs?v=resident-polish-20261117';
 // 단계(step) 종류별 조작 화면. 각 렌더러는 {el, tools, getAnswer, markWrong, afterCheck?, undo?} 를 돌려준다.
 // 채점은 data/workshops.mjs의 check가 하고, 여기서는 답을 모으고 틀린 부분만 표시한다.
 import {cuboid, faceDims, FACE_LABEL, STANDARD_VIEW} from '../lib/geometry.mjs';
 import {unfoldByFolds} from '../lib/net.mjs';
 import {planBoard} from '../lib/board-layout.mjs';
-import {createSolidView, meshFor, solidFigure} from './solid-view.mjs?v=refine-20261116-r5';
-import {createSketchView, orthoFigure, sketchFigure, fullEdges} from './sketch-view.mjs?v=refine-20261116-r5';
-import {createNetBoard, netFigure, createFoldView} from './net-board.mjs?v=refine-20261116-r5';
+import {createSolidView, meshFor, solidFigure} from './solid-view.mjs?v=ten-rounds-20261118';
+import {createSketchView, orthoFigure, sketchFigure, fullEdges} from './sketch-view.mjs?v=resident-polish-20261117';
+import {createNetBoard, netFigure, createFoldView} from './net-board.mjs?v=ten-rounds-20261118';
 import {createRobotView} from './robot-view.mjs';
-import {node, svg, button, setPressed, clear, announce} from './dom.mjs?v=refine-20261116-r5';
+import {node, svg, button, setPressed, clear, announce} from './dom.mjs?v=resident-polish-20261117';
 
 const cellsToPieces = cells => cells.map(([x, y], i) => ({id: `c${i}`, x, y, w: 1, h: 1}));
 const sizeKey = (w, h) => `${Math.max(w, h)}x${Math.min(w, h)}`;
@@ -22,20 +23,32 @@ const RENDERERS = {
   // ---- 면 떼어 보기 ----
   peel(step, ctx = {}) {
     const dims = step.dims;
-    const answer = {face: null, shapes: []};
+    const answer = {face: ctx.postal ? 'front' : null, shapes: []};
     const panel = node('div', {class: 'panel', style: {minWidth: '300px'}});
-    const view = createSolidView({postal:ctx.postal,dims, mode: 'peel', faceLabels: true, onSelect: (kind, id) => { answer.face = id; drawPanel(); }});
-    const bRect = button('직사각형이에요', () => toggleShape('rect'), {attrs: {'aria-pressed': 'false'}});
-    const bSquare = button('정사각형이에요', () => toggleShape('square'), {attrs: {'aria-pressed': 'false'}});
+    const view = createSolidView({postal:ctx.postal,dims, mode: 'peel', faceLabels: true, onSelect: (kind, id) => { if(answer.face!==id)answer.shapes=[]; answer.face = id; drawPanel(); }});
+    const bRect = button(ctx.postal?'길이가 달라요':'직사각형이에요', () => toggleShape('rect'), {attrs: {'aria-pressed': 'false'}});
+    const bSquare = button(ctx.postal?'모두 같아요':'정사각형이에요', () => toggleShape('square'), {attrs: {'aria-pressed': 'false'}});
+    const el = node('div', {class: ctx.postal?'peel-workflow':'row', style: {gap: '24px'}}, [view.el, panel]);
+    if(ctx.postal){
+      for(const [b,square] of [[bRect,false],[bSquare,true]]){
+        b.classList.add('shape-answer');const icon=svg('svg',{viewBox:'0 0 100 70','aria-hidden':'true'});
+        icon.append(svg('rect',{x:square?25:10,y:10,width:square?50:80,height:50,rx:2,fill:'#e2ecd4',stroke:'#42664f','stroke-width':3}));b.prepend(icon);
+        b.append(node('small',{text:square?'네 변이 같은 길이':'가로와 세로가 다른 길이'}));
+      }
+    }
     function toggleShape(s) {
-      if (answer.shapes.includes(s)) answer.shapes = answer.shapes.filter(x => x !== s); else answer.shapes.push(s);
-      setPressed(bRect, answer.shapes.includes('rect')); setPressed(bSquare, answer.shapes.includes('square'));
+      if(ctx.postal){answer.shapes=s==='square'?['rect','square']:['rect'];} else if (answer.shapes.includes(s)) answer.shapes = answer.shapes.filter(x => x !== s); else answer.shapes.push(s);
+      setPressed(bRect, answer.shapes.includes('rect')&&(!ctx.postal||!answer.shapes.includes('square'))); setPressed(bSquare, answer.shapes.includes('square'));
       bRect.classList.remove('wrong'); bSquare.classList.remove('wrong');
+      ctx.onGuide?.(answer.shapes.length?'selected':'shape');
     }
     function drawPanel() {
       clear(panel);
-      ctx.onGuide?.(answer.face?'shape':'face');
-      if (!answer.face) { panel.append(node('h3', {text: '면을 하나 눌러 떼어 내요'}), node('p', {class: 'note', text: '상자를 돌려 보고 면을 누르면 평평하게 펼쳐져요.'})); return; }
+      setPressed(bRect,answer.shapes.includes('rect')&&(!ctx.postal||!answer.shapes.includes('square')));setPressed(bSquare,answer.shapes.includes('square'));
+      bRect.classList.remove('wrong');bSquare.classList.remove('wrong');
+      el.dataset.phase=answer.face?'shape':'face';
+      ctx.onGuide?.(answer.shapes.length?'selected':answer.face?'shape':'face');
+      if (!answer.face) { panel.append(node('h3', {text: '① 상자의 넓은 면을 톡!'}), node('p', {class: 'note', text: '윗면·앞면·옆면 중 어디든 눌러 보세요.'}),node('p',{class:'peel-preview',text:'면을 고르면 → 여기에서 크게 펼쳐 봐요'})); return; }
       const [w, h] = faceDims(dims, answer.face);
       const s = Math.min(40, 180 / Math.max(w, h));
       const fig = svg('svg', {viewBox: '-140 -110 280 220', width: 280, height: 220, role: 'img', 'aria-label': `${FACE_LABEL[answer.face]} ${w}cm×${h}cm`});
@@ -46,13 +59,16 @@ const RENDERERS = {
       }
       fig.append(svg('text', {x: 0, y: y - 10, class: 'label', 'text-anchor': 'middle', text: `${w}cm`}));
       fig.append(svg('text', {x: x - 26, y: 6, class: 'label', 'text-anchor': 'middle', text: `${h}cm`}));
-      fig.append(svg('text', {x: 0, y: y + h * s + 24, class: 'label', 'text-anchor': 'middle', text: `${FACE_LABEL[answer.face]}: 네 각이 모두 직각`}));
-      panel.append(node('h3', {text: '떼어 낸 면'}), fig, node('p', {class: 'note', text: '이 면의 모양을 모두 표시해요 (둘 다 될 수도 있어요).'}), node('div', {class: 'row'}, [bRect, bSquare]));
+      fig.append(svg('text', {x: 0, y: y + h * s + 24, class: 'label', 'text-anchor': 'middle', text: ctx.postal?`${w}cm`: `${FACE_LABEL[answer.face]}: 네 각이 모두 직각`}));
+      if(ctx.postal)fig.append(svg('text',{x:-x+26,y:6,class:'label','text-anchor':'middle',text:`${h}cm`}));
+      panel.append(node('h3', {text: ctx.postal?'상자 앞면의 종이':'② 이 면은 어떤 모양인가요?'}), fig, node('p', {class: 'note', text: ctx.postal?'아래에서 하나만 골라요.':'맞는 이름을 모두 눌러요. 두 개를 고를 수도 있어요.'}), node('div', {class: 'shape-answers row'}, [bRect, bSquare]));
     }
+    if(ctx.postal){el.classList.add('one-choice-face');view.el.hidden=true;view.state.peeled=answer.face;view.redraw();}
     drawPanel();
-    const el = node('div', {class: 'row', style: {gap: '24px'}}, [view.el, panel]);
-    return {el, tools: [view.controls], getAnswer: () => ({face: answer.face, shapes: answer.shapes.slice()}),
-      restore(a) { answer.face=a.face; answer.shapes=[...(a.shapes||[])]; drawPanel();setPressed(bRect,answer.shapes.includes('rect'));setPressed(bSquare,answer.shapes.includes('square')); },
+    const rotateTools=ctx.postal?node('details',{class:'peel-rotate'},[node('summary',{text:'상자 돌려 보기'}),view.controls]):view.controls;
+    return {el, tools: ctx.postal?[]:[rotateTools], getAnswer: () => ({face: answer.face, shapes: answer.shapes.slice()}),
+      ready:()=>Boolean(answer.face&&answer.shapes.length),
+      restore(a) { answer.face=a.face||(ctx.postal?'front':null); answer.shapes=ctx.postal&&a.shapes?.length?(a.shapes.includes('square')?['rect','square']:['rect']):[...(a.shapes||[])];view.state.peeled=answer.face;view.redraw(); drawPanel();ctx.onGuide?.(answer.shapes.length?'selected':answer.face?'shape':'face'); },
       markWrong(result) { for (const id of result.wrong || []) (id === 'rect' ? bRect : bSquare).classList.add('wrong'); }};
   },
 
@@ -61,6 +77,34 @@ const RENDERERS = {
     const selected = new Set();
     const items = new Map();
     const shelf = node('div', {class: 'shelf'});
+    const review=ctx.activityId?.includes('-r'),turning=step.solids.some(s=>s.tilt);
+    const station=step.mode==='mark'?'정육면체 도장대':review?'출발 점검대':turning?'방향 비교대':'배송대';
+    const inspectDialog=node('dialog',{class:'parcel-inspector','aria-label':'상자 크게 살펴보기'});
+    const reviewFace=desc=>desc.kind==='oblique'?2:step.mode==='mark'&&desc.dims?(desc.dims.x!==desc.dims.y?4:3):0;
+    function inspect(desc,label,result){
+      clear(inspectDialog);
+      const small=items.get(desc.id).view;
+      const art=createSolidView({postal:true,mesh:meshFor(desc),yaw:small.state.yaw,pitch:small.state.pitch,size:300,scale:desc.dims?160/Math.max(desc.dims.x,desc.dims.y,desc.dims.z):43,mode:'none'});
+      inspectDialog.onclose=()=>{small.state.yaw=art.state.yaw;small.state.pitch=art.state.pitch;small.redraw();items.get(desc.id).item.querySelector('.inspect-box')?.focus({preventScroll:true});};
+      if(result?.reveal)art.reveal(reviewFace(desc),'살펴볼 면');
+      inspectDialog.append(node('h2',{text:label+' · 크게 살펴보기'}),art.el);
+      if(result&&desc.kind==='oblique'){
+        const flat=svg('svg',{viewBox:'0 0 240 125',class:'flat-face',role:'img','aria-label':'비스듬한 면을 정면에서 본 평행사변형. 네 각이 모두 직각은 아니에요.'});
+        flat.append(svg('polygon',{points:'28,100 136,100 202,22 94,22',fill:'#ead4aa',stroke:'#916b40','stroke-width':3}),svg('text',{x:120,y:120,'text-anchor':'middle',text:'이 면은 직사각형이 아니에요'}));inspectDialog.append(flat);
+      }
+      if(result&&step.mode==='mark'&&desc.dims){
+        const {x,y,z}=desc.dims,w=x!==y?x:z,h=y,s=85/Math.max(w,h);
+        const flat=svg('svg',{viewBox:'0 0 240 125',class:'flat-face',role:'img','aria-label':`${w}cm와 ${h}cm로 길이가 다른 직사각형 면`});
+        flat.append(svg('rect',{x:120-w*s/2,y:8,width:w*s,height:h*s,fill:'#ead4aa',stroke:'#916b40','stroke-width':3}),svg('text',{x:120,y:120,'text-anchor':'middle',text:`${w}cm × ${h}cm · 두 길이가 달라요`}));inspectDialog.append(flat);
+      }
+      inspectDialog.append(node('p',{text:result?.message||'상자를 끌거나 화살표로 돌려 봐요.'}),art.controls);
+      const actions=node('div',{class:'inspector-actions'});
+      if(result&&selected.has(desc.id))actions.append(button(step.mode==='mark'?'이 상자의 표시 지우기':'이 상자 내려놓고 다시 고르기',()=>{inspectDialog.close();items.get(desc.id).toggle.click();},{primary:true}));
+      actions.append(button('작업대로 돌아가기',()=>inspectDialog.close()));inspectDialog.append(actions);
+      inspectDialog.showModal();
+    }
+    const loadingDock=node('div',{class:'loading-dock','aria-label':'고른 상자를 올린 배송대'});
+    function drawDock(){if(!ctx.postal)return;clear(loadingDock);loadingDock.append(node('strong',{text:station+(selected.size?' · '+selected.size+'개':'')}));if(!selected.size)loadingDock.append(node('small',{text:step.mode==='mark'?'모든 면이 정사각형이면 도장을 붙여요':review?'출발할 상자를 다시 점검해요':turning?'놓인 방향이 달라도 같은 상자일까요?':'고른 상자가 여기에 놓여요'}));for(const id of selected){const o=items.get(id);if(!o)continue;const d=o.desc,art=createSolidView({mesh:meshFor(d),size:70,scale:d.dims?42/Math.max(d.dims.x,d.dims.y,d.dims.z):10,mode:'none'});art.svg.removeAttribute('tabindex');art.el.inert=true;const name=`상자 ${String.fromCharCode(65+step.solids.findIndex(x=>x.id===id))}`;const remove=button('',()=>o.toggle.click(),{cls:'dock-box',attrs:{'aria-label':name+(step.mode==='mark'?' 표시 지우기':' 배송대에서 내리기')}});remove.replaceChildren(art.el,node('span',{text:name+' ×'}));loadingDock.append(remove);}}
     const selectionNote=node('span',{class:'chip',role:'status',text:'고른 상자 0개'});
     for (const [i, desc] of step.solids.entries()) {
       const label = ctx.postal ? `상자 ${String.fromCharCode(65+i)}` : desc.name;
@@ -71,12 +115,17 @@ const RENDERERS = {
       const toggle = button(step.mode === 'mark' ? '정육면체 표시' : '배송대에 올리기', () => {
         if (selected.has(desc.id)) selected.delete(desc.id); else selected.add(desc.id);
         item.classList.toggle('picked', selected.has(desc.id)); item.classList.remove('wrong');
+        view.reveal(null,null);
+        el.classList.remove('needs-more');
         setPressed(toggle, selected.has(desc.id)); drawTags();
       }, {cls: 'small', attrs: {'aria-pressed': 'false'}});
       function drawTags() {
         if(ctx.postal)toggle.querySelector('span:last-child').textContent=selected.has(desc.id)?(step.mode==='mark'?'표시 지우기':'배송대에서 내리기'):(step.mode==='mark'?'정육면체 표시':'배송대에 올리기');
-        selectionNote.textContent=`고른 상자 ${selected.size}개 · 다시 누르면 취소`;
+        selectionNote.textContent=selected.size?`상자 ${selected.size}개 선택 · 아래에서 확인해요`:'맞는 상자를 모두 골라요';
+        drawDock();
         clear(tags);
+        item.querySelector('.cube-seal')?.remove();
+        if(ctx.postal&&step.mode==='mark'&&selected.has(desc.id))item.append(node('span',{class:'cube-seal',text:'정육면체?'}));
         if (step.mode === 'mark') tags.append(node('span', {class: 'tag', text: '직육면체'}));
         if (selected.has(desc.id)) tags.append(node('span', {class: `tag ${step.mode === 'mark' ? 'cube' : ''}`, text: step.mode === 'mark' ? '정육면체' : '배송대'}));
       }
@@ -86,19 +135,25 @@ const RENDERERS = {
         button('▶', () => view.rotate(0.4, 0), {cls: 'small', attrs: {'aria-label': `${label} 오른쪽으로 돌리기`}}),
         button('▲', () => view.rotate(0, -0.35), {cls: 'small', attrs: {'aria-label': `${label} 위로 돌리기`}})
       ]);
-      item.append(node('div', {class: 'name', text: label}), view.el, rot, tags, toggle);
+      item.append(node('div', {class: 'name', text: label}), view.el);
+      if(ctx.postal)item.append(button('크게 보고 돌리기',()=>inspect(desc,label),{cls:'inspect-box',attrs:{'aria-label':label+' 크게 보기'}}));
+      if(!ctx.postal)item.append(rot);
+      item.append(tags,toggle);
       items.set(desc.id, {item, view, desc, toggle, drawTags});
       shelf.append(item);
     }
-    const el = node('div', {style: {width: '100%'}}, [shelf]);
+    drawDock();
+    const el = node('div', {class:ctx.postal?'sorting-workbench':'',style: {width: '100%'}}, ctx.postal?[loadingDock,shelf]:[shelf]);
+    if(ctx.postal){el.dataset.station=step.mode==='mark'?'stamp':review?'review':turning?'turn':'select';el.append(inspectDialog);}
     return {el, tools: ctx.postal?[selectionNote]:[], getAnswer: () => ({selected: [...selected]}),
       restore(a) { selected.clear(); for(const id of a.selected||[]) selected.add(id);items.forEach((o,id)=>{o.item.classList.toggle('picked',selected.has(id));setPressed(o.toggle,selected.has(id));o.drawTags();}); },
-      afterCheck(result) { if(ctx.postal && result.ok) items.forEach(o=>{o.item.querySelector('.name').textContent=o.desc.name;}); },
+      afterCheck(result) { if(ctx.postal && result.ok) items.forEach(o=>{o.item.querySelector('.name').textContent=o.desc.name;const seal=o.item.querySelector('.cube-seal');if(seal){seal.textContent='✓ 정육면체';seal.classList.add('confirmed');}}); },
       markWrong(result) {
+        if(ctx.postal&&result.missing?.length){el.classList.add('needs-more');selectionNote.textContent='고른 상자는 유지돼요 · 다른 상자도 살펴봐요';}
         for (const id of result.wrong || []) items.get(id)?.item.classList.add('wrong');
         if (result.reveal) {
           const it = items.get(result.reveal.solid);
-          if (it) it.view.reveal(it.desc.kind === 'oblique' ? 2 : 0, '이 면');
+          if (it) {it.view.reveal(reviewFace(it.desc), '이 면');if(ctx.postal)inspect(it.desc,it.item.querySelector('.name').textContent,result);}
         }
       }};
   },
@@ -132,10 +187,14 @@ const RENDERERS = {
       else if (step.mode === 'pairs') counter.textContent = `${step.counterLabel} ${c.pairs} / ${step.count}`;
       else if(step.mode==='faces'&&!Number.isInteger(step.count))counter.textContent=`고른 면 ${c.faces}개`;
       else counter.textContent = `${step.counterLabel} ${step.mode === 'faces' ? c.faces : step.mode === 'edges' ? c.edges + c.diagonals : c.vertices} / ${step.count}`;
+      if(ctx.postal&&step.mode!=='all'){
+        const parts=counter.textContent.match(/^(.*?)(\d+ \/ \d+)$/);
+        if(parts)counter.replaceChildren(document.createTextNode(parts[1]),node('span',{style:{whiteSpace:'nowrap'},text:parts[2]}));
+      }
     }
     updateCounter();
     const transparent = button('투명 보기', () => { view.setTransparent(!view.state.transparent); setPressed(transparent, view.state.transparent); }, {cls: 'small', attrs: {'aria-pressed': 'false'}});
-    const side = node('div', {class: 'panel compact'}, [node('h3', {text: ctx.postal ? '차곡차곡 포장 중' : '진행'}), counter, kinds, node('p', {class: 'note', text: step.mode === 'pairs' ? '면 두 개를 차례로 누르면 짝이 돼요. 다시 누르면 풀려요.' : ctx.postal&&step.mode==='vertices' ? '살짝 눌러 붙이고, 한 번 더 누르면 뗄 수 있어요.' : '같은 곳을 다시 누르면 취소돼요.'})]);
+    const side = node('div', {class: 'panel compact component-progress'}, [node('h3', {text: ctx.postal ? (step.mode==='all'?'지금 찾는 것':'표시한 수') : '진행'}), counter, kinds, node('p', {class: 'note', text: step.mode === 'pairs' ? '면 두 개를 차례로 누르면 같은 번호가 붙어요. 다시 누르면 풀려요.' : ctx.postal&&step.mode==='vertices' ? '동그란 점을 누르거나 보호캡을 끌어 놓아요. 다시 누르면 뗄 수 있어요.' : '같은 곳을 다시 누르면 취소돼요.'})]);
     const el = node('div', {class: 'row', style: {justifyContent: 'center'}}, [view.el]);
     const capTools=[];
     if(ctx.postal&&step.mode==='vertices'){
@@ -157,7 +216,7 @@ const RENDERERS = {
     const multi = step.answer.length > 1;
     const cards = node('div', {class: `cards ${step.options.length === 3 ? 'three' : ''}`, role: 'group', 'aria-label': multi ? '모두 고르기' : '하나 고르기'});
     const selectionNote=node('span',{class:'chip',role:'status'});
-    const updateNote=()=>selectionNote.textContent=`고른 카드 ${selected.size}개 · ${multi?'맞는 것을 모두 골라요':'하나를 골라요'}`;updateNote();
+    const updateNote=()=>selectionNote.textContent=selected.size?`${selected.size}개 선택 · 아래에서 확인해요`:(multi?'맞는 카드를 모두 골라요':'카드 하나를 골라요');updateNote();
     const buttons = new Map();
     for (const o of step.options) {
       const b = button('', () => {
@@ -166,7 +225,7 @@ const RENDERERS = {
         setPressed(b, selected.has(o.id)); b.classList.remove('wrong');updateNote();
       }, {attrs: {'aria-pressed': 'false'}});
       b.firstChild?.remove();
-      if (step.figures === 'views') b.append(o.id === 'oblique' ? sketchFigure(step.dims, {size: 150}) : orthoFigure(step.dims, o.id, {size: 150}));
+      if (step.figures === 'views') b.append(o.id === 'oblique' ? sketchFigure(step.dims, {size: 150,fit:ctx.postal}) : orthoFigure(step.dims, o.id, {size: 150}));
       if (step.figures === 'nets' && o.cells) b.append(netFigure(cellsToPieces(o.cells), {size: 150}));
       const line = node('div', {class: 'row'}, [node('span', {class: 'mark', 'aria-hidden': 'true', text: multi ? '✓' : '●'}), node('span', {text: o.text || ''})]);
       b.append(line);
@@ -180,7 +239,7 @@ const RENDERERS = {
   },
 
   // ---- 빈칸·고르기 입력 ----
-  fill(step) {
+  fill(step,ctx={}) {
     const inputs = new Map();
     const fields = node('div', {class: 'fields'});
     for (const f of step.fields || []) {
@@ -197,7 +256,20 @@ const RENDERERS = {
       const row = node('div', {class: 'field'}, [node('label', {for: `s-${s.id}`, text: s.label}), sel]);
       inputs.set(s.id, {el: sel, row}); fields.append(row);
     }
-    const wrap = node('div', {style: {display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center'}});
+    let fieldIndex=0;
+    const rows=[...inputs.values()];
+    const fieldPosition=node('span',{class:'field-position',role:'status'});
+    const previous=button('이전 빈칸',()=>showField(fieldIndex-1,true),{cls:'small'});
+    const next=button('다음 빈칸',()=>showField(fieldIndex===rows.length-1?rows.findIndex(r=>!r.el.value.trim()):fieldIndex+1,true),{cls:'small'});
+    const fieldNav=node('div',{class:'field-nav'},[previous,fieldPosition,next]);
+    function showField(index,focus=false){
+      fieldIndex=Math.max(0,Math.min(index,rows.length-1));
+      if(ctx.postal&&rows.length>1){rows.forEach((r,i)=>r.row.hidden=i!==fieldIndex);previous.disabled=fieldIndex===0;const missing=rows.findIndex(r=>!r.el.value.trim());next.disabled=fieldIndex===rows.length-1&&missing<0;next.querySelector('span:last-child').textContent=fieldIndex===rows.length-1&&missing>=0?'남은 빈칸으로':'다음 빈칸';fieldPosition.textContent=`빈칸 ${fieldIndex+1}/${rows.length} · ${rows.filter(r=>r.el.value.trim()).length}개 입력`;}
+      if(focus)rows[fieldIndex]?.el.focus();
+    }
+    rows.forEach(r=>{r.el.addEventListener('input',()=>showField(fieldIndex));r.el.addEventListener('change',()=>showField(fieldIndex));});
+    showField(0);
+    const wrap = node('div', {class:ctx.postal?'answer-workbench':'',style: {display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center'}});
     const fig = step.figure;
     let figView = null;
     if (fig?.net) wrap.append(node('div', {class: 'panel'}, [node('h3', {text: '전개도'}), netFigure(fig.net.pieces, {size: 300, showLengths: true, blanks: fig.blanks.map((b, i) => ({...b, label: ['ㄱ', 'ㄴ', 'ㄷ'][i]}))}), blanksFigure(fig)]));
@@ -207,13 +279,13 @@ const RENDERERS = {
       figView = createSolidView({dims: fig.dims, size: 300, mode: 'none', edgeLabels, vertexLabels, faceMarks});
       wrap.append(node('div', {class: 'panel'}, [figView.el, node('p', {class: 'note', text: '돌려 볼 수 있어요.'})]));
     } else if (fig?.dims) {
-      wrap.append(node('div', {class: 'panel'}, [sketchFigure(fig.dims, {size: 260, showLengths: !!fig.showLengths}), fig.highlight ? node('p', {class: 'note', text: `${FACE_LABEL[fig.highlight]}을 구해요.`}) : null]));
+      wrap.append(node('div', {class: 'panel'}, [sketchFigure(fig.dims, {size: 260, showLengths: !!fig.showLengths,fit:ctx.postal}), fig.highlight ? node('p', {class: 'note', text: `${FACE_LABEL[fig.highlight]}을 구해요.`}) : null]));
     }
-    wrap.append(node('div', {class: 'panel'}, [node('h3', {text: '답 적기'}), fields]));
-    return {el: wrap, tools: figView ? [figView.controls] : [], focusFirst: () => inputs.values().next().value?.el.focus(),
+    wrap.append(node('div', {class: 'panel answer-fields'}, [node('h3', {text: fig?'그림을 보고 답해요':'빈칸을 채워요'}), fields,ctx.postal&&rows.length>1?fieldNav:null]));
+    return {el: wrap, tools: figView ? [figView.controls] : [], focusFirst: () => { if(!ctx.postal)rows[fieldIndex]?.el.focus(); },
       getAnswer: () => ({values: Object.fromEntries([...inputs].map(([k, v]) => [k, v.el.value]))}),
-      restore(a){inputs.forEach((v,k)=>{v.el.value=a.values?.[k]??'';});},
-      markWrong(result) { for (const id of result.wrong || []) inputs.get(id)?.row.classList.add('wrong'); }};
+      restore(a){inputs.forEach((v,k)=>{v.el.value=a.values?.[k]??'';});showField(Math.max(0,rows.findIndex(r=>!r.el.value)));},
+      markWrong(result) { for (const id of result.wrong || []) inputs.get(id)?.row.classList.add('wrong');const first=rows.findIndex(r=>r.row.classList.contains('wrong'));if(first>=0)showField(first,true); }};
   },
 
   // ---- 겨냥도 ----
@@ -226,10 +298,10 @@ const RENDERERS = {
     const undo = button('되돌리기', () => sk.undo(), {cls: 'small', icon: '↶'});
     const reveal = button('투명 보기', () => sk.reveal(true), {cls: 'small'});
     const side = node('div', {class: 'panel', style: {minWidth: '240px'}}, [
-      node('h3', {text: step.tool === 'draw' ? '선 그리기' : '선 바꾸기'}),
+      node('h3', {text: step.tool === 'draw' ? '① 선 종류 고르기' : '바꿀 선을 톡!'}),
       step.tool === 'draw' ? sk.typeButtons : null,
-      node('p', {class: 'note', text: step.tool === 'draw' ? '선 종류를 고른 뒤 꼭짓점 두 개를 차례로 눌러요. 그린 선을 누르면 종류가 바뀌어요.' : '선을 누르면 실선과 점선이 바뀌어요.'}),
-      node('p', {class: 'note', text: '실선 = 보이는 모서리, 점선 = 가려진 모서리'})
+      node('p', {class: 'note', text: step.tool === 'draw' ? '시작점 다음에 끝점을 눌러요.' : '실선 ↔ 점선으로 바뀌어요.'}),
+      node('div', {class: 'line-key'}, [node('span',{class:'visible-line',text:'보이는 모서리'}),node('span',{class:'hidden-line',text:'가려진 모서리'})])
     ]);
     side.style.width = '280px'; side.style.flexShrink = '0';
     const el = node('div', {class: 'row', style: {gap: '24px', flexWrap: 'nowrap'}}, [sk.el, side]);
@@ -238,7 +310,8 @@ const RENDERERS = {
   },
 
   // ---- 절개안 고르기 ----
-  'cut-plan'(step) {
+  'cut-plan'(step,ctx={}) {
+    if(ctx.postal)return postalCut(step);
     let selected = null;
     const cards = node('div', {class: 'cards three'});
     const buttons = new Map();
@@ -281,11 +354,11 @@ const RENDERERS = {
     function set(v) { predict = v; setPressed(bYes, v === true); setPressed(bNo, v === false); }
     const predictRow = node('div', {class: 'row'}, [bYes, bNo]);
     const predictNote = node('p', {class: 'note', text: '제출한 뒤에 접어서 확인해요.'});
-    const predictTitle = node('h3', {text: '예상'});
+    const predictTitle = node('h3', {text: '접은 모습을 떠올려 골라요'});
     const resultPanel = node('div', {class: 'panel compact', hidden: true});
     const el = node('div', {class: 'row', style: {gap: '16px', alignItems: 'flex-start', flexWrap: 'nowrap'}}, [
       node('div', {class: 'panel'}, [node('h3', {text: `모양 ${step.index + 1}`}), netFigure(pieces, {size: 220})]),
-      node('div', {class: 'panel'}, [predictTitle, predictRow, predictNote]),
+      node('div', {class: 'panel predict-answer'}, [predictTitle, predictRow, predictNote]),
       resultPanel
     ]);
     let fold = null;
@@ -313,7 +386,7 @@ const RENDERERS = {
       cols: plan.cols, rows: plan.rows, ox: plan.ox, oy: plan.oy, width: free ? 450 : 500, height: free ? 360 : 380,onGuide:ctx.onGuide});
     const foldSlot = node('div');
     let blankInput = null;
-    const side = node('div', {class: 'panel compact', style: {minWidth: '150px', maxWidth: '190px'}}, [node('h3', {text: '조각 보관함'}), board.trayEl, board.msgEl]);
+    const side = node('div', {class: 'panel compact', style: {minWidth: '150px', maxWidth: '190px'}}, [node('h3', {text: step.movable?'조각 바꾸기':'① 종이 고르기'}), board.trayEl, board.msgEl]);
     const tools = [board.toolsEl];
     if (step.blankLength) {
       blankInput = node('input', {type: 'text', inputmode: 'numeric', id: 'blank-len', 'aria-label': '빈칸(?)의 길이'});
@@ -348,7 +421,7 @@ const RENDERERS = {
   'net-points'(step) {
     const board = createNetBoard({pieces: step.pieces, mode: step.ask === 'point' ? 'points' : 'segments', origin: step.from, width: 380, height: 300});
     const fold = createFoldView({pieces: step.pieces, size: 220});
-    const el = node('div', {class: 'row', style: {gap: '20px', alignItems: 'flex-start'}}, [
+    const el = node('div', {class: 'row net-point-workbench', style: {gap: '20px', alignItems: 'flex-start'}}, [
       node('div', {class: 'panel'}, [node('h3', {text: step.ask === 'point' ? '점 ㄱ과 만나는 점 고르기' : '모서리 ㄱㄴ과 만나는 모서리 고르기'}), board.el, node('p', {class: 'note', text: '노란 표시가 기준이에요. 접기 슬라이더로 따라가 볼 수 있어요.'})]),
       node('div', {class: 'panel'}, [node('h3', {text: '접기 보기'}), fold.el])
     ]);
@@ -356,10 +429,13 @@ const RENDERERS = {
   },
 
   // ---- 조각 수 준비 ----
-  'tray-count'(step) {
+  'tray-count'(step,ctx={}) {
     const counts = {};
     const rows = new Map();
     const list = node('div', {class: 'counter'});
+    let comparedFace='front',lastPaper=null;
+    const paperPreview=node('div',{class:'paper-preview',role:'status',hidden:true});
+    function previewPaper(t){if(!ctx.postal)return;lastPaper=t;order.hidden=true;paperPreview.hidden=false;clear(paperPreview);const fig=svg('svg',{viewBox:'0 0 240 150',role:'img','aria-label':`${t.w}×${t.h}cm 종이와 상자 면 비교`});const dims=faceDims(step.dims,comparedFace),scale=Math.min(170/Math.max(t.w,dims[0]),105/Math.max(t.h,dims[1]));fig.append(svg('rect',{x:24,y:22,width:dims[0]*scale,height:dims[1]*scale,fill:'#edf0df',stroke:'#647e54','stroke-width':2,'stroke-dasharray':'5 4'}),svg('rect',{x:24,y:22,width:t.w*scale,height:t.h*scale,fill:'#efcf96',opacity:.7,stroke:'#8d6235','stroke-width':2}));paperPreview.append(fig,node('small',{text:`종이 ${t.w}×${t.h}cm · ${counts[sizeKey(t.w,t.h)]}장 / 점선은 ${FACE_LABEL[comparedFace]} ${dims[0]}×${dims[1]}cm`}));}
     for (const t of step.tray) {
       const key = sizeKey(t.w, t.h);
       counts[key] = 0;
@@ -369,21 +445,24 @@ const RENDERERS = {
       pic.append(svg('rect', {x: 35 - t.w * s / 2, y: 27 - t.h * s / 2, width: t.w * s, height: t.h * s, class: 'piece'}));
       pic.append(svg('text', {x: 35, y: 31, class: 'label', style: 'font-size:13px', 'text-anchor': 'middle', text: `${t.w}×${t.h}`}));
       const item = node('div', {class: 'item'}, [pic, node('div', {class: 'count-row'}, [
-        button('−', () => { counts[key] = Math.max(0, counts[key] - 1); num.textContent = String(counts[key]); item.classList.remove('wrong'); }, {cls: 'small', attrs: {'aria-label': `${t.w}×${t.h} 한 장 빼기`}}),
+        button('−', () => { counts[key] = Math.max(0, counts[key] - 1); num.textContent = String(counts[key]); item.classList.remove('wrong'); previewPaper(t); }, {cls: 'small', attrs: {'aria-label': `${t.w}×${t.h} 한 장 빼기`}}),
         num,
-        button('+', () => { counts[key] = Math.min(4, counts[key] + 1); num.textContent = String(counts[key]); item.classList.remove('wrong'); }, {cls: 'small', attrs: {'aria-label': `${t.w}×${t.h} 한 장 더하기`}})
+        button('+', () => { counts[key] = Math.min(4, counts[key] + 1); num.textContent = String(counts[key]); item.classList.remove('wrong'); previewPaper(t); }, {cls: 'small', attrs: {'aria-label': `${t.w}×${t.h} 한 장 더하기`}})
       ])]);
       rows.set(key, item); list.append(item);
     }
-    const el = node('div', {class: 'row', style: {gap: '24px', alignItems: 'flex-start'}}, [
-      node('div', {class: 'panel'}, [node('h3', {text: '주문 상자'}), sketchFigure(step.dims, {size: 220, showLengths: true}), node('p', {class: 'note', text: `가로 ${step.dims.x}cm · 세로 ${step.dims.y}cm · 높이 ${step.dims.z}cm`})]),
-      node('div', {class: 'panel'}, [node('h3', {text: '직사각형 준비(단위 cm)'}), list])
+    const faceTabs=node('div',{class:'paper-face-tabs'});for(const face of ['front','top','right']){const b=button(FACE_LABEL[face],()=>{comparedFace=face;for(const btn of faceTabs.children)setPressed(btn,btn===b);if(lastPaper)previewPaper(lastPaper);},{attrs:{'aria-pressed':String(face===comparedFace)}});faceTabs.append(b);}
+    faceTabs.append(button('상자 보기',()=>{order.hidden=false;paperPreview.hidden=true;}));
+    const order=ctx.postal?createSketchView({dims:step.dims,view:STANDARD_VIEW,width:300,height:230,scale:34,tool:'none',showLengths:true,edges:fullEdges(step.dims)}).el:sketchFigure(step.dims,{size:220,showLengths:true});
+    const el = node('div', {class: ctx.postal?'paper-workbench':'row', style: {gap: '24px', alignItems: 'flex-start'}}, [
+      node('div', {class: 'panel order-box'}, [node('h3', {text: '주문 상자'}), order,...(ctx.postal?[paperPreview]:[]), node('p', {class: 'note', text: `가로 ${step.dims.x}cm · 세로 ${step.dims.y}cm · 높이 ${step.dims.z}cm`}),...(ctx.postal?[faceTabs]:[])]),
+      node('div', {class: 'panel'}, [node('h3', {text: '＋를 눌러 종이를 준비해요 (cm)'}), list])
     ]);
     return {el, tools: [], getAnswer: () => ({counts: {...counts}}), restore(a){for(const k of Object.keys(counts)){counts[k]=a.counts?.[k]||0;rows.get(k).querySelector('.num').textContent=counts[k];}}, markWrong(result) { for (const id of result.wrong || []) rows.get(id)?.classList.add('wrong'); }};
   },
 
   // ---- 카드 연결 ----
-  link(step) {
+  link(step,ctx={}) {
     const links = {};
     const cells = new Map();
     const table = node('div', {class: 'link-table'});
@@ -396,8 +475,8 @@ const RENDERERS = {
       const mkSelect = (kind, letters, items) => {
         const sel = node('select', {'aria-label': `${s.name}의 ${kind === 'sketch' ? '겨냥도' : '전개도'}`});
         sel.append(node('option', {value: '', text: '고르기'}));
-        items.forEach((it, i) => sel.append(node('option', {value: it.id, text: letters[i]})));
-        sel.addEventListener('change', () => { links[s.id][kind] = sel.value; sel.parentElement.classList.remove('wrong'); });
+        items.forEach((it, i) => sel.append(node('option', {value: it.id, text: `${kind==='sketch'?'겨냥도':'전개도'} ${letters[i]}`})));
+        sel.addEventListener('change', () => { links[s.id][kind] = sel.value; sel.parentElement.classList.remove('wrong');sel.parentElement.classList.toggle('answered',Boolean(sel.value)); });
         const cell = node('div', {class: 'cell'}, [sel]);
         cells.set(`${s.id}:${kind}`, cell);
         return cell;
@@ -405,11 +484,31 @@ const RENDERERS = {
       table.append(solidCell, mkSelect('sketch', sketchLetters, step.sketches), mkSelect('net', netLetters, step.nets));
     }
     const legend = node('div', {class: 'row', style: {gap: '10px', flexWrap: 'wrap', justifyContent: 'center'}});
-    step.sketches.forEach((k, i) => legend.append(node('div', {class: 'cell', style: {background: '#fff', border: '2px solid #e2d5ae', borderRadius: '12px', padding: '4px', textAlign: 'center'}}, [node('div', {class: 'mini', text: `겨냥도 ${sketchLetters[i]}`}), sketchFigure(k.dims, {size: 150, showLengths: true})])));
+    step.sketches.forEach((k, i) => legend.append(node('div', {class: 'cell', style: {background: '#fff', border: '2px solid #e2d5ae', borderRadius: '12px', padding: '4px', textAlign: 'center'}}, [node('div', {class: 'mini', text: `겨냥도 ${sketchLetters[i]}`}), sketchFigure(k.dims, {size: 150, showLengths: true,fit:ctx.postal})])));
     step.nets.forEach((n, i) => legend.append(node('div', {class: 'cell', style: {background: '#fff', border: '2px solid #e2d5ae', borderRadius: '12px', padding: '4px', textAlign: 'center'}}, [node('div', {class: 'mini', text: `${netLetters[i]} · 가로×세로(cm)`}), netFigure(n.net.pieces, {size: 150, showLengths: true})])));
     legend.style.display = 'grid'; legend.style.gridTemplateColumns = 'repeat(3, 1fr)';
     const el = node('div', {class: 'card-match', style: {display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '16px', alignItems: 'center', width: '100%'}}, [legend, table]);
-    return {el, tools: [], getAnswer: () => ({links: JSON.parse(JSON.stringify(links))}), restore(a){for(const [id,value]of Object.entries(a.links||{})){if(!links[id])continue;links[id]={...value};for(const k of ['sketch','net'])cells.get(id+':'+k).querySelector('select').value=value[k]||'';}}, markWrong(result) { for (const id of result.wrong || []) cells.get(id)?.classList.add('wrong'); }};
+    let matchIndex=0;
+    const matches=step.solids.flatMap(s=>['sketch','net'].map(kind=>({s,kind})));
+    const matchLabel=node('strong',{class:'match-label'});
+    const back=button('이전 그림',()=>showMatch(matchIndex-1,true),{cls:'small'});
+    const forward=button('다음 그림',()=>showMatch(matchIndex===matches.length-1?matches.findIndex(({s,kind})=>!links[s.id][kind]):matchIndex+1,true),{cls:'small'});
+    const position=node('span',{class:'field-position',role:'status'});
+    const nav=node('div',{class:'field-nav'},[back,position,forward]);
+    if(ctx.postal){el.classList.add('one-match');el.prepend(matchLabel);el.append(nav);}
+    function showMatch(index,focus=false){
+      if(!ctx.postal)return;
+      matchIndex=Math.max(0,Math.min(index,matches.length-1));
+      const {s,kind}=matches[matchIndex],row=step.solids.indexOf(s);
+      matchLabel.textContent=s.name+' · '+(kind==='sketch'?'겨냥도':'전개도')+' 고르기';
+      [...table.children].forEach((cell,i)=>cell.hidden=!(i===3+row*3||i===3+row*3+(kind==='sketch'?1:2)));
+      [...legend.children].forEach((cell,i)=>cell.hidden=kind==='sketch'?i>=step.sketches.length:i<step.sketches.length);
+      position.textContent=`그림 ${matchIndex+1}/${matches.length} · ${matches.filter(({s,kind})=>links[s.id][kind]).length}개 선택`;back.disabled=matchIndex===0;const missing=matches.findIndex(({s,kind})=>!links[s.id][kind]);forward.disabled=matchIndex===matches.length-1&&missing<0;forward.querySelector('span:last-child').textContent=matchIndex===matches.length-1&&missing>=0?'남은 그림으로':'다음 그림';
+      if(focus)cells.get(s.id+':'+kind).querySelector('select').focus();
+    }
+    cells.forEach(cell=>cell.querySelector('select').addEventListener('change',()=>showMatch(matchIndex)));
+    showMatch(0);
+    return {el, tools: [], getAnswer: () => ({links: JSON.parse(JSON.stringify(links))}), restore(a){for(const [id,value]of Object.entries(a.links||{})){if(!links[id])continue;links[id]={...value};for(const k of ['sketch','net']){const cell=cells.get(id+':'+k);cell.querySelector('select').value=value[k]||'';cell.classList.toggle('answered',Boolean(value[k]));}}showMatch(Math.max(0,matches.findIndex(({s,kind})=>!links[s.id][kind])));}, markWrong(result) { for (const id of result.wrong || []) cells.get(id)?.classList.add('wrong');const first=matches.findIndex(({s,kind})=>cells.get(s.id+':'+kind).classList.contains('wrong'));if(first>=0)showMatch(first,true); }};
   }
 };
 
