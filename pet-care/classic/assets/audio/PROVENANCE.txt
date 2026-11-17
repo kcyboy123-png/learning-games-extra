@@ -1,0 +1,16 @@
+나만의 펫 키우기 · 음악과 효과음
+제작: 2026-11-05, Scenario의 기존 사용자 크레딧으로 생성.
+
+pet-music-v1.mp3 — ACE-Step 1.5 Text to Music - Quality
+잔잔한 피아노·나일론 기타·마림바 연주. 생성 원본 80초.
+반복 경계 1.5초 크로스페이드 후 78.5초 루프, 음량 조정.
+Scenario asset_9Yd2uywpcrmFQMRfDmbnVkda
+
+효과음 — Sonilo V1.1 Text to SFX
+pet-feed-v1.mp3: 먹이를 그릇에 담기 — asset_URJtriGNN1t3JkfSmUBnDqHK
+pet-water-v1.mp3: 물그릇에 물 붓기 — asset_ZBt1KxL1iUNkXpDgPQhK6fxo
+pet-brush-v1.mp3: 부드러운 빗질·닦기 — asset_63hrfGn7djcdoDWo8ZQ899xR
+pet-play-v1.mp3: 작은 공 통통 — asset_7u1k3146Z5VVy6mPa24yrQ8m
+pet-reward-v1.mp3: 돌봄 완료 마림바 — asset_2FW8MLtRc8hLLjp4VDRFv8HH
+효과음 시작·끝 페이드 및 음량 조정, MP3 압축.
+기존 게임 음악이나 특정 아티스트의 곡을 복제하지 않는 독립 제작 프롬프트 사용.
