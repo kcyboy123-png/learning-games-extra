@@ -1,0 +1,53 @@
+/* Village stationery: forest ink, milk paper, sea glass and a coral seal. */
+:root{--post-ink:#294f47;--post-paper:#fffdf3;--post-mint:#dcebe0;--post-seal:#bf6853}
+header{inset:18px 20px auto;align-items:center}
+.brand{display:flex;align-items:center;gap:10px;background:var(--post-paper);border:0;border-radius:14px;padding:9px 15px 9px 9px;box-shadow:0 3px 0 #b8c5a9,0 7px 18px #294f4720}
+.brand:before{content:'✉';display:grid;place-items:center;width:38px;height:38px;flex:none;font-size:25px;color:var(--post-ink);background:var(--post-mint);border:1px dashed #86a591;border-radius:9px}
+.brand b{font-size:17px;letter-spacing:-.6px;color:var(--post-ink)}
+nav{gap:8px}nav button{background:var(--post-paper);border:0;border-radius:50px;padding:10px 18px;box-shadow:0 3px 0 #bac8af,0 6px 14px #294f4720;color:var(--post-ink);font-size:16px}
+#routeMap{top:88px;right:20px;background:var(--post-paper);border:0;border-radius:16px;box-shadow:0 3px 0 #bac8af,0 7px 18px #294f4720}
+#routeMap summary{font-size:15px;padding:12px 16px}#routeMap[open]{border:5px solid var(--post-paper)}
+footer{left:20px;right:auto;max-width:calc(100% - 40px);bottom:10px;background:#fffdf3d9;border-radius:30px;padding:5px 12px;color:#34584b;box-shadow:none}footer span:last-child{display:none}
+/* 2. A resident's letter, with one clear action. */
+#task{right:20px;bottom:54px;width:316px;padding:20px 20px 16px;background:var(--post-paper);border:0;border-radius:18px;box-shadow:0 5px 0 #b7c4a7,0 12px 28px #294f4730;border-top:5px solid #91b6a1}
+#task:before{content:'';position:absolute;top:5px;left:10px;right:10px;height:3px;background:repeating-linear-gradient(90deg,#bad0bf 0 9px,transparent 9px 15px);pointer-events:none}
+#task h1{margin:0 58px 8px 0;color:var(--post-ink);font-size:20px;letter-spacing:-.6px}#task #hint{color:#4d665a;font-size:15px;line-height:1.55;margin:6px 0 14px;word-break:keep-all}
+#task .task-resident{width:60px;height:60px;object-fit:contain;right:14px;top:16px;background:#e7eee0;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 0 #becdaf}
+#actions{gap:8px;margin:0}#actions button{flex:1;min-height:48px;border:1px solid #bdcbb6;background:#edf3e6;color:var(--post-ink);border-radius:12px;font-size:15px;padding:11px 14px}
+#actions button.primary{background:#386b5a;border:0;border-bottom:3px solid #245140;box-shadow:inset 0 1px 0 #ffffff35;color:#fffdf1}
+/* 3. A pinned address tag and a tactile leaf thumbstick. */
+.pin{background:var(--post-paper);border:2px solid #fffdf3;border-radius:14px;box-shadow:0 3px 0 #a7bc9a,0 8px 18px #294f4730;gap:10px;padding:8px 13px 8px 8px;min-height:56px}
+.pin:after{border-top-color:var(--post-paper)}.pin-seal{width:36px;height:36px;background:#dcebe0;border:1px dashed #8eaf98;border-radius:9px;color:#356753}.pin-label{font-size:16px;color:#294f47}.pin-label small{font-size:13px;color:#60715b;letter-spacing:0}
+.pin.ready{border-color:#87ac94;box-shadow:0 3px 0 #789b7f,0 8px 18px #294f4730}.pin.ready .pin-seal{background:#386b5a;color:white;border-color:#386b5a}
+#movement{gap:9px}#movement #stick{border:3px solid #fff9e3;background:radial-gradient(circle,#d7e4c694 0 44%,#afc59c66 45% 61%,#f4f4daaa 62%);box-shadow:0 4px 0 #78946866,inset 0 0 0 2px #93ab7f,0 10px 20px #294f4720}
+#movement #stick:before{color:#52764c;top:8px;left:61px}#movement #stickKnob{background:linear-gradient(145deg,#759e6d,#3f7253);border:3px solid #f7f5dc;box-shadow:0 4px 0 #325c42,0 7px 9px #244b3c40;font-size:0}
+#stickKnob:before{content:'';width:20px;height:27px;border-radius:80% 12% 80% 12%;background:#f5f3d2;transform:rotate(25deg);box-shadow:inset -3px -2px 0 #cfdfb3}
+#movement small{font-size:13px;background:#fffdf3ed;border-radius:20px;padding:6px 12px;box-shadow:0 2px 0 #9db48e44}
+/* 4. Open the postbag: two main tools, a sound switch and a new-letter seal. */
+dialog.post-menu{width:min(640px,94vw);padding:24px;background:var(--post-paper);border:6px solid #e0e9d7;border-radius:28px;box-shadow:0 8px 0 #526f5540,0 24px 70px #193f4555}
+.post-menu #close{position:absolute;top:18px;right:18px;z-index:1;border:0;border-radius:50%;width:44px;min-width:44px;min-height:44px;background:#fffdf3;box-shadow:0 2px 0 #aabda1;color:#365b4b}
+.post-menu h2{position:relative;margin:-8px -8px 0;padding:18px 104px 18px 14px;min-height:80px;border-radius:17px;background:#dfebdf;color:#294f47;font-size:27px;letter-spacing:-1px}
+.post-menu h2:before{width:34px;height:40px;border-radius:6px;background:#fffdf3;border:2px dotted #8ba894;box-shadow:0 2px 0 #b3c7af;font-size:22px}
+.post-menu h2:after{content:'';position:absolute;right:56px;bottom:0;width:72px;height:80px;background:url('assets/resident-0.png') center/contain no-repeat;pointer-events:none}
+.post-menu #dialogBody>p{margin:10px 0 16px;font-size:15px;color:#5d7162}
+.post-menu .menu-section{margin-top:12px}.post-menu h3{color:#58705e;font-size:15px;margin-bottom:8px}
+.post-menu .menu-main .menu-grid button{min-height:82px;display:flex;align-items:center;justify-content:center;gap:12px;border-radius:16px;border:1px solid #b9cdb7;background:#edf3e5;color:#355c49;font-size:18px;box-shadow:0 3px 0 #bfceb5}
+.post-menu .menu-main .menu-grid button:before{content:'✉';display:grid;place-items:center;width:36px;height:42px;font-size:27px;color:#63836c;background:#fffdf3;border-radius:7px;transform:rotate(-5deg)}
+.post-menu .menu-main .menu-grid button.primary{background:#386b5a;border-color:#386b5a;color:#fffdf3;box-shadow:0 3px 0 #244e40}.post-menu .menu-main .menu-grid button.primary:before{content:'❧';color:#386b5a}
+.post-menu .menu-sound{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0}.post-menu .menu-sound h3{margin:0}.post-menu .menu-sound .menu-grid{display:block}.post-menu .menu-sound button{border-radius:24px;min-height:44px;padding:8px 20px;font-size:15px;background:#eaf1e1;border:1px solid #c3d0b7}
+.post-menu .menu-records{background:#f9ebd4;border:1px solid #dcc39d;border-radius:16px;padding:14px 16px;box-shadow:none;border-left:5px solid #c47b5d}.post-menu .menu-records h3{font-size:18px;color:#744d36}.post-menu .menu-records p{font-size:15px;color:#795e48;margin:5px 0 12px}
+.post-menu .menu-records button:first-child{background:#c77755;color:#fffdf3;border:0;border-bottom:3px solid #925037;border-radius:12px;font-size:18px;box-shadow:none}.post-menu .menu-records button:last-child{background:#fffbf0;color:#795a3d;border:1px solid #d9bf99;border-radius:12px;font-size:15px}
+.post-menu details.menu-section,.post-menu .menu-help{border:0;background:#eff3e6;border-radius:12px;margin-top:8px;padding:0 12px}.post-menu details summary{font-size:15px;min-height:46px;padding:12px 0}.post-menu details[open] .menu-grid{padding-bottom:12px}
+/* 5. Touch polish and compact screens; never move the walking hit target. */
+.post-menu .menu-main .menu-grid button.primary:before{content:'';width:23px;height:32px;border-radius:80% 12% 80% 12%;transform:rotate(20deg);box-shadow:inset -3px -2px 0 #d7e4be}
+.post-menu .menu-records button:first-child{background:#ac6046;border-bottom-color:#794330}.post-menu .menu-records button:first-child:hover{background:#9c533d;color:#fffdf3}
+nav button:active,#actions button:active,.post-menu button:active{translate:0 2px;box-shadow:none}
+nav button:focus-visible,#actions button:focus-visible,.post-menu button:focus-visible,.post-menu summary:focus-visible{outline:3px solid #325f57;outline-offset:4px}
+.post-menu .menu-grid button{transition:background-color .12s,translate .12s}.post-menu .menu-grid button.primary:hover{background:#2e5c4c;color:#fffdf3}
+@media(max-height:650px){dialog.post-menu{padding:18px;max-height:calc(100dvh - 24px)}.post-menu .menu-main .menu-grid button{min-height:64px}.post-menu #dialogBody>p{margin-bottom:10px}.post-menu .menu-section{margin-top:9px}.post-menu .menu-sound{padding:5px 0}#task{bottom:48px}#movement{bottom:50px}}
+@media(max-width:700px){header{inset:12px;gap:8px}.brand{padding:7px 10px;gap:7px;max-width:calc(100vw - 175px)}.brand b{font-size:14px}.brand:before{width:28px;height:32px;font-size:21px}nav{max-width:160px;gap:6px}nav button{font-size:14px;padding:8px 12px}#routeMap{right:12px;top:76px}#task{right:12px;width:calc(100vw - 190px);padding:17px 14px 12px}#task h1{font-size:18px;margin-right:42px}#task .task-resident{width:42px;height:46px;right:10px}#task #hint{font-size:14px}#actions button{font-size:14px;padding:9px;min-height:48px}}
+@media(max-width:480px){dialog.post-menu{padding:16px;border-width:4px;width:calc(100vw - 20px)}.post-menu h2{font-size:23px;padding-left:10px}.post-menu h2:after{width:46px;right:42px}.post-menu h2:before{display:none}.post-menu .menu-main .menu-grid button{font-size:16px;min-height:72px;gap:7px;padding:10px}.post-menu .menu-records{padding:12px}.post-menu .menu-sound{gap:8px}.post-menu .menu-records .menu-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.post-menu .menu-grid button{transition:none}nav button:active,#actions button:active,.post-menu button:active{translate:none}}
+.post-menu #close{position:sticky;top:0;float:right;margin:-6px -6px -46px 0;z-index:5;box-shadow:0 2px 0 #aabda1,0 3px 12px #294f4726}
+.post-menu button,.post-menu summary{ -webkit-tap-highlight-color:transparent }
+body.sailing #movement{visibility:hidden}

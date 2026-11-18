@@ -1,6 +1,6 @@
 // 직육면체 부품으로 조립한 로봇 장난감(회전 가능 SVG). 머리 2×2×2, 몸통 4×3×2, 팔 1×3×1 ×2, 다리 1×3×1 ×2.
 import {rotate, norm, dot} from '../lib/geometry.mjs';
-import {svg, node, button, clear} from './dom.mjs?v=tablet-20261115';
+import {svg, node, button, clear, reducedMotion} from './dom.mjs?v=tablet-20261115';
 
 const LIGHT = norm([0.35, 0.8, 0.55]);
 // 부품: dims(x,y,z), center(x,y,z), 색
@@ -58,12 +58,17 @@ export function createRobotView({size = 340, parts = ROBOT_PARTS, unit = 26, int
       }
     }
   }
-  let drag = null;
+  let drag = null,spinFrame=null;
+  function stopSpin(){if(spinFrame!==null)cancelAnimationFrame(spinFrame);spinFrame=null;}
+  function endDrag(e){if(!drag||e.pointerId!==drag.id)return;if(e.type==='pointerup')api.rotate((e.clientX-drag.x)*.012,(e.clientY-drag.y)*.012);const id=drag.id;drag=null;el.style.cursor='grab';if(el.hasPointerCapture(id))el.releasePointerCapture(id);}
   if (interactive) {
-    el.addEventListener('pointerdown', e => { drag = {x: e.clientX, y: e.clientY}; el.setPointerCapture(e.pointerId); });
-    el.addEventListener('pointermove', e => { if (!drag) return; api.rotate((e.clientX - drag.x) * 0.012, (e.clientY - drag.y) * 0.012); drag = {x: e.clientX, y: e.clientY}; });
-    el.addEventListener('pointerup', () => { drag = null; });
-    el.addEventListener('pointercancel', () => { drag = null; });
+    el.style.cursor='grab';el.setAttribute('tabindex','0');el.setAttribute('role','group');el.setAttribute('aria-label','조립한 로봇 · 끌거나 방향키로 돌려요');
+    el.addEventListener('keydown',e=>{const turn={ArrowLeft:[-.35,0],ArrowRight:[.35,0],ArrowUp:[0,-.3],ArrowDown:[0,.3]}[e.key];if(turn){e.preventDefault();api.rotate(...turn);}});
+    el.addEventListener('pointerdown', e => {if(!e.isPrimary||e.button!==0||drag)return;stopSpin();drag = {id:e.pointerId,x: e.clientX, y: e.clientY};el.style.cursor='grabbing'; el.setPointerCapture(e.pointerId); });
+    el.addEventListener('pointermove', e => { if (!drag||drag.id!==e.pointerId) return; api.rotate((e.clientX - drag.x) * 0.012, (e.clientY - drag.y) * 0.012);drag.x=e.clientX;drag.y=e.clientY; });
+    el.addEventListener('pointerup',endDrag);
+    el.addEventListener('pointercancel',endDrag);
+    el.addEventListener('lostpointercapture',endDrag);
   }
   const controls = node('div', {class: 'rot', role: 'group', 'aria-label': '로봇 돌려 보기'}, [
     button('◀', () => api.rotate(-0.35, 0), {cls: 'small', attrs: {'aria-label': '왼쪽으로 돌리기'}}),
@@ -73,13 +78,15 @@ export function createRobotView({size = 340, parts = ROBOT_PARTS, unit = 26, int
   ]);
   const api = {
     el: root, svg: el, controls,
-    rotate(dy, dp) { state.yaw += dy; state.pitch = Math.max(-1.2, Math.min(1.2, state.pitch + dp)); draw(); },
+    rotate(dy, dp) { stopSpin();state.yaw += dy; state.pitch = Math.max(-1.2, Math.min(1.2, state.pitch + dp)); draw(); },
     setDone(ids) { state.done = new Set(ids); draw(); },
     spin(ms = 1800) {
+      stopSpin();if(reducedMotion())return;
       const t0 = performance.now(), from = state.yaw;
-      const tick = now => { const k = Math.min(1, (now - t0) / ms); state.yaw = from + k * Math.PI * 2; draw(); if (k < 1) requestAnimationFrame(tick); };
-      requestAnimationFrame(tick);
+      const tick = now => {spinFrame=null;if(!root.isConnected)return;const k = Math.min(1, (now - t0) / ms); state.yaw = from + k * Math.PI * 2; draw(); if (k < 1)spinFrame=requestAnimationFrame(tick); };
+      spinFrame=requestAnimationFrame(tick);
     },
+    destroy(){stopSpin();if(drag)endDrag({pointerId:drag.id});},
     redraw: draw
   };
   draw();

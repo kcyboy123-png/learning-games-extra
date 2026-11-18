@@ -1,6 +1,6 @@
 // 겨냥도 편집기(SVG). 꼭짓점은 사선 투영 좌표로 만들고, 선은 실선(보임)/점선(가려짐)으로 표시한다.
 import {cuboid, obliqueProject, STANDARD_VIEW, viewSets, edgeId, FACE_LABEL} from '../lib/geometry.mjs';
-import {svg, node, button, pressable, setPressed, clear, reducedMotion, announce} from './dom.mjs?v=tablet-20261115';
+import {svg, node, button, pressable, setPressed, clear, reducedMotion, announce} from './dom.mjs?v=tactile-audit-e-20261118';
 
 export function createSketchView(opts = {}) {
   const dims = opts.dims, view = opts.view || STANDARD_VIEW;
@@ -23,6 +23,7 @@ export function createSketchView(opts = {}) {
     return {[x]: `${dims.x}cm`, [y]: `${dims.y}cm`, [z]: `${dims.z}cm`};
   }
   function draw() {
+    const focusKey=el.contains(document.activeElement)?document.activeElement.dataset.focusKey:null;
     clear(el);
     const gFaces = svg('g'), gLines = svg('g'), gVerts = svg('g'), gLabels = svg('g');
     el.append(gFaces, gLines, gVerts, gLabels);
@@ -41,7 +42,7 @@ export function createSketchView(opts = {}) {
         const cls = ['edge', type === 'dashed' ? 'dashed' : '', state.wrong.has(e.id) ? 'wrong' : '', opts.drawnIds?.has?.(e.id) ? 'drawn' : ''].filter(Boolean).join(' ');
         const line = svg('line', {x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: cls});
         if ((state.tool === 'toggle' || state.tool === 'draw') && !state.locked.has(e.id)) {
-          const hit = svg('line', {x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: 'edge-hit'});
+          const hit = svg('line', {x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: 'edge-hit','data-focus-key':'edge:'+e.id});
           pressable(hit, () => toggleEdge(e.id), `모서리 (${type === 'dashed' ? '점선' : '실선'}) 눌러서 바꾸기`);
           gLines.append(hit);
         }
@@ -64,7 +65,7 @@ export function createSketchView(opts = {}) {
       const [va, vb] = key.split('-');
       const a = P[va], b = P[vb];
       const line = svg('line', {x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: `edge drawn ${type === 'dashed' ? 'dashed' : ''} ${state.wrong.has(key) ? 'wrong' : ''}`});
-      const hit = svg('line', {x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: 'edge-hit'});
+      const hit = svg('line', {x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: 'edge-hit','data-focus-key':'extra:'+key});
       pressable(hit, () => { pushHistory(); delete state.extras[key]; draw(); onChange(api.getEdges()); }, '모서리가 아닌 선 (눌러서 지우기)');
       gLines.append(hit, line);
     }
@@ -73,8 +74,9 @@ export function createSketchView(opts = {}) {
       const hiddenV = sets.hiddenVertices.includes(v.id);
       const dotEl = svg('circle', {cx: p.x, cy: p.y, r: state.pending === v.id ? 10 : 6, class: `vertex ${state.pending === v.id ? 'active' : ''}`, opacity: hiddenV && !state.reveal && state.tool !== 'draw' ? .6 : 1});
       if (state.tool === 'draw') {
-        const hit = svg('circle', {cx: p.x, cy: p.y, r: 22, class: 'vertex-hit'});
+        const hit = svg('circle', {cx: p.x, cy: p.y, r: 22, class: 'vertex-hit','data-focus-key':'vertex:'+v.id});
         pressable(hit, () => pickVertex(v.id), `꼭짓점 ${opts.vertexLabels?.[v.id] || ''}`);
+        hit.setAttribute('aria-pressed',String(state.pending===v.id));
         gVerts.append(hit);
       }
       gVerts.append(dotEl);
@@ -91,7 +93,10 @@ export function createSketchView(opts = {}) {
       const f = solid.faces.find(x => x.id === opts.highlightFace);
       gFaces.append(svg('polygon', {points: f.vertices.map(id => `${P[id].x},${P[id].y}`).join(' '), fill: 'rgba(42,167,163,.35)', stroke: '#1d7f7c', 'stroke-width': 3, 'stroke-dasharray': '6 4'}));
     }
+    if(focusKey)[...el.querySelectorAll('[data-focus-key]')].find(n=>n.dataset.focusKey===focusKey)?.focus({preventScroll:true});
+    opts.onHistory?.(state.pending!==null||state.history.length>0);
   }
+  let revealTimer;
   function pushHistory() { state.history.push({edges: {...state.edges}, extras: {...state.extras}}); if (state.history.length > 50) state.history.shift(); }
   function toggleEdge(id) {
     pushHistory();
@@ -103,16 +108,18 @@ export function createSketchView(opts = {}) {
     if (state.pending === null) { state.pending = id; draw(); opts.onGuide?.('second');announce('첫 꼭짓점을 골랐어요. 이을 꼭짓점을 누르세요.'); return; }
     if (state.pending === id) { state.pending = null; draw();opts.onGuide?.('first'); return; }
     const key = edgeId(state.pending, id);
-    pushHistory();
     const isEdge = solid.edges.some(e => e.id === key);
+    if((isEdge?state.edges[key]:state.extras[key])===state.lineType){state.pending=null;draw();opts.onGuide?.('first');announce('이미 같은 선이 있어요.');return;}
+    pushHistory();
     if (isEdge) { state.edges[key] = state.lineType; state.wrong.delete(key); (opts.drawnIds ||= new Set()).add(key); }
-    else state.extras[key] = state.lineType;
+    else {state.extras[key] = state.lineType;state.wrong.delete(key);}
     state.pending = null;
     opts.onGuide?.('first');
     draw(); onChange(api.getEdges());
     announce(isEdge ? `${state.lineType === 'dashed' ? '점선' : '실선'} 모서리를 그렸어요.` : '꼭짓점을 이었지만 모서리가 아닌 선이에요.');
   }
   const typeButtons = node('div', {class: 'row', role: 'group', 'aria-label': '선 종류'});
+  el.addEventListener('keydown',e=>{if(e.key==='Escape'&&state.pending!==null){e.preventDefault();e.stopPropagation();api.undo();announce('시작점 선택을 취소했어요.');}});
   const bSolid = button('실선(보이는 모서리)', () => api.setLineType('solid'), {cls: 'small'});
   const bDash = button('점선(가려진 모서리)', () => api.setLineType('dashed'), {cls: 'small'});
   typeButtons.append(bSolid, bDash);
@@ -127,9 +134,10 @@ export function createSketchView(opts = {}) {
     setLineType(t) { state.lineType = t; setPressed(bSolid, t === 'solid'); setPressed(bDash, t === 'dashed'); },
     markWrong(ids) { state.wrong = new Set(ids); draw(); },
     clearWrong() { state.wrong.clear(); draw(); },
-    undo() { const h = state.history.pop(); if (!h) return false; state.edges = h.edges; state.extras = h.extras; state.pending = null; draw();opts.onGuide?.('first'); onChange(api.getEdges()); return true; },
-    canUndo: () => state.history.length > 0,
-    reveal(on = true) { state.reveal = on; draw(); if (on && !opts.keepReveal) setTimeout(() => { state.reveal = false; draw(); }, reducedMotion() ? 2500 : 1800); },
+    undo() { if(state.pending!==null){state.pending=null;draw();opts.onGuide?.('first');return true;} const h = state.history.pop(); if (!h) return false; state.edges = h.edges; state.extras = h.extras;state.wrong.clear(); state.pending = null; draw();opts.onGuide?.('first'); onChange(api.getEdges()); return true; },
+    canUndo: () => state.pending!==null || state.history.length > 0,
+    reveal(on = true) { clearTimeout(revealTimer);state.reveal = on; draw(); if (on && !opts.keepReveal) revealTimer=setTimeout(() => { state.reveal = false; draw(); }, reducedMotion() ? 2500 : 1800); },
+    destroy(){clearTimeout(revealTimer);},
     redraw: draw
   };
   api.setLineType('solid');

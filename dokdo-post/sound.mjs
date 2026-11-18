@@ -4,8 +4,8 @@ import {setSoundEnabled,sfx} from './math/ui/audio.mjs?v=audio-journey-20261117'
 // Sound preferences stay separate from the child's learning record.
 export function createPostSound(storage) {
   const key='dotori-dokdo-post:sound:v1', music=createMusic();
-  let enabled=false, unlocked=false, playing=false;
-  try { enabled=storage?.getItem(key)==='on'; } catch {}
+  // Each visit starts with music and effects on; mute remains available for this visit.
+  let enabled=true, unlocked=false, playing=false;
   music.chapter(new URL('./assets/audio/forest-post.mp3',import.meta.url).href);
   const apply=async()=>{const audible=enabled&&unlocked&&!document.hidden;setSoundEnabled(audible);if(audible&&playing)return true;playing=audible;const ok=await music.enable(audible);if(!ok)playing=false;return ok;};
   const unlock=()=>{unlocked=true;apply();};

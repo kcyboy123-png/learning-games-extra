@@ -1,6 +1,6 @@
 // 회전하는 입체 뷰어(SVG). 면·모서리·꼭짓점은 수학 좌표에서 투영하며, 보이는 요소만 누를 수 있다.
 import {cuboid, rotate, FACE_LABEL, prism, regularPolygon, boxMesh, cross, sub, dot, norm, facesAtVertex, OPPOSITE} from '../lib/geometry.mjs';
-import {svg, node, button, pressable, setPressed, clear, reducedMotion} from './dom.mjs?v=tablet-20261115';
+import {svg, node, button, pressable, setPressed, clear, reducedMotion} from './dom.mjs?v=tactile-audit-e-20261118';
 import {paperSurface} from './paper-surface.mjs';
 
 const BASE_RGB = [214, 178, 131];
@@ -57,10 +57,11 @@ export function createSolidView(opts = {}) {
     glowFaces: new Set(), revealFace: null, peeled: null
   };
   const onSelect = opts.onSelect || (() => {});
+  let glowTimer;
   const solid = opts.dims ? cuboid(opts.dims.x, opts.dims.y, opts.dims.z) : null;
   const mesh = opts.mesh ? opts.mesh : null;
   const root = node('div', {class: 'solid-view', style: {position: 'relative', display: 'inline-block'}});
-  const el = svg('svg', {viewBox: `${-size / 2} ${-size / 2} ${size} ${size}`, width: size, height: size, tabindex: '0', role: 'group', 'aria-label': opts.ariaLabel || '상자를 끌면 회전하고 짧게 누르면 선택해요. 화살표 키로도 회전해요.', style: 'touch-action:none;outline-offset:2px'});
+  const el = svg('svg', {viewBox: `${-size / 2} ${-size / 2} ${size} ${size}`, width: size, height: size, tabindex: '0', role: 'group', 'aria-label': opts.ariaLabel || (state.mode==='none'&&!opts.faceSelectable?'상자를 끌어 돌려 봐요. 화살표 키로도 회전해요.':'상자를 끌면 회전하고 짧게 누르면 선택해요. 화살표 키로도 회전해요.'), style: 'touch-action:none;outline-offset:2px'});
   root.append(el);
   if(opts.postal&&opts.mode!=='none')root.append(node('div',{class:'turn-hint',text:'끌어서 회전 · 톡 눌러 선택'}));
   const pid = `stamp${patternSeq++}`;
@@ -89,6 +90,7 @@ export function createSolidView(opts = {}) {
   }
 
   function draw() {
+    const focusKey=el.contains(document.activeElement)?document.activeElement.dataset.focusKey:null;
     clear(el);
     paperFill = paperSurface(el);
     const defs = svg('defs');
@@ -122,6 +124,7 @@ export function createSolidView(opts = {}) {
         gLabels.append(svg('text', {x: c[0], y: c[1] + 6, class: 'label big', 'text-anchor': 'middle', text: opts.revealLabel || '이 면'}));
       }
     }
+    if(focusKey)[...el.querySelectorAll('[data-focus-key]')].find(n=>n.dataset.focusKey===focusKey)?.focus({preventScroll:true});
   }
   function facePolygon(f, isBack) {
     const pts = f.pts.map(p => project(p));
@@ -174,10 +177,10 @@ export function createSolidView(opts = {}) {
       if (state.wrong.pairs.has(state.pairs[selectedPair].join('+'))) poly.classList.add('wrong');
     }
     const selectable = solid && (state.kind === 'faces' || state.kind === 'pairs' || state.mode === 'peel') || (mesh && opts.faceSelectable);
-    if (selectable) pressable(poly, () => handleFace(f.id), `${FACE_LABEL[f.id] || '면'}`);
+    if (selectable){poly.dataset.focusKey='face:'+f.id;poly.setAttribute('aria-pressed',String(isSel||selectedPair>=0||state.pending===f.id||state.peeled===f.id));pressable(poly, () => handleFace(f.id), `${FACE_LABEL[f.id] || '면'}`);}
     if (opts.diagonals && state.kind === 'edges' && solid) {
       const p0 = pts[0], p2 = pts[2];
-      const hit = svg('line', {x1: p0.x, y1: p0.y, x2: p2.x, y2: p2.y, class: 'diag-hit'});
+      const hit = svg('line', {x1: p0.x, y1: p0.y, x2: p2.x, y2: p2.y, class: 'diag-hit','data-focus-key':'diag:'+f.id,'aria-pressed':String(state.selected.diagonals.has('diag-'+f.id))});
       const line = svg('line', {x1: p0.x, y1: p0.y, x2: p2.x, y2: p2.y, class: 'diag' + (state.selected.diagonals.has('diag-' + f.id) ? ' selected' : '') + (state.wrong.diagonals.has('diag-' + f.id) ? ' selected' : '')});
       pressable(hit, () => handleDiagonal('diag-' + f.id), '면 안의 대각선(모서리가 아님)');
       g.append(hit, line);
@@ -197,7 +200,7 @@ export function createSolidView(opts = {}) {
       if (state.wrong.edges.has(e.id)) cls.push('wrong');
       const line = svg('line', {x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: cls.join(' ')});
       if (visible && state.kind === 'edges') {
-        const hit = svg('line', {x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: 'edge-hit'});
+        const hit = svg('line', {x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: 'edge-hit','data-focus-key':'edge:'+e.id,'aria-pressed':String(state.selected.edges.has(e.id))});
         pressable(hit, () => handleEdge(e.id), `모서리 ${e.length}cm`);
         g.append(hit);
       }
@@ -218,7 +221,7 @@ export function createSolidView(opts = {}) {
       if (state.wrong.vertices.has(v.id)) cls.push('wrong');
       const dotEl = svg('circle', {cx: p.x, cy: p.y, r: sel ? 11 : 7, class: cls.join(' '), opacity: visible ? 1 : .45});
       if (visible && state.kind === 'vertices') {
-        const hit = svg('circle', {cx: p.x, cy: p.y, r: 22, class: 'vertex-hit'});
+        const hit = svg('circle', {cx: p.x, cy: p.y, r: 22, class: 'vertex-hit','aria-pressed':String(sel),'data-focus-key':'vertex:'+v.id});
         pressable(hit, () => handleVertex(v.id), '꼭짓점');
         g.append(hit);
       }
@@ -257,12 +260,13 @@ export function createSolidView(opts = {}) {
   function handleEdge(id) { state.wrong.edges.delete(id); toggle(state.selected.edges, id); draw(); onSelect('edges', [...state.selected.edges]); }
   function handleDiagonal(id) { state.wrong.diagonals.delete(id); toggle(state.selected.diagonals, id); draw(); onSelect('diagonals', [...state.selected.diagonals]); }
   function handleVertex(id) {
+    clearTimeout(glowTimer);state.glowFaces.clear();
     state.wrong.vertices.delete(id);
     toggle(state.selected.vertices, id);
     if (opts.showFacesAtVertex && state.selected.vertices.has(id)) {
       state.glowFaces = new Set(facesAtVertex(id));
       draw();
-      setTimeout(() => { state.glowFaces.clear(); draw(); }, reducedMotion() ? 1500 : 900);
+      glowTimer=setTimeout(() => { state.glowFaces.clear(); draw(); }, reducedMotion() ? 1500 : 900);
     } else draw();
     onSelect('vertices', [...state.selected.vertices]);
   }
@@ -271,29 +275,36 @@ export function createSolidView(opts = {}) {
   let drag = null, suppressClick = false;
   // Decide tap versus rotation before a selectable face can activate.
   el.addEventListener('pointerdown', e => {
-    if(!e.isPrimary||e.button!==0)return;
+    if(!e.isPrimary||e.button!==0||drag)return;
     suppressClick=false;drag={id:e.pointerId,x:e.clientX,y:e.clientY,moved:false};
+    root.classList.add('turn-pressed');
   },true);
   el.addEventListener('pointermove', e => {
     if(!drag||e.pointerId!==drag.id)return;
     const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
-    if(!drag.moved&&Math.hypot(dx,dy)<=10)return;
+    if(!drag.moved&&Math.hypot(dx,dy)<(e.pointerType==='mouse'?2:4))return;
     if(!drag.moved){drag.moved=true;el.setPointerCapture(e.pointerId);root.classList.add('turning','has-turned');}
     e.preventDefault();e.stopPropagation();
     drag.x=e.clientX;drag.y=e.clientY;api.rotate(dx*.012,dy*.012);
   },true);
   const endDrag=e=>{
     if(!drag||e.pointerId!==drag.id)return;
-    if(drag.moved){suppressClick=true;e.preventDefault();e.stopPropagation();}
-    drag=null;root.classList.remove('turning');
+    if(drag.moved){
+      if(e.type==='pointerup')api.rotate((e.clientX-drag.x)*.012,(e.clientY-drag.y)*.012);
+      suppressClick=true;e.preventDefault();e.stopPropagation();
+    }
+    const id=drag.id;drag=null;root.classList.remove('turning','turn-pressed');
+    if(el.hasPointerCapture(id))el.releasePointerCapture(id);
   };
   el.addEventListener('pointerup',endDrag,true);
   el.addEventListener('pointercancel',endDrag,true);
-  el.addEventListener('lostpointercapture',()=>{drag=null;root.classList.remove('turning');});
+  el.addEventListener('lostpointercapture',()=>{drag=null;root.classList.remove('turning','turn-pressed');});
+  el.addEventListener('pointerleave',()=>{if(drag&&!drag.moved){drag=null;root.classList.remove('turn-pressed');}});
   el.addEventListener('click',e=>{if(suppressClick&&e.detail!==0){suppressClick=false;e.preventDefault();e.stopPropagation();}},true);
   el.addEventListener('keydown', e => {
+    if(e.key==='Escape'&&state.pending!==null){e.preventDefault();e.stopPropagation();state.pending=null;draw();onSelect('pairs',state.pairs.slice());return;}
     const map = {ArrowLeft: [-0.25, 0], ArrowRight: [0.25, 0], ArrowUp: [0, -0.2], ArrowDown: [0, 0.2]};
-    if (map[e.key]) { e.preventDefault(); api.rotate(...map[e.key]); }
+    if (map[e.key]) { e.preventDefault(); api.rotate(...map[e.key]);el.focus({preventScroll:true}); }
   });
   const controls = node('div', {class: 'rot', role: 'group', 'aria-label': '돌려 보기'});
   controls.append(
@@ -306,6 +317,7 @@ export function createSolidView(opts = {}) {
 
   const api = {
     el: root, svg: el, controls, state,
+    destroy(){clearTimeout(glowTimer);},
     rotate(dy, dp) { state.yaw += dy; state.pitch = Math.max(-1.4, Math.min(1.4, state.pitch + dp)); draw(); },
     setView(yaw, pitch) { state.yaw = yaw; state.pitch = pitch; draw(); },
     setKind(kind) { state.kind = kind; draw(); },

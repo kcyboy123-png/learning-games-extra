@@ -278,7 +278,7 @@
 .postal .predict-answer .row{display:grid;grid-template-columns:1fr;gap:12px}
 .postal .predict-answer button{min-height:58px;font-size:21px}
 .postal .predict-answer button[aria-pressed="true"]{background:#deebd1;color:#2f513b;border:2px solid #365d42}
-.postal .predict-answer button[aria-pressed="true"] span:before{content:'✓ '}
+.postal .predict-answer button[aria-pressed="true"] span:before{content:'● '}
 .postal .held-piece{padding:10px!important;border:2px solid #658351;border-radius:12px;background:#e0edce!important;color:#2f5037!important;font-weight:800;font-size:18px!important;line-height:1.4}
 .postal .card-match .answered{background:#e3edd6;border-color:#6d8b56}
 .postal .card-match select{min-height:48px;border:2px solid #819b70;background:#fffef6;font-size:18px}
@@ -519,3 +519,62 @@
 .cube-seal{background:#f8e7b9;color:#775b31;border-color:#ba9f64;border-style:dashed}.cube-seal.confirmed{background:#507554;color:#fff8de;border-style:double;border-color:#e6efd3}
 .postal .loading-dock .dock-box{display:flex;align-items:center;min-height:44px;padding:2px 7px;margin:0;background:#fff5dc;color:#4c5f40;border:1px solid #b3a17e;box-shadow:none}.postal .loading-dock .dock-box svg{width:40px;height:40px}.postal .loading-dock .dock-box>span{font-size:15px;white-space:nowrap}
 .postal .sorting-workbench.needs-more .item:not(.picked) .inspect-box{outline:2px dashed #af8a47;outline-offset:-4px}
+/* Tactile cues never change the mathematical geometry or touch targets. */
+.postal .net-board .ghost.drop-valid{fill:#c9dfb1!important;stroke:#50784b!important;stroke-width:3!important;stroke-dasharray:7 4;opacity:.75}
+.postal .net-board .ghost.drop-blocked{fill:#f0c3ac!important;stroke:#aa604c!important;stroke-width:3!important;stroke-dasharray:3 4;opacity:.65}
+.postal .net-board:has(.ghost) .piece{cursor:grabbing}
+.postal .net-layout .tray button:active{filter:brightness(.95)}
+@media(prefers-reduced-motion:no-preference){
+ .postal .net-layout .held-preview{filter:drop-shadow(0 5px 3px #725b3838);animation:paper-lift .16s ease-out}
+ .postal .net-board .piece.just-placed{animation:paper-seat .22s ease-out}
+ @keyframes paper-lift{from{transform:translateY(4px) scale(.94);opacity:.6}to{transform:none;opacity:1}}
+ @keyframes paper-seat{from{filter:drop-shadow(0 -5px 4px #725b3844);stroke-width:4}to{filter:none;stroke-width:2}}
+}
+/* Input follows the pointer directly; the grid preview alone snaps to cells. */
+.postal .drag-held-paper{filter:drop-shadow(0 4px 3px #55412744);opacity:.92}
+.postal .drag-held-paper>rect{fill:#ead2a5;stroke:#9b794f;stroke-width:2}
+.postal .drag-paper-layer .ghost{opacity:.5}
+.postal .paper-pressed{filter:brightness(.94)!important;outline:2px solid #78945b;outline-offset:-2px}
+.postal .net-layout .tray button{transition:background-color 60ms,box-shadow 60ms}
+.postal .net-board.paper-dragging{position:relative;z-index:3}
+.postal .net-board.paper-dragging>svg{overflow:visible}
+
+.postal .solid-view>svg{cursor:grab}
+.postal .solid-view.turn-pressed>svg{cursor:grabbing;filter:drop-shadow(0 2px 2px #55412722)}
+
+.postal .net-board .drag-paper-layer .label{paint-order:stroke;stroke:#fff9e9;stroke-width:5px;stroke-linejoin:round;fill:#36543d}
+.postal .net-layout .tray .held-preview:active{filter:drop-shadow(0 6px 3px #70542a55)}
+.postal .net-layout .row button:not(:disabled):active,.postal .solid-view~.rot button:not(:disabled):active{box-shadow:inset 0 2px 4px #53674233;background:#dce9ce}
+.postal .paper-seat-outline{fill:none;stroke:#688b51;stroke-width:3;opacity:0}
+@media(prefers-reduced-motion:no-preference){.postal .paper-seat-outline{animation:paper-contact .24s ease-out}@keyframes paper-contact{0%,30%{opacity:.85}100%{opacity:0}}}
+
+.postal .cut-preview>.cut-selection-status{flex-basis:100%;max-width:none;text-align:center;font-size:16px;line-height:1.45;color:#566c4f}
+
+
+.postal .match-choice{cursor:pointer;color:#34543d;touch-action:manipulation}.postal .match-choice[aria-pressed="true"]{background:#e4eed7!important;border-color:#557947!important;box-shadow:inset 0 0 0 2px #557947}.postal .match-choice:active{transform:translateY(2px)}.postal .match-choice:focus-visible{outline:3px solid #9b7435;outline-offset:3px}
+.postal .match-choice.wrong{border-color:#a34f35!important;box-shadow:inset 0 0 0 2px #a34f35;background:#fff0e8!important}
+/* The reference models are observation tools, never answer counters. */
+.postal .with-parcel-reference{gap:18px!important}
+.postal .parcel-reference{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-width:390px;flex:1 1 300px}
+.postal .reference-box{background:#f3ead3;border:2px solid #d9cbaa;border-radius:22px;text-align:center;padding:12px 4px 6px;box-shadow:0 4px 0 #d7c9a9;transition:border-color .15s,background .15s}
+.postal .reference-box strong{font-size:18px;color:#405d48}
+.postal .reference-box.current-reference{border-color:#668454;background:#f8f6df}
+.postal .reference-box .solid-view{display:block!important}
+.postal .reference-box svg{width:100%!important;height:160px!important;max-width:180px}
+.postal .reference-cue{grid-column:1/-1;text-align:center;color:#52634c;font-size:16px;line-height:1.5}
+.postal .with-parcel-reference .answer-fields{flex:1 1 300px;max-width:440px}
+.postal .match-choice{position:relative}
+.postal .match-choice[aria-pressed="true"]:after{content:'선택';position:absolute;right:7px;top:7px;font-size:12px;line-height:1.4;padding:2px 7px;border-radius:12px;background:#42664f;color:#fffdf1;pointer-events:none}
+.postal .match-choice.wrong:after{content:'다시 보기';background:#9a533d}
+@media(prefers-reduced-motion:reduce){.postal .reference-box{transition:none}.postal .match-choice:active{transform:none}}
+.portrait .postal .with-parcel-reference{flex-direction:column;gap:12px!important}
+.portrait .postal .with-parcel-reference .parcel-reference{flex:0 0 auto;width:min(100%,390px)}
+.portrait .postal .with-parcel-reference .answer-fields{flex:0 0 auto;width:min(100%,440px);box-sizing:border-box}
+.postal .with-parcel-reference .field-nav button{white-space:nowrap;flex-shrink:0}
+.postal .with-parcel-reference .field-nav button{touch-action:manipulation}
+.postal .reference-box strong{font-size:var(--reading-size,18px)}
+.postal .reference-cue{font-size:var(--small-size,16px)}
+.portrait .postal .with-parcel-reference .parcel-reference{width:min(100%,560px);max-width:560px}
+.portrait .postal .reference-box svg{height:210px!important;max-width:240px}
+.postal .match-choice,.postal .dock-box{-webkit-tap-highlight-color:transparent}.postal .match-choice[aria-pressed="true"]:after{font-size:var(--small-size,15px)}
+.postal .paper-workbench .panel>h3{font-size:var(--reading-size,18px);line-height:1.35}

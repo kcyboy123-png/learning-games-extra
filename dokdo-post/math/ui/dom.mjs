@@ -53,11 +53,11 @@ export function pressable(el, handler, label) {
   el.classList.add('pressable');
   let touch=null;
   el.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&e.isPrimary)touch={id:e.pointerId,x:e.clientX,y:e.clientY};});
-  el.addEventListener('pointermove',e=>{if(touch&&Math.hypot(e.clientX-touch.x,e.clientY-touch.y)>10)touch=null;});
-  el.addEventListener('pointercancel',()=>{touch=null;});
-  el.addEventListener('pointerup',e=>{const start=touch;touch=null;if(!start||start.id!==e.pointerId||Math.hypot(e.clientX-start.x,e.clientY-start.y)>10)return;e.preventDefault();lastTouchActivation=performance.now();handler(e);});
+  el.addEventListener('pointermove',e=>{if(touch&&e.pointerId===touch.id&&Math.hypot(e.clientX-touch.x,e.clientY-touch.y)>10)touch=null;});
+  el.addEventListener('pointercancel',e=>{if(touch?.id===e.pointerId)touch=null;});
+  el.addEventListener('pointerup',e=>{const start=touch;if(!start||start.id!==e.pointerId)return;touch=null;if(Math.hypot(e.clientX-start.x,e.clientY-start.y)>10)return;e.preventDefault();lastTouchActivation=performance.now();handler(e);});
   el.addEventListener('click', e => { e.preventDefault();if((e.pointerType==='touch'||e.sourceCapabilities?.firesTouchEvents)&&performance.now()-lastTouchActivation<700)return;handler(e); });
-  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(e); } });
+  el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault();if(!e.repeat)handler(e); } });
   return el;
 }
 export function setPressed(el, on) { el.setAttribute('aria-pressed', on ? 'true' : 'false'); el.classList.toggle('on', !!on); }

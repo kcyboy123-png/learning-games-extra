@@ -1,14 +1,14 @@
-import {parcelCustomizer,parcelDimensions,packingMilestone} from '../../parcel-life.mjs?v=ten-rounds-20261118';
+import {parcelCustomizer,parcelDimensions,packingMilestone} from '../../parcel-life.mjs?v=ui-journey-20261118';
 // 미션 실행기(업그레이드): 위 목표 한 줄, 가운데 큰 조작 도형, 오른쪽 작은 진행 상태, 아래 모아의 짧은 말과 명확한 제출.
 // 상황 한 문장 → 직접 조작 → 명시적 제출 → 피드백(오답 시 조작 보존) → 학습 정리 → 명시적 다음 버튼.
 import {STORIES,portrait,itemImage,coachFor} from '../../story.mjs?v=resident-polish-20261117';
-import {createSolidView} from './solid-view.mjs?v=ten-rounds-20261118';
-import {netFigure} from './net-board.mjs?v=ten-rounds-20261118';
-import {actionFor,questionFor,moveFor,hasResponse} from './postal-instructions.mjs?v=resident-polish-20261117';
-import {renderStep} from './steps.mjs?v=ten-rounds-20261118';
+import {createSolidView} from './solid-view.mjs?v=ui-journey-20261118';
+import {netFigure} from './net-board.mjs?v=ui-journey-20261118';
+import {actionFor,questionFor,moveFor,hasResponse} from './postal-instructions.mjs?v=ui-journey-20261118';
+import {renderStep} from './steps.mjs?v=ui-journey-20261118';
 import {newEventId, answerSignature} from '../lib/progress.mjs';
 import {sfx} from './audio.mjs?v=audio-journey-20261117';
-import {createRobotView} from './robot-view.mjs';
+import {createRobotView} from './robot-view.mjs?v=ui-journey-20261118';
 import {node, button, clear, announce, reducedMotion} from './dom.mjs?v=resident-polish-20261117';
 import {frameRect} from './assets.mjs';
 
@@ -52,9 +52,14 @@ export function runMission({activity, workshop, progress, scored = true, contain
     if(!activity.postal||!view||solvedStep)return;
     const step=steps[index],answer=view.getAnswer(),ready=hasResponse(step,answer);
     const submit=primarySlot.querySelector('button');if(!submit)return;
-    const pending=step.kind==='net-build'?(answer.board?.held?'종이를 놓아요':step.blankLength&&!String(answer.values?.blank??'').trim()?'길이를 적어요':'종이를 붙여요'):({fill:'빈칸을 채워요',link:'그림을 모두 골라요',solid:'상자에 표시해요',sketch:'그림을 완성해요','tray-count':'종이를 준비해요'}[step.kind]||'먼저 답을 골라요');
-    submit.disabled=!ready;submit.title=ready?'내 답을 확인해요':pending;
-    submit.querySelector('span:last-child').textContent=ready?submitLabel(step):pending;
+    const currentInput=ws.querySelector('.answer-fields .field:not([hidden]) input,.answer-fields .field:not([hidden]) select,.link-table > :not([hidden]) select');
+    const nextButton=ws.querySelector('.field-nav button:last-child'),nextInput=nextButton?.textContent.trim();
+    const navigate=!ready&&['fill','link'].includes(step.kind)&&Boolean(currentInput?.value.trim())&&nextButton&&!nextButton.disabled;
+    const pending=step.kind==='net-build'?(answer.board?.held?'종이를 놓아요':(answer.pieces?.length||0)<6?`종이 ${6-(answer.pieces?.length||0)}장을 더 놓아요`:step.blankLength&&!String(answer.values?.blank??'').trim()?'길이를 적어요':'종이를 붙여요'):({fill:currentInput?.value.trim()?`${nextInput||'다음 빈칸'} 버튼을 눌러요`:'빈칸을 채워요',link:currentInput?.value?`${nextInput||'다음 그림'} 버튼을 눌러요`:'그림을 골라요',solid:'상자에 표시해요',sketch:'그림을 완성해요','tray-count':'종이를 준비해요'}[step.kind]||'먼저 답을 골라요');
+    submit.querySelector('.btn-icon').hidden=!ready&&!navigate;
+    submit.querySelector('.btn-icon').textContent=navigate?'→':'✓';
+    submit.disabled=!ready&&!navigate;submit.title=ready?'내 답을 확인해요':pending;
+    submit.querySelector('span:last-child').textContent=ready?submitLabel(step):navigate?nextInput:pending;
   }
   // A selectable SVG node can be replaced by its handler; read state after that event finishes.
   const capture=()=>{clearTimeout(captureTimer);captureTimer=setTimeout(()=>{if(!solvedStep){syncResponse();snapshot();}},0);};ws.addEventListener('click',capture);ws.addEventListener('input',capture);ws.addEventListener('change',capture);ws.addEventListener('pointerup',capture);ws.addEventListener('keydown',capture,true);ws.addEventListener('keyup',capture);
@@ -153,7 +158,11 @@ export function runMission({activity, workshop, progress, scored = true, contain
     if (solvedStep) return;
     const step = steps[index];
     const answer = view.getAnswer();
-    if(activity.postal&&!hasResponse(step,answer))return;
+    if(activity.postal&&!hasResponse(step,answer)){
+      const current=ws.querySelector('.answer-fields .field:not([hidden]) input,.answer-fields .field:not([hidden]) select,.link-table > :not([hidden]) select');
+      if(['fill','link'].includes(step.kind)&&current?.value.trim())ws.querySelector('.field-nav button:last-child:not([disabled])')?.click();
+      return;
+    }
     const result = step.check(answer, {stepAnswers});
     view.afterCheck?.(result);
     if (result.ok) {
@@ -251,5 +260,6 @@ export function runMission({activity, workshop, progress, scored = true, contain
   renderCurrent();restoring=false;
   return {destroy() { view?.destroy?.();clearTimeout(guideTimer);clearTimeout(focusTimer);clearTimeout(captureTimer);instructionSize.disconnect();window.removeEventListener('resize',fitInstruction);if(!solvedStep)snapshot();window.removeEventListener('pagehide',snapshot);clear(container); },get view(){return view;}};
 }
+
 
 
