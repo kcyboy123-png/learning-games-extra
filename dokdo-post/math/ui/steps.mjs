@@ -1,4 +1,4 @@
-import {postalCut} from './postal-cut.mjs?v=ui-journey-20261118';
+import {postalCut} from './postal-cut.mjs?v=gift-focus-20261118';
 // 단계(step) 종류별 조작 화면. 각 렌더러는 {el, tools, getAnswer, markWrong, afterCheck?, undo?} 를 돌려준다.
 // 채점은 data/workshops.mjs의 check가 하고, 여기서는 답을 모으고 틀린 부분만 표시한다.
 import {cuboid, faceDims, FACE_LABEL, STANDARD_VIEW} from '../lib/geometry.mjs';
@@ -157,7 +157,8 @@ const RENDERERS = {
     drawDock();
     const el = node('div', {class:ctx.postal?'sorting-workbench':'',style: {width: '100%'}}, ctx.postal?[loadingDock,shelf]:[shelf]);
     if(ctx.postal){el.dataset.station=step.mode==='mark'?'stamp':review?'review':turning?'turn':'select';el.append(inspectDialog);}
-    return {el, tools: ctx.postal?[selectionNote]:[],destroy(){inspectDialog.onclose=null;if(inspectDialog.open)inspectDialog.close();inspection?.destroy();items.forEach(o=>o.view.destroy());}, getAnswer: () => ({selected: [...selected]}),
+    const scrollCue=ctx.postal&&step.solids.length>3?node('small',{class:'shelf-scroll-cue',text:'↕ 위로 밀어 아래 상자도 살펴봐요'}):null;
+    return {el, tools: ctx.postal?[selectionNote,...(scrollCue?[scrollCue]:[])]:[],destroy(){inspectDialog.onclose=null;if(inspectDialog.open)inspectDialog.close();inspection?.destroy();items.forEach(o=>o.view.destroy());}, getAnswer: () => ({selected: [...selected]}),
       restore(a) { selected.clear(); for(const id of a.selected||[]) selected.add(id);items.forEach((o,id)=>{o.item.classList.toggle('picked',selected.has(id));setPressed(o.toggle,selected.has(id));o.drawTags();}); },
       afterCheck(result) { if(ctx.postal && result.ok) items.forEach(o=>{o.item.querySelector('.name').textContent=o.desc.name;const seal=o.item.querySelector('.cube-seal');if(seal){seal.textContent='✓ 정육면체';seal.classList.add('confirmed');}}); },
       markWrong(result) {
@@ -427,7 +428,7 @@ const RENDERERS = {
       showLengths: !!step.dims, blank: step.blankLength ? {piece: step.blankLength.piece, side: step.blankLength.side} : null,
       cols: plan.cols, rows: plan.rows, ox: plan.ox, oy: plan.oy, width: free ? 450 : 500, height: free ? 360 : 380,onGuide:ctx.onGuide,onChange:clearResult});
     let blankInput = null;
-    const side = node('div', {class: 'panel compact', style: {minWidth: '150px', maxWidth: '190px'}}, [node('h3', {text: step.movable?'조각 바꾸기':'① 종이 고르기'}), board.trayEl, board.msgEl]);
+    const side = node('div', {class: 'panel compact', style: {minWidth: '150px', maxWidth: '190px'}}, [node('h3', {text: step.movable?'조각 옮기기':'① 종이 고르기'}), board.trayEl, board.msgEl]);
     const tools = [board.toolsEl];
     if (step.blankLength) {
       blankInput = node('input', {type: 'text', inputmode: 'numeric', id: 'blank-len', 'aria-label': '빈칸(?)의 길이'});

@@ -578,3 +578,22 @@
 .portrait .postal .reference-box svg{height:210px!important;max-width:240px}
 .postal .match-choice,.postal .dock-box{-webkit-tap-highlight-color:transparent}.postal .match-choice[aria-pressed="true"]:after{font-size:var(--small-size,15px)}
 .postal .paper-workbench .panel>h3{font-size:var(--reading-size,18px);line-height:1.35}
+
+.shelf-scroll-cue{display:none}.portrait .postal .shelf-scroll-cue{display:block;flex-basis:100%;font-size:16px;line-height:1.4;color:#435d45}
+.gift-finished>.parcel-record,.gift-finished>.stamp,.gift-finished>p.note,.gift-finished .parcel-customizer h3{display:none}
+.gift-finished>.row:last-child{position:sticky;bottom:0;z-index:3;background:#fff9e9;padding:10px 0;margin:0}
+.gift-finished{scroll-padding-bottom:84px}.gift-finished>h2{font-size:26px!important;margin:8px 0!important}
+.gift-finished>.lesson-recap,.gift-finished>.completed-preview{font-size:16px;margin:6px 0}
+.gift-finished .parcel-customizer{margin:8px 0}
+.portrait .gift-finished .look-choice{min-height:var(--touch-size,54px);font-size:var(--small-size,18px)!important}
+.portrait .gift-finished .look-status,.portrait .gift-finished .parcel-purpose{font-size:var(--small-size,18px)}
+/* A finished gift owns the desk; yesterday's question must not compete with it. */
+.postal:has(.gift-finished)>.stage,.postal:has(.gift-finished)>.progress-side,.postal:has(.gift-finished)>.tools,.postal:has(.gift-finished)>.bubble,.postal:has(.gift-finished)>.banner{visibility:hidden}
+.postal .gift-finished{background:#fffcf1;box-shadow:0 18px 55px #38543d40;border:2px solid #a7b98b}
+.postal .gift-finished .look-preview{background:radial-gradient(ellipse at center,#fffbee 0%,#f5efd7 75%)}
+.lesson-recap>summary::before{content:'▸';margin-right:8px}.lesson-recap[open]>summary::before{content:'▾'}
+
+.postal .gift-finished .look-preview{height:150px}
+.postal .gift-finished>.row:last-child{position:static}
+.postal .gift-finished .completed-preview>summary{min-height:48px;display:flex;align-items:center;justify-content:center}
+@media(prefers-reduced-motion:no-preference){.postal.ready-to-check .primary-slot .primary{animation:check-arrived .35s ease-out}@keyframes check-arrived{from{translate:0 4px}to{translate:0 0}}}

@@ -1,17 +1,17 @@
 import {FACE_LABEL} from '../lib/geometry.mjs';
 // Action wording supplements, never replaces, each lesson's exact conditions.
 export function actionFor(step,kind=step.mode){
- if(kind==='ready')return '표시를 마쳤어요 · ‘포장 확인’을 눌러요';
+ if(kind==='ready')return '표시 끝 · 포장 확인';
  if(step.mode==='all'&&String(kind).endsWith('-next'))return `종류 버튼 ‘${{faces:'면',edges:'모서리',vertices:'꼭짓점'}[kind.replace('-next','')]}’를 눌러 다음 종류를 찾아요`;
- if(step.kind==='net-build'&&kind==='place')return '끌어서 놓거나 빈칸을 톡 눌러요';
+ if(step.kind==='net-build'&&kind==='place')return '끌어 놓기 · 빈칸 톡';
  if(step.kind==='net-build'&&kind==='check')return step.blankLength?'빈칸 길이도 적고 ‘접어서 확인’을 눌러요':'여섯 면을 놓았어요 · 접어서 확인해요';
- if(step.kind==='sketch'&&kind==='second')return '이을 꼭짓점을 하나 더 눌러요';
- if(step.kind==='peel')return kind==='selected'?'내 답 확인을 눌러요':'네 변의 길이가 모두 같나요?';
+ if(step.kind==='sketch'&&kind==='second')return '끝점 하나 더 톡';
+ if(step.kind==='peel')return kind==='selected'?'내 답 확인':'네 변의 길이가 모두 같나요?';
  if(step.kind==='solid'){
   if(step.mode==='all')return {faces:'면 6개를 찾아 눌러요',edges:'모서리 12개를 찾아 눌러요',vertices:'꼭짓점 8개를 찾아 눌러요'}[kind==='all'?'faces':kind];
   if(kind==='vertices')return `꼭짓점 ${step.count}곳에 보호캡을 붙여요`;
   if(kind==='edges')return `모서리 ${step.count}개에 보호대를 붙여요`;
-  if(kind==='pair-second')return '첫 면을 골랐어요 · 짝이 될 면을 눌러요';
+  if(kind==='pair-second')return '짝이 될 면 톡';
   if(kind==='pairs')return '조건에 맞는 면 두 개를 짝지어요';
   return Number.isInteger(step.count)?`${step.counterLabel||'면'} ${step.count}개를 찾아 눌러요`:'조건에 맞는 면을 찾아 눌러요';
  }
@@ -51,8 +51,8 @@ export function moveFor(step,kind=step.mode){
  if(['ready','check','second','pair-second','place'].includes(kind)||String(kind).endsWith('-next'))return actionFor(step,kind);
  if(step.kind==='solid'&&step.secondFace)return `★ ${FACE_LABEL[step.baseFace]} · ◆ ${FACE_LABEL[step.secondFace]}이 기준이에요. 면을 눌러요.`;
  if(step.kind==='solid'&&step.basePair)return `${step.basePair.map(f=>FACE_LABEL[f]).join(' · ')}이 밑면이에요. 상자를 돌려 찾아요.`;
- if(step.kind==='solid')return step.mode==='pairs'?'면 두 개를 차례로 눌러 한 쌍을 만들어요.':step.mode==='all'?({faces:'상자의 넓은 면을 눌러요.',edges:'면과 면이 만나는 선을 눌러요.',vertices:'선이 모이는 끝점을 눌러요.'}[kind]||'먼저 면을 누르세요.'):step.mode==='vertices'?'동그란 꼭짓점을 톡 눌러요. 뒤쪽은 상자를 돌려서 찾아요.':step.mode==='edges'?'선을 톡 누르면 보호대 · 상자를 끌면 회전':'넓은 면을 톡 눌러요. 뒤쪽은 상자를 끌어 돌려요.';
- return {sort:'맞는 상자를 모두 골라요 · 다시 누르면 취소',choice:step.answer?.length>1?'맞는 카드를 모두 눌러요. 다시 누르면 취소돼요.':'맞는 카드 한 장을 눌러요.',fill:'지금 보이는 빈칸부터 채워요.',sketch:step.tool==='draw'?'선 종류 선택 → 시작점 → 끝점':'바꿀 선을 누르면 실선 ↔ 점선으로 바뀌어요.','cut-plan':'안을 고르면 크게 보여요. 상자를 돌려 보고 하나 골라요.','net-predict':'종이 모양을 보고 아래에서 ‘될 거예요’ 또는 ‘안 될 거예요’를 눌러요.','net-build':step.replaceable?'맞지 않는 조각 선택 → 보관함에 넣기 → 맞는 종이 붙이기':step.movable?'바꿀 조각을 눌러 집은 뒤, 놓을 칸을 눌러요.':'종이를 끌어 놓아요 · 톡톡 눌러도 돼요','net-points':step.ask==='segment'?'노란 선과 만날 선을 눌러요. 접기 보기로 확인할 수 있어요.':'노란 점과 만날 점들을 눌러요. 접기 보기로 확인할 수 있어요.','tray-count':'종이 아래 ＋로 한 장 추가하고, −로 빼요.',link:'맞는 그림을 눌러요 · 다음 그림으로 계속'}[step.kind]||actionFor(step,kind);
+ if(step.kind==='solid')return step.mode==='pairs'?'면 두 개 톡 → 한 쌍':step.mode==='all'?({faces:'상자의 넓은 면을 눌러요.',edges:'면과 면이 만나는 선을 눌러요.',vertices:'선이 모이는 끝점을 눌러요.'}[kind]||'먼저 면을 누르세요.'):step.mode==='vertices'?'보호캡 끌기 · 꼭짓점 톡':step.mode==='edges'?'선을 톡 누르면 보호대 · 상자를 끌면 회전':'면 톡 · 끌어서 회전';
+ return {sort:'선택 · 다시 누르면 취소',choice:step.answer?.length>1?'모두 선택 · 다시 누르면 취소':'한 장 선택',fill:'지금 보이는 빈칸부터 채워요.',sketch:step.tool==='draw'?'선 종류 선택 → 시작점 → 끝점':'바꿀 선을 누르면 실선 ↔ 점선으로 바뀌어요.','cut-plan':'안을 고르면 크게 보여요. 상자를 돌려 보고 하나 골라요.','net-predict':'접힌 모양 생각 → 선택','net-build':step.replaceable?'맞지 않는 조각 선택 → 보관함에 넣기 → 맞는 종이 붙이기':step.movable?'끌어 옮기기 · 집고 놓기':'종이 끌기 · 톡톡 놓기','net-points':step.ask==='segment'?'노란 선과 만날 선을 눌러요. 접기 보기로 확인할 수 있어요.':'노란 점과 만날 점들을 눌러요. 접기 보기로 확인할 수 있어요.','tray-count':'＋ 추가 · − 빼기',link:'그림 선택 → 다음 그림'}[step.kind]||actionFor(step,kind);
 }
 
 // An unfinished input is not a mathematical mistake. Never consult check/answers here.

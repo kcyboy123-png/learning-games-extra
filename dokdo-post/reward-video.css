@@ -1,0 +1,8 @@
+#dialog.reward-video-view{width:min(920px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;padding:20px;}
+.reward-video-view #dialogBody{display:flex;flex-direction:column;gap:12px;}
+.reward-video-view h2{margin:0;padding-right:48px;font-size:clamp(22px,3vw,30px);}
+.reward-video-view video{display:block;width:100%;max-height:calc(100dvh - 210px);aspect-ratio:16/9;object-fit:contain;background:#243e34;border-radius:18px;}
+.reward-video-view p{margin:0;text-align:center;font-size:17px;}
+.reward-video-view .reward-actions{position:static;margin:0;padding:0;display:flex;justify-content:center;flex-wrap:wrap;gap:10px;}
+.reward-video-view .reward-actions button{min-height:48px;font-size:17px;}
+.reward-video-view button[hidden]{display:none;}

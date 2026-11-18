@@ -114,6 +114,27 @@ export function postGarden(stops){
 
  // A low flower patch replaces the canopy that obscured the post-office approach.
  const verge=toWorld(10,13),lowFlowers=new T.Group();root.add(lowFlowers);flowers(lowFlowers,verge.x,verge.z,'#eed8ad',5);batchParts(lowFlowers);
+ // Woodland vignettes frame the open delivery routes, rather than filling them.
+ const woodland=new T.Group();woodland.name='동화 숲 가장자리';root.add(woodland);
+ for(const [i,cell]of [[4.8,12.8],[6,6.2],[8.2,4.3],[14.8,11.6],[14.7,14.5]].entries()){
+  const p=toWorld(...cell);shrub(p.x,p.z,.8);grass(p.x+.6,p.z+.2,.8);
+  flowers(woodland,p.x-.5,p.z+.4,i%2?'#e4cce5':'#f6e6bf',4);
+  for(let j=0;j<3;j++){
+   const x=p.x+.3+j*.19,z=p.z-.45+Math.sin(j)*.14;
+   part(woodland,'cylinder','#eee2c6',x,.22,z,.035,.22,.035);
+   const cap=part(woodland,'sphere',i%2?'#cbab8c':'#bc8d80',x,.34,z,.13,.07,.13);
+   for(const dx of [-.04,.04])part(woodland,'sphere','#f7ead3',x+dx,.40,z,.018,.009,.018);
+  }
+ }
+ // A light bunting and a birdhouse belong to the post-office garden, not the sky.
+ for(let i=0;i<7;i++){
+  const x=-1.4+i*.46,y=2.28-Math.sin(i/6*Math.PI)*.24;
+  const flag=part(porch,'box',i%3===0?'#c3d5aa':i%3===1?'#e8c3ae':'#eedda7',x,y,.05,.18,.24,.025);flag.rotation.z=(i-3)*.045;
+ }
+ const bird=toWorld(8.1,9.6);box(woodland,'#ac9873',bird.x,.6,bird.z,.07,1.2,.07);
+ box(woodland,'#e5d4ad',bird.x,1.3,bird.z,.34,.4,.28);const roof=box(woodland,'#8fa081',bird.x,1.55,bird.z,.44,.07,.38);roof.rotation.z=-.13;
+ part(woodland,'sphere','#776a50',bird.x,1.32,bird.z+.145,.065,.065,.012);
+ batchParts(woodland);
  // Three small visitors stay beside flowers; they are scenery, never a collection task.
  const butterflies=[];const shape=new T.Shape();shape.moveTo(0,0);shape.bezierCurveTo(.26,.32,.38,.13,.13,-.02);shape.bezierCurveTo(.32,-.2,.12,-.3,0,-.1);shape.closePath();const wingGeo=new T.ShapeGeometry(shape);
  for(const [i,cell]of [[7,10],[8,8],[13,16]].entries()){
@@ -121,8 +142,10 @@ export function postGarden(stops){
   const wings=[-1,1].map(side=>{const wing=new T.Mesh(wingGeo,mat);wing.scale.x=side;wing.rotation.x=-Math.PI/2;g.add(wing);return wing;});
   part(g,'sphere','#857b55',0,0,-.04,.018,.025,.12);butterflies.push({g,wings,q,i});
  }
- root.userData.tick=(time,reduced)=>{for(const {g,wings,q,i}of butterflies){const t=reduced?i:time*.55+i*2;g.position.set(q.x+1.05+Math.cos(t)*.25,.9+(reduced?0:Math.sin(t*2)*.08),q.z-.8+Math.sin(t)*.22);g.rotation.y=t*.6;wings.forEach((w,j)=>w.rotation.y=(j?1:-1)*(reduced?.35:.35+Math.sin(time*9+i)*.3));}};
+ let stillPose=false;
+ root.userData.tick=(time,reduced)=>{if(reduced&&stillPose)return;stillPose=reduced;for(const {g,wings,q,i}of butterflies){const t=reduced?i:time*.55+i*2;g.position.set(q.x+1.05+Math.cos(t)*.25,.9+(reduced?0:Math.sin(t*2)*.08),q.z-.8+Math.sin(t)*.22);g.rotation.y=t*.6;wings.forEach((w,j)=>w.rotation.y=(j?1:-1)*(reduced?.35:.35+Math.sin(time*9+i)*.3));}};
  root.userData.update=delivered=>replies.forEach((r,i)=>r.visible=delivered.includes(i));
  batchParts(meadow);
+ for(const group of [meadow,woodland,porch])group.traverse(o=>{o.updateMatrix();o.matrixAutoUpdate=false;});
  return root;
 }

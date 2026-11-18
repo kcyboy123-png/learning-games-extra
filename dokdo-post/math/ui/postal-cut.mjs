@@ -20,7 +20,7 @@ export function postalCut(step){
   releaseInspection();
   clear(preview);clear(feedback);el.classList.remove('cut-reviewed');
   const v=createSolidView({dims:{x:2,y:2,z:2},size:300,scale:68,postal:true,mode:'none',transparent:false,...poses.get(plan.id),ariaLabel:`절개안 ${plan.id} 확대 · 끌어서 뒤쪽도 살펴요`});v.markWrong(plan.cuts);inspection=v;inspectionPlan=plan.id;
-  preview.append(node('strong',{text:`절개안 ${plan.id} · 빨간 선을 잘라요`}),node('small',{class:'cut-selection-status',text:selected===plan.id?'이 안을 골랐어요 · 아래에서 확인해요':'아직 선택하지 않았어요 · 위에서 안을 골라요'}),v.el,node('small',{text:'상자를 끌어 뒤쪽도 봐요'}),button('뒤쪽 보기',()=>v.rotate(Math.PI,0)));
+  preview.append(node('strong',{text:`절개안 ${plan.id} · 빨간 선을 잘라요`}),node('small',{class:'cut-selection-status',text:selected===plan.id?'✓ 선택됨 · 내 답 확인':'A·B·C 중 하나 선택'}),v.el,node('small',{text:'↔ 끌어서 돌려요'}),button('뒤쪽 보기',()=>v.rotate(Math.PI,0)));
   return v;
  }
  function choose(id){if(selected===id&&!el.classList.contains('cut-reviewed'))return;selected=id;buttons.forEach((b,k)=>{setPressed(b,k===id);b.classList.remove('wrong');});inspect(step.plans.find(p=>p.id===id));}

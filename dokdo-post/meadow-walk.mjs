@@ -1,13 +1,15 @@
-import {toCell,toWorld,walkable} from './village/grid.mjs';
+import {toCell,toWorld,walkable,roadSet} from './village/grid.mjs';
 import {at} from './village/core.mjs';
 
 // Tree canopies cover a full tile; only their trunks should block a stroll.
 export function meadowFloor(state){
  const trees=state.buildings.filter(b=>b.type==='tree').map(b=>toWorld(b.x,b.y));
+ const roads=roadSet(state),cells=new Set();
+ for(let x=0;x<18;x++)for(let y=0;y<18;y++)if(walkable(state,x,y,roads)||at(state,x,y)?.type==='tree')cells.add(x+','+y);
  return (x,z)=>{
   for(const [dx,dz]of [[-.28,-.28],[.28,-.28],[-.28,.28],[.28,.28]]){
    const {gx,gy}=toCell(x+dx,z+dz);
-   if(!walkable(state,gx,gy)&&at(state,gx,gy)?.type!=='tree')return false;
+   if(!cells.has(gx+','+gy))return false;
   }
   return trees.every(t=>Math.hypot(x-t.x,z-t.z)>.64);
  };
