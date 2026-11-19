@@ -196,15 +196,21 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('keyup',e=>{stopRepeat('key:'+e.key);const name=e.code==='KeyC'?'hold':keys[e.key];if(name&&!['left','right','soft'].includes(name))document.querySelector(`[data-action="${name}"]`)?.classList.remove('pressed');});window.addEventListener('blur',()=>{stopInput();if(['challenge','training'].includes(state.mode)&&canPlay())pause();});
 document.addEventListener('visibilitychange',()=>{stopInput();if(document.hidden&&['challenge','training'].includes(state.mode)&&canPlay())pause();});
 function botActions(){return rivalActions(state.bot,state.local.players[1],state.local.time);}
+function takeActions(now){
+ state.actions=state.actions.filter(a=>a.isCurrent());
+ // Keep an intentional fast drop until the existing 150ms landing guard opens.
+ if(now-state.local.players[state.slot].lastLock<150&&state.actions.some(a=>a.action==='drop'))return [];
+ return state.actions.splice(0);
+}
 setInterval(()=>{
  if(!state.local||state.mode==='home'||state.paused||state.local.done||document.querySelector('dialog[open]')||state.stageDone)return;
  if(state.mode==='training'){
-  state.local.time+=TICK;const p=state.local.players[0];p.gravity=-1000;const l=progress(p,state.actions.splice(0).filter(a=>a.isCurrent()),TICK,state.local.time);resolve(state.local,[l,null]);if(state.stage===1&&l?.lines&&p.combo<6)p.piece.x=W/2-1;
+  state.local.time+=TICK;const p=state.local.players[0];p.gravity=-1000;const l=progress(p,takeActions(state.local.time),TICK,state.local.time);resolve(state.local,[l,null]);if(state.stage===1&&l?.lines&&p.combo<6)p.piece.x=W/2-1;
   if(state.stage===1&&l?.previousCombo&&!l.combo)state.trainingRetrySuggested=true;
   if((state.stage===0&&p.lines>=1)||(state.stage===1&&p.combo>=6)||(state.stage===2&&p.blocked>=1)||(state.stage===3&&p.hold!==null&&p.lines>=1)){
    state.stageDone=true;$('trainingNext').hidden=false;setText('trainingNext',state.stage===3?'라이벌에게 도전하기 →':'다음 체험 →');setText('trainingText',['좋아! 한 줄을 완성했어.',`${p.combo}콤보! 줄을 이어서 성공!`,'공격 1줄을 막았어!','저장하고 바꿔서 한 줄 완성!'][state.stage]);$('trainingNext').focus();
   }else if(p.dead){void localStart('training',state.stage);setText('trainingText','판이 가득 찼어. 새 판에서 다시 해 보자!');return;}
- }else step(state.local,[state.actions.splice(0).filter(a=>a.isCurrent()),botActions()]);
+ }else step(state.local,[takeActions(state.local.time+TICK),botActions()]);
  state.game=snapshot(state.local);update();
 },TICK);
 function frame(){const g=state.game,now=performance.now();if(g&&state.mode!=='home'){
