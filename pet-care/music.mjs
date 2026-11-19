@@ -1,4 +1,5 @@
 // Original quiet eight-bar theme; scheduled audio runs independently of rendering.
+import {audioContext} from './audio.mjs';
 const chords=[[48,55,59,64],[45,52,55,60],[53,57,60,64],[43,50,55,59]];
 const melody=[76,79,74,null,72,76,71,null,69,72,76,null,74,71,67,null];
 export function createSynthMusic(){
@@ -26,7 +27,7 @@ export function createSynthMusic(){
   if(!enabled&&timer){clearInterval(timer);timer=null;for(const voice of voices)try{voice.stop(ac.currentTime+2);}catch{}}
  }
  return {
-  unlock(){if(!enabled)return;try{if(!ac){ac=new AudioContext();bus=ac.createGain();bus.gain.value=0;bus.connect(ac.destination);}ac.resume().then(sync).catch(()=>{});}catch{}},
+  unlock(){if(!enabled)return;try{if(!ac){ac=audioContext();bus=ac.createGain();bus.gain.value=0;bus.connect(ac.destination);}ac.resume().then(sync).catch(()=>{});}catch{}},
   set(on,rest=false){enabled=!!on;sleeping=!!rest;sync();},
   stop(){enabled=false;sync();}
  };
@@ -49,7 +50,7 @@ export function createMusic(){
   if(!enabled)return;
   if(fallback){fallback.unlock();return;}
   try{
-   if(!track){ac=new AudioContext();bus=ac.createGain();bus.gain.value=0;bus.connect(ac.destination);track=new Audio();track.preload='none';track.loop=true;track.src=new URL('./assets/pet-companion-suno.mp3',import.meta.url).href;
+   if(!track){ac=audioContext();bus=ac.createGain();bus.gain.value=0;bus.connect(ac.destination);track=new Audio();track.preload='none';track.loop=true;track.src=new URL('./assets/pet-companion-suno.mp3',import.meta.url).href;
     source=ac.createMediaElementSource(track);source.connect(bus);track.addEventListener('timeupdate',sync);
     track.addEventListener('error',()=>{track.pause();source.disconnect();fallback=createSynthMusic();fallback.set(enabled,sleeping);fallback.unlock();},{once:true});
    }

@@ -14,7 +14,14 @@ export const BANK_POSES = Object.freeze({base:[0,1,2,3,4,5,6,7],walk:[12,13,14,1
 export const petArt = (id,bank) => `assets/pets/${petById(id).id}/${bank}.webp`;
 // Tail-up and tail-down silhouettes need different heights to preserve body scale.
 export function speciesHeight(id,pose){
- const pet=petById(id);if(pet.species==='dog')return null;
+ if(pose>=36&&pose<=39)return pose===39?.48:pose===38?.86:1;
+ const pet=petById(id);
+ if(pose>=28&&pose<=35)return pose===35?.72:pose===29?1.02:pose===30||pose===31?.96:1;
+ if(pose>=24&&pose<=27){
+  if(pose===26)return id==='puppy'?.85:pet.species==='dog'?.89:pet.species==='cat'?.90:.86;
+  return pose===25?.98:1;
+ }
+ if(pet.species==='dog')return null;
  const cheese=id==='cat-cheese',pig=pet.species==='pig';
  if(pose>=12&&pose<20)return cheese?.88:pig?.68:.65;
  return ({2:cheese?.92:pig?.74:.82,3:.48,4:cheese?.78:.66,20:cheese?.88:pig?.68:id==='cat-gray'?.76:.65,21:.84,22:.72,23:.58})[pose]??1;

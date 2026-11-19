@@ -25,3 +25,159 @@ nav button{height:62px;border-radius:15px;background:#3e4435c9;display:flex;flex
 
 #queued{pointer-events:auto;min-height:44px;border:1px solid #b9c8ae;font:inherit;font-size:12px;cursor:pointer;margin-top:7px}#queued::after{content:" · 취소 ×"}@media(max-height:500px){#queued{position:fixed;left:16px;bottom:100px;margin:0;max-width:32vw}#offer{max-width:34vw}}
 @media(max-height:500px){body.petting-drag #speech{top:auto;bottom:110px;left:12px;right:auto;transform:none;max-width:190px;font-size:13px}}
+
+@media(max-height:500px){.paper{max-height:calc(100dvh - 96px);overflow:auto}}
+#panelBody form{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+#panelBody form input{flex:1 1 160px;min-width:0;max-width:100%;min-height:44px;padding:10px 12px;border:1px solid #c8b795;border-radius:12px;background:#fff}
+#panelBody form>[role=status]{flex-basis:100%;margin:4px 0}
+@media(max-width:400px){#actions button{min-width:0;flex:1;padding:10px 4px;font-size:14px}}
+@media(max-width:400px){header h1{font-size:18px;letter-spacing:-.7px}}
+
+/* Direct petting keeps the animal unobstructed. */
+#actions:empty{display:none}.bond-meter{display:block;font-weight:700;margin:24px 0 12px}.bond-meter meter{display:block;width:100%;height:20px;margin-top:10px;accent-color:#66845c}.care-record{display:flex;justify-content:space-between;gap:16px;border-bottom:1px solid #e7ddcc;padding:12px 0;font-size:14px}.care-record span:last-child{text-align:right;color:#74674f}@media(max-width:480px){header{flex-wrap:wrap;gap:8px}header nav{margin-left:auto}nav button{min-width:44px;min-height:44px}}
+
+.touch-status{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:13px}.touch-status strong,.touch-status span{display:block}.touch-status span{margin-top:8px;color:#74674f}.bond-meter meter::-webkit-meter-bar{background:#e8e4d7;border:0;border-radius:10px}.bond-meter meter::-webkit-meter-optimum-value{background:#66845c;border-radius:10px}
+
+#place{display:block;pointer-events:auto;min-height:44px;border:1px solid #fff6dc99;background:#433d2a99;color:#fff9eb;border-radius:22px;padding:8px 14px;font-size:13px;margin-top:6px}#placeActivity{position:fixed;right:22px;top:35%;min-height:44px;padding:10px 16px;border:1px solid #eee4cc;border-radius:24px;background:#fff9e9ed;color:#4b5940;font-size:14px;box-shadow:0 3px 12px #30281922}.place-choice{display:block;width:100%;text-align:left;padding:12px 16px;border:1px solid #d9d3c0;border-radius:14px;background:#faf6ea}.place-choice small{display:block;margin-top:6px;font-weight:400;color:#776c53;font-size:13px}.place-choice:disabled{cursor:default;opacity:.65}@media(max-height:500px){#place{margin-top:0}#placeActivity{top:35%;right:16px}}
+
+@media(max-width:480px){header{flex-wrap:nowrap}header>div{flex:1;min-width:0}header nav{flex:0 0 auto;gap:4px}#place{position:fixed;top:120px;left:18px;margin:0;max-width:calc(100vw - 36px)}}
+@media(max-width:480px){#speech{top:max(185px,20%)}}
+.care-gauges{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.care-gauges .bond-meter{margin:8px 0;font-size:14px}.care-gauges meter{height:16px;margin-top:8px}@media(max-width:480px){.care-gauges{grid-template-columns:1fr;gap:0}.care-gauges .bond-meter{margin:8px 0}}
+
+/* The controls frame the animal. Empty space between controls accepts a touch on the room. */
+header {
+  --edge: clamp(12px, 3vw, 44px);
+  left: max(var(--edge), env(safe-area-inset-left));
+  right: max(var(--edge), env(safe-area-inset-right));
+  top: max(12px, env(safe-area-inset-top));
+}
+header nav, #actions { pointer-events: none; }
+header nav button, #actions button { pointer-events: auto; }
+header nav { gap: 8px; }
+nav button { padding: 3px 1px; background: #354537e8; }
+nav .nav-label { font-size: 12px; white-space: nowrap; }
+#menu { margin-left: 2px; }
+#scene:focus-visible { outline: 3px solid #fffaf0; outline-offset: -6px; box-shadow: inset 0 0 0 7px #35523c; }
+body[data-welcome] :is(#status, #camera, #album, #dayline, footer, #speech) { display: none; }
+
+#welcome { padding: 20px 24px 12px; }
+#welcome h2 { font-size: 24px; margin: 0 0 12px; }
+#choosePet {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  width: 100%; min-height: 44px; font-size: 16px; padding: 8px 12px;
+  border: 1px solid #c6bda7; border-radius: 12px;
+  background: #f7f3e8; box-shadow: none;
+}
+.choose-link { font-size: 14px; color: #3e5b43; }
+#welcome label { margin: 12px 0 4px; font-weight: 700; }
+.name-row input { flex: 1; }
+#welcome .classic { display: inline-flex; align-items: center; min-height: 44px; margin: 2px 0 -6px; color: #675b46; }
+#dayline {
+  max-width: 100%; margin: 4px 0 0; padding: 5px 10px;
+  background: #354537e8; color: #fffaf0; text-shadow: none; border-radius: 10px;
+  font-size: 12px; line-height: 1.35; overflow-wrap: anywhere;
+}
+#dayline::after { display: block; content: "이름 부르기 ›"; font-weight: 700; }
+#place { background: #354537e8; word-break: keep-all; }
+footer {
+  bottom: max(12px, env(safe-area-inset-bottom));
+  left: max(8px, env(safe-area-inset-left)); right: max(8px, env(safe-area-inset-right));
+}
+#hint {
+  display: table; width: fit-content; max-width: min(92%, 650px);
+  margin: 8px auto 0; padding: 4px 12px; border-radius: 12px;
+  color: #fffaf0; background: #344435ed; text-shadow: none;
+  font-size: 13px; line-height: 1.45; word-break: keep-all; overflow-wrap: anywhere;
+}
+#hint:empty { display: none; }
+.next-action { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.next-action :is(#queued,#offer) {
+  position: static; transform: none; margin: 0 0 8px; max-width: 100%;
+  min-height: 44px; pointer-events: auto;
+}
+#actions[data-mode="play"] button:last-child,
+#actions[data-mode="care"] button:last-child,
+#actions[data-mode="hunt"] button:last-child,
+#actions[data-mode="fetch"] button:last-child {
+  background: #455744; color: white; border: 1px solid #e5e5d4;
+}
+#actions button { word-break: keep-all; overflow-wrap: anywhere; }
+
+#panel[open] {
+  display: grid; grid-template: minmax(0,1fr) / minmax(0,1fr); padding: 0; overflow: hidden;
+  max-height: min(90dvh, 820px);
+}
+#panelBody {
+  --gutter: clamp(16px, 3vw, 27px);
+  grid-area: 1/1; overflow: auto; overscroll-behavior: contain;
+  padding: 0 var(--gutter) 18px; scroll-padding-top: 72px;
+}
+#panelBody h2 {
+  position: sticky; top: 0; z-index: 1; margin: 0 calc(0px - var(--gutter)) 12px;
+  padding: 16px 66px 14px var(--gutter); min-height: 62px;
+  font-size: clamp(21px, 3vw, 26px); line-height: 1.28; background: #fffaf0;
+  border-bottom: 1px solid #e7ddcc; text-wrap: balance; overflow-wrap: anywhere;
+}
+#closePanel {
+  position: relative; grid-area: 1/1; place-self: start end; z-index: 2;
+  margin: 8px 10px 0 0; width: 44px; height: 44px; border: 1px solid #d9cfba;
+  background: #f7f1e4; font-size: 26px; line-height: 1;
+}
+#panelBody .pet-grid { gap: 8px; }
+#panelBody .pet-grid button { position: relative; margin: 0; }
+.pet-grid button[aria-pressed="true"]::after {
+  content: "✓"; position: absolute; top: 5px; right: 5px; display: grid; place-items: center;
+  width: 22px; height: 22px; color: white; background: #476249; border-radius: 50%;
+}
+#panelBody .place-choice { position: relative; margin: 5px 0; padding-right: 36px; }
+.place-choice:not(:disabled)::after, .place-choice[aria-current="location"]::after {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 19px; content: "›";
+}
+.place-choice[aria-current="location"]:disabled { opacity: 1; border-color: #83967b; background: #ebefdf; }
+.place-choice[aria-current="location"]::after { content: "✓"; color: #3e5b43; }
+.photos { grid-template-columns: repeat(auto-fit,minmax(min(185px,100%),1fr)); }
+.photos figure { display: grid; grid-template-columns: 1fr auto; align-content: start; gap: 4px 10px; }
+.photos img, .photos figcaption { grid-column: 1/-1; }
+.photos img { max-height: 235px; object-fit: contain; background: #f4f0e5; }
+.photos a, #panelBody .photos button { display: inline-flex; align-items: center; min-height: 44px; }
+#panelBody .photos button { margin: 0; padding: 0 10px; background: transparent; border: 0; color: #794e40; text-decoration: underline; }
+
+@media (max-width: 600px) {
+  header nav { gap: 6px; }
+  nav button { width: 44px; height: 52px; }
+  #actions { padding: 0; gap: 6px; }
+  #actions:not(:empty) { display: grid; grid-auto-columns: minmax(0,1fr); grid-auto-flow: column; }
+  #actions button { min-width: 0; min-height: 48px; padding: 7px 3px; font-size: 15px; line-height: 1.24; }
+  #place { position: static; width: fit-content; margin: 6px 0 0; max-width: 100%; padding: 5px 10px; }
+  #welcome { bottom: max(12px,env(safe-area-inset-bottom)); padding: 16px 18px 8px; }
+  #welcome h2 { font-size: 21px; }
+}
+@media (max-height: 500px) and (orientation:landscape) {
+  #welcome {
+    left: max(12px,env(safe-area-inset-left)); top: auto; bottom: max(10px,env(safe-area-inset-bottom));
+    width: min(38vw,330px); max-height: calc(100dvh - 66px); padding: 14px 16px 8px;
+  }
+  #welcome h2 { font-size: 20px; margin-bottom: 8px; }
+  #welcome .name-row .primary { padding: 8px 12px; }
+  #speech, body.petting-drag #speech {
+    margin: 0; top: 44%; bottom: auto; left: max(12px,env(safe-area-inset-left)); right: auto;
+    transform: none; max-width: 26vw; font-size: 14px; line-height: 1.4;
+  }
+  body[data-pet-side="left"] #speech { left: auto; right: max(12px,env(safe-area-inset-right)); }
+  #placeActivity { top: 24%; }
+  #actions button { min-height: 44px; padding: 6px 14px; font-size: 15px; }
+  #hint { margin-top: 4px; }
+  #panel[open] { max-height: 94dvh; }
+}
+@media (max-height: 650px) and (orientation:portrait) {
+  #speech { top: 76px; right: 12px; left: auto; transform: none; margin: 0; padding: 7px 12px; max-width: 57vw; font-size: 14px; }
+}
+@media (max-height: 500px) and (orientation:landscape) {
+  .next-action { justify-content: flex-start; padding-inline: 4px; }
+}
+@media (max-width:360px) { header h1 { font-size: 15px; white-space: nowrap; } }
+/* Keep the credit clear of activity controls and the device safe area. */
+footer { bottom: calc(42px + env(safe-area-inset-bottom)); }
+.creator-credit { position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: calc(5px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 5px; pointer-events: none; color: #fffdf3; font-size: 12px; font-weight: 600; text-shadow: 0 1px 3px #342b20, 0 0 5px #342b20; }
+.creator-credit img { display: block; object-fit: contain; }
+@media (max-width: 600px) { .creator-credit { right: 50%; transform: translateX(50%); white-space: nowrap; } }
