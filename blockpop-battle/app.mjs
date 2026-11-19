@@ -152,8 +152,12 @@ function canAct(name){
 
 function rotationFeedback(turned,type){if(turned)sound.play('rotate');else setEvent(type===1?'네모는 같은 모양!':'돌릴 공간이 부족해',type===1?'그대로 놓아도 괜찮아':'옆으로 옮겨서 놓아 봐');}
 function action(name,isCurrent=()=>true){if(!canAct(name))return;void sound.unlock();const p=state.game.players[state.slot];if(!p.piece)return;
- const firstHold=name!=='hold'&&pendingFirstHold(p);
- state.actions.push({action:name,pieceId:p.pieceId,isCurrent:firstHold?()=>isCurrent()&&firstHold.isCurrent():isCurrent,onRotate:name==='rotate'?rotationFeedback:undefined,onHold:name==='hold'?()=>sound.play('rotate'):undefined});
+ const firstHold=name!=='hold'&&pendingFirstHold(p),pieceId=p.pieceId;
+ state.actions.push({action:name,pieceId,isCurrent:firstHold?()=>isCurrent()&&firstHold.isCurrent():isCurrent,onRotate:name==='rotate'?rotationFeedback:undefined,onHold:name==='hold'?()=>{
+  sound.play('rotate');
+  // Deferred inputs after this hold belong to the piece just taken out.
+  for(const a of state.actions)if(a.pieceId===pieceId&&a.action!=='hold')a.pieceId=state.local.players[state.slot].pieceId;
+ }:undefined});
 }
 // Own repeat timing keeps keyboard and touch independent of the OS delay.
 const repeating=new Map();
@@ -197,9 +201,11 @@ window.addEventListener('keyup',e=>{stopRepeat('key:'+e.key);const name=e.code==
 document.addEventListener('visibilitychange',()=>{stopInput();if(document.hidden&&['challenge','training'].includes(state.mode)&&canPlay())pause();});
 function botActions(){return rivalActions(state.bot,state.local.players[1],state.local.time);}
 function takeActions(now){
- state.actions=state.actions.filter(a=>a.isCurrent());
- // Keep an intentional fast drop until the existing 150ms landing guard opens.
- if(now-state.local.players[state.slot].lastLock<150&&state.actions.some(a=>a.action==='drop'))return [];
+ const p=state.local.players[state.slot];
+ state.actions=state.actions.filter(a=>a.isCurrent()&&a.pieceId===p.pieceId);
+ // Only the drop waits for the landing guard; earlier movement and hold stay responsive.
+ const drop=state.actions.findIndex(a=>a.action==='drop');
+ if(now-p.lastLock<150&&drop>=0)return state.actions.splice(0,drop);
  return state.actions.splice(0);
 }
 setInterval(()=>{
