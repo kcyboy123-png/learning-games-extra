@@ -596,3 +596,8 @@ button.primary:disabled{box-shadow:none}
 .stage-restart:hover:not(:disabled){background:#ffffff09;border-color:#ffffff18}
 .stage-restart:disabled{opacity:1;color:#81858c;background:transparent}
 @media(max-width:480px){.stage-entry .chapter-card{min-height:132px}}
+
+body[data-mode=lesson][data-answer-mode=all] .choice-guide{gap:6px 12px;margin-bottom:4px}
+body[data-mode=lesson] .multi-choice-callout{padding:5px 10px;border-left:3px solid #f1cb91;border-radius:4px;background:#e6bf8714;color:#f4dfbf;font-size:16px;line-height:1.5}
+.multi-choice-callout strong{color:#ffdb9f;font-weight:800;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
+.choice-count{font-size:13px;color:#d5c9b7;white-space:nowrap;font-variant-numeric:tabular-nums}

@@ -362,7 +362,7 @@ function renderChoices(){
   }
   if(q?.type==='complete'){
     const guide=document.createElement('div');guide.className='choice-guide';guide.setAttribute('role','status');
-    guide.innerHTML=q.answerMode==='all'?`<span class="single-paper" aria-hidden="true">□ → ① / □ → ②</span><b>가능한 자리 모두 · ${Array.isArray(selected)?selected.length:0}곳 선택</b><span>한 면만 옮겨 가며 생각해요. 여러 면을 함께 붙이지 않아요.</span>`:'<b>빈자리 하나를 톡!</b><span>밝은 칸은 종이 · 테두리 칸은 붙여 볼 자리</span>';
+    guide.innerHTML=q.answerMode==='all'?`<span class="single-paper" aria-hidden="true">□ → ① / □ → ②</span><b class="multi-choice-callout">가능한 자리 <strong>모두</strong> 골라요</b><small class="choice-count">${Array.isArray(selected)?selected.length:0}곳 선택</small><span>한 면만 옮겨 가며 생각해요. 여러 면을 함께 붙이지 않아요.</span>`:'<b>빈자리 하나를 톡!</b><span>밝은 칸은 종이 · 테두리 칸은 붙여 볼 자리</span>';
     $('choices').append(guide);
   }
   const options=mode==='explore'?net.faces.map(f=>({id:String(f.id),label:`${labels[f.id]} 면`,face:f.id})):q?.options??[];
