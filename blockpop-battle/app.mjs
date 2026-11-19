@@ -16,7 +16,8 @@ function toast(text){setText('toast',text);$('toast').classList.add('visible');c
 function open(id){stopInput();if(!$(id).open)$(id).showModal();}
 function close(id){$(id).close();}
 function closeAll(){document.querySelectorAll('dialog[open]').forEach(d=>d.close());}
-function animate(el,name){el.classList.add(name);for(const a of el.getAnimations())if('animationName' in a){a.currentTime=0;a.play();}}
+function animate(el,name){el.classList.remove(name);el.getAnimations({subtree:true});el.classList.add(name);}
+document.addEventListener('animationend',e=>{if(e.animationName==='attackRim'||e.animationName==='attackHit')e.target.classList.remove('attack-hit');});
 function character(el,index){el.className='character '+(index===-1?'lumi':'rival r'+index);el.setAttribute('aria-label',index===-1?'루미':RIVALS[index].name);}
 function renderRivals(){
  const grid=$('rivalGrid');grid.replaceChildren();
@@ -210,7 +211,7 @@ function frame(){const g=state.game,now=performance.now();if(g&&state.mode!=='ho
  state.effects=state.effects.map(es=>es.filter(e=>now-e.born<850));drawBoard($('myBoard'),g.players[state.slot],state.effects[state.slot],now,state.reduced);drawBoard($('otherBoard'),g.players[1-state.slot],state.effects[1-state.slot],now,state.reduced);
  if(state.reduced||state.paused)state.flights=[];
  state.flights=state.flights.filter(f=>now-f.born<flightDuration(f.n));
- for(const f of state.flights){const hits=flightHits(now-f.born,f.n);if(hits>f.hits){animate($(f.own?'otherShell':'myQueueBox'),'attack-hit');if(!f.hit&&f.own)sound.play('hit',f.n,f.n);f.hit=true;f.hits=hits;}}
+ for(const f of state.flights){const hits=flightHits(now-f.born,f.n);if(hits>f.hits){animate($(f.own?'otherShell':'myShell'),'attack-hit');if(!f.hit){if(f.own)sound.play('hit',f.n,f.n);else animate($('myQueueBox'),'attack-hit');}f.hit=true;f.hits=hits;}}
  }drawFlights($('battleEffects'),state.flights,now);requestAnimationFrame(frame);}requestAnimationFrame(frame);
 function pause(){stopInput();state.paused=true;open('pauseDialog');setText('pauseTitle','잠깐 쉬어 가자');setText('pauseText',state.mode==='challenge'?`현재 ${state.series.wins[0]} : ${state.series.wins[1]}. 계속하기를 누르면 이어서 해요. 목록으로 나가면 이번 대결은 0 : 0부터 다시 시작해요.`:'준비되면 이어서 할 수 있어.');setText('leaveButton',state.mode==='challenge'?'대결 끝내고 목록':'라이벌 목록');$('resumeButton').disabled=false;setText('resumeButton','계속하기');update();}
 function showResult(){

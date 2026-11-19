@@ -126,7 +126,9 @@ dialog .close{width:44px;min-height:44px;top:5px;right:6px}
 .combo-badge{position:relative}
 .combo-badge.pop::after,.combo-badge.reconnected::after{content:'';position:absolute;inset:2px 0;pointer-events:none;opacity:0;border-top:2px solid #ffe7ab;border-bottom:2px solid #ffe7ab;border-radius:inherit;animation:comboStreak .32s ease-out both}
 @keyframes comboStreak{0%{opacity:0;transform:scaleX(.15)}22%{opacity:1;transform:scaleX(.95)}50%{opacity:.25}70%{opacity:.85;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1)}}
-.attack-hit{animation:attackHit .34s ease-out}
+.queue-box.attack-hit{animation:attackHit .34s ease-out}
+.board-shell.attack-hit::before{content:'';position:absolute;inset:0;border:4px solid transparent;border-radius:inherit;pointer-events:none;animation:attackRim .2s ease-out}
+@keyframes attackRim{0%,100%{border-color:transparent}18%{border-color:#fff0ca}42%{border-color:#f4c77a}70%{border-color:#ffe5a177}}
 @keyframes comboStamp{0%{transform:translateX(-7px) scale(.72);filter:brightness(1.6)}22%{transform:translateX(2px) scale(1.08)}42%{transform:translateX(-2px) scale(.98)}61%{transform:translateX(1px) scale(1.04)}100%{transform:none;filter:none}}
 @keyframes comboDetail{0%,18%{opacity:0;transform:translateX(-8px)}100%{opacity:1;transform:none}}
 @keyframes comboRim{0%,100%{border-color:transparent;box-shadow:inset 0 0 0 transparent}12%,38%,64%{border-color:#ffe2a1;box-shadow:inset 0 0 14px #f8cb6c66}25%,51%,80%{border-color:#dba96822;box-shadow:inset 0 0 0 transparent}}

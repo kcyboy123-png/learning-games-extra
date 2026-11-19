@@ -13,9 +13,10 @@ export function drawFlights(canvas,flights,now){
  c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,box.width,box.height);
  if(!flights.length){activeFlightCanvases.delete(canvas);return;}activeFlightCanvases.add(canvas);
  const rect=el=>{const r=el.getBoundingClientRect();return{x:r.left-box.left,y:r.top-box.top,w:r.width,h:r.height};};
- // Keep both playing fields and all block previews readable beneath the flight.
- c.save();c.beginPath();c.rect(0,0,box.width,box.height);
- for(const el of canvas.parentElement.querySelectorAll('canvas:not(#battleEffects)')){const r=rect(el);if(r.w)c.rect(r.x-2,r.y-2,r.w+4,r.h+4);}c.clip('evenodd');
+ // Subtract each region separately so overlapping exclusions never reopen a hole.
+ c.save();
+ for(const el of canvas.parentElement.querySelectorAll('canvas:not(#battleEffects),#myQueueBox,#eventBadge')){const r=rect(el);if(r.w){c.beginPath();c.rect(0,0,box.width,box.height);c.rect(r.x-2,r.y-2,r.w+4,r.h+4);c.clip('evenodd');}}
+ const queue=rect(canvas.parentElement.querySelector('#myQueueBox'));
  for(const f of flights){
   const s=rect(f.from),t=rect(f.to),dir=t.x>s.x?1:-1;
   const sx=dir>0?s.x+s.w+6:s.x-6,tx=dir>0?t.x-3:t.x+t.w+3;
@@ -24,8 +25,14 @@ export function drawFlights(canvas,flights,now){
    const age=now-f.born-i*FLIGHT_GAP;if(age<0||age>FLIGHT_MS+FLIGHT_FADE)continue;
    const iy=ty+(i-(f.n-1)/2)*size*.85;
    if(age<FLIGHT_MS){
-    const u=age/FLIGHT_MS,p=.2*u+.8*u*u,cy=Math.min(sy,iy)-32;
-    const point=q=>({x:sx+(tx-sx)*q,y:(1-q)*(1-q)*sy+2*(1-q)*q*cy+q*q*iy});
+    const u=age/FLIGHT_MS,p=.2*u+.8*u*u,cy=Math.min(box.height-size*.6,Math.max(sy,iy,queue.y+queue.h+size));
+    const near=dir>0?Math.max(sx,queue.x-size):Math.min(sx,queue.x+queue.w+size),far=dir>0?Math.min(tx,queue.x+queue.w+size):Math.max(tx,queue.x-size);
+    const first=Math.max(1,Math.abs(near-sx)+Math.abs(cy-sy)),middle=Math.max(1,Math.abs(far-near)),last=Math.max(1,Math.abs(tx-far)+Math.abs(iy-cy));
+    const point=q=>{const d=q*(first+middle+last);
+     if(d<first){const v=d/first;return{x:sx+(near-sx)*v*v,y:sy+(cy-sy)*(2*v-v*v)};}
+     if(d<first+middle)return{x:near+(far-near)*(d-first)/middle,y:cy};
+     const v=(d-first-middle)/last;return{x:far+(tx-far)*(2*v-v*v),y:cy+(iy-cy)*v*v};
+    };
     const a=point(p),tail=point(Math.max(0,p-.18));
     c.strokeStyle=f.own?'#ffd68b':'#f4a27a';c.lineWidth=size*.4;c.globalAlpha=.5;c.beginPath();c.moveTo(tail.x,tail.y);c.lineTo(a.x,a.y);c.stroke();
     if(age<110){c.globalAlpha=1-age/110;c.lineWidth=3;c.beginPath();c.moveTo(sx,sy-size);c.lineTo(sx,sy+size);c.stroke();}
