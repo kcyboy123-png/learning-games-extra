@@ -1,0 +1,148 @@
+/* Approved graphite/champagne direction; character art carries the ornament. */
+:root{--gold:#efd09c;--muted:#c2bdb6;--ink:#24252b}
+body{background:radial-gradient(ellipse at 0 20%,#8b70412b,transparent 45%),radial-gradient(ellipse at 95% 80%,#a0834520,transparent 45%),#24252b;color:#f6f0e4}
+.topbar{background:#24252b70;border-bottom-color:#ead1a31c}.brand{font-size:24px}.character{display:block;background-repeat:no-repeat;pointer-events:none;flex-shrink:0;filter:drop-shadow(0 12px 14px #0003)}
+.character.lumi{background-image:url('assets/rivals/lumi.webp');background-size:contain;background-position:center;aspect-ratio:2/3}
+.character.rival{aspect-ratio:1/2;background-size:300% 100%}
+.r0,.r1,.r2{background-image:url('assets/rivals/rivals-1.webp')}.r3,.r4,.r5{background-image:url('assets/rivals/rivals-2.webp')}.r6,.r7,.r8{background-image:url('assets/rivals/rivals-3.webp')}
+.r0,.r3,.r6{background-position:0 50%}.r1,.r4,.r7{background-position:50% 50%}.r2,.r5,.r8{background-position:100% 50%}
+.challenge-home{max-width:1480px;margin:auto;min-height:calc(100dvh - 82px);padding:28px 3vw 16px;display:grid;grid-template-columns:minmax(240px,.75fr) minmax(0,2fr);gap:28px;align-items:center}
+.journey-hero{position:relative;align-self:stretch;min-height:480px;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.journey-hero>.character{width:min(100%,380px);filter:drop-shadow(0 15px 30px #caa45720)}
+.hero-caption{text-align:center;margin-top:-8px;position:relative}.hero-caption>span{font-size:13px;color:#d6c6aa;margin-right:10px}.hero-caption>strong{font-size:29px;color:#f5deb7}.hero-caption p{color:#bfb8ac;font-size:14px;margin:12px 0}
+.journey-heading{margin-bottom:22px;text-align:center}.journey-heading h1{font-size:clamp(26px,3vw,42px);letter-spacing:-.05em;margin:0 0 9px;color:#f3dfba}.journey-heading p{margin:0;color:#c8c1b5;font-size:16px}
+.rival-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.rival-card{position:relative;height:154px;border-radius:17px;overflow:hidden;text-align:left;border:1px solid #d2bd9750;padding:18px 14px;background:linear-gradient(140deg,#5b564c65,#2b2c3270);isolation:isolate;transition:border-color .2s,background .2s,box-shadow .2s}
+.rival-card:hover{filter:none;border-color:#f5dcb688}.rival-card .character{position:absolute;width:168px;height:336px;right:-2px;top:-30px;z-index:-1;clip-path:inset(0 3%);mask-image:linear-gradient(#000 78%,transparent 97%)}
+.rival-card .r0{top:-88px}.rival-card .r2{top:-62px}.rival-card .r6{top:-48px}
+.rival-card strong{display:block;font-size:23px;letter-spacing:-.05em;margin-top:20px;position:relative;z-index:1;text-shadow:0 2px 8px #24252b}
+.rival-card small{display:inline-block;font-size:11px;margin-top:12px;padding:4px 7px;border-radius:8px;color:#d7c9ae;background:#24252baf}
+.rival-number{font-size:14px;font-weight:700;color:#f3d8a7;display:inline-grid;place-items:center;width:26px;height:25px;background:#d4ba8525;border-radius:7px}
+.rival-card.locked .character{filter:grayscale(.6) brightness(.65);opacity:.8}.rival-card.locked strong{color:#d2c9ba}.rival-card.locked small{color:#b8b2a8}.rival-card.locked small::before{content:'';display:inline-block;width:7px;height:7px;border:1px solid currentColor;border-radius:1px;margin-right:5px}
+.rival-card.selected{border-color:#f8db9c;box-shadow:inset 0 0 0 1px #efcc90,0 0 24px #e4b56825;background:linear-gradient(140deg,#b9945950,#3d3b35)}
+.rival-card.selected small,.rival-card.cleared small{color:#ffe5ad}.rival-card.rival-card[data-rival="8"]{background:radial-gradient(ellipse at right,#d8a54f26,transparent 70%),#2e2c2b}
+.challenge-footer{margin-top:20px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center}
+.rival-brief{grid-column:1/-1;display:flex;align-items:center;gap:12px;flex-wrap:wrap}.rival-brief strong{font-size:16px;color:#f5dfb9}.rival-brief>span{font-size:11px;border:1px solid #baa47e40;padding:4px 9px;border-radius:20px;color:#d1be9c}.rival-brief p{margin:0;font-size:13px;color:#c1bcb3}
+#challengeButton{justify-content:center;width:100%;min-height:60px;font-size:22px;border-radius:16px}#completedCount{color:#ead1a9;font-size:15px;padding:10px 16px;white-space:nowrap}
+.journey-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:12px}.journey-bottom .text-button{padding-left:0;font-size:13px}.journey-bottom>span{font-size:11px;color:#aaa69d}
+.game-view .player-side>.character{width:155px;max-height:240px;margin-bottom:-4px}.game-view .opponent-heading>.character{width:54px;height:100px;margin-bottom:-9px}
+.game-view .arena::before{background:radial-gradient(ellipse at 30% 20%,#ccb78e0a,transparent 60%)}.board-shell{border-color:#efcea1}.next-immediate{background:linear-gradient(140deg,#e5c28c20,#2a2b31);border-color:#dfbf88a0}
+.play-bottom{background:linear-gradient(160deg,#48464040,#24252bb0)}.timer{background:#d1bc8c06}.room-tag{font-size:12px}
+.combo-notice{pointer-events:none}.nameplate{white-space:nowrap}.game-view .player-side .nameplate{font-size:16px}
+#resultDialog{width:min(980px,94vw);max-width:980px;padding:26px 42px 30px;border-color:#d5b67f88;background:radial-gradient(ellipse at 75% 50%,#9b744829,transparent 60%),#292a30}
+.result-heading h2{font-size:clamp(28px,3vw,42px);color:#f6dfb6;margin:0 0 8px}.result-heading p{margin:0 0 18px;font-size:16px}.result-progress{display:flex;justify-content:center;gap:10px}.result-progress span{font-size:13px;color:#8f918f;border:1px solid #ffffff20;border-radius:12px;padding:6px 10px;min-width:40px}.result-progress .done{color:#f8dba5;border-color:#dac39270}.result-progress .available{color:#fff0ca;border-color:#f5d38e;box-shadow:0 0 16px #efc77125}
+.unlock-scene{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:center;margin:15px 0 22px}.result-hero>.character{height:min(34vh,300px);margin:auto}.result-stats{margin:10px 0 0}.result-stats b{font-size:26px}.result-stats span{font-size:11px;color:#c0b8a8}
+.unlock-character{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center}.unlock-character>.character{height:min(38vh,340px);width:auto;aspect-ratio:1/2}.unlock-character>.lumi{aspect-ratio:2/3}.unlock-halo{position:absolute;z-index:-1;inset:3% 8% 18%;border-radius:50% 50% 12% 12%;border:1px solid #edca8680;box-shadow:inset 0 0 35px #efca7220,0 0 30px #dcb77318;background:radial-gradient(ellipse,#b9914830,transparent 70%)}
+.unlock-character>strong{font-size:25px;color:#f3d9a9;margin-top:-6px}.unlock-character>p{margin:7px 0 0;font-size:14px}.result-actions{display:grid;grid-template-columns:1fr 1.7fr;gap:14px}.result-actions button{min-height:60px;font-size:19px}.result-actions .gold{font-size:21px}
+#resultDialog[data-outcome=win] .unlock-character{animation:reveal .55s ease-out}@keyframes reveal{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+@media(min-width:901px) and (max-height:800px){.challenge-home{padding-top:18px;gap:24px}.journey-heading{margin-bottom:14px}.journey-heading h1{font-size:32px}.rival-card{height:126px}.rival-card .character{height:212px;width:106px;top:-14px}.rival-card strong{font-size:21px;margin-top:12px}.rival-card small{margin-top:6px}.challenge-footer{margin-top:14px}.journey-hero{min-height:400px}.journey-bottom{margin-top:3px}.game-view .player-side>.character{width:120px;height:180px}.game-view .opponent-heading>.character{width:58px;height:112px}}
+@media(max-width:1100px){.challenge-home{grid-template-columns:minmax(190px,.65fr) minmax(0,2fr);gap:18px;padding-left:22px;padding-right:22px}.rival-card{padding-left:10px}.rival-card .character{right:-14px}.rival-card strong{font-size:20px}.rival-brief p{flex-basis:100%}.journey-bottom{align-items:flex-start}.journey-bottom>span{max-width:180px;text-align:right;line-height:1.6}}
+@media(max-width:900px){.challenge-home{padding:24px 20px;display:block}.journey-hero{display:none}.journey-heading{padding:0 0 5px}.journey-heading h1{font-size:32px}.rival-card{height:150px}.rival-card .character{height:240px;width:120px;right:0}.rival-card strong{font-size:24px}.game-view .player-side>.character{display:none}.game-view .opponent-heading>.character{width:48px;height:90px}.game-view .opponent-heading .nameplate{font-size:12px;padding:4px 7px;min-width:0}.game-view .room-tag{font-size:10px}.result-actions .gold{font-size:18px}#resultDialog{padding:24px}}
+@media(max-width:540px){.topbar .brand{font-size:19px}.topbar{gap:8px;padding-left:16px;padding-right:16px}.challenge-home{padding:22px 14px}.journey-heading h1{font-size:27px}.journey-heading p{font-size:14px}.rival-grid{gap:8px}.rival-card{height:146px;padding:9px 7px}.rival-card .character{width:87px;height:174px;top:0;right:-11px}.rival-card strong{position:absolute;bottom:30px;left:8px;font-size:17px;margin:0}.rival-card small{position:absolute;bottom:7px;left:6px;font-size:10px;margin:0}.rival-number{width:22px;height:22px;font-size:12px}.challenge-footer{gap:10px;margin-top:15px}.rival-brief{gap:7px}.rival-brief strong{font-size:15px}.rival-brief p{font-size:12px;line-height:1.5}#challengeButton{font-size:18px;min-height:56px}#completedCount{font-size:12px;padding:8px}.journey-bottom{flex-direction:column;gap:0;align-items:center}.journey-bottom>span{max-width:none;text-align:center}.journey-bottom .text-button{min-height:44px;padding:10px}.room-tag{max-width:115px;min-width:0}.game-view .opponent-heading>.character{height:72px;width:36px}
+ #resultDialog{padding:20px 14px;width:calc(100vw - 20px)}.result-heading h2{font-size:28px}.result-heading p{font-size:13px}.result-progress{gap:4px}.result-progress span{min-width:0;flex:1;padding:6px 0;font-size:10px;border-radius:8px}.unlock-scene{gap:8px;margin:14px 0}.result-hero>.character{height:190px}.unlock-character>.character{height:215px}.unlock-character>strong{font-size:19px}.unlock-character>p{font-size:12px}.result-stats{gap:3px}.result-stats b{font-size:21px}.result-stats span{font-size:9px}.result-actions{grid-template-columns:1fr;gap:10px}.result-actions .gold{grid-row:1}.result-actions button{font-size:15px;min-height:48px}.result-actions .gold{font-size:18px}
+}
+@media(max-width:350px){.rival-card .character{right:-18px}.rival-card strong{font-size:15px}.journey-heading h1{font-size:23px}.rival-card{height:132px}.rival-card .character{height:160px;width:80px}.result-hero>.character{height:160px}.unlock-character>.character{height:185px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+/* Reserve real rows for the opponent, combo and feedback on narrow screens. */
+@media(max-width:900px){
+ .game-view .arena{grid-template-rows:auto auto 1fr}
+ .game-view .board-column,.game-view .next-column{grid-row:1/4}
+ .game-view .player-side{position:static;grid-column:3;grid-row:2;width:100%;margin-top:10px;align-self:start}
+ .game-view .battle-lane{position:static;grid-column:3;grid-row:3;width:100%;align-self:start;padding-top:12px}
+}
+@media(min-width:901px){.game-view:not(.training){--board-h:min(calc(100dvh - 360px),580px)}}
+/* Round wins stay above the boards; line-clearing points keep their existing place. */
+.game-view .room-tag{white-space:pre-line;line-height:1.65;font-variant-numeric:tabular-nums}
+.series-score{display:block;margin-top:12px;color:#f5dfb8;font-size:24px;letter-spacing:1px;font-variant-numeric:tabular-nums}
+.room-tag small{display:block;font-size:11px;line-height:1.4;color:#c2bdb6}
+.result-heading .round-result{font-size:13px;color:#c2bdb6;margin:8px 0;line-height:1.5;text-wrap:balance}
+.timer[data-urgent=true]{color:#ffe6cd;border-color:#f2b07a;background:#b96a301f;box-shadow:inset 0 0 0 1px #f2b07a50}
+.room-tag strong{display:block;font-size:18px;line-height:1.4;color:#f5dfb8;white-space:nowrap}
+@media(max-width:900px){.room-tag small{font-size:9px}.room-tag strong{font-size:14px}.match-top>.room-tag{width:34%;max-width:none}.match-top .round-info{width:30%}.match-top .timer{padding:4px 12px}}
+.goal-note{font-size:12px!important;line-height:1.5;margin-top:8px!important;color:#d0c5b3!important}
+.rival-card::before{content:'';position:absolute;inset:45% 0 0;background:linear-gradient(transparent,#24252bba);z-index:-1;pointer-events:none}
+.rival-card small{white-space:nowrap}.rival-card.locked small{font-size:10px;padding:4px}
+.result-stats{align-items:start}.result-stats span{min-height:2.8em;line-height:1.4;color:#d4c8b5}
+.toast{width:max-content;max-width:calc(100vw - 32px);text-align:center;word-break:keep-all;line-height:1.5;bottom:max(18px,env(safe-area-inset-bottom))}
+.header-actions .icon-button{min-width:44px;min-height:44px}.setting-row{min-height:44px}.setting-row input[type=checkbox]{width:28px;height:28px}.setting-row:has(input[type=checkbox]){cursor:pointer}
+dialog .close{width:44px;min-height:44px;top:5px;right:6px}
+.combo-grace{display:flex;flex-direction:column;align-items:center;gap:4px;margin-top:7px}
+.combo-grace>span{font-size:11px;font-weight:500;line-height:1.2;letter-spacing:0}
+.combo-grace>span{margin-left:0}.combo-grace .grace-dots{display:flex}.grace-dots i{display:block}
+.grace-dots{display:flex;gap:5px}.grace-dots i{width:14px;height:4px;border:1px solid currentColor;border-radius:2px;opacity:.3}.grace-dots i.available{opacity:1;background:currentColor}
+.combo-badge[data-grace="2"] .combo-grace{color:#ffbd93}.combo-badge.hot[data-grace="2"] .combo-grace{color:#733c1d}
+.combo-badge[data-record=true]{filter:drop-shadow(0 0 5px #f2ca7d55)}
+.combo-badge[data-digits="3"] strong{font-size:44px;letter-spacing:-2px}.combo-badge[data-digits="4"] strong{font-size:32px;letter-spacing:-1px}
+@media(max-width:900px){.combo-grace>span{font-size:9px}.combo-grace{margin-top:4px;gap:3px}.grace-dots i{width:10px}.combo-badge[data-digits="3"] strong{font-size:26px}.combo-badge[data-digits="4"] strong{font-size:20px}.combo-notice small{line-height:1.2;text-wrap:balance}.header-actions{gap:4px}}
+@media(max-height:600px){#resultDialog{padding:14px 20px}.result-heading h2{font-size:24px}.result-heading p{margin-bottom:6px}.series-score{margin-top:6px;font-size:20px}.unlock-scene{margin:8px 0;gap:12px}.result-hero>.character,.unlock-character>.character{height:110px}.unlock-character>strong{font-size:18px}.unlock-character>p{font-size:12px}.result-stats{margin-top:4px}.result-stats b{font-size:20px}.result-actions{position:sticky;bottom:-14px;background:#292a30;padding:8px 0;margin-bottom:-6px;z-index:2}.result-actions button{min-height:44px;font-size:15px}.result-actions .gold{font-size:17px}}
+@media(max-width:900px){.combo-badge>strong{display:block}.combo-badge>#comboLabel{display:block;margin:3px 0;white-space:nowrap}}
+@media(max-width:900px){.combo-badge.hot[data-grace="2"] .combo-grace{color:#ffbd93}}
+@media(min-width:700px) and (max-width:900px) and (max-height:600px){
+ .game-view{display:grid;grid-template-columns:minmax(0,1fr) 240px;column-gap:14px;--board-h:calc(100dvh - 145px);padding:0 14px}
+ .game-view .match-top{grid-column:1/-1}
+ .game-view .arena{grid-column:1;grid-row:2;grid-template-columns:var(--board-w) 56px 76px 76px;grid-template-rows:auto 1fr;gap:8px;max-width:100%;width:100%;align-items:start}
+ .game-view .board-column{grid-column:1;grid-row:1/3}
+ .game-view .next-column{grid-column:2;grid-row:1/3}
+ .game-view .next-column>#nextBoard,.game-view .later-label{display:none}
+ .game-view .opponent-column{grid-column:3;grid-row:1/3}
+ .game-view .player-side{grid-column:4;grid-row:1;margin-top:25px}
+ .game-view .battle-lane{grid-column:4;grid-row:2;padding:0}
+ .game-view .play-bottom{grid-column:2;grid-row:2;align-self:center;width:100%;margin:0;padding:10px}
+ .game-view .controls{grid-template-columns:1fr 1fr;gap:6px}
+ .game-view .controls button{min-height:44px;padding:6px;font-size:18px}
+ .game-view .controls button:nth-child(1){grid-column:1;grid-row:2}
+ .game-view .controls button:nth-child(2){grid-column:1/-1;grid-row:1}
+ .game-view .controls button:nth-child(3){grid-column:2;grid-row:2}
+ .game-view .controls button:nth-child(4){grid-column:1/-1;grid-row:3}
+ .game-view .hold-button{min-width:100px}.game-view .play-context{margin-bottom:8px}
+}
+/* Keep the practice board and retry action together on short laptop screens. */
+@media(min-width:901px) and (max-height:700px){
+ .game-view.training{--board-h:clamp(220px,calc(100dvh - 365px),355px)}
+ .training .player-side>.character{width:58px;height:86px}
+ .training .opponent-heading>.character{width:27px;height:54px}
+ .training .nameplate{font-size:12px!important;padding:4px 8px;min-width:70px}
+ .training .combo-badge strong{font-size:34px}.training .combo-badge>span{font-size:13px}
+ .training .score-box b{font-size:22px}.training .score-box{font-size:11px}
+ .training .next-column>#nextBoard,.training .later-label{display:none}
+ .training .play-bottom{margin-top:8px;padding:8px 12px}
+ .training .controls button{min-height:48px;padding:8px;font-size:20px}
+ .training .play-context{min-height:30px;margin-bottom:6px}
+ .training .training-bar{margin-top:8px;margin-bottom:8px;padding:7px 12px;gap:6px}
+ .training .keyboard-hint{display:none}
+}
+
+.training-bar button{min-height:44px}
+.battle-effects{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:9}
+.board-shell::after{content:'';position:absolute;inset:0;border:3px solid transparent;border-radius:inherit;pointer-events:none}
+.board-shell.combo-strike::after{animation:comboRim .44s ease-out}
+.board-shell.combo-strike[data-combo-tier=ultra]::after{border-width:5px;animation-duration:.52s}
+.combo-notice.burst>div{transform-origin:left center;animation:comboStamp .38s cubic-bezier(.16,.8,.3,1)}
+.combo-notice strong{font-size:42px;line-height:.9}
+.combo-notice[data-digits="3"] strong{font-size:34px}.combo-notice[data-digits="4"] strong{font-size:27px}
+.event-badge.animate b{animation:comboStamp .38s ease-out}
+.combo-notice.burst small{animation:comboDetail .3s ease-out both}
+.combo-badge.pop strong,.combo-badge.reconnected strong{animation:comboStamp .38s ease-out}
+.combo-badge{position:relative}
+.combo-badge.pop::after,.combo-badge.reconnected::after{content:'';position:absolute;inset:2px 0;pointer-events:none;opacity:0;border-top:2px solid #ffe7ab;border-bottom:2px solid #ffe7ab;border-radius:inherit;animation:comboStreak .32s ease-out both}
+@keyframes comboStreak{0%{opacity:0;transform:scaleX(.15)}22%{opacity:1;transform:scaleX(.95)}50%{opacity:.25}70%{opacity:.85;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1)}}
+.attack-hit{animation:attackHit .34s ease-out}
+@keyframes comboStamp{0%{transform:translateX(-7px) scale(.72);filter:brightness(1.6)}22%{transform:translateX(2px) scale(1.08)}42%{transform:translateX(-2px) scale(.98)}61%{transform:translateX(1px) scale(1.04)}100%{transform:none;filter:none}}
+@keyframes comboDetail{0%,18%{opacity:0;transform:translateX(-8px)}100%{opacity:1;transform:none}}
+@keyframes comboRim{0%,100%{border-color:transparent;box-shadow:inset 0 0 0 transparent}12%,38%,64%{border-color:#ffe2a1;box-shadow:inset 0 0 14px #f8cb6c66}25%,51%,80%{border-color:#dba96822;box-shadow:inset 0 0 0 transparent}}
+@keyframes attackHit{0%,100%{transform:none}15%{transform:translateX(4px);border-color:#ffe9bd;box-shadow:0 0 22px #ffd28b88}33%{transform:translateX(-2px)}52%{transform:translateX(3px);border-color:#ffe9bd}72%{transform:translateX(-1px)}}
+@media(max-width:900px){.combo-notice strong{font-size:30px}.combo-notice[data-digits="3"] strong{font-size:24px}.combo-notice[data-digits="4"] strong{font-size:19px}}
+@media(min-width:700px) and (max-width:900px) and (max-height:600px){
+ .game-view.training{grid-template-columns:minmax(0,1fr) 280px}
+ .game-view.training .arena{grid-row:2/4}
+ .game-view.training .play-bottom{align-self:start}
+ .game-view.training .play-context{flex-direction:column;gap:6px}
+ .game-view.training .controls{grid-template-columns:1fr 1.2fr 1fr 1.6fr}
+ .game-view.training .controls button:nth-child(n){grid-column:auto;grid-row:auto;min-height:48px;font-size:15px;padding:6px 2px}
+ .game-view.training .training-bar{grid-column:2;grid-row:3;align-self:start;margin:4px 0 0;width:100%;padding:6px;gap:4px}
+ .game-view.training .training-bar button{font-size:10px;padding:5px}
+ .game-view.training .keyboard-hint{display:none}
+ .game-view.training .next-column{padding-top:24px}
+ .game-view.training .player-side>.character,.game-view.training .player-side .nameplate,.game-view.training .player-side .score-box{display:none}
+}
+
