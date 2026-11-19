@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f4f1e9"><title>종이비행기 비행학교</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 48 40%22%3E%3Cpath d=%22M3 16 44 3 30 36 21 24 12 30 13 20Z M13 20 44 3 21 24%22 fill=%22%23f3ecdb%22 stroke=%22%23365b4b%22 stroke-width=%222%22/%3E%3C/svg%3E"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="studio.css"></head>
+<body>
+<header class="masthead">
+ <a class="brand" href="./" aria-label="종이비행기 비행학교 처음 화면"><svg viewBox="0 0 48 40" aria-hidden="true"><path d="M3 16 44 3 30 36 21 24 12 30 13 20Z M13 20 44 3 21 24"/></svg><span>종이비행기 <strong>비행학교</strong></span></a>
+ <button id="workshopNav" class="workshop-nav active"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h18v4H3zM5 12v8M19 12v8M9 8V4h6v4"/></svg>작업대</button>
+ <nav aria-label="비행 모드"><button id="practiceNav" class="active" aria-pressed="true">자유비행</button><button id="missionNav" aria-pressed="false">비행미션</button></nav>
+ <button id="soundButton" class="icon-button sound-button" aria-label="소리 끄기" aria-pressed="true" title="소리 끄기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="sound-waves" d="M16 8q4 4 0 8m3-11q7 7 0 14"/><path class="sound-off" d="m16 9 6 6m0-6-6 6"/></svg></button>
+ <button id="aboutButton" class="icon-button" aria-label="모형 설명과 설정">ⓘ</button>
+</header>
+<main class="app">
+ <div class="flight-deck">
+  <section class="stage" aria-label="비행기와 비행 공간">
+   <div id="scene"></div><div class="stage-heading"><span id="stageLabel">종이 한 장으로 시작하는 비행</span><h1 id="stageTitle">접고, 바꾸고, 날려요.</h1><p id="stageHint">작업대에서 비행기를 바꿔요.</p></div>
+   <span id="missionPill" class="mission-pill" hidden></span>
+   <div id="windBadge" class="wind-badge" hidden><span id="windArrow" aria-hidden="true">↑</span><div><strong id="windName">바람 없음</strong><small id="windValue">0.0 m/s</small></div></div><span id="targetBadge" class="target-badge" hidden>멀리 날기</span>
+   <div id="planeInfo" class="plane-info"><span id="paperLabel">A4 · 80 g/m²</span><span id="planeMass">4.99 g</span></div>
+   <div id="dimension" class="dimension"><span id="spanLabel">날개 폭 14.5 cm</span><i></i></div>
+   <div id="viewTools" class="view-tools"><button id="rotateLeft" aria-label="비행기 왼쪽으로 돌려 보기">↶</button><button id="resetView" aria-label="비행기 처음 방향으로 돌려 보기">처음</button><button id="rotateRight" aria-label="비행기 오른쪽으로 돌려 보기">↷</button></div>
+   <div id="flightReadout" class="flight-readout" hidden><span id="flightTime">0.0 초</span><span id="flightHeight">1.4 m 높이</span></div>
+   <div id="trailLegend" class="trail-legend" hidden><span>━ 이번 비행</span><span>┄ 지난번</span></div><div id="webglError" role="alert" hidden></div>
+  </section>
+  <section class="flight-dock" aria-label="비행 화면 바로 아래 힘 조절과 던지기"><div id="dockContent"></div><div id="actionArea"></div></section>
+ </div>
+ <aside class="controls" aria-label="작업대와 비행 기록">
+  <div class="workbench-heading"><span class="bench-icon" aria-hidden="true">✧</span><h2 id="workbenchTitle" tabindex="-1">나의 작업대</h2><span class="bench-dot" aria-hidden="true"></span></div>
+  <div id="editorTabs" class="editor-tabs" aria-label="작업대 도구"><button data-editor="design" aria-pressed="true">접기·개조</button><button data-editor="aim" aria-pressed="false">각도·바람</button></div>
+  <div id="controlContent"></div>
+ </aside>
+</main>
+<footer><span id="status" role="status" aria-atomic="true">작업대에서 나만의 비행기를 준비해요.</span><button id="modelLink">실험용 근사 모형 ⓘ</button></footer>
+<dialog id="aboutDialog" aria-labelledby="aboutTitle"><button class="close" data-close aria-label="설명 닫기">×</button><h2 id="aboutTitle">한 장의 종이로 하는 실험</h2><p>작업대에서 접는 모양·클립·각도·바람을 정해요. 경기장에서 <b>힘 조절 시작</b>을 누르고, 원하는 힘에 왔을 때 <b>지금 던지기</b>를 눌러요.</p><p>중력·양력·항력, 상대 바람, 무게중심과 세 축의 회전을 계산해요. 매번 누른 힘과 준비한 설정으로 새로 계산해요. 힘 0~100%는 발사 속도 2~12 m/s에 대응해요.</p><p>실제 비행과 정확히 같은 예측기는 아니에요. 종이의 휘어짐·접기 오차·공기력 계수와 종이의 질량 분포는 근삿값을 사용해요. 학교와 나무는 배경이며 충돌 대상이 아니에요.</p><fieldset class="audio-settings"><legend>게임 소리</legend><label for="musicVolume">배경음 <output id="musicVolumeValue">32%</output></label><input id="musicVolume" type="range" min="0" max="100" value="32"><label for="effectsVolume">효과음 <output id="effectsVolumeValue">65%</output></label><input id="effectsVolume" type="range" min="0" max="100" value="65"><p id="soundStatus" class="small" role="status"></p><p class="small">배경음: 바람을 접어 · Suno v6</p></fieldset><label class="check"><input id="reducedMotion" type="checkbox"> 움직임 줄이기 · 카메라 고정</label><p class="small">짧은 잔상과 발사·착륙 화면 전환도 함께 꺼져요.</p><p class="small">접기는 모양에 따른 근사 모형이에요. 종이를 접어도 종이 무게는 같고 클립은 한 개마다 0.5 g을 더해요. 종이 무게 선택은 질량에 반영하고, 종이의 휘어짐 차이는 계산하지 않아요. 체공시간·비거리는 근사 계산이에요. 실제 비행과 비교하려면 실물 측정과 교정이 필요해요.</p><div class="doc-links"><a href="README.txt" target="_blank">게임 안내</a><a href="검수결과.txt" target="_blank">이번 개선 기록</a><a href="https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/lift-equation/" target="_blank" rel="noreferrer">물리 원리 · NASA</a></div></dialog>
+<dialog id="missionDialog" aria-labelledby="missionTitle"><button class="close" data-close aria-label="대회 선택 닫기">×</button><span class="dialog-label">오늘의 비행미션</span><h2 id="missionTitle">어떤 기록에 도전할까요?</h2><div id="sportChoices"></div><p>학교에서 세계대회까지, 세 번 중 최고 기록으로 겨뤄요.<br>두 종목의 기록과 초대장은 따로 모아요.</p><div id="cupCards"></div></dialog>
+<dialog id="archiveDialog" aria-labelledby="archiveTitle"><button class="close" data-close aria-label="이전 기록 닫기">×</button><h2 id="archiveTitle">이전 시즌 기록</h2><div id="archiveContent"></div></dialog>
+<script type="module" src="app.mjs"></script>
+</body></html>
