@@ -1,10 +1,10 @@
-import {playSuccess} from './media.mjs';
+import {playSuccess} from './media.mjs?v=77';
 import {STAGES,TIERS,TIER_COLORS,STAGE_KEY,stageTier,readStages,stageOpen,mergeStage,stageRecordMessage} from './stage-game.mjs';
 import {faceFoldPlan} from './direct-fold.mjs';
 import {ChallengeClock,savedChallenge,clockText} from './challenge.mjs';
 import {makeNet,CUBE_NETS,CROSS_NET,analyze,poses,corners,marks,opposite,key,foldAngles,findFoldSequence,intersections} from './geometry.mjs';
 import {TYPES,grade,sameResponse} from './questions.mjs';
-import {createScene,COLORS} from './scene.mjs';
+import {createScene,COLORS} from './scene.mjs?v=77';
 import {BANK,CHAPTERS,getQuestion,questionCount,chapterFor,gridKey,parseGrid} from './curriculum.mjs';
 import {PROGRESS_KEY,readProgress} from './progress.mjs';
 
@@ -22,7 +22,7 @@ let freeMaker={cells:[[0,0]],undo:[]};
 const motionPreference=matchMedia('(prefers-reduced-motion: reduce)');
 let reduced=motionPreference.matches,motionOverride=false,privateSession=false;
 let pendingFaces=[];
-let folding=false,lastSubmitted=null,exploreOpposite=false,journeyState='';
+let folding=false,arriving=false,lastSubmitted=null,exploreOpposite=false,journeyState='';
 let pendingProgress=null,restoring=false,visitRecords=[],answerPreview=0,hintStage=0;
 let challengeMode=true,challengeActive=false,challengeReading=false,stageAssisted=false;const challengeClock=new ChallengeClock();let challengeSaveSecond=-1;
 function updateChallenge(){
@@ -217,14 +217,14 @@ function foldTo(value,animate=true,faceAction=false){
   if(mode==='lesson'&&!attempts&&target>0)helped=true;
   if(!net.connected||net.cycle){if(!solved)feedback('먼저 종이 모양을 살펴봐요',mode==='lesson'&&q?.type==='valid'&&net.cycle?'네 면이 한 점을 둘러싸고 있어 접을 수 없어요.':analyze(net).message);if(solved||revealed)showActionIfBelow('next');return;}
   const finishAction=()=>{if(target!==1||!(solved||revealed||diagnostic))return;if(innerHeight<550&&compactActivity()){$('fold-stage').textContent=mode==='create'?'아래로 내려 ‘펼쳐서 고쳐 만들기’를 눌러요.':'아래로 내려 ‘다음 문제’를 눌러요.';}else showActionIfBelow(mode==='create'?'edit-maker':'next');};
-  const start=progress,t0=performance.now(),duration=reduced||!animate?0:Math.max(450,Math.abs(target-start)*2400);
+  const start=progress,t0=performance.now()+(arriving&&animate?320:0),duration=reduced||!animate?0:arriving?3000:Math.max(450,Math.abs(target-start)*2400);
   const frame=now=>{
-    const t=duration?Math.min(1,(now-t0)/duration):1;const next=start+(target-start)*(t*t*(3-2*t));
+    const t=duration?Math.max(0,Math.min(1,(now-t0)/duration)):1;const next=start+(target-start)*(t*t*(3-2*t));
     if(target>start&&intersections(net,foldAngles(net,next,sequence)).length){
       folding=false;
       if(!solved&&!revealed)feedback('여기에서 두 면이 겹쳐요','종이는 서로 통과할 수 없어요. 펼친 종이에서 같은 자리를 덮는 면을 찾아 보세요.',false,mode==='create'?'<button class="secondary" id="edit-maker" data-action="edit-maker">펼쳐서 고쳐 만들기</button>':'');updateFoldControls();$('fold-stage').textContent='두 면이 겹치기 전에 멈췄어요';saveProgress();finishAction();return;
     }
-    progress=next;folding=t<1;scene.update(progress,selectedFace(),markerItems());updateFoldControls();if(t<1)animation=requestAnimationFrame(frame);else{if(hintStage>1||mode==='explore')renderNet();saveProgress();finishAction();if(mode==='explore'&&pendingFaces.length)tapFace(pendingFaces.shift());}
+    progress=next;folding=t<1;scene.update(progress,selectedFace(),markerItems());updateFoldControls();if(t<1)animation=requestAnimationFrame(frame);else{finishArrival();if(hintStage>1||mode==='explore')renderNet();saveProgress();finishAction();if(mode==='explore'&&pendingFaces.length)tapFace(pendingFaces.shift());}
   };frame(t0);
 }
 function inspectFold(target=1){
@@ -263,7 +263,7 @@ function updateFoldControls(){
   syncJourney();
 }
 function zoomCamera(delta){const level=scene.zoom(delta);$('zoom-in').disabled=!Number.isFinite(level)||level>=1.14/1.1;$('zoom-out').disabled=!Number.isFinite(level)||level<=.65;$('zoom-in').title=$('zoom-in').disabled?'도형 전체가 보이는 최대 크기예요.':'상자 크게 보기';$('zoom-out').title=$('zoom-out').disabled?'가장 작은 크기예요.':'상자 작게 보기';}
-function setNet(next,nextLabels=labels){pendingFaces=[];next.monochrome=!!q?.monochrome;cancelAnimationFrame(animation);folding=false;net=next;labels=nextLabels;progress=0;sequence=net.connected&&!net.cycle?(findFoldSequence(net)??net.links.map((_,i)=>i)):[];scene.setNet(net,labels);scene.reset();zoomCamera(0);updateFoldControls();}
+function setNet(next,nextLabels=labels){finishArrival();pendingFaces=[];next.monochrome=!!q?.monochrome;cancelAnimationFrame(animation);folding=false;net=next;labels=nextLabels;progress=0;sequence=net.connected&&!net.cycle?(findFoldSequence(net)??net.links.map((_,i)=>i)):[];scene.setNet(net,labels);scene.reset();zoomCamera(0);updateFoldControls();}
 function element(tag,attrs,text){const e=document.createElementNS(NS,tag);for(const [k,v]of Object.entries(attrs||{}))e.setAttribute(k,String(v));if(text!==undefined)e.textContent=text;return e;}
 function distanceToSegment(x,y,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy||1)));return Math.hypot(x-ax-t*dx,y-ay-t*dy);}
 function svgButton(parent,attrs,aria,action,value){const g=element('g',{...attrs,role:'button',tabindex:solved||revealed?-1:0,'aria-label':aria,'data-action':action,'data-value':value,class:`hit ${attrs?.class||''}`});if(solved||revealed)g.setAttribute('aria-disabled','true');if(action==='choose')g.setAttribute('aria-pressed',String(mode==='explore'?foldAngles(net,progress,sequence)[net.links.findIndex(l=>l.child===Number(value))]>.999:isChosen(value)));parent.append(g);return g;}
@@ -414,6 +414,7 @@ function renderTools(){
 }
 function tapFace(face){
   if(face===net.root)return;
+  if(arriving){finishArrival();foldTo(0,false);}
   if(folding){if(pendingFaces.length<8)pendingFaces.push(face);updateFoldControls();return;}
   if(Math.abs(progress*net.links.length-Math.round(progress*net.links.length))>.001)foldTo(Math.floor(progress*net.links.length)/net.links.length,false);
   const plan=faceFoldPlan(net,sequence,progress,face);
@@ -444,7 +445,7 @@ function choose(value){
   challengeReading=false;renderNet();renderChoices();scene.update(progress,selectedFace(),markerItems());updateFoldControls();syncJourney();
   if(mode==='explore'||mode==='lesson'&&q.answerMode!=='all')showActionIfBelow(mode==='explore'?'explore-action':'check');
 }
-function startMode(next){pendingFaces=[];clearPenalty();
+function startMode(next){finishArrival();pendingFaces=[];clearPenalty();
   if(next==='lesson'){
     if(!stageOpen(stageResults(),stageIndex())){const first=stageResults().findIndex(r=>!r?.complete);practice='bank:'+STAGES[first<0?7:first].id;}
     challengeMode=true;stageAssisted=false;
@@ -720,4 +721,10 @@ setInterval(()=>{if(!challengeActive||document.hidden)return;updateChallenge();c
 window.addEventListener('pagehide',()=>{challengeClock.advance(performance.now(),false);saveProgress();});
 updateChallenge();
 
+function finishArrival(){if(!arriving)return;arriving=false;scene.setArrival(false);document.body.classList.remove('arrival-unfold');}
+window.addEventListener('nets-entered',()=>{
+  if(mode!=='explore'||reduced||!document.body.classList.contains('direct-fold'))return;
+  arriving=true;scene.setArrival(true);document.body.classList.add('arrival-unfold');
+  progress=1;scene.update(1,null,[]);updateFoldControls();foldTo(0);
+},{once:true});
 document.documentElement.dataset.appState='ready';window.dispatchEvent(new Event('nets-ready'));

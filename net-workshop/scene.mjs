@@ -7,7 +7,7 @@ export function createScene(host){
   let renderer;
   try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});}catch{
     host.innerHTML='<p class="webgl-error">이 기기에서 3D를 열지 못했어요.<br>펼친 종이에서 문제를 계속 풀 수 있어요.<br><button class="secondary" data-action="choose-again">펼친 종이로 돌아가기</button></p>';
-    return {setBusy(){},setDirect(){return false;},setSequence(){},setNet(){},update(){},rotate(){},reset(){},zoom(){},transparent(){},lookAtFace(){}};
+    return {setArrival(){},setBusy(){},setDirect(){return false;},setSequence(){},setNet(){},update(){},rotate(){},reset(){},zoom(){},transparent(){},lookAtFace(){}};
   }
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));host.append(renderer.domElement);
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -36,7 +36,7 @@ export function createScene(host){
   const paperLight=paperContext.createLinearGradient(0,0,512,512);paperLight.addColorStop(0,'#fffdf7');paperLight.addColorStop(1,'#eee5d7');paperContext.globalCompositeOperation='multiply';paperContext.fillStyle=paperLight;paperContext.fillRect(0,0,512,512);
   const paperTexture=new THREE.CanvasTexture(paperCanvas);paperTexture.colorSpace=THREE.SRGBColorSpace;paperTexture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
   let direct=null,busy=false;
-  let net,meshes=[],labels=[],backLabels=[],faceText=[],lines=[],markers=[],sequence=[],progress=0,yaw=-.88,pitch=.48,zoom=1,ghost=false,selected=null;
+  let net,meshes=[],labels=[],backLabels=[],faceText=[],lines=[],markers=[],sequence=[],progress=0,yaw=-.88,pitch=.48,zoom=1,ghost=false,selected=null,arrival=false;
   const labelTexture=(text,badge=null,fixed=false)=>{
     const cv=document.createElement('canvas');cv.width=cv.height=512;const ctx=cv.getContext('2d');ctx.scale(4,4);
     if(badge){ctx.beginPath();ctx.arc(64,64,57,0,Math.PI*2);ctx.fillStyle=badge==='target'?'#303236':'#e6bf87';ctx.fill();ctx.lineWidth=4;ctx.strokeStyle='#fff1db';ctx.stroke();}
@@ -124,18 +124,19 @@ export function createScene(host){
     const box=new THREE.Box3().setFromPoints(points);
     let center=box.getCenter(new THREE.Vector3());
     const flat=direct?new THREE.Box3().setFromPoints(net.faces.flatMap((f,i)=>corners(f,poses(net,net.links.map(()=>0))[i]).map(p=>new THREE.Vector3(...p)))):null;
-    if(flat)center=flat.getCenter(new THREE.Vector3());
+    if(flat)center=flat.getCenter(new THREE.Vector3()).lerp(center,arrival?progress:0);
     const aspect=host.clientWidth/Math.max(host.clientHeight,1);
     floor.position.y=box.min.y-Math.min(...net.dimensions)*.02;
     floor.position.x=center.x;floor.position.z=center.z;const floorSize=box.getSize(new THREE.Vector3());
     floor.scale.set(Math.max(floorSize.x*1.7,.5),Math.max(floorSize.z*1.7,.5),1);
     contact.position.copy(floor.position);contact.position.y+=Math.min(...net.dimensions)*.002;contact.scale.set(Math.max(...net.dimensions)*8,Math.max(...net.dimensions)*8,1);
     floor.visible=contact.visible=!ghost&&!direct;light.target.position.copy(center);
-    const turn=direct?Math.min(1,progress*net.links.length):0,viewYaw=direct?-.55*turn+yaw+.88:yaw,viewPitch=direct?.42*turn+pitch-.48:pitch;
+    const turn=direct?(arrival?progress:Math.min(1,progress*net.links.length)):0,viewYaw=direct?-.55*turn+yaw+.88:yaw,viewPitch=direct?.42*turn+pitch-.48:pitch;
     camera.position.set(center.x+18*Math.sin(viewYaw)*Math.cos(viewPitch),center.y+18*Math.sin(viewPitch),center.z+18*Math.cos(viewYaw)*Math.cos(viewPitch));camera.lookAt(center);camera.updateMatrixWorld();
     const viewPoints=points.map(p=>p.clone().applyMatrix4(camera.matrixWorldInverse));
     const projectedExtent=Math.max(...viewPoints.map(p=>Math.max(Math.abs(p.x)/aspect,Math.abs(p.y))));
-    const extent=flat?Math.max(Math.max(flat.getSize(new THREE.Vector3()).x/aspect,flat.getSize(new THREE.Vector3()).y)*.62/zoom,projectedExtent*1.1):projectedExtent*Math.max(1.1,1.14/zoom);
+    let extent=flat?Math.max(Math.max(flat.getSize(new THREE.Vector3()).x/aspect,flat.getSize(new THREE.Vector3()).y)*.62/zoom,projectedExtent*1.1):projectedExtent*Math.max(1.1,1.14/zoom);
+    if(arrival)extent=Math.max(projectedExtent*1.1,extent*(1-progress)+projectedExtent*1.45*progress);
     camera.left=-extent*aspect;camera.right=extent*aspect;camera.top=extent;camera.bottom=-extent;camera.updateProjectionMatrix();
     renderer.render(scene,camera);
   }
@@ -167,5 +168,5 @@ export function createScene(host){
   function lookAtFace(face){const normal=poses(net,foldAngles(net,progress,sequence))[face]?.n;if(!normal)return;yaw=Math.atan2(normal[0],normal[2])+.22;pitch=Math.max(-1.2,Math.min(1.2,Math.asin(Math.max(-1,Math.min(1,normal[1])))+.22));zoom=1;render();}
   function refreshLabels(){meshes.forEach(mesh=>mesh.children.forEach(crease=>{crease.visible=!ghost&&progress<.999;}));labels.forEach((label,i)=>{label.material.map.dispose();label.material.map=labelTexture(faceText[i],null,!!direct&&i===net.root);backLabels[i].material.map=label.material.map;});render();}
   document.fonts.ready.then(refreshLabels);
-  return {setBusy:value=>{busy=value;},setDirect:callback=>{direct=callback;renderer.domElement.setAttribute('aria-label',callback?'면을 누르면 접히는 종이. 아래 면 이름 버튼으로도 접거나 펼칠 수 있어요.':'접힌 상자 관찰 화면. 아래 보기 버튼으로 방향을 바꿀 수 있어요.');renderer.domElement.style.cursor=callback?'pointer':'';render();return true;},setSequence:value=>{sequence=value.slice();},setNet,update,lookAtFace,rotate:(direction)=>{yaw+=direction*.5;render();},reset:()=>{yaw=-.88;pitch=.48;zoom=1;render();},zoom:delta=>{zoom=Math.max(.65,Math.min(1.14/1.1,zoom+delta));render();return zoom;},transparent:value=>{ghost=value;meshes.forEach(m=>{m.material.opacity=value?.27:1;m.material.depthWrite=!value;});lines.forEach((m,i)=>{m.material.depthTest=!value;m.material.opacity=value?.72:.18;m.material.color.set(i===selected?0xe3b778:value?0xe5dac8:0x8a8276);});markers.forEach(m=>{m.material.depthTest=!value;if(m.isMesh&&!m.userData.faceBorder)m.material.color.set(m.userData.target?(value?0xfff0d7:0x303236):0xd9a05b);});refreshLabels();}};
+  return {setArrival:value=>{arrival=value;render();},setBusy:value=>{busy=value;},setDirect:callback=>{direct=callback;renderer.domElement.setAttribute('aria-label',callback?'면을 누르면 접히는 종이. 아래 면 이름 버튼으로도 접거나 펼칠 수 있어요.':'접힌 상자 관찰 화면. 아래 보기 버튼으로 방향을 바꿀 수 있어요.');renderer.domElement.style.cursor=callback?'pointer':'';render();return true;},setSequence:value=>{sequence=value.slice();},setNet,update,lookAtFace,rotate:(direction)=>{yaw+=direction*.5;render();},reset:()=>{yaw=-.88;pitch=.48;zoom=1;render();},zoom:delta=>{zoom=Math.max(.65,Math.min(1.14/1.1,zoom+delta));render();return zoom;},transparent:value=>{ghost=value;meshes.forEach(m=>{m.material.opacity=value?.27:1;m.material.depthWrite=!value;});lines.forEach((m,i)=>{m.material.depthTest=!value;m.material.opacity=value?.72:.18;m.material.color.set(i===selected?0xe3b778:value?0xe5dac8:0x8a8276);});markers.forEach(m=>{m.material.depthTest=!value;if(m.isMesh&&!m.userData.faceBorder)m.material.color.set(m.userData.target?(value?0xfff0d7:0x303236):0xd9a05b);});refreshLabels();}};
 }
