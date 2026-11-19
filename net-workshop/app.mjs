@@ -4,7 +4,7 @@ import {faceFoldPlan} from './direct-fold.mjs';
 import {ChallengeClock,savedChallenge,clockText} from './challenge.mjs';
 import {makeNet,CUBE_NETS,CROSS_NET,analyze,poses,corners,marks,opposite,key,foldAngles,findFoldSequence,intersections} from './geometry.mjs';
 import {TYPES,grade,sameResponse} from './questions.mjs';
-import {createScene,COLORS} from './scene.mjs?v=77';
+import {createScene,COLORS} from './scene.mjs?v=78';
 import {BANK,CHAPTERS,getQuestion,questionCount,chapterFor,gridKey,parseGrid} from './curriculum.mjs';
 import {PROGRESS_KEY,readProgress} from './progress.mjs';
 
@@ -414,7 +414,6 @@ function renderTools(){
 }
 function tapFace(face){
   if(face===net.root)return;
-  if(arriving){finishArrival();foldTo(0,false);}
   if(folding){if(pendingFaces.length<8)pendingFaces.push(face);updateFoldControls();return;}
   if(Math.abs(progress*net.links.length-Math.round(progress*net.links.length))>.001)foldTo(Math.floor(progress*net.links.length)/net.links.length,false);
   const plan=faceFoldPlan(net,sequence,progress,face);

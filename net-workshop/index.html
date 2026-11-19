@@ -55,7 +55,7 @@
 <noscript>이 활동을 하려면 JavaScript를 켜 주세요.</noscript>
 <script type="module">
 document.documentElement.dataset.appState='loading';
-import('./app.mjs?v=77').then(()=>{
+import('./app.mjs?v=78').then(()=>{
   if(document.documentElement.dataset.appState!=='ready')throw new Error('App initialization did not complete');
 }).catch(error=>{
   console.error('전개도 공작소 시작 실패',error);

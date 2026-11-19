@@ -50,6 +50,7 @@ export function createScene(host){
     group.traverse(o=>{o.geometry?.dispose();if(o.material){if(o.material.map!==paperTexture)o.material.map?.dispose();o.material.dispose();}});group.clear();meshes=[];labels=[];backLabels=[];lines=[];markers=[];
   }
   function setNet(next,faceLabels=['가','나','다','라','마','바']){
+    drag=null;dragPointer=null;dragFace=-1;
     clear();net=next;faceText=faceLabels;if(!net?.connected){renderer.render(scene,camera);return;}
     sequence=findFoldSequence(net)??net.links.map((_,i)=>i);
     const reach=Math.max(...net.dimensions)*3;
@@ -141,7 +142,7 @@ export function createScene(host){
     renderer.render(scene,camera);
   }
   const resize=new ResizeObserver(()=>{renderer.setSize(Math.max(1,host.clientWidth),Math.max(1,host.clientHeight));render();});resize.observe(host);
-  let drag=null,dragStart=null,dragMoved=false,dragPointer=null,dragFace=-1;
+  let drag=null,dragStart=null,dragMoved=false,dragPointer=null,dragFace=-1,dragArrival=false;
   function pickFace(e){
     const rect=renderer.domElement.getBoundingClientRect(),ray=new THREE.Raycaster();
     ray.setFromCamera(new THREE.Vector2((e.clientX-rect.left)/rect.width*2-1,1-(e.clientY-rect.top)/rect.height*2),camera);
@@ -150,7 +151,7 @@ export function createScene(host){
   }
   renderer.domElement.addEventListener('pointerdown',e=>{
     if(dragPointer!==null||!e.isPrimary||e.button!==0){drag=null;dragPointer=null;return;}
-    dragFace=direct&&!busy?pickFace(e):-1;dragPointer=e.pointerId;dragStart=[e.clientX,e.clientY];dragMoved=false;drag=[e.clientX,e.clientY];renderer.domElement.setPointerCapture(e.pointerId);
+    dragFace=direct&&!busy?pickFace(e):-1;dragArrival=arrival;dragPointer=e.pointerId;dragStart=[e.clientX,e.clientY];dragMoved=false;drag=[e.clientX,e.clientY];renderer.domElement.setPointerCapture(e.pointerId);
   });
   renderer.domElement.addEventListener('pointermove',e=>{
     if(!drag||e.pointerId!==dragPointer)return;
@@ -161,7 +162,8 @@ export function createScene(host){
   renderer.domElement.addEventListener('pointerup',e=>{
     if(e.pointerId!==dragPointer)return;
     if(direct&&!busy&&dragFace>=0&&drag&&!dragMoved&&Math.hypot(e.clientX-dragStart[0],e.clientY-dragStart[1])<=10){
-      if(pickFace(e)===dragFace)direct(dragFace);
+      // The opening moves the paper under a stationary finger; keep the face touched first.
+      if(dragArrival||pickFace(e)===dragFace)direct(dragFace);
     }drag=null;dragPointer=null;
   });
   for(const event of ['pointercancel','lostpointercapture'])renderer.domElement.addEventListener(event,e=>{if(e.pointerId===dragPointer){drag=null;dragPointer=null;}});
