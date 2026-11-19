@@ -402,8 +402,8 @@ function renderGrid(){
     if(fixed)g.append(element('text',{x:ox+x*size,y:oy-y*size+21,'text-anchor':'middle','font-size':10},'고정된 면'));
   }
   if(q?.type==='build'){$('check').disabled=!canCheckAnswer();}
-  else if(mode==='create'){$('check').hidden=Boolean(diagnostic);$('show-model').disabled=createCells.length!==6;$('show-model').title=createCells.length!==6?'여섯 면을 놓으면 접힌 모습을 확인할 수 있어요.':'내 전개도가 상자가 되는지 확인해요.';$('check').disabled=createCells.length!==6;$('check').textContent=createCells.length===6?'내 전개도 접어 보기':`${6-createCells.length}면 더 놓아요`;
-    $('instruction').textContent=diagnostic?(diagnostic.valid?'상자가 완성됐어요. 펼쳐서 다른 모양으로 바꿔 볼까요?':'상자가 되지 않았어요. 펼쳐서 면의 자리를 바꿔 보세요.'):createCells.length<6?`＋를 눌러 ${6-createCells.length}면 더 놓아요.`:'여섯 면을 놓았어요. 내 전개도 접어 보기를 눌러 확인해요.';}
+  else if(mode==='create'){$('check').hidden=Boolean(diagnostic);$('show-model').disabled=createCells.length!==6;$('show-model').title=createCells.length!==6?'여섯 면을 놓으면 접힌 모습을 확인할 수 있어요.':'내 전개도가 상자가 되는지 확인해요.';$('check').disabled=createCells.length!==6;$('check').textContent=createCells.length===6?'내 전개도 접어 보기':'접어 보기';
+    $('instruction').textContent=diagnostic?(diagnostic.valid?'상자가 완성됐어요.':diagnostic.reason==='overlap'?'펼쳐서 면의 자리를 바꿔 보세요.':'면의 자리를 바꿔 보세요.'):createCells.length<6?`＋를 눌러 ${6-createCells.length}면 더 놓아요.`:'';}
   $('choices').innerHTML=`<span class="create-count">${createCells.length} / 6 면${q?.type==='build'?' · 주어진 면은 그대로':''}<span class="face-meter" aria-hidden="true">${Array.from({length:6},(_,i)=>`<i class="${i<createCells.length?'filled':''}"></i>`).join('')}</span></span><button data-action="undo" ${undoStack.length&&!solved&&!revealed?'':'disabled'}>한 번 되돌리기</button><button data-action="clear-grid" ${solved||revealed||gridKey(createCells)===gridKey(q?.initialCells??[[0,0]])?'disabled':''}>${q?.type==='build'?'내가 놓은 면 지우기':'처음 한 면만 남기기'}</button>`;syncContext();syncJourney();
   $('selection-note').textContent=mode==='create'&&diagnostic?(diagnostic.valid?'상자가 완성됐어요. 펼치거나 다른 모양도 만들어봐요.':diagnostic.message):solved||revealed?'완성한 모양을 접어 확인해요. 다음 문제도 해 볼까요?':`지금 ${createCells.length}개의 면을 놓았어요. ${createCells.length<6?`＋를 눌러 ${6-createCells.length}면 더 이어 주세요.`:'상자가 될지 확인해요. 옮기려면 내가 놓은 면을 먼저 눌러 지워요.'}`;
 }
@@ -474,6 +474,7 @@ function startMode(next){pendingFaces=[];clearPenalty();
     
     document.querySelector('.mobile-switch').before($('challenge-status'));
   }
+  if(next==='create')document.querySelector('.activity-header').append($('learning-controls'));
   $('extra-tools').open=false;
   if(next==='explore')document.querySelector('.task-heading').before(document.querySelector('.activity-bar'));
   else $('extra-tools-body').prepend(document.querySelector('.activity-bar'));
@@ -538,7 +539,7 @@ function logAttempt(correct){const record={id:q.id,type:q.type,seed,index:qIndex
 function check(){
   const keyboard=$('check').matches(':focus-visible');
   if(mode==='create'){
-    const result=analyze(makeNet(createCells));diagnostic=result;setNet(makeNet(createCells),LABELS);renderGrid();feedback(result.valid?'상자가 완성돼요!':'이 부분을 다시 살펴봐요',result.message,result.valid,'<button class="secondary" id="edit-maker" data-action="edit-maker">펼쳐서 고쳐 만들기</button>');if(result.valid){smallView(true,true);foldTo(1);}else if(result.reason==='overlap'){smallView(true,true);foldTo(1);}if(keyboard)$('feedback').focus();else if(!result.valid)$('feedback').scrollIntoView({block:'nearest',behavior:'instant'});return;
+    const result=analyze(makeNet(createCells)),preview=result.valid||result.reason==='overlap';diagnostic=result;setNet(makeNet(createCells),LABELS);renderGrid();feedback(result.valid?'상자가 완성돼요!':'이 부분을 다시 살펴봐요',result.message,result.valid,`<button class="secondary" id="edit-maker" data-action="edit-maker">${preview?'펼쳐서 고쳐 만들기':'다시 고치기'}</button>`);if(preview){smallView(true,true);foldTo(1);}if(keyboard)$('feedback').focus();else if(!result.valid)$('feedback').scrollIntoView({block:'nearest',behavior:'instant'});return;
   }
   if(!q||!canCheckAnswer())return;lastSubmitted=Array.isArray(selected)?selected.slice():selected;attempts++;const correct=grade(q,selected);logAttempt(correct);locked=false;updateFoldControls();
   if(!correct&&challengeActive)showPenalty();

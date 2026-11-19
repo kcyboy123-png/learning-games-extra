@@ -1,5 +1,5 @@
 // v1.0.0: compact stages and optional entrance media.
-const CACHE='net-workshop-v74';
+const CACHE='net-workshop-v75';
 
 const FILES=['./','./index.html','./style.css','./app.mjs','./media.mjs','./media/intro-poster.jpg','./stage-game.mjs','./challenge.mjs', './direct-fold.mjs','./geometry.mjs','./questions.mjs','./progress.mjs','./curriculum.mjs','./bank-data.mjs','./printables/cube-nets.pdf','./printables/question-nets.pdf','./printables/teacher-guide.pdf','./scene.mjs','./icon.svg','./vendor/three.module.js','./fonts/SUIT-Regular.woff2','./fonts/SUIT-Bold.woff2'];
 

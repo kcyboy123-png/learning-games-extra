@@ -624,3 +624,19 @@ body[data-mode=lesson][data-answer-mode=all] .choice-guide{gap:6px 12px;margin-b
 body[data-mode=lesson] .multi-choice-callout{padding:5px 10px;border-left:3px solid #f1cb91;border-radius:4px;background:#e6bf8714;color:#f4dfbf;font-size:16px;line-height:1.5}
 .multi-choice-callout strong{color:#ffdb9f;font-weight:800;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
 .choice-count{font-size:13px;color:#d5c9b7;white-space:nowrap;font-variant-numeric:tabular-nums}
+
+/* Keep making and comparing close to their primary action. */
+body[data-mode=create] .activity-header{flex-direction:row;align-items:center;gap:12px;flex-wrap:wrap}
+body[data-mode=create] .task-heading{flex:1;min-width:240px;width:auto}
+body[data-mode=create] #learning-controls{flex:none;border:0;background:none;padding:0;margin:0;min-height:48px}
+body[data-mode=create] #learning-controls .answer-actions{width:auto}
+body[data-mode=create]:has(#feedback.good:not([hidden])) #instruction{display:none}
+body[data-mode=create] #instruction:empty{display:none}
+@media(max-width:1366px){
+ body[data-mode=lesson]:not(.counting-question) #workbench.view-model ~ #feedback.retry-feedback [data-action=choose-again]{display:none}
+}
+@media(min-width:601px) and (max-width:900px){
+ body[data-mode=lesson] .net-context{grid-template-columns:128px minmax(0,1fr);padding:8px;gap:12px;align-items:center}
+ body[data-mode=lesson] #mini-net{height:100px;grid-row:1}
+ body[data-mode=lesson] .net-context p{grid-row:1;margin:0;align-self:center;font-size:14px}
+}
