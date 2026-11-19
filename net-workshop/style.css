@@ -393,6 +393,12 @@ body[data-mode=lesson]:not([data-answer-mode=all]) .choice-guide{display:none}
 body[data-mode=lesson] #learning-controls{border:0;margin:8px 0;padding:0;min-height:48px}
 body[data-mode=lesson] .learning-controls .answer-actions{width:auto;margin-left:auto}
 body[data-mode=lesson] .learning-controls .answer-actions>.primary{min-width:160px}
+body[data-mode=lesson] #context-back{display:none}
+@media(max-width:1366px){
+ body[data-mode=lesson]:not(.counting-question) #workbench.view-model + #learning-controls #context-back{display:inline-flex;align-items:center;justify-content:center;min-height:48px;min-width:140px;font-size:16px;padding:10px 16px;border-color:#d0b18b;color:#fff0dc}
+ body[data-mode=lesson] #workbench.view-model + #learning-controls:has(#next:not([hidden])) #context-back{display:none}
+ body[data-mode=lesson]:not(.counting-question) #workbench.view-model + #learning-controls #check:disabled{display:none}
+}
 body[data-mode=lesson] .lesson-utilities{margin:0;justify-content:flex-end}
 body[data-mode=lesson] .challenge-status{font-size:12px}
 body[data-mode=lesson] .challenge-status>b{font-weight:400}

@@ -158,7 +158,7 @@ function syncContext(){
 
   if(mode==='explore'&&!$('face-taps').querySelector('[data-action=reset-camera]')){const reset=document.createElement('button');reset.className='quiet';reset.dataset.action='reset-camera';reset.innerHTML='↺<small>처음 방향</small>';reset.setAttribute('aria-label','처음 방향으로 보기. 접힌 상태는 유지해요.');$('face-taps').append(reset);}
   const faceMarks=markerItems().filter(m=>m.kind==='face');$('face-marker-key').hidden=faceMarks.length===0;$('face-marker-key').textContent=mode==='explore'?'푸른 테두리와 금빛 테두리의 면이 마주 봐요.':'종이의 ★는 입체에서 푸른 테두리 면이에요.';
-  $('context-back').textContent=mode==='create'?'펼쳐서 고쳐 만들기':solved||revealed?'펼쳐서 비교':'다시 고르기';
+  $('context-back').textContent=mode==='create'?'펼쳐서 고쳐 만들기':solved||revealed?'펼쳐서 비교':q?.type==='build'?'계속 만들기':'답 고르기';
   const copy=cloneNet('mini');copy.removeAttribute('aria-label');
   if(svg.dataset.contentBox)copy.setAttribute('viewBox',svg.dataset.contentBox);
   if(q?.type==='complete'&&(solved||revealed)){
@@ -463,6 +463,7 @@ function startMode(next){pendingFaces=[];clearPenalty();
   $('explore-controls').hidden=next!=='explore';
   $('show-model').disabled=false;$('show-model').removeAttribute('title');
   for(const [node,parent]of learningActions)(next==='lesson'||next==='create'?$('learning-controls'):parent).append(node);
+  (next==='lesson'?document.querySelector('.answer-actions'):$('net-context')).prepend($('context-back'));
   $('learning-controls').hidden=next!=='lesson'&&next!=='create';
   $('lesson-utilities').hidden=next!=='lesson';
   if(next==='lesson'){
