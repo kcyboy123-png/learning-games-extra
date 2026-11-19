@@ -408,7 +408,7 @@ function renderGrid(){
   $('selection-note').textContent=mode==='create'&&diagnostic?(diagnostic.valid?'상자가 완성됐어요. 펼치거나 다른 모양도 만들어봐요.':diagnostic.message):solved||revealed?'완성한 모양을 접어 확인해요. 다음 문제도 해 볼까요?':`지금 ${createCells.length}개의 면을 놓았어요. ${createCells.length<6?`＋를 눌러 ${6-createCells.length}면 더 이어 주세요.`:'상자가 될지 확인해요. 옮기려면 내가 놓은 면을 먼저 눌러 지워요.'}`;
 }
 function renderTools(){
-  if(mode==='explore')$('mode-tools').innerHTML=`<label class="tool-label" for="shape">상자</label><select id="shape"><option value="cube" ${dimensions[0]===1?'selected':''}>정육면체</option><option value="cuboid" ${dimensions[0]!==1?'selected':''}>직육면체 · 4 × 3 × 2</option></select><label class="tool-label" for="net-list">전개도</label><select id="net-list"><option value="-1">처음 모양</option>${CUBE_NETS.map((_,i)=>`<option value="${i}" ${i===explorerIndex?'selected':''}>모양 ${i+1}</option>`).join('')}</select>`;
+  if(mode==='explore')$('mode-tools').innerHTML=`<label class="tool-label" for="shape">상자</label><select id="shape"><option value="cube" ${dimensions[0]===1?'selected':''}>정육면체</option><option value="cuboid" ${dimensions[0]!==1?'selected':''}>직육면체 · 4 × 3 × 2</option></select><label class="tool-label" for="net-list">전개도</label><select id="net-list"><option value="-1">기본 모양</option>${CUBE_NETS.map((_,i)=>`<option value="${i}" ${i===explorerIndex?'selected':''}>모양 ${i+1}</option>`).join('')}</select>`;
   else if(mode==='lesson')$('mode-tools').innerHTML=`<label class="tool-label" for="practice">활동</label><select id="practice">${CHAPTERS.filter((c,i)=>stageOpen(stageResults(),i)).map(c=>`<option value="bank:${c.id}" ${practice==='bank:'+c.id?'selected':''}>${c.title} · ${c.count}문제</option>`).join('')}</select><label class="tool-label" for="assistance">접기 도움</label><select id="assistance"><option value="auto" ${assistance==='auto'?'selected':''}>점점 혼자 해 보기</option><option value="guided" ${assistance==='guided'?'selected':''}>함께 접으며 풀기</option><option value="predict" ${assistance==='predict'?'selected':''}>먼저 예상하기</option></select>`;
   else $('mode-tools').innerHTML='<span class="pill">정육면체 만들기</span><span class="muted">빈칸을 누르면 면이 생겨요. 다시 누르면 지워져요.</span>';
 }
@@ -499,8 +499,8 @@ function startMode(next){pendingFaces=[];clearPenalty();
   $('model-title').textContent='접어서 확인';
   document.querySelector('.fold-more').open=false;
   document.querySelector('.view-settings').open=false;
-  $('activity-settings').open=false;$('settings-label').textContent=mode==='lesson'?'활동과 도움 고르기':mode==='create'?'만드는 방법 보기':'다른 모양';
-  $('shape-position').textContent=explorerIndex<0?'처음':`${explorerIndex+1} / 11`;
+  $('activity-settings').open=false;$('settings-label').textContent=mode==='lesson'?'활동과 도움 고르기':mode==='create'?'만드는 방법 보기':`다른 모양 · ${dimensions[0]===1?'정육면체':'직육면체'}`;
+  $('shape-position').textContent=explorerIndex<0?'기본 모양':`모양 ${explorerIndex+1} / 11`;
   document.querySelectorAll('button[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode||b.dataset.mode==='path'&&mode==='lesson')));
   $('lesson-progress').hidden=mode!=='lesson';$('hint').hidden=mode!=='lesson';$('check').hidden=mode==='explore';$('next').hidden=true;$('check').disabled=mode!=='create';
   if(mode==='path'){renderPath();return;}

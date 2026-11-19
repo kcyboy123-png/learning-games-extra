@@ -539,6 +539,13 @@ body[data-mode=explore] .shape-pager span{font-size:15px}
 #entrance video{width:100%;height:100%;min-height:0;aspect-ratio:auto;object-fit:contain}
 #entrance-status{font-size:16px;color:#f2d5ab}
 body.entrance-open{overflow:hidden}
+@media(min-width:900px) and (max-height:700px){
+ body[data-mode=explore] .activity-header{flex-direction:row;align-items:center;gap:20px}
+ body[data-mode=explore] .activity-bar{width:auto;flex:0 0 auto}
+ body[data-mode=explore] .task-heading{width:auto;flex:1}
+ body[data-mode=explore] .task-heading h1{font-size:26px;margin:0}
+ body[data-mode=explore].direct-fold #net-wrap{height:clamp(240px,calc(100dvh - 342px),340px);min-height:240px}
+}
 
 /* Keep the stage grid within the first tablet view. */
 .path-intro{margin:0;padding:4px 0}.path-intro h1{margin:8px 0}.stage-rules{margin-bottom:8px}.stage-orb svg{display:block}.chapter-card:focus-visible{outline:3px solid #f4d5a1;outline-offset:4px}.chapter-card[disabled]{opacity:1;color:#aaaeb4}.chapter-card[disabled] .stage-orb{color:#a7a8ab}.chapter-card.completed .stage-orb{background:#ead0a822;border-color:#d2b38266;color:#e7c799}
@@ -572,7 +579,7 @@ body[data-mode=explore].direct-fold #face-taps{
 #face-taps button[aria-pressed=true]{background:linear-gradient(145deg,#ffe5b7,#e7bd83);border-color:#fff0d2;color:#292724;box-shadow:inset 0 1px 2px #fff7,0 2px 6px #0004}
 #face-taps button:active:not(:disabled){box-shadow:inset 0 2px 5px #0005;background:#4b4237}
 #face-taps button[aria-pressed=true]:active:not(:disabled){background:#dfb577}
-#face-taps button:disabled{opacity:1;background:#2d2e30;color:#999b9e;border-color:#ffffff0a;box-shadow:none}
+#face-taps button:disabled{opacity:1;background:#2d2e30;color:#c8cbd0;border-color:#ffffff0a;box-shadow:none}
 #face-taps button small{font-size:12px;line-height:1.25;letter-spacing:0}
 #face-taps [data-action=reset-camera]{background:#ffffff06;border:1px solid #ffffff1a;box-shadow:none;color:#dbd7d0;margin-left:4px}
 button.primary{background:linear-gradient(155deg,#ffe5b9,#ecc68f 65%,#d5ab74);box-shadow:inset 0 1px 2px #fff8,inset 0 -1px 2px #a7793c40,0 5px 12px #0003}
