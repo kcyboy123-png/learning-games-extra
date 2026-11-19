@@ -79,8 +79,12 @@ export function createNetBoard(opts = {}) {
         const blank = opts.blank && opts.blank.piece === p.id;
         const wText = blank && opts.blank.side === 'w' ? '?' : `${p.w}`;
         const hText = blank && opts.blank.side === 'h' ? '?' : `${p.h}`;
+        if(opts.postal&&!blank&&p.w*cell<40&&p.h*cell<40){
+          gLabels.append(svg('text',{x:dx+p.w*cell/2,y:dy+p.h*cell/2+4,class:'label compact-length','text-anchor':'middle',text:`${p.w}×${p.h}`,style:'font-size:12px;stroke-width:2px'}));
+        }else{
         gLabels.append(svg('text', {x: dx + p.w * cell / 2, y: dy + 18, class: 'label', 'text-anchor': 'middle', text: wText, style: wText === '?' ? 'fill:#c74b3f;font-size:22px' : ''}));
         gLabels.append(svg('text', {x: dx + 14, y: dy + p.h * cell / 2 + 6, class: 'label', 'text-anchor': 'middle', text: hText, style: hText === '?' ? 'fill:#c74b3f;font-size:22px' : ''}));
+        }
       }
     }
     landed=null;
@@ -346,12 +350,12 @@ function boundsOf(pieces) {
 }
 
 // 정지 상태의 작은 전개도 그림(카드·복습용)
-export function netFigure(pieces, {size = 150, showLengths = false, blanks = []} = {}) {
+export function netFigure(pieces, {size = 150, showLengths = false, blanks = [], labelSize} = {}) {
   const b = boundsOf(pieces);
   const s = Math.min((size - 20) / Math.max(b.w, 1), (size - 20) / Math.max(b.h, 1));
   const el = svg('svg', {viewBox: `0 0 ${size} ${size}`, width: size, height: size, 'aria-hidden': 'true'});
   const offX = (size - b.w * s) / 2 - b.x * s, offY = (size - b.h * s) / 2 - b.y * s;
-  const fs = size >= 250 ? 16 : 13;
+  const fs = labelSize || (size >= 250 ? 16 : 13);
   for (const p of pieces) {
     el.append(svg('rect', {x: p.x * s + offX, y: p.y * s + offY, width: p.w * s, height: p.h * s, class: 'piece'}));
     if (showLengths) {
@@ -360,8 +364,8 @@ export function netFigure(pieces, {size = 150, showLengths = false, blanks = []}
         el.append(svg('text',{x:p.x*s+offX+p.w*s/2,y:p.y*s+offY+p.h*s/2+4,class:'label',style:'font-size:11px;stroke-width:2px','text-anchor':'middle',text:`${p.w}×${p.h}`}));
         continue;
       }
-      el.append(svg('text', {x: p.x * s + offX + p.w * s / 2, y: p.y * s + offY + fs + 2, class: 'label', style: `font-size:${fs}px${bw ? ';fill:#c74b3f' : ''}`, 'text-anchor': 'middle', text: bw ? (bw.label || '?') : p.w}));
-      el.append(svg('text', {x: p.x * s + offX + fs - 2, y: p.y * s + offY + p.h * s / 2 + 5, class: 'label', style: `font-size:${fs}px${bh ? ';fill:#c74b3f' : ''}`, 'text-anchor': 'middle', text: bh ? (bh.label || '?') : p.h}));
+      el.append(svg('text', {x: p.x * s + offX + p.w * s / 2, y: p.y * s + offY + fs + 2, class: 'label', 'data-blank-id':bw?.id||'', style: `font-size:${fs}px${bw ? ';fill:#c74b3f' : ''}`, 'text-anchor': 'middle', text: bw ? (bw.label || '?') : p.w}));
+      el.append(svg('text', {x: p.x * s + offX + fs - 2, y: p.y * s + offY + p.h * s / 2 + 5, class: 'label', 'data-blank-id':bh?.id||'', style: `font-size:${fs}px${bh ? ';fill:#c74b3f' : ''}`, 'text-anchor': 'middle', text: bh ? (bh.label || '?') : p.h}));
     }
   }
   const {full} = adjacency(pieces);
@@ -373,6 +377,7 @@ export function netFigure(pieces, {size = 150, showLengths = false, blanks = []}
     el.append(svg('line', {x1: pts[0][0] * s + offX, y1: pts[0][1] * s + offY, x2: pts[1][0] * s + offX, y2: pts[1][1] * s + offY, stroke: '#f6efd9', 'stroke-width': 3}));
     el.append(svg('line', {x1: pts[0][0] * s + offX, y1: pts[0][1] * s + offY, x2: pts[1][0] * s + offX, y2: pts[1][1] * s + offY, class: 'fold', style: 'stroke-width:2;stroke-dasharray:5 4'}));
   }
+  for(const blank of blanks){const p=pieces.find(p=>p.id===blank.piece);if(!p)continue;const x=p.x*s+offX,y=p.y*s+offY;el.append(svg('line',{x1:x,y1:y,x2:x+(blank.side==='w'?p.w*s:0),y2:y+(blank.side==='h'?p.h*s:0),class:'blank-guide','data-blank-id':blank.id,'pointer-events':'none'}));}
   return el;
 }
 

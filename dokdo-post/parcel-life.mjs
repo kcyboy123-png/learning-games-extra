@@ -1,5 +1,5 @@
 import {sfx} from './math/ui/audio.mjs?v=audio-journey-20261117';
-import {itemImage,portrait,STORIES} from './story.mjs?v=gift-focus-20261118';
+import {itemImage,portrait,STORIES} from './story.mjs?v=gifts-math-final-20261119';
 import {findActivity} from './math/data/workshops.mjs';
 
 // Use the actual lesson box; robot limbs are parts, not the shipping carton.
@@ -61,13 +61,28 @@ export function parcelCustomizer(progress,id,save){
 export const USE_CAPTIONS=['컵을 들어 따뜻한 차를 마셔요.','마을 사진 액자를 책상 위에 세워요.','기록장을 펼쳐 오늘의 바다를 적어요.','등불을 켜고 저녁 편지를 읽어요.','간식 상자를 열고 함께 나눠 먹어요.','종이 우체부 옆에서 답장을 써요.','마을 친구들의 편지를 펼쳐 읽어요.'];
 export function giftUseScene(id,look,assetBase=''){
   const scene=el('figure','gift-use');scene.dataset.gift=id;
+  scene.classList.add('gift-cinematic');
   const art=el('div','gift-use-art');art.setAttribute('role','img');art.setAttribute('aria-label',USE_CAPTIONS[id]);
   const receiver=el('img','gift-receiver');receiver.src=assetBase+portrait(id<3?1:3);receiver.alt='';
   const gift=el('img','gift-in-use');gift.src=itemImage(id);gift.alt='';
   art.append(el('div','gift-table'),receiver,gift,el('span','use-effect',id===0?'〰':id===1||id===3?'✧':id===4?'●':id===6?'♡':'✎'));
   const parcel=parcelPicture(look);parcel.classList.add('delivered-parcel');art.append(parcel);
   scene.append(art,el('figcaption',null,USE_CAPTIONS[id]));
-  const replay=el('button','replay-gift','다시 보기');replay.type='button';replay.onclick=()=>{art.classList.remove('playing');void art.offsetWidth;art.classList.add('playing');};scene.append(replay);art.classList.add('playing');return scene;
+  if(id===0){const steam=el('span','gift-steam');steam.setAttribute('aria-hidden','true');for(let i=0;i<3;i++)steam.append(el('i'));art.append(steam);}
+  {const glints=el('span','gift-glints','✧  ·  ✦');glints.setAttribute('aria-hidden','true');art.append(glints);}
+  const play=()=>{
+    for(const n of [receiver,gift])n.getAnimations().forEach(a=>a.cancel());
+    art.classList.remove('playing');void art.offsetWidth;art.classList.add('playing');
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const duration=5200,easing='ease-in-out';
+    receiver.animate([{transform:'translateY(8px) rotate(-3deg)',offset:0},{transform:'none',offset:.18},{transform:'rotate(3deg)',offset:.5},{transform:'none',offset:1}],{duration,easing});
+    if(id===0){
+      const dx=receiver.offsetLeft+receiver.offsetWidth*.62-gift.offsetLeft-gift.offsetWidth*.5,dy=receiver.offsetTop+receiver.offsetHeight*.44-gift.offsetTop-gift.offsetHeight*.5;
+      const sip=`translate(${dx}px,${dy}px) rotate(-12deg) scale(.66)`;
+      gift.animate([{transform:'translateY(4px)',offset:0},{transform:'none',offset:.15},{transform:sip,offset:.4},{transform:sip,offset:.65},{transform:'none',offset:.86},{transform:'none',offset:1}],{duration,easing});
+    }else gift.animate([{transform:'translate(25px,-24px) rotate(12deg)',opacity:.3,offset:0},{transform:'translate(0,-10px) rotate(-5deg)',opacity:1,offset:.28},{transform:'translateY(2px) rotate(2deg)',offset:.48},{transform:'none',offset:.6},{transform:'none',offset:1}],{duration,easing});
+  };
+  const replay=el('button','replay-gift','다시 보기');replay.type='button';replay.onclick=play;scene.append(replay);requestAnimationFrame(()=>{if(scene.isConnected)play();});return scene;
 }
 export function packingMoment(id,phase){
   const root=el('div','packing-moment'),art=el('div','packing-action-art'),gift=el('img','packing-action-gift');gift.src=itemImage(id);gift.alt='';art.append(parcelPicture({ribbon:'leaf',stamp:'leaf'}),gift);root.append(art);

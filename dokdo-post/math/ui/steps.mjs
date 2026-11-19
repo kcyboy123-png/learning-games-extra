@@ -1,12 +1,13 @@
 import {postalCut} from './postal-cut.mjs?v=gift-focus-20261118';
+import {paperSurface} from './paper-surface.mjs?v=carton-material-20261119';
 // 단계(step) 종류별 조작 화면. 각 렌더러는 {el, tools, getAnswer, markWrong, afterCheck?, undo?} 를 돌려준다.
 // 채점은 data/workshops.mjs의 check가 하고, 여기서는 답을 모으고 틀린 부분만 표시한다.
 import {cuboid, faceDims, FACE_LABEL, STANDARD_VIEW} from '../lib/geometry.mjs';
 import {unfoldByFolds} from '../lib/net.mjs';
 import {planBoard} from '../lib/board-layout.mjs';
-import {createSolidView, meshFor, solidFigure} from './solid-view.mjs?v=ui-journey-20261118';
-import {createSketchView, orthoFigure, sketchFigure, fullEdges} from './sketch-view.mjs?v=ui-journey-20261118';
-import {createNetBoard, netFigure, createFoldView} from './net-board.mjs?v=ui-journey-20261118';
+import {createSolidView, meshFor, solidFigure} from './solid-view.mjs?v=gifts-math-final-20261119';
+import {createSketchView, orthoFigure, sketchFigure, fullEdges} from './sketch-view.mjs?v=gifts-math-final-20261119';
+import {createNetBoard, netFigure, createFoldView} from './net-board.mjs?v=hint-free-play-20261120';
 import {createRobotView} from './robot-view.mjs?v=ui-journey-20261118';
 import {node, svg, button, setPressed, clear, announce, reducedMotion, pressable} from './dom.mjs?v=tactile-audit-e-20261118';
 
@@ -25,11 +26,14 @@ const RENDERERS = {
     const dims = step.dims;
     const answer = {face: ctx.postal ? 'front' : null, shapes: []};
     const panel = node('div', {class: 'panel', style: {minWidth: '300px'}});
-    const view = createSolidView({postal:ctx.postal,dims, mode: 'peel', faceLabels: true, onSelect: (kind, id) => { if(answer.face!==id)answer.shapes=[]; answer.face = id; drawPanel(); }});
-    const bRect = button(ctx.postal?'길이가 달라요':'직사각형이에요', () => toggleShape('rect'), {attrs: {'aria-pressed': 'false'}});
-    const bSquare = button(ctx.postal?'모두 같아요':'정사각형이에요', () => toggleShape('square'), {attrs: {'aria-pressed': 'false'}});
+    const view = createSolidView({postal:ctx.postal,dims, yaw:ctx.postal?.48:undefined,pitch:ctx.postal?.38:undefined,scale:ctx.postal?410/Math.hypot(dims.x,dims.y,dims.z):undefined, mode: 'peel', faceLabels: !ctx.postal, onSelect: (kind, id) => { if(answer.face!==id)answer.shapes=[]; answer.face = id; drawPanel(); }});
+    const bRect = button(ctx.postal?'달라요':'직사각형이에요', ctx.postal?null:() => toggleShape('rect'), {attrs: {'aria-pressed': 'false'}});
+    const bSquare = button(ctx.postal?'같아요':'정사각형이에요', ctx.postal?null:() => toggleShape('square'), {attrs: {'aria-pressed': 'false'}});
+    if(ctx.postal){pressable(bRect,()=>toggleShape('rect'),'길이가 달라요');pressable(bSquare,()=>toggleShape('square'),'모두 같아요');}
     const el = node('div', {class: ctx.postal?'peel-workflow':'row', style: {gap: '24px'}}, [view.el, panel]);
     if(ctx.postal){
+      const connection=svg('svg',{class:'peel-connection',viewBox:'0 0 1000 400','aria-hidden':'true'});
+      connection.append(svg('path',{d:'M340 253 Q440 309 554 255',fill:'none',stroke:'#fff8df','stroke-width':5,'stroke-linecap':'round','stroke-dasharray':'6 12'}),svg('path',{d:'M541 249 L560 252 L551 269',fill:'none',stroke:'#fff8df','stroke-width':5,'stroke-linejoin':'round','stroke-linecap':'round'}));el.append(connection);
       for(const [b,square] of [[bRect,false],[bSquare,true]]){
         b.classList.add('shape-answer');const icon=svg('svg',{viewBox:'0 0 100 70','aria-hidden':'true'});
         icon.append(svg('rect',{x:square?25:10,y:10,width:square?50:80,height:50,rx:2,fill:'#e2ecd4',stroke:'#42664f','stroke-width':3}));b.prepend(icon);
@@ -50,10 +54,13 @@ const RENDERERS = {
       ctx.onGuide?.(answer.shapes.length?'selected':answer.face?'shape':'face');
       if (!answer.face) { panel.append(node('h3', {text: '① 상자의 넓은 면을 톡!'}), node('p', {class: 'note', text: '윗면·앞면·옆면 중 어디든 눌러 보세요.'}),node('p',{class:'peel-preview',text:'면을 고르면 → 여기에서 크게 펼쳐 봐요'})); return; }
       const [w, h] = faceDims(dims, answer.face);
-      const s = Math.min(40, 180 / Math.max(w, h));
+      const s = Math.min(ctx.postal?48:40, (ctx.postal?192:180) / Math.max(w, h));
       const fig = svg('svg', {viewBox: '-140 -110 280 220', width: 280, height: 220, role: 'img', 'aria-label': `${FACE_LABEL[answer.face]} ${w}cm×${h}cm`});
       const x = -w * s / 2, y = -h * s / 2;
-      fig.append(svg('rect', {x, y, width: w * s, height: h * s, fill: '#fff3c4', stroke: '#4a3418', 'stroke-width': 3}));
+      fig.append(svg('rect', {x, y, width: w * s, height: h * s, fill: ctx.postal?'#efd09a':'#fff3c4', stroke: '#785432', 'stroke-width': 2.5}));
+      if(ctx.postal){
+        fig.append(svg('rect',{x,y,width:w*s,height:h*s,fill:paperSurface(fig,true),opacity:.22,'pointer-events':'none'}),svg('path',{d:`M${x+2} ${y+h*s-2}H${x+w*s-2}V${y+2}`,fill:'none',stroke:'#b58a52','stroke-width':2,'pointer-events':'none'}));
+      }
       for (const [cx, cy, sx, sy] of [[x, y, 1, 1], [x + w * s, y, -1, 1], [x + w * s, y + h * s, -1, -1], [x, y + h * s, 1, -1]]) {
         fig.append(svg('path', {d: `M${cx + sx * 14},${cy} L${cx + sx * 14},${cy + sy * 14} L${cx},${cy + sy * 14}`, fill: 'none', stroke: '#c74b3f', 'stroke-width': 2.5}));
       }
@@ -61,12 +68,12 @@ const RENDERERS = {
       fig.append(svg('text', {x: x - 26, y: 6, class: 'label', 'text-anchor': 'middle', text: `${h}cm`}));
       fig.append(svg('text', {x: 0, y: y + h * s + 24, class: 'label', 'text-anchor': 'middle', text: ctx.postal?`${w}cm`: `${FACE_LABEL[answer.face]}: 네 각이 모두 직각`}));
       if(ctx.postal)fig.append(svg('text',{x:-x+26,y:6,class:'label','text-anchor':'middle',text:`${h}cm`}));
-      panel.append(node('h3', {text: ctx.postal?'상자 앞면의 종이':'② 이 면은 어떤 모양인가요?'}), fig, node('p', {class: 'note', text: ctx.postal?'아래에서 하나만 골라요.':'맞는 이름을 모두 눌러요. 두 개를 고를 수도 있어요.'}), node('div', {class: 'shape-answers row'}, [bRect, bSquare]));
+      panel.append(node('h3', {text: ctx.postal?`${FACE_LABEL[answer.face]}에서 떼어 낸 종이`:'② 이 면은 어떤 모양인가요?'}), fig, node('p', {class: 'note', text: ctx.postal?'하나만 골라요':'맞는 이름을 모두 눌러요. 두 개를 고를 수도 있어요.'}), node('div', {class: 'shape-answers row'}, [bRect, bSquare]));
     }
-    if(ctx.postal){el.classList.add('one-choice-face');view.el.hidden=true;view.state.peeled=answer.face;view.redraw();}
+    if(ctx.postal){el.classList.add('one-choice-face','parcel-face');view.state.peeled=answer.face;view.redraw();}
     drawPanel();
     const rotateTools=ctx.postal?node('details',{class:'peel-rotate'},[node('summary',{text:'상자 돌려 보기'}),view.controls]):view.controls;
-    return {el, tools: ctx.postal?[]:[rotateTools], getAnswer: () => ({face: answer.face, shapes: answer.shapes.slice()}),
+    return {el, tools: [rotateTools], getAnswer: () => ({face: answer.face, shapes: answer.shapes.slice()}),
       ready:()=>Boolean(answer.face&&answer.shapes.length),
       restore(a) { answer.face=a.face||(ctx.postal?'front':null); answer.shapes=ctx.postal&&a.shapes?.length?(a.shapes.includes('square')?['rect','square']:['rect']):[...(a.shapes||[])];view.state.peeled=answer.face;view.redraw(); drawPanel();ctx.onGuide?.(answer.shapes.length?'selected':answer.face?'shape':'face'); },
       markWrong(result) { for (const id of result.wrong || []) (id === 'rect' ? bRect : bSquare).classList.add('wrong'); }};
@@ -250,6 +257,15 @@ const RENDERERS = {
       buttons.set(o.id, b); cards.append(b);
     }
     const wrap = node('div', {style: {display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center'}});
+    if(ctx.postal&&ctx.activityId==='w1-r3'){
+      wrap.classList.add('shape-comparison');
+      const ref=node('div',{class:'choice-reference','aria-label':'두 상자를 보고 비교해요'});
+      for(const [name,dims] of [['직육면체',{x:4,y:3,z:2}],['정육면체',{x:3,y:3,z:3}]]){
+        const figure=solidFigure({kind:'cuboid',dims},{size:110});
+        ref.append(node('figure',{},[figure.el,node('figcaption',{text:name})]));
+      }
+      wrap.append(ref);
+    }
     if (step.figureCells) wrap.append(node('div', {class: 'panel'}, [node('h3', {text: '이 모양'}), netFigure(cellsToPieces(step.figureCells), {size: 180})]));
     wrap.append(cards);
     if (multi) wrap.append(node('p', {class: 'note', text: '맞는 것을 모두 골라요.'}));
@@ -258,20 +274,21 @@ const RENDERERS = {
 
   // ---- 빈칸·고르기 입력 ----
   fill(step,ctx={}) {
+    const displayLabel=text=>ctx.postal?text.replace(/^([ㄱㄴㄷ])$/,step.figure?.net?'$1의 길이':'$1').replace('직육면체(4×3×2) 모서리의 길이','길이가 4cm · 3cm · 2cm인 상자\n모서리 길이는?').replace(/^보이지 않는 /,'가려진 ').replace(/^보이는 /,'실제로 눈에 보이는 ').replace(/^(면|모서리|꼭짓점)$/,ctx.activityId==='w2-r2'?'$1 전체':'$1'):text;
     const inputs = new Map();
     const fields = node('div', {class: 'fields'});
     for (const f of step.fields || []) {
-      const inp = node('input', {type: 'text', inputmode: 'numeric', pattern: '[0-9]*', id: `f-${f.id}`, 'aria-label': f.label});
+      const inp = node('input', {type: 'text', inputmode: 'numeric', pattern: '[0-9]*', id: `f-${f.id}`, 'aria-label': displayLabel(f.label)});
       inp.addEventListener('input', () => inp.parentElement.classList.remove('wrong'));
-      const row = node('div', {class: 'field'}, [node('label', {for: `f-${f.id}`, text: f.label}), inp, node('span', {class: 'unit', text: f.unit || ''})]);
+      const row = node('div', {class: 'field'}, [node('label', {for: `f-${f.id}`, text: displayLabel(f.label)}), inp, node('span', {class: 'unit', text: f.unit || ''})]);
       inputs.set(f.id, {el: inp, row}); fields.append(row);
     }
     for (const s of step.selects || []) {
-      const sel = node('select', {id: `s-${s.id}`, 'aria-label': s.label});
+      const sel = node('select', {id: `s-${s.id}`, 'aria-label': displayLabel(s.label)});
       sel.append(node('option', {value: '', text: '고르기'}));
       for (const o of s.options) sel.append(node('option', {value: o, text: o}));
       sel.addEventListener('change', () => sel.parentElement.classList.remove('wrong'));
-      const row = node('div', {class: 'field'}, [node('label', {for: `s-${s.id}`, text: s.label}), sel]);
+      const row = node('div', {class: 'field'}, [node('label', {for: `s-${s.id}`, text: displayLabel(s.label)}), sel]);
       inputs.set(s.id, {el: sel, row}); fields.append(row);
     }
     let fieldIndex=0;
@@ -286,7 +303,7 @@ const RENDERERS = {
     const fieldNav=node('div',{class:'field-nav'},[previous,fieldPosition,next]);
     function showField(index,focus=false){
       fieldIndex=Math.max(0,Math.min(index,rows.length-1));
-      if(ctx.postal&&rows.length>1){rows.forEach((r,i)=>r.row.hidden=i!==fieldIndex);previous.disabled=fieldIndex===0;const missing=rows.findIndex(r=>!r.el.value.trim());next.disabled=fieldIndex===rows.length-1&&(missing<0||missing===fieldIndex);next.querySelector('span:last-child').textContent=fieldIndex===rows.length-1&&missing<0?'입력 완료':fieldIndex===rows.length-1&&missing===fieldIndex?'이 빈칸을 채워요':fieldIndex===rows.length-1&&missing>=0?'남은 빈칸으로':'다음 빈칸';fieldPosition.textContent=`빈칸 ${fieldIndex+1}/${rows.length} · ${rows.filter(r=>r.el.value.trim()).length}개 입력`;}
+      if(ctx.postal&&rows.length>1){rows.forEach((r,i)=>r.row.hidden=i!==fieldIndex);previous.disabled=fieldIndex===0;const missing=rows.findIndex(r=>!r.el.value.trim());next.disabled=fieldIndex===rows.length-1&&(missing<0||missing===fieldIndex);next.querySelector('span:last-child').textContent=fieldIndex===rows.length-1&&missing<0?'입력 완료':fieldIndex===rows.length-1&&missing===fieldIndex?(rows[fieldIndex].el.tagName==='SELECT'?'먼저 골라요':'먼저 적어요'):fieldIndex===rows.length-1&&missing>=0?'남은 빈칸':'다음 빈칸';fieldPosition.textContent=`${fieldIndex+1} / ${rows.length}`;}
       if(focus)rows[fieldIndex]?.el.focus();
       updateReference();
     }
@@ -294,7 +311,7 @@ const RENDERERS = {
     if(ctx.postal)rows.forEach(r=>r.el.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing&&r.el.tagName==='INPUT'){e.preventDefault();if(!e.repeat&&r.el.value.trim()&&!next.disabled)next.click();}}));
     showField(0);
     const wrap = node('div', {class:ctx.postal?'answer-workbench':'',style: {display: 'flex', gap: '24px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center'}});
-    const fig = step.figure;
+    const fig = step.figure || (ctx.postal&&step.fields?.some(f=>f.id==='fv')&&step.fields?.some(f=>f.id==='fh')?{dims:{x:4,y:3,z:2},sketch:true}:null);
     let figView = null;
     if(ctx.postal&&!fig&&['w1-m4','w2-m4'].includes(ctx.activityId)){
       const reference=node('div',{class:'parcel-reference'}),cards=[];
@@ -306,7 +323,11 @@ const RENDERERS = {
       updateReference=()=>{const label=rows[fieldIndex]?.row.querySelector('label')?.textContent||'';const target=label.includes('정육면체')?'정육면체':label.includes('직육면체')?'직육면체':null;cards.forEach(({name,card})=>card.classList.toggle('current-reference',!target||target===name));};
       updateReference();
     }
-    if (fig?.net) wrap.append(node('div', {class: 'panel'}, [node('h3', {text: '전개도'}), netFigure(fig.net.pieces, {size: 300, showLengths: true, blanks: fig.blanks.map((b, i) => ({...b, label: ['ㄱ', 'ㄴ', 'ㄷ'][i]}))}), blanksFigure(fig)]));
+    if (fig?.net) {
+      const diagram=netFigure(fig.net.pieces,{size:300,showLengths:true,labelSize:ctx.postal?22:undefined,blanks:fig.blanks.map((b,i)=>({...b,label:['ㄱ','ㄴ','ㄷ'][i]}))});
+      wrap.append(node('div',{class:'panel net-reference'},[node('h3',{text:'표시한 변의 길이'}),diagram,blanksFigure(fig)]));
+      if(ctx.postal){updateReference=()=>{const id=[...inputs.keys()][fieldIndex];diagram.querySelectorAll('[data-blank-id]').forEach(e=>e.classList.toggle('current-blank',e.dataset.blankId===id));};updateReference();}
+    }
     else if (fig?.marks) {
       const edgeLabels = {}, vertexLabels = {}, faceMarks = {};
       for (const m of fig.marks) (m.type === 'edge' ? edgeLabels : m.type === 'vertex' ? vertexLabels : faceMarks)[m.id] = m.label;
@@ -331,7 +352,7 @@ const RENDERERS = {
     let undo;
     const sk = createSketchView({dims: step.dims, view, edges, tool: step.tool, showLengths: step.showLengths, width: 480, height: 380,onGuide:ctx.onGuide,onHistory:available=>{if(undo)undo.disabled=!available;}});
     undo = button('되돌리기', () => sk.undo(), {cls: 'small', icon: '↶',attrs:{disabled:true}});
-    const reveal = button('투명 보기', () => sk.reveal(true), {cls: 'small'});
+    const reveal = button(ctx.postal?'잠깐 비춰 보기':'투명 보기', () => sk.reveal(true), {cls: 'small'});
     const side = node('div', {class: 'panel', style: {minWidth: '240px'}}, [
       node('h3', {text: step.tool === 'draw' ? '① 선 종류 고르기' : '바꿀 선을 톡!'}),
       step.tool === 'draw' ? sk.typeButtons : null,
@@ -516,7 +537,7 @@ const RENDERERS = {
     for (const s of step.solids) {
       links[s.id] = {sketch: '', net: ''};
       const fig = solidFigure({kind: 'cuboid', dims: s.dims}, {size: 120});
-      const solidCell = node('div', {class: 'cell'}, [fig.el, node('div', {class: 'mini', text: s.name})]);
+      const solidCell = node('div', {class: 'cell'}, [fig.el, node('div', {class: 'mini', text: ctx.postal?s.name.replace(/(\d+)×(\d+)×(\d+)/g,'$1cm · $2cm · $3cm'):s.name})]);
       const mkSelect = (kind, letters, items) => {
         const sel = node('select', {'aria-label': `${s.name}의 ${kind === 'sketch' ? '겨냥도' : '전개도'}`});
         sel.append(node('option', {value: '', text: '고르기'}));
@@ -550,7 +571,7 @@ const RENDERERS = {
       if(!ctx.postal)return;
       matchIndex=Math.max(0,Math.min(index,matches.length-1));
       const {s,kind}=matches[matchIndex],row=step.solids.indexOf(s);
-      matchLabel.textContent=s.name+' · 맞는 '+(kind==='sketch'?'겨냥도':'전개도')+' 그림을 눌러요';
+      matchLabel.textContent=s.name.replace(/(\d+)×(\d+)×(\d+)/g,'$1cm · $2cm · $3cm')+' · 맞는 '+(kind==='sketch'?'겨냥도':'전개도')+' 그림을 눌러요';
       [...table.children].forEach((cell,i)=>cell.hidden=!(i===3+row*3||i===3+row*3+(kind==='sketch'?1:2)));
       [...legend.children].forEach((cell,i)=>cell.hidden=kind==='sketch'?i>=step.sketches.length:i<step.sketches.length);
       [...legend.children].forEach(cell=>{const picked=cell.dataset.kind===kind&&cell.dataset.option===links[s.id][kind];setPressed(cell,picked);cell.classList.toggle('wrong',picked&&cells.get(s.id+':'+kind).classList.contains('wrong'));});
@@ -559,7 +580,7 @@ const RENDERERS = {
     }
     cells.forEach(cell=>cell.querySelector('select').addEventListener('change',()=>showMatch(matchIndex)));
     showMatch(0);
-    return {el, tools: [], getAnswer: () => ({links: JSON.parse(JSON.stringify(links))}), restore(a){for(const [id,value]of Object.entries(a.links||{})){if(!links[id])continue;links[id]={...value};for(const k of ['sketch','net']){const cell=cells.get(id+':'+k);cell.querySelector('select').value=value[k]||'';cell.classList.toggle('answered',Boolean(value[k]));}}const missing=matches.findIndex(({s,kind})=>!links[s.id][kind]);showMatch(missing<0?matches.length-1:missing);}, markWrong(result) { cells.forEach((cell,id)=>{const wrong=(result.wrong||[]).includes(id);cell.classList.toggle('wrong',wrong);cell.querySelector('select').setAttribute('aria-invalid',String(wrong));});const first=matches.findIndex(({s,kind})=>cells.get(s.id+':'+kind).classList.contains('wrong'));showMatch(first>=0?first:matchIndex,first>=0); }};
+    return {el, tools: [], focusFirst(){if(!ctx.postal)el.querySelector('select')?.focus();}, getAnswer: () => ({links: JSON.parse(JSON.stringify(links))}), restore(a){for(const [id,value]of Object.entries(a.links||{})){if(!links[id])continue;links[id]={...value};for(const k of ['sketch','net']){const cell=cells.get(id+':'+k);cell.querySelector('select').value=value[k]||'';cell.classList.toggle('answered',Boolean(value[k]));}}const missing=matches.findIndex(({s,kind})=>!links[s.id][kind]);showMatch(missing<0?matches.length-1:missing);}, markWrong(result) { cells.forEach((cell,id)=>{const wrong=(result.wrong||[]).includes(id);cell.classList.toggle('wrong',wrong);cell.querySelector('select').setAttribute('aria-invalid',String(wrong));});const first=matches.findIndex(({s,kind})=>cells.get(s.id+':'+kind).classList.contains('wrong'));showMatch(first>=0?first:matchIndex,first>=0); }};
   }
 };
 
@@ -569,5 +590,6 @@ function blanksFigure(fig) {
   const labels = ['ㄱ', 'ㄴ', 'ㄷ'];
   return node('p', {class: 'note', text: fig.blanks.map((b, i) => `${labels[i]}: ${names[b.piece]}의 ${b.side === 'w' ? '가로' : '세로'}`).join(' · ')});
 }
+
 
 

@@ -22,6 +22,14 @@ export function postGarden(stops){
    leaf.rotation.y=a;
   }
  }
+ function leafyShrub(x,z,size=1){
+  part(meadow,'sphere','#6d9055',x,.25*size,z,.27*size,.24*size,.28*size);
+  for(let j=0;j<13;j++){
+   const a=j*2.399,r=j<8?.24:.13,y=j<8?.24:.41;
+   const leaf=part(meadow,'sphere',j%2?'#9bb873':'#83a35e',x+Math.sin(a)*r*size,y*size,z+Math.cos(a)*r*size,.12*size,.055*size,.19*size);
+   leaf.rotation.set(.3,a,.22);
+  }
+ }
  for(const [x,y]of [[6.1,12.7],[7.8,12.8],[8.2,12],[8.2,6.2],[6.1,7.6],[12.2,10.3],[14.3,12.3],[13.8,15.6],[12.8,16.5]]){
   const q=toWorld(x,y);grass(q.x,q.z);grass(q.x+.48,q.z+.18,.72);
  }
@@ -45,12 +53,13 @@ export function postGarden(stops){
   // Low greenery frames the back of each doorstep, never the resident's face.
   shrub(q.x-1.65,q.z-1.35,.9);shrub(q.x+1.65,q.z-1.65,.7);
   grass(q.x-2.05,q.z-.95,.8);
-  // A single small mailbox and two loose flower clumps frame each neighbour.
-  box(g,'#a28b66',-1.1,.40,-.65,.075,.8,.075);box(g,colors[i],-1.1,.9,-.65,.44,.38,.34);
-  const roof=box(g,'#6b8c75',-1.1,1.12,-.65,.56,.07,.45);roof.rotation.z=-.08;
-  box(g,'#594d3e',-1.1,.94,-.47,.28,.035,.015);
-  const letter=box(g,'#f8eccf',-1.08,.99,-.45,.20,.12,.018);letter.rotation.z=.12;box(g,colors[i],-1.08,.99,-.435,.04,.035,.012);
-  const name=sign(g,['모모','단단','여울','솔이','보리','꼬미'][i],-1.1,.80,-.445);name.scale.set(.32,.32,1);
+  // Bori's approach passes left of the resident; tuck the mailbox behind that approach.
+  const mailbox=new T.Group();mailbox.position.set(i===4?-.65:0,0,i===4?-.85:0);g.add(mailbox);
+  box(mailbox,'#a28b66',-1.1,.40,-.65,.075,.8,.075);box(mailbox,colors[i],-1.1,.9,-.65,.44,.38,.34);
+  const roof=box(mailbox,'#6b8c75',-1.1,1.12,-.65,.56,.07,.45);roof.rotation.z=-.08;
+  box(mailbox,'#594d3e',-1.1,.94,-.47,.28,.035,.015);
+  const letter=box(mailbox,'#f8eccf',-1.08,.99,-.45,.20,.12,.018);letter.rotation.z=.12;box(mailbox,colors[i],-1.08,.99,-.435,.04,.035,.012);
+  const name=sign(mailbox,['모모','단단','여울','솔이','보리','꼬미'][i],-1.1,.80,-.445);name.scale.set(.32,.32,1);
   flowers(g,-1.4,-.9,colors[i],5);flowers(g,1.4,-1.0,i%2?'#fff0c9':'#e2c1cd',3);
   // Each neighbour's small still life matches the parcel in their story.
   const x=1.15,z=-1.2;
@@ -62,7 +71,7 @@ export function postGarden(stops){
   if(i===4){box(g,'#d7b37d',x,.55,z,.43,.18,.28);for(const dx of [-.1,.1])part(g,'cylinder','#edce91',x+dx,.66,z,.08,.035,.08);}
   if(i===5){for(let j=0;j<3;j++)box(g,'#f7eacc',x,.49+j*.024,z,.35,.02,.23);box(g,'#8fa88d',x,.565,z,.05,.01,.23);}
   batchParts(g);
-  const reply=new T.Group();reply.name='도착한 답장 '+i;g.add(reply);
+  const reply=new T.Group();reply.name='도착한 답장 '+i;reply.position.copy(mailbox.position);g.add(reply);
   box(reply,'#fff4d8',-1.1,1.25,-.65,.32,.22,.025);box(reply,'#b59358',-1.1,1.25,-.63,.065,.065,.016);
   const flap=box(reply,'#d6c49e',-1.1,1.29,-.632,.22,.018,.01);flap.rotation.z=-.25;reply.visible=false;replies.push(reply);
  }
@@ -109,7 +118,12 @@ export function postGarden(stops){
    box(g,'#b39367',-.7,.28,-.95,.38,.36,.3);box(g,'#e5d1a6',-.7,.47,-.95,.42,.04,.34);
    const handle=new T.Mesh(new T.TorusGeometry(.12,.018,5,12,Math.PI),new T.MeshStandardMaterial({color:'#987d56',roughness:1}));handle.position.set(-.7,.49,-.95);g.add(handle);
   }
-  sign(g,title,-.15,1.12,-1.05);box(g,'#a58b63',-.15,.56,-1.07,.07,1.12,.07);batchParts(g);
+  const signX=cell[0]===8?-.15:-1.55;
+  const signHeight=cell[0]===8?1.12:.58;
+  const board=sign(g,title,signX,signHeight,-1.05);
+  // The harbour approach passes beside this sign; keep it below the player's face.
+  if(cell[0]!==8)board.scale.set(.75,.75,1);
+  box(g,'#a58b63',signX,signHeight/2,-1.07,.07,signHeight,.07);batchParts(g);
  }
 
  // A low flower patch replaces the canopy that obscured the post-office approach.
@@ -134,6 +148,32 @@ export function postGarden(stops){
  const bird=toWorld(8.1,9.6);box(woodland,'#ac9873',bird.x,.6,bird.z,.07,1.2,.07);
  box(woodland,'#e5d4ad',bird.x,1.3,bird.z,.34,.4,.28);const roof=box(woodland,'#8fa081',bird.x,1.55,bird.z,.44,.07,.38);roof.rotation.z=-.13;
  part(woodland,'sphere','#776a50',bird.x,1.32,bird.z+.145,.065,.065,.012);
+ // Layered beds join the woodland to the cottages without adding signs or gates.
+ for(const [i,cell]of [[5.8,12.5],[6,13.4],[7.8,13.2],[8.5,12.5],[9.8,12.7],
+  [5.8,9.6],[7.9,9.4],[8.1,10.1],[9.8,9.4],[4.4,7.8],[6,5.8],
+  [8,5.9],[9.9,4.6],[12.2,9.1],[14.3,9.4],[14.7,11.8],[15.9,14.2],
+  [12.1,13.8],[13.9,15.4],[12.8,16.8],[10,15.8],[7.6,15.1],[4.7,14.8],[16.4,8.9]].entries()){
+  const p=toWorld(...cell),color=['#f4e3b9','#ddbdd0','#b9cbdc','#efc7b6'][i%4];
+  for(let j=0;j<3;j++){
+   const a=j*2.1+i*.7,x=p.x+Math.cos(a)*.45,z=p.z+Math.sin(a)*.45;
+   leafyShrub(x,z,1.1+(j%2)*.25);grass(x+.45,z+.24,.85);
+  }
+  flowers(woodland,p.x-.65,p.z+.38,color,8);
+  flowers(woodland,p.x+.72,p.z-.25,i%2?'#f5e9c8':'#c5d5b6',5);
+  if(i%3===0)for(let j=0;j<3;j++)part(woodland,'sphere','#b7b79a',p.x-.65+j*.32,.14,p.z+.74,.22,.13,.17);
+ }
+ // Low woodland ribbons fill the verges while keeping faces and route arrows visible.
+ for(const [i,cell]of [[6,11.9],[6.2,12.8],[7.6,12.2],[8.6,11.9],
+  [6.1,8.8],[7.8,8.3],[8.1,7.8],[9.8,6.1],[4.1,7.1],[5.9,6.7],
+  [12.2,10.4],[14.1,10.9],[14.1,12.1],[14.2,13.9],[12.1,14.9],[12.7,16.6]].entries()){
+  const q=toWorld(...cell),color=['#f5e8bf','#dbbfd5','#c5d6e1','#efd0bb'][i%4];
+  for(let j=0;j<3;j++){
+   const a=i*.7+j*2.1,x=q.x+Math.cos(a)*.5,z=q.z+Math.sin(a)*.4;
+   leafyShrub(x,z,.55+j*.08);grass(x+.23,z-.2,.65);
+  }
+  flowers(woodland,q.x-.38,q.z+.25,color,6);
+  flowers(woodland,q.x+.45,q.z-.3,'#f5e8bf',4);
+ }
  batchParts(woodland);
  // Three small visitors stay beside flowers; they are scenery, never a collection task.
  const butterflies=[];const shape=new T.Shape();shape.moveTo(0,0);shape.bezierCurveTo(.26,.32,.38,.13,.13,-.02);shape.bezierCurveTo(.32,-.2,.12,-.3,0,-.1);shape.closePath();const wingGeo=new T.ShapeGeometry(shape);

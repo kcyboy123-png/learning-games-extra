@@ -1,8 +1,36 @@
-import {portrait,itemImage} from './story.mjs?v=gift-focus-20261118';
+import {portrait,itemImage} from './story.mjs?v=gifts-math-final-20261119';
 
 const el=(tag,cls,text)=>{const n=document.createElement(tag);n.className=cls;if(text)n.textContent=text;return n;};
 const art=(src,cls,alt='')=>{const n=el('img',cls);n.src=src;n.alt=alt;return n;};
 const asset=path=>new URL(path,import.meta.url).href;
+let entryFilmWatched=false;
+
+export function entryOpening(onDone,sound){
+  const dialog=el('dialog','entry-opening'),video=el('video','entry-film');
+  dialog.setAttribute('aria-label','도토리마을 독도우체국 오프닝');
+  video.src=asset('./assets/video/momo-request.mp4');video.poster=asset('./assets/video/momo-request.webp');
+  video.muted=true;video.autoplay=true;video.playsInline=true;video.preload='auto';video.setAttribute('aria-label','모모가 바다빛 컵을 들어 보여요');
+  dialog.style.setProperty('--entry-poster',`url("${video.poster}")`);
+  const skip=el('button','entry-skip','건너뛰기'),resume=el('button','entry-play','▶ 오프닝 재생'),title=el('strong','entry-title','도토리마을 독도우체국');
+  skip.type=resume.type='button';resume.hidden=true;dialog.append(video,title,skip,resume);document.body.append(dialog);
+  const events=new AbortController();let done=false,timer;
+  const music=el('button','entry-music','♪ 음악 켜기');music.type='button';music.hidden=true;dialog.append(music);
+  const startMusic=async()=>{if(sound){const ok=await sound.unlock();if(!done)music.hidden=ok;}};
+  music.onclick=startMusic;
+  dialog.addEventListener('pointerdown',startMusic,{signal:events.signal});
+  dialog.addEventListener('keydown',startMusic,{signal:events.signal});
+  const finish=()=>{if(done)return;done=true;clearTimeout(timer);events.abort();video.pause();video.removeAttribute('src');video.load();dialog.close();dialog.remove();onDone();};
+  const blocked=()=>{clearTimeout(timer);if(!done){resume.hidden=false;resume.textContent='▶ 오프닝 재생';}};
+  async function play(){if(done||document.hidden)return;resume.hidden=true;clearTimeout(timer);timer=setTimeout(blocked,10000);try{await video.play();if(done||document.hidden)video.pause();}catch{blocked();}}
+  skip.onclick=finish;resume.onclick=()=>{if(video.error)video.load();play();};
+  dialog.addEventListener('keydown',e=>e.stopPropagation(),{signal:events.signal});
+  dialog.addEventListener('cancel',e=>{e.preventDefault();finish();},{signal:events.signal});
+  video.addEventListener('ended',()=>{entryFilmWatched=true;finish();},{signal:events.signal});video.addEventListener('error',blocked,{signal:events.signal});
+  video.addEventListener('playing',()=>{clearTimeout(timer);resume.hidden=true;},{signal:events.signal});
+  video.addEventListener('waiting',()=>{clearTimeout(timer);timer=setTimeout(blocked,10000);},{signal:events.signal});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(timer);video.pause();}else play();},{signal:events.signal});
+  dialog.showModal();skip.focus({preventScroll:true});play();startMusic();
+}
 
 export function welcomeLetter(){
   const root=el('aside','welcome-letter');root.setAttribute('aria-label','모모에게 편지가 왔어요');
@@ -25,19 +53,20 @@ export function momoRequestFilm(dialog){
   root.append(video,control,route);let dismissed=false;
   const stop=()=>{video.pause();resume=false;dismissed=true;control.textContent='다시 보기';root.classList.add('film-finished');};
   control.onclick=()=>{if(!video.paused){stop();return;}dismissed=false;if(video.error)video.load();else video.currentTime=0;play();};
-  async function play(){resume=true;try{await video.play();if(dismissed||!root.isConnected||document.hidden)video.pause();else {control.textContent='건너뛰기';root.classList.remove('film-finished');}}catch{resume=false;control.textContent='영상 보기';root.classList.add('film-finished');}}
+  async function play(){resume=true;control.textContent='건너뛰기';root.classList.remove('film-finished');try{await video.play();if(dismissed||!root.isConnected||document.hidden)video.pause();}catch{if(dismissed||!root.isConnected||document.hidden)return;resume=false;control.textContent='영상 보기';root.classList.add('film-finished');}}
   video.addEventListener('ended',()=>{resume=false;control.textContent='다시 보기';root.classList.add('film-finished');});
-  video.addEventListener('error',()=>{control.textContent='영상 다시 보기';root.classList.add('film-finished');});
+  video.addEventListener('error',()=>{resume=false;control.textContent='영상 다시 보기';root.classList.add('film-finished');});
   const events=new AbortController();let resume=false;
   document.addEventListener('visibilitychange',()=>{if(document.hidden){resume=resume||!video.paused;video.pause();}else if(resume&&!dismissed){resume=false;play();}},{signal:events.signal});
   dialog.addEventListener('close',()=>{events.abort();dismissed=true;video.pause();video.removeAttribute('src');video.load();},{once:true});
-  if(matchMedia('(prefers-reduced-motion: reduce)').matches)control.textContent='영상 보기';else queueMicrotask(play);return root;
+  if(entryFilmWatched){control.textContent='다시 보기';root.classList.add('film-finished');}
+  else if(matchMedia('(prefers-reduced-motion: reduce)').matches)control.textContent='영상 보기';else queueMicrotask(play);return root;
 }
 
 export function cupPractice(onPlace){
   const root=el('div','cup-practice'),cup=el('button','practice-cup'),box=el('button','practice-box');
   cup.type=box.type='button';cup.setAttribute('aria-label','컵 집기');box.setAttribute('aria-label','상자에 컵 놓기');
-  cup.append(art(itemImage(0),'',''));box.append(el('span','box-opening'),el('span','box-front','♡'));
+  cup.append(art(itemImage(0),'',''));box.append(art(asset('./assets/gift-polish/open-box.webp'),'practice-box-art',''),el('span','practice-seal','✓'));
   const arrow=el('span','practice-arrow','→');arrow.setAttribute('aria-hidden','true');root.append(cup,arrow,box);
   let drag=null,placed=false,suppressClick=false;
   const place=()=>{if(placed)return;placed=true;root.classList.add('cup-placed');cup.style.transform='';cup.setAttribute('aria-label','상자에 담은 컵');box.setAttribute('aria-label','컵을 안전하게 포장할 준비 완료');onPlace();};

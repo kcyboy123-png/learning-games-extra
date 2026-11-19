@@ -1,5 +1,5 @@
 import {node,button,clear,setPressed} from './dom.mjs';
-import {createSolidView} from './solid-view.mjs?v=ui-journey-20261118';
+import {createSolidView} from './solid-view.mjs?v=gifts-math-final-20261119';
 import {netFigure,createFoldView} from './net-board.mjs';
 import {unfoldByFolds} from '../lib/net.mjs';
 import {cuboid,FACE_LABEL} from '../lib/geometry.mjs';

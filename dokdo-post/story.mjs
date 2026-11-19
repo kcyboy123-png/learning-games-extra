@@ -12,6 +12,7 @@ export const portrait=id=>`assets/resident-${Math.min(id,5)}.png`;
 // Small deterministic item illustrations remain separate from the assessed geometry.
 const giftImages=new Map();
 export function itemImage(id){
+ if(Number.isInteger(id)&&id>=0&&id<=6)return new URL(`./assets/gift-polish/${['cup','frame','journal','lantern','snacks','letters','mail'][id]}.webp`,import.meta.url).href;
  if(giftImages.has(id))return giftImages.get(id);
  const art=[
  '<path d="M48 50h72v57q-36 30-72 0z" fill="#87b4bb" stroke="#547d85" stroke-width="5"/><path d="M121 60q42-2 26 34q-8 12-24 5" fill="none" stroke="#547d85" stroke-width="9"/><ellipse cx="84" cy="50" rx="36" ry="9" fill="#e0ede6"/><path d="M70 33q-10-9 0-20m25 20q-10-9 0-20" fill="none" stroke="#b4a78b" stroke-width="4"/><ellipse cx="88" cy="130" rx="56" ry="7" fill="#cfbd98"/>',

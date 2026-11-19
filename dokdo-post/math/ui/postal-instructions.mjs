@@ -21,6 +21,8 @@ export function actionFor(step,kind=step.mode){
 
 // Keep the actual question visible while the hands-on instruction changes.
 export function questionFor(step,kind=step.mode){
+ if(step.kind==='fill'&&step.instruction==='면·모서리·꼭짓점의 수를 적어요.')return '뒤쪽까지 포함해 전체 수를 적어요';
+ if(step.kind==='fill'&&step.fields?.some(f=>f.id==='fv')&&step.fields?.some(f=>f.id==='fh'))return '눈에 보이는 부분과 가려진 부분을 나눠 세요';
  if(step.kind==='fill'&&step.instruction==='비교표를 완성해요.')return '두 상자를 보고 하나씩 답해요';
  if(step.kind==='solid'&&step.secondFace)return '두 기준 면 모두에 수직인 면을 골라요';
  if(step.kind==='solid'&&step.basePair)return `밑면을 뺀 옆면 ${step.count}개를 찾아요`;
@@ -40,7 +42,7 @@ export function questionFor(step,kind=step.mode){
  if(step.kind==='net-build'){
   if(step.replaceable)return step.blankLength?'크기가 맞지 않는 조각을 바꾸고 길이를 적어요':'크기가 맞지 않는 조각을 바꿔요';
   if(step.movable)return '겹치는 조각을 다른 자리로 옮겨요';
-  if(step.fixedBase)return (step.part?step.part+` (${step.dims.x}×${step.dims.y}×${step.dims.z}) · `:'')+'빠진 면 하나를 붙여요';
+  if(step.fixedBase)return (step.part?step.part+' · ':'')+'빠진 면 하나를 붙여요';
   if(step.instruction.includes('다른 모양'))return '앞에서 만든 것과 다른 전개도를 만들어요';
   return '종이 조각으로 상자 전개도를 만들어요';
  }
@@ -48,6 +50,7 @@ export function questionFor(step,kind=step.mode){
 }
 
 export function moveFor(step,kind=step.mode){
+ if(step.kind==='fill'&&step.instruction==='면·모서리·꼭짓점의 수를 적어요.')return '앞쪽 + 가려진 뒤쪽';
  if(['ready','check','second','pair-second','place'].includes(kind)||String(kind).endsWith('-next'))return actionFor(step,kind);
  if(step.kind==='solid'&&step.secondFace)return `★ ${FACE_LABEL[step.baseFace]} · ◆ ${FACE_LABEL[step.secondFace]}이 기준이에요. 면을 눌러요.`;
  if(step.kind==='solid'&&step.basePair)return `${step.basePair.map(f=>FACE_LABEL[f]).join(' · ')}이 밑면이에요. 상자를 돌려 찾아요.`;

@@ -9,3 +9,8 @@ export function postEntrancePose(seconds,player,aspect){
  for(const key of Object.keys(end))pose[key]+=(end[key]-pose[key])*k;
  return pose;
 }
+
+export function dokdoArrivalPose(seconds,player,aspect){
+ const t=Math.max(0,Math.min(1,(seconds-.35)/3.3)),k=t*t*t*(t*(t*6-15)+10),zoom=aspect<.8?3.105:2.565;
+ return {x:player.x*k,z:-2+(player.z+2)*k,height:player.y+21+24*(1-k),look:player.y+.8,angle:.35+.23*k,zoom:.43*Math.pow(zoom/.43,k)};
+}

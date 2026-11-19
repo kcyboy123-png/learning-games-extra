@@ -1,9 +1,9 @@
-import {postEntrancePose} from './post-entrance.mjs?v=encore-20261119';
+import {postEntrancePose,dokdoArrivalPose} from './post-entrance.mjs?v=gifts-math-final-20261119';
 import {strollRouter} from './stroll-route.mjs?v=encore-20261119';
 import {meadowFloor,meadowStep} from './meadow-walk.mjs?v=encore-20261119';
 import {groundVector,inputVector,stickVector,PLAYER_SPEED} from './village/move.mjs';
 import {World} from './village/world.mjs?v=reference-camera-20261115';
-import {postGarden} from './post-garden.mjs?v=encore-20261119';
+import {postGarden} from './post-garden.mjs?v=forest-momo-20261119';
 import {deliveryGarden} from './delivery-garden.mjs?v=optimization-20-20261118';
 import * as T from './lib/three.module.min.js';
 import {developedVillage} from './village/qa-developed.mjs';
@@ -22,10 +22,18 @@ export function baseline(){
  const add=(type,x,y)=>s.buildings.push({id:s.nextId++,type,x,y,opts:[],progress:1,starter:false,completedAt:0});
  const roads=new Set();for(const line of LANES)for(let i=1;i<line.length;i++){let [x,y]=line[i-1];const [tx,ty]=line[i];roads.add(x+','+y);while(x!==tx||y!==ty){x+=Math.sign(tx-x);y+=Math.sign(ty-y);roads.add(x+','+y);}}
  for(const k of roads){const [x,y]=k.split(',').map(Number);add(x===11?'bridge':'road',x,y);}
- for(const [x,y]of [[4,6],[9,3],[16,10],[15,16],[9,10],[6,10],[6,8]])add('house',x,y);
+ // Keep the foreground cottage beside Dandan's approach, not over the player's feet.
+ for(const [x,y]of [[4,6],[9,3],[16,10],[15,16],[9,10],[6,10],[4,8]])add('house',x,y);
  for(const [x,y]of [[3,4],[4,3],[5,4],[6,3],[6,5],[3,9],[4,9],[3,11],[4,12],[4,14],[5,16],[8,2],[10,2],[10,4],[14,3],[15,4],[16,5],[14,7],[16,8],[17,15],[15,15],[14,18]])add('tree',x,y);
  // Small woodland pockets leave the delivery lanes and cottage doors open.
- for(const [x,y]of [[5,11],[8,8],[14,8],[17,12]])add('tree',x,y);
+ for(const [x,y]of [[5,11],[6,4],[14,8],[17,12]])add('tree',x,y);
+ // Dense woodland pockets frame the village; doors and delivery anchors stay open.
+ for(const [x,y]of [[2,2],[3,2],[5,2],[7,2],[9,1],[12,2],[13,2],[16,2],[17,3],
+  [2,5],[3,6],[2,7],[3,8],[4,5],[7,4],[8,3],[10,6],[12,5],[13,5],[15,6],[17,7],
+  [2,10],[2,12],[3,13],[2,15],[3,16],[4,17],[5,13],[5,14],[6,16],[7,15],[8,16],[9,17],
+  [12,7],[13,8],[16,12],[17,13],[17,16],[16,17],[13,17]]){
+  if(!s.buildings.some(b=>b.x===x&&b.y===y)&&Object.values(STOPS).every(([sx,sy])=>Math.hypot(sx-x,sy-y)>=1.6))add('tree',x,y);
+ }
  for(const [x,y]of [[5,6],[8,5],[14,10],[14,14]])add('bench',x,y);
  // Clear natural obstacles along walkable lanes, leaving the original shoreline woodland intact.
  for(const k of roads)s.landscape.cleared.push(k);
@@ -111,6 +119,7 @@ export function createScene(canvas,onArrive){
 
  let greeting=null,clickAt=0,entrance=null;
  function finishEntrance(skipped=false){if(!entrance)return;const done=entrance.done;entrance=null;world.angle=.58;follow();world.zoom=world.targetZoom;document.body.classList.remove('postal-entering');document.getElementById('skipPostalEntrance')?.remove();world.frame(0,clock,reduced);done?.(skipped);}
+ function startDokdoArrival(){if(reduced||island!=='mist')return;reset();entrance={t:0,dokdo:true};world.followPlayer=false;applyEntrancePose(world,dokdoArrivalPose(0,world.player.g.position,world.aspect));document.body.classList.add('postal-entering');const skip=document.createElement('button');skip.id='skipPostalEntrance';skip.textContent='바로 걷기';skip.onclick=()=>finishEntrance(true);document.body.append(skip);}
  function startEntrance(done){if(reduced||island!=='main'){done?.(false);return;}reset();entrance={t:0,done};world.followPlayer=false;applyEntrancePose(world,postEntrancePose(0,world.player.g.position,world.aspect));document.body.classList.add('postal-entering');const skip=document.createElement('button');skip.id='skipPostalEntrance';skip.textContent='바로 걷기';skip.onclick=()=>finishEntrance(true);document.body.append(skip);}
  document.addEventListener('pointerdown',e=>{if(!entrance)return;finishEntrance(true);if(e.target===canvas)e.stopImmediatePropagation();},{capture:true});
  document.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyW','KeyA','KeyS','KeyD','Escape','Enter','Space'].includes(e.code))finishEntrance(true);},{capture:true});
@@ -152,7 +161,7 @@ export function createScene(canvas,onArrive){
  pad.addEventListener('pointermove',e=>{if(stickPointer===e.pointerId)steer(e);});
  for(const name of ['pointerup','pointercancel','lostpointercapture'])pad.addEventListener(name,reset);
  const codes={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right'};
- addEventListener('keydown',e=>{if(!codes[e.code]||paused||dialog.open)return;e.preventDefault();clickRoute=[];clickMarker.visible=false;keys.add(codes[e.code]);});
+ addEventListener('keydown',e=>{if(!codes[e.code]||paused||dialog.open)return;e.preventDefault();if(entrance)finishEntrance(true);clickRoute=[];clickMarker.visible=false;keys.add(codes[e.code]);});
  addEventListener('keyup',e=>keys.delete(codes[e.code]));addEventListener('blur',reset);document.addEventListener('visibilitychange',reset);
  document.querySelectorAll('[data-move]').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();b.setPointerCapture(e.pointerId);held.set(e.pointerId,b.dataset.move);});b.addEventListener('pointermove',e=>{if(!held.has(e.pointerId))return;const over=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-move]');held.set(e.pointerId,over?.dataset.move||'');});for(const event of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(event,e=>held.delete(e.pointerId));});
  function manual(dt){if(sailing||dialog.open){reset();return;}const {ix,iy}=inputVector(held.size?new Set([...keys,...[...held.values()].flatMap(v=>v.split(' '))]):keys),vx=ix+stick.ix*stick.power+fieldStick.ix*fieldStick.power,vy=iy+stick.iy*stick.power+fieldStick.iy*fieldStick.power,inputPower=Math.min(1,Math.hypot(vx,vy));let power=inputPower,v=groundVector(world.angle,vx,vy);if(v){clickRoute=[];clickMarker.visible=false;}else if(clickRoute.length){const p=world.player.g.position;while(clickRoute.length&&Math.hypot(clickRoute[0].x-p.x,clickRoute[0].z-p.z)<.18)clickRoute.shift();if(clickRoute.length){const q=clickRoute[0],d=Math.hypot(q.x-p.x,q.z-p.z);v={x:(q.x-p.x)/d,z:(q.z-p.z)/d};power=Math.min(1,d/(dt*PLAYER_SPEED));}else clickMarker.visible=false;}if(v){const p=world.player.g.position,n=island==='mist'?walkStep(p,v,dt*PLAYER_SPEED*power):meadowStep(p,v,dt*PLAYER_SPEED*power,canStand);const distance=Math.hypot(n.x-p.x,n.z-p.z);if(clickRoute.length){stalled=distance<.001?stalled+dt:0;if(stalled>.6){clickRoute=[];clickMarker.visible=false;}}p.x=n.x;p.z=n.z;if(island==='mist'){p.y=n.y;p.walkEdge=n.edge;}world.player.route=[];const turn=Math.atan2(v.x,v.z)-world.player.g.rotation.y;world.player.g.rotation.y+=Math.atan2(Math.sin(turn),Math.cos(turn))*Math.min(1,dt*14);world.player.distance+=distance;world.player.moving=distance>.0001?1:0;if(!world.followPlayer)follow();world.followPlayer=true;}else world.player.moving=0;
@@ -192,10 +201,12 @@ export function createScene(canvas,onArrive){
  let frameHandle=null;
  function scheduleFrame(){if(frameHandle===null&&!paused&&!document.hidden)frameHandle=requestAnimationFrame(frame);}
  document.addEventListener('visibilitychange',()=>{last=performance.now();scheduleFrame();});
- function frame(now){frameHandle=null;const dt=Math.min(.2,(now-last)/1000);last=now;if(paused||document.hidden)return;clock+=dt;if(entrance){entrance.t+=dt;applyEntrancePose(world,postEntrancePose(entrance.t,world.player.g.position,world.aspect));if(entrance.t>=4.25)finishEntrance();}if(sailing){const u=Math.min(.48,(now-sailing)/3500*.48),pose=ferryPose(u,1,1);scenery.boat.position.set(pose.x,-.1,pose.z);scenery.boat.rotation.y=pose.angle;applyEntrancePose(world,voyagePose(u,pose,island,world.aspect));}manual(dt);tickDiscovery(now,dt);if(!sailing&&world.followPlayer)world.cameraHeight=world.lookHeight+20.2;trail.visible=!entrance;goalRing.visible=!!target&&!sailing&&!entrance;const destination=target&&point(target);if(destination){goalRing.position.set(destination.x,destination.y+.07,destination.z);goalRing.material.opacity=near(target)?.85:.42;}playerRing.visible=!sailing;playerRing.position.copy(world.player.g.position);playerRing.position.y+=.1;world.paused=paused;world.frame(dt,clock,reduced);if(clickMarker.visible)clickMarker.scale.setScalar(reduced?1:1+.22*Math.sin(Math.min(1,(now-clickAt)/450)*Math.PI));if(greeting){const t=(now-greeting.at)/1000;if(t>1.6)greeting=null;else if(!reduced&&!greeting.actor.residentArt?.e.ready)greeting.actor.limbs[3].rotation.z=Math.sin(t/1.6*Math.PI)*(.8+Math.sin(t*13)*.13);}receivers.forEach((r,i)=>{if(island==='mist')r.g.position.y=DOCKS[i?'C':'B'].y;});scenery.tick(clock,reduced);if(deliveryProps.visible)deliveryProps.userData.tick?.(reduced);if(postalGarden.visible)postalGarden.userData.tick(clock,reduced);scheduleFrame();}scheduleFrame();
+ function frame(now){frameHandle=null;const dt=Math.min(.2,(now-last)/1000);last=now;if(paused||document.hidden)return;clock+=dt;if(entrance){entrance.t+=dt;applyEntrancePose(world,(entrance.dokdo?dokdoArrivalPose:postEntrancePose)(entrance.t,world.player.g.position,world.aspect));if(entrance.t>=(entrance.dokdo?3.65:4.25))finishEntrance();}if(sailing){const u=Math.min(.48,(now-sailing)/3500*.48),pose=ferryPose(u,1,1);scenery.boat.position.set(pose.x,-.1,pose.z);scenery.boat.rotation.y=pose.angle;applyEntrancePose(world,voyagePose(u,pose,island,world.aspect));}manual(dt);tickDiscovery(now,dt);if(!sailing&&world.followPlayer)world.cameraHeight=world.lookHeight+20.2;trail.visible=!entrance;goalRing.visible=!!target&&!sailing&&!entrance;const destination=target&&point(target);if(destination){goalRing.position.set(destination.x,destination.y+.07,destination.z);goalRing.material.opacity=near(target)?.85:.42;}playerRing.visible=!sailing;playerRing.position.copy(world.player.g.position);playerRing.position.y+=.1;world.paused=paused;world.frame(dt,clock,reduced);if(clickMarker.visible)clickMarker.scale.setScalar(reduced?1:1+.22*Math.sin(Math.min(1,(now-clickAt)/450)*Math.PI));if(greeting){const t=(now-greeting.at)/1000;if(t>1.6)greeting=null;else if(!reduced&&!greeting.actor.residentArt?.e.ready)greeting.actor.limbs[3].rotation.z=Math.sin(t/1.6*Math.PI)*(.8+Math.sin(t*13)*.13);}receivers.forEach((r,i)=>{if(island==='mist')r.g.position.y=DOCKS[i?'C':'B'].y;});scenery.tick(clock,reduced);if(deliveryProps.visible)deliveryProps.userData.tick?.(reduced);if(postalGarden.visible)postalGarden.userData.tick(clock,reduced);scheduleFrame();}scheduleFrame();
  setIsland('main','start');
- return {startEntrance,get entering(){return !!entrance;},discover,setParcelLook,useGift:id=>{if(id<6)deliveryProps.userData.use?.(id,receivers[id<3?0:1]);},reflectDeliveries:ids=>{postalGarden.userData.update(ids);deliveryProps.userData.update(ids);},world,maps,get mapPaths(){return mapPaths[island];},point,route,walk,travel,setIsland,get island(){return island;},near,follow,rotate(delta){world.angle+=delta;},zoom(delta){world.targetZoom=Math.max(.6,Math.min(3.6,world.targetZoom+delta));},stop:reset,get moving(){return clickRoute.length>0;},pause(v){paused=v;reset();last=performance.now();scheduleFrame();},sail(on){sailing=on?performance.now():null;world.followPlayer=false;},overview(){world.followPlayer=false;world.center.set(0,0,island==='main'?2:-2);world.targetZoom=.43;world.cameraHeight=34;world.lookHeight=1;},project(id){const q=point(id);return q?world.screen(projectionPoint.set(q.x,q.y+2.35,q.z)):null;},boat:scenery.boat,scenery,validStops:()=>Object.entries(STOPS).every(([k,[x,y]])=>walkable(maps.main,x,y))};
+ return {startEntrance,startDokdoArrival,get entering(){return !!entrance;},discover,setParcelLook,useGift:id=>{if(id<6)deliveryProps.userData.use?.(id,receivers[id<3?0:1]);},reflectDeliveries:ids=>{postalGarden.userData.update(ids);deliveryProps.userData.update(ids);},world,maps,get mapPaths(){return mapPaths[island];},point,route,walk,travel,setIsland,get island(){return island;},near,follow,rotate(delta){world.angle+=delta;},zoom(delta){world.targetZoom=Math.max(.6,Math.min(3.6,world.targetZoom+delta));},stop:reset,get moving(){return clickRoute.length>0;},pause(v){paused=v;reset();last=performance.now();scheduleFrame();},sail(on){sailing=on?performance.now():null;world.followPlayer=false;},overview(){world.followPlayer=false;world.center.set(0,0,island==='main'?2:-2);world.targetZoom=.43;world.cameraHeight=34;world.lookHeight=1;},project(id){const q=point(id);return q?world.screen(projectionPoint.set(q.x,q.y+2.35,q.z)):null;},boat:scenery.boat,scenery,validStops:()=>Object.entries(STOPS).every(([k,[x,y]])=>walkable(maps.main,x,y))};
 }
+
+
 
 
 

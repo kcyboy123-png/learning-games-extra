@@ -1,7 +1,7 @@
 // 회전하는 입체 뷰어(SVG). 면·모서리·꼭짓점은 수학 좌표에서 투영하며, 보이는 요소만 누를 수 있다.
 import {cuboid, rotate, FACE_LABEL, prism, regularPolygon, boxMesh, cross, sub, dot, norm, facesAtVertex, OPPOSITE} from '../lib/geometry.mjs';
 import {svg, node, button, pressable, setPressed, clear, reducedMotion} from './dom.mjs?v=tactile-audit-e-20261118';
-import {paperSurface} from './paper-surface.mjs';
+import {paperSurface} from './paper-surface.mjs?v=carton-material-20261119';
 
 const BASE_RGB = [214, 178, 131];
 const LIGHT = norm([0.35, 0.8, 0.55]);
@@ -92,7 +92,7 @@ export function createSolidView(opts = {}) {
   function draw() {
     const focusKey=el.contains(document.activeElement)?document.activeElement.dataset.focusKey:null;
     clear(el);
-    paperFill = paperSurface(el);
+    paperFill = paperSurface(el,opts.postal&&state.mode==='peel');
     const defs = svg('defs');
     const pat = svg('pattern', {id: pid, width: 10, height: 10, patternUnits: 'userSpaceOnUse'});
     pat.append(svg('rect', {width: 10, height: 10, fill: 'rgba(42,167,163,.18)'}));
@@ -105,8 +105,9 @@ export function createSolidView(opts = {}) {
     // 작업대 접지 그림자(도형 아래)
     if (opts.groundShadow !== false) {
       const lowest = Math.max(...faces.flatMap(f => f.pts.map(p => project(p).y)));
-      if(opts.postal){el.append(svg('ellipse',{cx:0,cy:lowest+12,rx:size*.39,ry:size*.085,fill:'#f6ecd4',stroke:'#d9c9a5','stroke-width':2,'pointer-events':'none'}),svg('ellipse',{cx:0,cy:lowest+12,rx:size*.37,ry:size*.072,fill:'none',stroke:'#b6c4a4','stroke-width':1.5,'stroke-dasharray':'4 5','pointer-events':'none'}));}
-      el.append(svg('ellipse', {cx: 0, cy: lowest + 10, rx: size * 0.3, ry: size * 0.045, fill: opts.postal?'rgba(128,99,64,.13)':'rgba(40,25,10,.22)', 'pointer-events': 'none'}));
+      if(opts.postal&&state.mode!=='peel'){el.append(svg('ellipse',{cx:0,cy:lowest+12,rx:size*.39,ry:size*.085,fill:'#f6ecd4',stroke:'#d9c9a5','stroke-width':2,'pointer-events':'none'}),svg('ellipse',{cx:0,cy:lowest+12,rx:size*.37,ry:size*.072,fill:'none',stroke:'#b6c4a4','stroke-width':1.5,'stroke-dasharray':'4 5','pointer-events':'none'}));}
+      const carton=opts.postal&&state.mode==='peel';
+      el.append(svg('ellipse', {cx: carton?10:0, cy: lowest + (carton?3:10), rx: size * 0.3, ry: size * (carton?.025:.045), fill: carton?'rgba(80,46,19,.26)':opts.postal?'rgba(128,99,64,.13)':'rgba(40,25,10,.22)',style:carton?'filter:blur(5px)':'', 'pointer-events': 'none'}));
     }
     const gBack = svg('g', {class: 'back-faces'}), gFront = svg('g', {class: 'front-faces'}), gEdges = svg('g'), gVerts = svg('g'), gLabels = svg('g');
     if (state.transparent) for (const f of sortByDepth(back)) gBack.append(facePolygon(f, true));
@@ -131,7 +132,8 @@ export function createSolidView(opts = {}) {
     const poly = svg('polygon', {points: pts.map(p => `${p.x},${p.y}`).join(' ')});
     const selectedPair = state.pairs.findIndex(pr => pr.includes(f.id));
     const isSel = state.selected.faces.has(f.id);
-    let fill = opts.postal ? `rgb(${[248,224,184].map(c=>Math.round(c*(.80+.20*Math.max(0,dot(f.n,LIGHT))))).join(',')})` : shade(opts.color || BASE_RGB, f.n);
+    const parcel=opts.postal&&state.mode==='peel';
+    let fill = opts.postal ? `rgb(${(parcel?[234,184,115]:[248,224,184]).map(c=>Math.round(c*(.80+.20*Math.max(0,dot(f.n,LIGHT))))).join(',')})` : shade(opts.color || BASE_RGB, f.n);
     if (selectedPair >= 0) fill = PAIR_COLORS[selectedPair % 3];
     if (state.revealFace !== null && f.index === state.revealFace) fill = '#e97b6b';
     if (state.glowFaces.has(f.id)) fill = '#ffe08a';
@@ -139,35 +141,81 @@ export function createSolidView(opts = {}) {
     poly.classList.add('face');
     if (f.smooth) poly.setAttribute('stroke', 'none');
     if (isBack) { poly.setAttribute('opacity', '.28'); poly.setAttribute('stroke-dasharray', '6 6'); return poly; }
-    if (f.id === state.peeled) { poly.setAttribute('fill', '#fff3c4'); poly.setAttribute('stroke-dasharray', '8 6'); }
+    const opened = opts.postal && state.mode === 'peel' && f.id === state.peeled;
+    if (f.id === state.peeled) { poly.setAttribute('fill', opened?'#8b6540':'#fff3c4'); poly.setAttribute('stroke-dasharray', '8 6'); }
     const g = svg('g');
-    if(opts.postal&&!isSel&&selectedPair<0&&!state.glowFaces.has(f.id)){
+    if(opened){
+      const id=`${pid}-inside-${f.id}`,gradient=svg('linearGradient',{id,x1:'0%',y1:'0%',x2:'75%',y2:'100%'});
+      gradient.append(svg('stop',{offset:'0%','stop-color':'#533c29'}),svg('stop',{offset:'100%','stop-color':'#ad8557'}));
+      g.append(svg('defs',{},[gradient]));poly.setAttribute('fill',`url(#${id})`);poly.removeAttribute('stroke-dasharray');
+    }
+    if(opts.postal&&!opened&&!isSel&&selectedPair<0&&!state.glowFaces.has(f.id)){
       const id=`${pid}-soft-${f.id}`,gradient=svg('linearGradient',{id,x1:'0%',y1:'0%',x2:'85%',y2:'100%'});
-      gradient.append(svg('stop',{offset:'0%', 'stop-color':'#fff9e4'}),svg('stop',{offset:'58%','stop-color':fill}),svg('stop',{offset:'100%','stop-color':fill}));g.append(svg('defs',{},[gradient]));poly.setAttribute('fill',`url(#${id})`);
+      gradient.append(svg('stop',{offset:'0%', 'stop-color':parcel?'#f5d29b':'#fff9e4'}),svg('stop',{offset:'58%','stop-color':fill}),svg('stop',{offset:'100%','stop-color':fill}));g.append(svg('defs',{},[gradient]));poly.setAttribute('fill',`url(#${id})`);
     }
     g.append(poly);
+    if(opened){
+      // Recess stays inside the exact selectable face; decorative walls never capture taps.
+      const c=center2(pts),inner=pts.map(p=>({x:p.x*.72+c[0]*.28,y:p.y*.72+c[1]*.28}));
+      const recessClip=`${pid}-recess-clip-${f.id}`;
+      g.append(svg('defs',{},[svg('clipPath',{id:recessClip},[svg('polygon',{points:poly.getAttribute('points')})])]));
+      const walls=svg('g',{'pointer-events':'none',class:'parcel-interior','clip-path':`url(#${recessClip})`});
+      const interiorId=`${pid}-recess-${f.id}`,light=svg('radialGradient',{id:interiorId,cx:'70%',cy:'80%',r:'95%'});
+      light.append(svg('stop',{offset:'0%','stop-color':'#bd8a4d'}),svg('stop',{offset:'75%','stop-color':'#85582d'}),svg('stop',{offset:'100%','stop-color':'#5c3b21'}));walls.append(svg('defs',{},[light]));
+      walls.append(svg('polygon',{points:inner.map(p=>`${p.x},${p.y}`).join(' '),fill:`url(#${interiorId})`,stroke:'#7c542e','stroke-width':1}));
+      for(let i=0;i<4;i++){
+        const j=(i+1)%4,points=[pts[i],pts[j],inner[j],inner[i]].map(p=>`${p.x},${p.y}`).join(' ');
+        const id=interiorId+'-'+i,shade=svg('linearGradient',{id,x1:'0%',y1:'0%',x2:'60%',y2:'100%'});
+        shade.append(svg('stop',{offset:'0%','stop-color':['#8c6031','#a9763d','#e5b878','#83562e'][i]}),svg('stop',{offset:'100%','stop-color':['#4e331c','#76502b','#b78649','#a77740'][i]}));walls.append(svg('defs',{},[shade]));
+        walls.append(svg('polygon',{points,fill:`url(#${id})`,stroke:'#815831','stroke-width':.7}));
+      }
+      walls.append(svg('polygon',{points:poly.getAttribute('points'),fill:'none',stroke:'#efd09a','stroke-width':5,'stroke-linejoin':'round'}));
+      for(let i=0;i<4;i++){
+        const a=pts[i],b=pts[(i+1)%4],dx=b.x-a.x,dy=b.y-a.y,length=Math.hypot(dx,dy),waves=Math.max(1,Math.round(length/7));let d=`M${a.x},${a.y}`;
+        for(let k=1;k<=waves*2;k++){const t=k/(waves*2),wave=k%2?1.4:-1.4;d+=` L${a.x+dx*t-dy/length*wave},${a.y+dy*t+dx/length*wave}`;}
+        walls.append(svg('path',{d,stroke:'#9f713e','stroke-width':.8,fill:'none'}));
+      }
+      g.append(walls);
+    }
     if (solid && pts.length === 4) {
       const c = center2(pts);
-      g.append(svg('polygon', {points: poly.getAttribute('points'), fill: paperFill, class: 'paper-grain', 'pointer-events': 'none'}));
+      if(parcel){
+        const a=pts[0],b=pts[1],d=pts[3];
+        const clipId=`${pid}-paper-clip-${f.id}`;
+        // Keep a pixel-sized material plane so opacity/blend layers retain the paper fibres.
+        g.append(svg('defs',{},[svg('clipPath',{id:clipId},[svg('rect',{width:512,height:512})])]));
+        const texture=svg('g',{'clip-path':`url(#${clipId})`,transform:`matrix(${(b.x-a.x)/512} ${(b.y-a.y)/512} ${(d.x-a.x)/512} ${(d.y-a.y)/512} ${a.x} ${a.y})`,opacity:opened?.5:1,style:opened?'mix-blend-mode:multiply':`filter:brightness(${.82+.18*Math.max(0,dot(f.n,LIGHT))})`,'pointer-events':'none',class:'carton-fibres'});
+        texture.append(svg('image',{href:new URL('../assets/kraft-fibres.png',import.meta.url).href,width:2048,height:2048}));g.append(texture);
+      }else g.append(svg('polygon', {points: poly.getAttribute('points'), fill: paperFill, class: 'paper-grain', 'pointer-events': 'none'}));
       g.append(svg('polygon', {points: pts.map(p => `${p.x*.975+c[0]*.025},${p.y*.975+c[1]*.025}`).join(' '), fill: 'none', stroke: '#fff0ca', 'stroke-width': 1.1, opacity: '.45', class: 'paper-grain', 'pointer-events': 'none'}));
     }
     // 골판지 재질: 면 가운데 옅은 테이프 띠(상자 느낌). 선택·강조 상태에서는 생략.
-    if (solid && !isSel && selectedPair < 0 && !state.glowFaces.has(f.id) && opts.material !== false && pts.length === 4) {
+    if (solid && !opened && !isSel && selectedPair < 0 && !state.glowFaces.has(f.id) && opts.material !== false && pts.length === 4) {
       const mid = (a, b, t) => ({x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t});
       const p0 = mid(pts[0], pts[1], 0.42), p1 = mid(pts[0], pts[1], 0.58), p2 = mid(pts[3], pts[2], 0.58), p3 = mid(pts[3], pts[2], 0.42);
-      g.append(svg('polygon', {points: [p0, p1, p2, p3].map(p => `${p.x},${p.y}`).join(' '), fill: opts.postal?'#b9ccb0':'rgba(255,255,255,.14)', opacity:opts.postal?.72:1, 'pointer-events': 'none'}));
+      g.append(svg('polygon', {points: [p0, p1, p2, p3].map(p => `${p.x},${p.y}`).join(' '), fill: parcel?'#ffe1ad':opts.postal?'#b9ccb0':'rgba(255,255,255,.14)', opacity:opts.postal?.72:1, 'pointer-events': 'none'}));
+      if(parcel&&f.id==='top'){
+        const a=pts[0],b=pts[1],d=pts[3],decal=svg('g',{'pointer-events':'none',transform:`matrix(${b.x-a.x} ${b.y-a.y} ${d.x-a.x} ${d.y-a.y} ${a.x} ${a.y})`});
+        decal.append(svg('path',{d:'M.02 .42L.01 .44L.03 .46L.01 .48L.03 .50L.01 .52L.03 .54L.01 .57H.98L.99 .55L.97 .53L.99 .51L.97 .49L.99 .47L.97 .45L.99 .42Z',fill:'#ffe8bd',stroke:'#f9ddb0','stroke-width':.006,opacity:.6}));
+        decal.append(svg('rect',{x:0,y:.43,width:1,height:.14,fill:'#ffe1ad',opacity:.65}),svg('rect',{x:.65,y:.64,width:.27,height:.29,rx:.012,fill:'#fff2cc',stroke:'#e5cb96','stroke-width':.012,'stroke-dasharray':'.02 .012'}),svg('rect',{x:.68,y:.67,width:.21,height:.23,fill:'#9dc6c1'}),svg('path',{d:'M.68 .85L.73 .75L.77 .83L.82 .76L.89 .85V.89H.68Z',fill:'#718866'}),svg('path',{d:'M.68 .87Q.73 .85 .78 .87T.89 .87',stroke:'#e5f1d3','stroke-width':.012,fill:'none'}));g.append(decal);
+      }
       if(opts.postal&&f.id==='front'&&['vertices','none'].includes(state.mode)){
         const c=center2(pts),seal=svg('g',{'pointer-events':'none',transform:`translate(${c[0]},${c[1]})`});
         seal.append(svg('ellipse',{cx:0,cy:2,rx:27,ry:23,fill:'#ba9e7133'}),svg('ellipse',{cx:0,cy:0,rx:27,ry:23,fill:'#fff5df',stroke:'#dcc9a5','stroke-width':1.5}),svg('path',{d:'M-9 8Q-23-13 6-13Q19 5-9 8Z',fill:'#90ad81'}),svg('path',{d:'M-13 15Q-5 1 8-8',fill:'none',stroke:'#607e59','stroke-width':2,'stroke-linecap':'round'}));g.append(seal);
       }
     }
     if (isSel) {
+      if(opts.postal&&!state.wrong.faces.has(f.id)&&pts.length===4){
+        const [a,b,,d]=pts,ink='#517e72',stamp=svg('g',{'pointer-events':'none',class:'face-ink-stamp',transform:`matrix(${b.x-a.x},${b.y-a.y},${d.x-a.x},${d.y-a.y},${a.x},${a.y})`});
+        stamp.append(svg('circle',{cx:.5,cy:.58,r:.18,fill:'#fff5db',opacity:.85}),svg('circle',{cx:.5,cy:.58,r:.16,fill:'none',stroke:ink,'stroke-width':.012,'stroke-dasharray':'.025 .012'}),svg('circle',{cx:.5,cy:.58,r:.135,fill:'none',stroke:ink,'stroke-width':.006}),svg('path',{d:'M.5 .66 C.32 .55 .44 .47 .5 .54 C.56 .47 .68 .55 .5 .66Z',fill:ink}));g.append(stamp);
+      }else{
       poly.classList.add('selected');
       const overlay = svg('polygon', {points: poly.getAttribute('points'), fill: `url(#${pid})`, 'pointer-events': 'none'});
       overlay.classList.add('selection-pattern'); g.append(overlay);
       const c = center2(pts);
       g.append(svg('circle', {cx: c[0], cy: c[1], r: 16, fill: opts.postal&&!state.wrong.faces.has(f.id)?'#55784a':'#c74b3f', opacity: .9, 'pointer-events': 'none'}));
       g.append(svg('text', {x: c[0], y: c[1] + 6, class: 'label', fill: '#fff', style: 'fill:#fff;stroke:none;font-size:16px', 'text-anchor': 'middle', text: '✓'}));
+      }
     }
     if (state.wrong.faces.has(f.id)) poly.classList.add('wrong');
     if (state.pending === f.id) { poly.classList.add('selected'); }
@@ -227,7 +275,10 @@ export function createSolidView(opts = {}) {
       }
       g.append(dotEl);
       if(opts.postal&&sel&&visible){dotEl.style.opacity='0';for(const f of faces.filter(f=>f.visible&&f.verts.includes(v.id))){const i=f.verts.indexOf(v.id),a=solid.vertex(f.verts[(i+1)%4]).pos,b=solid.vertex(f.verts[(i+3)%4]).pos;const mix=q=>v.pos.map((n,j)=>n+(q[j]-n)*.20);const pa=project(mix(a)),pb=project(mix(b));const capPoints=[p,pa,pb],c=center2(capPoints);g.append(svg('polygon',{points:capPoints.map(q=>`${q.x},${q.y}`).join(' '),fill:f.id==='top'?'#e6eee0':'#b5c9a4',stroke:state.wrong.vertices.has(v.id)?'#c76458':'#839b73','stroke-width':4,'stroke-linejoin':'round','pointer-events':'none',class:'felt-cap'}),svg('polygon',{points:capPoints.map(q=>`${q.x*.72+c[0]*.28},${q.y*.72+c[1]*.28}`).join(' '),fill:'none',stroke:'#f8f5df','stroke-width':1,'stroke-dasharray':'2 3','pointer-events':'none'}));}}
-      if (opts.vertexLabels?.[v.id]) g.append(svg('text', {x: p.x + 14, y: p.y - 10, class: 'label big', text: opts.vertexLabels[v.id]}));
+      if (opts.vertexLabels?.[v.id]) {
+        const c=center2(solid.vertices.map(v=>project(v.pos))),dx=p.x-c[0],dy=p.y-c[1],len=Math.hypot(dx,dy)||1,x=Math.max(-size/2+18,Math.min(size/2-18,p.x+30*dx/len)),y=Math.max(-size/2+20,Math.min(size/2-20,p.y+30*dy/len));
+        g.append(svg('line',{x1:p.x,y1:p.y,x2:x,y2:y,stroke:'#45685a','stroke-width':1.5,'pointer-events':'none'}),svg('text',{x,y:y+6,class:'label big','text-anchor':'middle',text:opts.vertexLabels[v.id]}));
+      }
     }
   }
   function drawFaceLabels(g, faces) {
@@ -238,7 +289,7 @@ export function createSolidView(opts = {}) {
       if (opts.faceLabels) parts.push(FACE_LABEL[f.id]);
       if (opts.faceMarks?.[f.id]) parts.push(opts.faceMarks[f.id]);
       if (opts.basePair?.includes(f.id)) parts.push('밑면');
-      if (parts.length) g.append(svg('text', {x: c[0], y: c[1] - (state.selected.faces.has(f.id) ? 22 : -6), class: 'label', 'text-anchor': 'middle', text: parts.join(' ')}));
+      if (parts.length) g.append(svg('text', {x: c[0], y: c[1] - (state.selected.faces.has(f.id)||state.pairs.some(pair=>pair.includes(f.id)) ? 22 : -6), class: 'label', 'text-anchor': 'middle', text: parts.join(' ')}));
     }
   }
 

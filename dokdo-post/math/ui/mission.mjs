@@ -1,11 +1,11 @@
-import {parcelCustomizer,parcelDimensions,packingMilestone} from '../../parcel-life.mjs?v=gift-focus-20261118';
+import {parcelCustomizer,parcelDimensions,packingMilestone} from '../../parcel-life.mjs?v=gifts-math-final-20261119';
 // 미션 실행기(업그레이드): 위 목표 한 줄, 가운데 큰 조작 도형, 오른쪽 작은 진행 상태, 아래 모아의 짧은 말과 명확한 제출.
 // 상황 한 문장 → 직접 조작 → 명시적 제출 → 피드백(오답 시 조작 보존) → 학습 정리 → 명시적 다음 버튼.
-import {STORIES,portrait,itemImage,coachFor} from '../../story.mjs?v=gift-focus-20261118';
-import {createSolidView} from './solid-view.mjs?v=ui-journey-20261118';
-import {netFigure} from './net-board.mjs?v=ui-journey-20261118';
-import {actionFor,questionFor,moveFor,hasResponse} from './postal-instructions.mjs?v=gift-focus-20261118';
-import {renderStep} from './steps.mjs?v=gift-focus-20261118';
+import {STORIES,portrait,itemImage,coachFor} from '../../story.mjs?v=gifts-math-final-20261119';
+import {createSolidView} from './solid-view.mjs?v=gifts-math-final-20261119';
+import {netFigure} from './net-board.mjs?v=hint-free-play-20261120';
+import {actionFor,questionFor,moveFor,hasResponse} from './postal-instructions.mjs?v=gifts-math-final-20261119';
+import {renderStep} from './steps.mjs?v=hint-free-play-20261120';
 import {newEventId, answerSignature} from '../lib/progress.mjs';
 import {sfx} from './audio.mjs?v=audio-journey-20261117';
 import {createRobotView} from './robot-view.mjs?v=ui-journey-20261118';
@@ -55,7 +55,7 @@ export function runMission({activity, workshop, progress, scored = true, contain
     const currentInput=ws.querySelector('.answer-fields .field:not([hidden]) input,.answer-fields .field:not([hidden]) select,.link-table > :not([hidden]) select');
     const nextButton=ws.querySelector('.field-nav button:last-child'),nextInput=nextButton?.textContent.trim();
     const navigate=!ready&&['fill','link'].includes(step.kind)&&Boolean(currentInput?.value.trim())&&nextButton&&!nextButton.disabled;
-    const pending=step.kind==='net-build'?(answer.board?.held?'종이를 놓아요':(answer.pieces?.length||0)<6?`종이 ${6-(answer.pieces?.length||0)}장을 더 놓아요`:step.blankLength&&!String(answer.values?.blank??'').trim()?'길이를 적어요':'종이를 붙여요'):({fill:currentInput?.value.trim()?`${nextInput||'다음 빈칸'} 버튼을 눌러요`:'빈칸을 채워요',link:currentInput?.value?`${nextInput||'다음 그림'} 버튼을 눌러요`:'그림을 골라요',solid:'상자에 표시해요',sketch:'그림을 완성해요','tray-count':'종이를 준비해요'}[step.kind]||'먼저 답을 골라요');
+    const pending=step.kind==='net-build'?(answer.board?.held?'종이를 놓아요':(answer.pieces?.length||0)<6?`종이 ${6-(answer.pieces?.length||0)}장을 더 놓아요`:step.blankLength&&!String(answer.values?.blank??'').trim()?'길이를 적어요':'종이를 붙여요'):({fill:currentInput?.value.trim()?`${nextInput||'다음 빈칸'} 버튼을 눌러요`:currentInput?.tagName==='SELECT'?'답을 골라요':'수를 적어요',link:currentInput?.value?`${nextInput||'다음 그림'} 버튼을 눌러요`:'그림을 골라요',solid:'상자에 표시해요',sketch:'그림을 완성해요','tray-count':'종이를 준비해요'}[step.kind]||'먼저 답을 골라요');
     submit.querySelector('.btn-icon').hidden=!ready&&!navigate;
     submit.querySelector('.btn-icon').textContent=navigate?'→':'✓';
     submit.disabled=!ready&&!navigate;submit.title=ready?'내 답을 확인해요':pending;
@@ -130,7 +130,6 @@ export function runMission({activity, workshop, progress, scored = true, contain
     if(activity.postal){
       hintBtn.title=scored&&!progress.hinted(activity.id)?'수학 힌트 · 이 활동에서 처음 사용하면 3점이 줄어요. 조작 안내는 점수가 줄지 않아요.':'이 활동의 힌트는 다시 봐도 추가로 점수가 줄지 않아요.';
       const coach=coachFor(step),explain=()=>{ws.classList.remove('needs-review');speak(coach.moves.join(' '),'help');};explainCurrent=explain;
-      tools.append(node('details',{class:'help-tools'},[node('summary',{text:'도움이 필요해요'}),node('p',{class:'full-task',text:step.kind==='peel'?'종이의 위쪽과 옆쪽 길이를 비교해요. 같아요 / 달라요 중 하나를 골라요.':step.instruction}),node('div',{class:'help-options'},[button('조작 방법 · 무료',explain,{cls:'small'}),hintBtn])]));
       if(activity.postalGuide)guideTimer=setTimeout(explain,60);
     }else tools.append(hintBtn);
     hud.setSub(steps.length > 1 ? [`단계 ${index + 1} / ${steps.length}`] : []);
@@ -260,6 +259,7 @@ export function runMission({activity, workshop, progress, scored = true, contain
   renderCurrent();restoring=false;
   return {destroy() { view?.destroy?.();clearTimeout(guideTimer);clearTimeout(focusTimer);clearTimeout(captureTimer);instructionSize.disconnect();window.removeEventListener('resize',fitInstruction);if(!solvedStep)snapshot();window.removeEventListener('pagehide',snapshot);clear(container); },get view(){return view;}};
 }
+
 
 
 

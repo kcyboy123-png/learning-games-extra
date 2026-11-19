@@ -102,8 +102,9 @@ export function viewSets(solid, view = STANDARD_VIEW) {
 export function obliqueProject(pos, dims, view = STANDARD_VIEW, scale = 40, depthRatio = [0.45, 0.32]) {
   const [x, y, z] = pos;
   const depth = (dims.z / 2 - z * view.z);
-  const px = x * view.x + depth * depthRatio[0] * view.x;
-  const py = y * view.y + depth * depthRatio[1] * view.y;
+  // The depth direction changes with the view; mirroring x/y again puts hidden corners on the silhouette.
+  const px = x + depth * depthRatio[0] * view.x;
+  const py = y + depth * depthRatio[1] * view.y;
   return [px * scale, -py * scale];
 }
 

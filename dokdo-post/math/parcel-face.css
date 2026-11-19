@@ -1,0 +1,164 @@
+/* Round 1: tabletop composition; one shared layout instead of competing overrides. */
+.workspace.postal[data-task="peel"]{background:url(assets/parcel-face-desk.png) center/cover!important}
+.postal[data-task="peel"] .mat{display:none!important}
+.postal[data-task="peel"] .banner{left:325px!important;right:95px!important;top:95px!important;width:auto!important;max-width:none!important;transform:none!important;box-sizing:border-box!important;background:#fff4d7!important;color:#405b46!important;border:1px solid #ddc495!important;border-radius:7px!important;box-shadow:0 5px 8px #795d3430!important;text-align:center;padding:16px 14px!important;min-height:0!important}
+.postal[data-task="peel"] .banner:before,.postal[data-task="peel"] .banner small{display:none!important}
+.postal[data-task="peel"] .banner strong{font-size:29px!important;color:#405b46!important}
+.postal[data-task="peel"]:not(.inline-complete) .stage{left:42px!important;right:47px!important;top:215px!important;bottom:178px!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;overflow:visible!important}
+.postal .one-choice-face.parcel-face{display:grid!important;grid-template-columns:1fr 1fr;align-items:center;gap:24px!important;width:100%!important;height:100%;position:relative}
+.postal .parcel-face>.solid-view{display:block!important;width:100%;height:100%;min-width:0;position:relative}
+.workspace.postal[data-task="peel"] .parcel-face>.solid-view>svg{width:100%!important;height:385px!important;min-height:0!important;max-height:385px!important;max-width:none!important;transform:none!important;filter:drop-shadow(0 12px 7px #65431b22)}
+.postal .parcel-face .vertex,.postal .parcel-face .vertex-hit{display:none}
+.postal .parcel-face .turn-hint{top:auto!important;bottom:0!important;left:50%;background:#fff6df!important;border:1px solid #c8b384;border-radius:22px;color:#496149!important;padding:7px 14px;font-size:17px!important;white-space:nowrap}
+.postal .one-choice-face.parcel-face>.panel{padding:0!important;background:none!important;border:0!important;box-shadow:none!important;min-width:0!important;width:100%!important;position:relative}
+.postal .parcel-face>.panel:before{content:'↝';position:absolute;left:-38px;top:31%;font-size:52px;color:#fff7dd;text-shadow:0 2px #a37a46}
+.postal .parcel-face>.panel>h3{display:block!important;margin:0!important;text-align:center;font-size:18px;color:#5d482d}
+.postal .one-choice-face.parcel-face>.panel>svg{width:100%!important;height:260px!important;filter:drop-shadow(0 8px 4px #76502225)}
+.postal .parcel-face .shape-answers{display:grid!important;grid-template-columns:1fr 1fr;gap:15px!important;margin:0!important}
+.postal .parcel-face .shape-answer{min-height:70px!important;font-size:24px!important;background:#fff9e8!important;border:2px solid #cbb585!important;border-radius:23px!important;box-shadow:0 5px 0 #a3804b55!important;color:#405b46!important;padding:10px!important}
+.postal .parcel-face .shape-answer[aria-pressed="true"]{background:#e0eccb!important;border-color:#5c7b50!important;box-shadow:0 4px 0 #527548!important}
+.postal .parcel-face .shape-answer.wrong{border-color:#c47551!important;background:#fff0db!important}
+.postal .parcel-face .shape-answer small,.postal .parcel-face .shape-answer svg,.postal .parcel-face .panel>.note{display:none!important}
+.postal[data-task="peel"] .tools{left:36px!important;bottom:70px!important;background:#fff8e8!important;border:1px solid #cbb585!important;border-radius:24px!important;padding:10px 15px!important}
+.postal .peel-rotate>summary{font-size:19px;color:#405b46;cursor:pointer;min-height:28px}
+.postal .peel-rotate[open]{position:relative;z-index:5}
+.postal .peel-rotate[open] .solid-controls{background:#fff8e8}
+.postal[data-task="peel"] .primary-slot{bottom:40px!important}
+@media(max-aspect-ratio:1/1){
+ .postal[data-task="peel"] .banner{top:155px!important;left:70px!important;right:70px!important;padding:20px!important}
+ .postal[data-task="peel"] .banner strong{font-size:34px!important}
+ .postal[data-task="peel"]:not(.inline-complete) .stage{top:300px!important;bottom:330px!important;left:45px!important;right:45px!important}
+ .postal .one-choice-face.parcel-face{grid-template-columns:1fr;grid-template-rows:340px 1fr;gap:12px!important}
+ .portrait .workspace.postal[data-task="peel"] .parcel-face>.solid-view>svg{height:330px!important;min-height:330px!important;max-height:330px!important}
+ .postal .one-choice-face.parcel-face>.panel>svg{height:260px!important}
+ .postal .parcel-face>.panel>h3{font-size:23px}
+ .postal .parcel-face>.panel:before{display:none}
+ .postal .parcel-face .shape-answer{min-height:76px!important;font-size:27px!important}
+ .postal .parcel-face .turn-hint{font-size:23px!important}
+ .postal[data-task="peel"] .tools{bottom:135px!important;display:flex!important;width:auto!important;max-width:700px!important}
+ .postal .peel-rotate>summary{font-size:24px}
+}
+/* Round 2: a small resident luggage tag and pinned paper question. */
+#residentPortrait{display:none}
+.app:has(.postal[data-task="peel"]) .hud .card.loc{width:284px!important;min-width:0!important;max-width:284px!important;padding:12px 15px 12px 75px!important;min-height:88px!important;background:linear-gradient(110deg,#fff9df,#f3e5bb)!important;border:2px solid #c8b580!important;border-radius:30px 20px 20px 30px!important;box-shadow:0 5px 6px #71592d30!important;position:relative}
+.app:has(.postal[data-task="peel"]) .hud .card.loc:after{content:'';position:absolute;inset:6px;border:1px dashed #c7b37e;border-radius:24px 14px 14px 24px;pointer-events:none}
+.app:has(.postal[data-task="peel"]) #residentPortrait{display:block;position:absolute;left:9px;top:10px;width:66px;height:66px;object-fit:contain;filter:drop-shadow(0 3px 2px #6a552b33)}
+.app:has(.postal[data-task="peel"]) #sender,.app:has(.postal[data-task="peel"]) #parcelSymbol{display:none!important}
+.app:has(.postal[data-task="peel"]) #location{font-size:25px!important;white-space:nowrap}
+.app:has(.postal[data-task="peel"]) #subbar{margin:5px 0 0!important;background:none!important;padding:0!important;font-size:16px!important}
+.postal[data-task="peel"] .banner:before,.postal[data-task="peel"] .banner:after{content:''!important;display:block!important;position:absolute!important;top:8px!important;left:9px!important;width:10px!important;height:10px!important;transform:none!important;border-radius:50%!important;background:radial-gradient(circle at 30% 25%,#fce0a5,#bb8448)!important;box-shadow:0 2px 2px #6b4b2b55!important}
+.postal[data-task="peel"] .banner:after{left:auto!important;right:9px!important}
+.app:has(.postal[data-task="peel"]) .hud .card.loc>div{display:block!important;min-height:0!important}
+.app:has(.postal[data-task="peel"]) #subbar{display:flex!important;gap:6px;white-space:nowrap}
+.app:has(.postal[data-task="peel"]) #subbar span{font-size:14px!important}
+/* Round 4: soft carton outlines, without changing mathematical hit regions. */
+.postal .parcel-face .face{stroke:#9b7548!important;stroke-width:1.5!important;stroke-linejoin:round}
+.postal .parcel-face .edge{stroke:#a7804f!important;stroke-width:1.4!important}
+.postal .parcel-face .paper-grain{opacity:.7}
+/* Round 5: dimensions belong to the paper, without chalk outlines. */
+.postal .parcel-face>.panel>h3{font-size:16px!important;font-weight:500;color:#75532e}
+.postal .parcel-face>.panel>svg .label{font-size:20px!important;fill:#385e3b!important;stroke:none!important;font-weight:800}
+/* Round 6: the detached face is visually connected to the carton. */
+.postal .parcel-face>.panel:before{display:none!important}
+.postal .peel-connection{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;filter:drop-shadow(0 2px 1px #8f652b44)}
+@media(max-aspect-ratio:1/1){.postal .peel-connection{display:none}}
+/* Round 7: the gift remains on the desk; the carton rests on wood. */
+.postal[data-task="peel"] .parcel-item{display:block!important;position:absolute;left:2px;top:420px!important;width:80px!important;height:90px!important;z-index:2;pointer-events:none;background:none!important;border:0!important;box-shadow:none!important;filter:drop-shadow(0 4px 2px #5c402b33)}
+.postal[data-task="peel"] .parcel-item img{width:100%;height:100%;object-fit:contain}
+.app:has(.postal[data-task="peel"]) #residentPortrait{width:76px;height:76px;left:3px;top:0}
+@media(max-aspect-ratio:1/1){.postal[data-task="peel"] .parcel-item{left:190px;top:470px!important;width:85px!important}}
+/* Round 8: short answer plaques, clear selection and tactile press feedback. */
+.postal .parcel-face .shape-answer{background:linear-gradient(#fffdf0,#f8eccb)!important;border:2px solid #afbc90!important;border-bottom-color:#81966a!important;box-shadow:inset 0 2px #fff,0 5px 0 #9d9f7280,0 8px 9px #79582628!important;font-size:30px!important;font-weight:800;transition:transform .12s,box-shadow .12s,background .12s}
+.postal .parcel-face .shape-answer:active{transform:translateY(3px);box-shadow:inset 0 2px 4px #6d794b22,0 2px 0 #7e9564!important}
+.postal .parcel-face .shape-answer[aria-pressed="true"]{background:linear-gradient(#edf3d7,#d8e7bd)!important;outline:2px solid #638556;outline-offset:2px}
+.postal .parcel-face .shape-answer:focus-visible{outline:3px solid #385e3b;outline-offset:5px}
+.postal[data-task="peel"] .tools{box-shadow:0 4px 0 #9c845742!important;gap:12px!important}
+.postal[data-task="peel"] .primary-slot button{border-radius:24px!important;border:2px solid #96aa7e!important;box-shadow:0 4px 0 #435e3a55!important;font-size:23px!important}
+@media(prefers-reduced-motion:reduce){.postal .parcel-face .shape-answer{transition:none}}
+/* Round 9: portrait keeps the same hierarchy at actual finger/text sizes. */
+@media(max-aspect-ratio:1/1){
+ .app:has(.postal[data-task="peel"]) .hud .card.loc{width:345px!important;max-width:345px!important;min-height:102px!important;padding-left:92px!important}
+ .app:has(.postal[data-task="peel"]) #location{font-size:30px!important}
+ .app:has(.postal[data-task="peel"]) #subbar span{font-size:19px!important}
+ .app:has(.postal[data-task="peel"]) #residentPortrait{width:89px;height:89px;top:2px}
+ .portrait .postal[data-task="peel"] .parcel-face>.panel>h3{font-size:22px!important}
+ .portrait .postal[data-task="peel"] .parcel-face .shape-answer{font-size:32px!important;min-height:80px!important}
+ .portrait .postal[data-task="peel"] .parcel-face>.panel>svg .label{font-size:24px!important}
+ .portrait .postal[data-task="peel"] .parcel-item{width:120px!important;height:120px!important;left:150px;top:440px!important;padding:0!important;object-fit:contain}
+ .portrait .postal[data-task="peel"] .tools{display:flex!important;flex-direction:row!important;align-items:center;gap:10px!important;max-width:900px!important}
+ .portrait .postal[data-task="peel"] .tools>.help-tools{border:0!important;padding:0!important;margin:0!important}
+ .portrait .postal[data-task="peel"] .primary-slot button{font-size:26px!important;min-height:64px!important}
+}
+/* Round 10: feedback has one emphasis; supplementary controls stay out of the work. */
+.postal .parcel-face .solid-view.has-turned .turn-hint{opacity:.45}
+.postal .parcel-face.review-lengths>.panel>svg .label{fill:#a3452e!important;paint-order:stroke;stroke:#fff2cc!important;stroke-width:3px!important}
+.postal[data-task="peel"].step-checked .banner{background:#f0f3db!important;border-color:#8fa97b!important}
+.postal[data-task="peel"] .tools details[open]{max-height:260px;overflow:auto}
+.postal[data-task="peel"].inline-complete .peel-connection{display:none}
+.postal[data-task="peel"] .tools:has(details[open]){z-index:15;box-shadow:0 7px 18px #59452844!important}
+.postal[data-task="peel"] .tools .help-tools[open] p{max-width:370px;line-height:1.5}
+.postal[data-task="peel"] .tools summary{min-height:var(--touch-size,48px)!important;display:flex;align-items:center;box-sizing:border-box}
+/* Second series, round 5: paper lies on wood rather than floating on a worksheet. */
+.postal .one-choice-face.parcel-face>.panel>svg{filter:drop-shadow(2px 7px 3px #68461d42)!important}
+.postal .parcel-face>.panel>h3{color:#614a2d!important}
+.postal .parcel-face .paper-grain{opacity:1}
+/* Second series, round 6: bring the interactive objects forward. */
+@media(min-aspect-ratio:1/1){
+ .postal[data-task="peel"]:not(.inline-complete) .stage{left:30px!important;right:45px!important;top:195px!important;bottom:165px!important}
+ .workspace.postal[data-task="peel"] .parcel-face>.solid-view>svg{height:445px!important;max-height:445px!important;width:100%!important}
+ .postal .one-choice-face.parcel-face{grid-template-columns:1.05fr 1fr;gap:30px!important}
+ .postal .one-choice-face.parcel-face>.panel>svg{height:295px!important}
+ .postal .parcel-face .turn-hint{bottom:-8px!important;font-size:16px!important;background:#fff6dfd9!important}
+}
+/* Second series, round 7: a recognizable gift, with restrained paper grain. */
+.postal .parcel-face .paper-grain{opacity:.3!important}
+@media(min-aspect-ratio:1/1){
+ .postal[data-task="peel"] .parcel-item{left:-10px!important;top:380px!important;width:155px!important;height:165px!important;padding:0!important;object-fit:contain}
+ .postal .parcel-face .turn-hint{top:2px!important;bottom:auto!important}
+}
+/* Second series, round 8: warmer paper plaques with a quiet inner rim. */
+.postal[data-task="peel"] .banner{background:linear-gradient(105deg,#fff5d9,#f5e7c2)!important;box-shadow:inset 0 0 0 3px #fff4d844,0 4px 9px #76532a33!important}
+.postal .parcel-face .shape-answer{font-size:32px!important;min-height:76px!important;letter-spacing:.01em;border-radius:25px!important;box-shadow:inset 0 0 0 3px #fff9e688,0 4px 0 #96a777,0 7px 8px #76552933!important}
+.postal .parcel-face .shape-answer[aria-pressed="true"]{box-shadow:inset 0 0 0 3px #edf5d799,0 4px 0 #6f8b58!important}
+.postal[data-task="peel"] .peel-rotate>summary{font-weight:700}
+.postal[data-task="peel"] .banner strong{letter-spacing:-.025em}
+/* Second series, round 9: larger portrait objects without covering the answer row. */
+@media(max-aspect-ratio:1/1){
+ .portrait .workspace.postal[data-task="peel"] .parcel-face>.solid-view>svg{height:380px!important;min-height:380px!important;max-height:380px!important}
+ .portrait .postal .parcel-face .turn-hint{top:0!important;bottom:auto!important;font-size:20px!important}
+ .portrait .postal .one-choice-face.parcel-face>.panel>svg{height:295px!important}
+ .portrait .postal[data-task="peel"] .tools{bottom:90px!important}
+ .portrait .postal[data-task="peel"] .parcel-item{top:465px!important}
+}
+/* Second series, round 10: a newly detached paper settles once, not continuously. */
+@keyframes parcel-paper-settle{from{opacity:.4;transform:translate(-12px,6px) rotate(-2deg)}to{opacity:1;transform:none}}
+.postal[data-task="peel"] .one-choice-face.parcel-face>.panel>svg{animation:parcel-paper-settle .24s ease-out both!important;transform-origin:center}
+.postal[data-task="peel"]:has(.shape-answer[aria-pressed="true"]) .peel-connection{opacity:.45}
+.postal .parcel-face .shape-answer.wrong{background:linear-gradient(#fff3df,#f2d4b2)!important;border-color:#b66e47!important;outline-color:#b66e47!important}
+@media(prefers-reduced-motion:reduce){.postal[data-task="peel"] .one-choice-face.parcel-face>.panel>svg{animation:none!important}}
+@media(max-aspect-ratio:1/1){
+ .portrait .postal[data-task="peel"] .tools{bottom:180px!important;width:max-content!important;max-width:930px!important;flex-wrap:nowrap!important;display:flex!important}
+ .portrait .postal[data-task="peel"] .tools>details{width:auto!important;flex:0 0 auto!important}
+ .portrait .postal[data-task="peel"] .tools>details>summary{white-space:nowrap}
+}
+/* Tactile series 3: layered carton rims, without moving selectable faces. */
+.postal .parcel-face .face{stroke:#cda46c!important;stroke-width:3.6!important;stroke-linejoin:round!important}
+.postal .parcel-face .edge{stroke:#987347!important;stroke-width:.8!important;opacity:.68}
+.postal .parcel-face .parcel-interior{filter:drop-shadow(0 1px 1px #59371f33)}
+/* Tactile series 7: retain all four lengths with a quieter secondary pair. */
+.postal .parcel-face>.panel>svg text.label:nth-last-of-type(-n+2){font-size:16px!important;fill:#6d603d!important;font-weight:600!important}
+.postal .parcel-face.review-lengths>.panel>svg text.label{font-size:20px!important;fill:#a3452e!important;font-weight:800!important}
+.portrait .postal .parcel-face>.panel>svg text.label:nth-last-of-type(-n+2){font-size:21px!important}
+/* Tactile series 8: answer words remain the strongest interactive labels. */
+.workspace.postal[data-task="peel"] .parcel-face .shape-answer>span{font-size:30px!important;line-height:1.2!important;font-weight:800!important}
+.postal[data-task="peel"] .primary-slot button:disabled{font-size:18px!important;min-height:48px!important;background:#fff6dfba!important;border:1px dashed #a9ac7e!important;box-shadow:none!important;color:#657455!important}
+.postal[data-task="peel"] .primary-slot button:not(:disabled){background:linear-gradient(#608260,#436d4e)!important;color:#fffbe9!important}
+/* Tactile series 9: small-screen targets retain the real 48px minimum. */
+.postal[data-task="peel"] .primary-slot button:disabled{min-height:var(--touch-size,48px)!important}
+.portrait .workspace.postal[data-task="peel"] .parcel-face .shape-answer>span{font-size:33px!important}
+/* Tactile series 10: restrained shared paper material on the pinned question. */
+.postal[data-task="peel"] .banner{background:linear-gradient(105deg,#fff8e3e6,#f9eccfe8),url(assets/kraft-fibres.png) center/320px!important;border-color:#ddc390!important;box-shadow:inset 0 0 0 2px #fffae666,0 5px 9px #78532838!important}
+.postal .parcel-face .shape-answer{border-top-color:#d3d9b2!important;border-left-color:#c6d1a6!important}
+.postal .parcel-face .shape-answer:focus-visible{outline:3px solid #345b3d!important;outline-offset:5px!important}
+/* Finished work is inert; do not invite another gesture over the next-step receipt. */
+.postal[data-task="peel"].inline-complete .turn-hint{display:none!important}

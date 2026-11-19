@@ -1,5 +1,5 @@
 // 겨냥도 편집기(SVG). 꼭짓점은 사선 투영 좌표로 만들고, 선은 실선(보임)/점선(가려짐)으로 표시한다.
-import {cuboid, obliqueProject, STANDARD_VIEW, viewSets, edgeId, FACE_LABEL} from '../lib/geometry.mjs';
+import {cuboid, obliqueProject, STANDARD_VIEW, viewSets, edgeId, FACE_LABEL} from '../lib/geometry.mjs?v=gifts-math-final-20261119';
 import {svg, node, button, pressable, setPressed, clear, reducedMotion, announce} from './dom.mjs?v=tactile-audit-e-20261118';
 
 export function createSketchView(opts = {}) {
