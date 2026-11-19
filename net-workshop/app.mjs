@@ -215,7 +215,7 @@ function foldTo(value,animate=true,faceAction=false){
   cancelAnimationFrame(animation);folding=false;const target=Math.max(0,Math.min(1,value));
   if(locked)return;
   if(mode==='lesson'&&!attempts&&target>0)helped=true;
-  if(!net.connected||net.cycle){if(!solved)feedback('먼저 종이 모양을 살펴봐요',analyze(net).message);if(solved||revealed)showActionIfBelow('next');return;}
+  if(!net.connected||net.cycle){if(!solved)feedback('먼저 종이 모양을 살펴봐요',mode==='lesson'&&q?.type==='valid'&&net.cycle?'네 면이 한 점을 둘러싸고 있어 접을 수 없어요.':analyze(net).message);if(solved||revealed)showActionIfBelow('next');return;}
   const finishAction=()=>{if(target!==1||!(solved||revealed||diagnostic))return;if(innerHeight<550&&compactActivity()){$('fold-stage').textContent=mode==='create'?'아래로 내려 ‘펼쳐서 고쳐 만들기’를 눌러요.':'아래로 내려 ‘다음 문제’를 눌러요.';}else showActionIfBelow(mode==='create'?'edit-maker':'next');};
   const start=progress,t0=performance.now(),duration=reduced||!animate?0:Math.max(450,Math.abs(target-start)*2400);
   const frame=now=>{
@@ -239,8 +239,8 @@ function inspectFold(target=1){
 }
 function updateFoldControls(){
   $('model-fold').hidden=mode!=='lesson';
-  $('model-fold').disabled=folding;
-  $('model-fold').textContent=folding?'움직이는 중…':progress>.001?'다시 펼치기':'접어 보기';
+  $('model-fold').disabled=folding||!net.connected||net.cycle;
+  $('model-fold').textContent=!net.connected||net.cycle?'접기 불가':folding?'움직이는 중…':progress>.001?'다시 펼치기':'접어 보기';
   scene.setBusy(mode==='explore'?pendingFaces.length>=8:folding);
   if(mode==='explore'){$('face-taps').setAttribute('aria-busy',String(folding));$('face-taps').querySelectorAll('[data-action=choose]').forEach(b=>{const face=Number(b.dataset.value),waiting=pendingFaces.filter(f=>f===face).length;b.disabled=pendingFaces.length>=8||face===net.root;const state=b.querySelector('small');if(state)state.textContent=waiting?'대기 '+waiting:face===net.root?'고정':foldAngles(net,progress,sequence)[net.links.findIndex(l=>l.child===face)]>.999?'펼치기':'접기';b.setAttribute('aria-label',labels[face]+' 면 '+(waiting?'접기·펼치기 '+waiting+'회 대기':state?.textContent??''));});}
   if(mode==='lesson'&&q&&!document.body.classList.contains('course-finished'))$('chapter').textContent=`${chapterFor(practice)?.title??TYPES[q.type]} · ${locked?'먼저 예상해요':solved||revealed?'접어서 비교해요':helped?'도움을 받아 살펴봐요':'접으며 알아봐요'}`;
@@ -669,6 +669,8 @@ $('hint').onclick=()=>{
     extra=retryControls();
   }
   feedback(title,message,false,extra);$('feedback').focus({preventScroll:true});$('feedback').scrollIntoView({block:'nearest',behavior:'instant'});
+  const heading=$('task-title').getBoundingClientRect(),hint=$('feedback').getBoundingClientRect();
+  if(heading.top<0&&hint.bottom-heading.top<=innerHeight-48)$('task-title').scrollIntoView({block:'start',behavior:'instant'});
 };
 $('check').onclick=check;$('next').onclick=nextQuestion;
 $('help-open').onclick=()=>{
