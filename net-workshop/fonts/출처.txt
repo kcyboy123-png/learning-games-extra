@@ -1,0 +1,7 @@
+SUIT Regular / Bold — SUNN
+공식 프로젝트: https://github.com/sun-typeface/SUIT
+공식 이용 조건: https://github.com/sun-typeface/SUIT/blob/main/LICENSE
+SIL Open Font License 1.1. 원문은 SUIT-LICENSE.txt에 포함했습니다.
+기존 창용쌤 게임 스튜디오의 SUIT Regular/Bold WOFF2를 수정 없이 복사했습니다.
+가공·이름 변경·서브셋 생성은 하지 않았습니다.
+이 앱은 글꼴을 외부 서버에 요청하지 않고 로컬 파일과 오프라인 캐시를 사용합니다.

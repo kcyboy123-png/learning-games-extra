@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#242528"><meta name="description" content="탭으로 예상하고, 한 면씩 접어 확인하는 초등 전개도 공작소">
+  <title>전개도 공작소 · 창용쌤</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml"><link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#task-title">활동으로 건너뛰기</a>
+<header class="topbar">
+  <a class="brand" href="./" aria-label="전개도 공작소 처음으로"><img src="icon.svg" alt="" width="36" height="36"><span>전개도 공작소</span></a>
+  <nav aria-label="활동 선택"><button data-mode="explore" aria-pressed="true">접어 보기</button><button data-mode="path" aria-pressed="false">문제 풀기</button><button data-mode="create" aria-pressed="false">직접 만들기</button></nav>
+  <button id="teacher-open" class="quiet">선생님</button>
+</header>
+<main id="game-main">
+  <section id="resume-banner" class="resume-banner" hidden><p>이전에 풀던 활동이 있어요.</p><button id="resume-lesson" class="primary">이어서 풀기 →</button><button id="fresh-lesson" class="secondary">처음부터 풀기</button></section>
+  <section id="path-screen" hidden><div class="path-intro"><div><h1 tabindex="-1" id="path-title">도전</h1></div><svg class="path-art" viewBox="0 0 240 210" aria-hidden="true"><defs><linearGradient id="map-gold" x2="1" y2="1"><stop stop-color="#f4d8ad"/><stop offset="1" stop-color="#cba36d"/></linearGradient><linearGradient id="map-paper" x2="1" y2="1"><stop stop-color="#f5f1e9"/><stop offset="1" stop-color="#d2cec6"/></linearGradient></defs><path d="M120 18 213 69 120 121 27 69Z" fill="#f2eee6"/><path d="M27 69 120 121V202L27 150Z" fill="url(#map-gold)"/><path d="M120 121 213 69V150L120 202Z" fill="url(#map-paper)"/><path d="M27 69 120 121 213 69M120 121V202" fill="none" stroke="#ffffff88" stroke-width="1.2"/></svg></div><section class="tier-guide" aria-label="시작 전 티어 안내"><ol id="tier-ladder" class="tier-ladder" aria-label="브론즈부터 챌린저까지 티어 순서"></ol><div class="tier-guide-footer"><span class="tier-penalty">오답 −10초</span><details class="stage-rules"><summary aria-label="티어 기준 보기">기준</summary><div id="tier-rules"></div></details></div></section><div id="chapter-cards" class="chapter-cards"></div><details class="print-library"><summary>접기 도안</summary><div class="paper-library"><div><h2>종이로 직접 접어봐요</h2><p>실제 크기로 인쇄해요. 실선은 오리고, 점선은 접어요.</p></div><div class="paper-links"><a href="./printables/cube-nets.pdf" target="_blank" rel="noopener">정육면체 11가지 도안 <span aria-hidden="true">↗</span></a><a href="./printables/question-nets.pdf" target="_blank" rel="noopener">96문제 연결 도안 <span aria-hidden="true">↗</span></a><a href="./printables/teacher-guide.pdf" target="_blank" rel="noopener">선생님용 정답·지도 자료 <span aria-hidden="true">↗</span></a></div></div></details></section>
+  <div class="activity-header">
+  <section class="task-heading" aria-labelledby="task-title">
+    <div><p class="eyebrow" id="chapter">종이에서 상자로</p><h1 id="task-title" tabindex="-1">접으면, 어떤 면이 만날까?</h1><p id="instruction">면을 누르면 접혀요. 다시 누르면 펼쳐져요.</p></div>
+    <div id="lesson-progress" class="lesson-progress" hidden></div>
+  </section>
+  <div class="activity-bar"><details id="activity-settings"><summary id="settings-label">다른 모양 고르기</summary><div id="mode-tools"></div></details><div class="shape-pager" aria-label="전개도 모양 바꾸기"><button id="previous-shape" aria-label="이전 전개도">‹</button><span id="shape-position" aria-live="polite">처음</span><button id="next-shape" aria-label="다음 전개도">›</button></div></div>
+  </div>
+  <ol class="action-path" aria-label="활동 순서"><li id="path-pick" aria-current="step"><span>1</span> 톡, 고르기</li><li id="path-fold"><span>2</span> 접어 보기</li><li id="path-find"><span>3</span> 생각 확인</li></ol>
+  <div id="challenge-status" class="challenge-status" hidden><b>시간 도전</b><span id="challenge-clock">0:00</span><span id="challenge-state" role="status" aria-live="polite">남은 시간</span><span id="time-penalty" role="status" aria-live="polite"></span></div><div class="mobile-switch" aria-label="작은 화면 보기"><button id="show-net" aria-pressed="true">펼친 종이</button><button id="show-model" aria-pressed="false">접힌 모습</button></div>
+  <section id="explore-controls" class="explore-controls" aria-label="접어 보기의 다음 행동" hidden><p id="explore-cue" role="status"></p><div id="explore-primary-controls"></div></section>
+  <section id="learning-controls" tabindex="-1" class="learning-controls" aria-label="지금 할 일" hidden></section>
+  <div class="workbench" id="workbench">
+    <section class="sheet-panel" aria-labelledby="net-title">
+      <div class="panel-heading"><h2 id="net-title" tabindex="-1">펼친 종이</h2><span id="net-badge" class="small-badge">정육면체</span></div>
+      <div id="net-wrap"><svg id="net-svg" viewBox="0 0 600 400" aria-label="전개도. 면이나 숫자가 붙은 곳을 눌러 선택해요." role="group"></svg></div>
+      <p class="rotate-hint">손가락으로 밀어 돌려 보세요</p><div id="face-taps" aria-label="면 접기와 펼치기"></div>
+      <div id="choices" class="choices" aria-label="답 고르기"></div>
+      <details class="legend-help"><summary>그림 기호</summary><div class="net-legend"><span id="fixed-face-key" hidden></span><span><i class="solid"></i> 종이의 가장자리</span><span><i class="dashed"></i> 접는 선</span></div></details>
+    </section>
+    <section class="model-panel" aria-labelledby="model-title">
+      <div class="panel-heading"><h2 id="model-title" tabindex="-1">접어서 확인</h2><button id="selected-view" class="quiet small" hidden>고른 면 보기</button><button id="ghost" class="quiet small" aria-pressed="false">속 보기</button></div>
+      <div id="net-context" class="net-context"><div id="mini-net" aria-hidden="true"></div><p id="context-label">같은 글자의 면을 따라가요.</p><button id="context-back" class="quiet">다시 고르기</button></div>
+      <p id="face-marker-key" class="face-marker-key" hidden></p><div class="scene-wrap"><div id="scene"></div><div id="model-cover" hidden><span class="fold-symbol">◇</span><strong>머릿속으로 먼저 접어 봐요</strong><p>답을 고른 뒤 확인하면<br>상자가 접히는 모습을 볼 수 있어요.</p><button id="unlock" class="secondary">접기 도움 받기</button></div><span id="fold-stage" class="scene-caption">종이가 활짝 펼쳐져 있어요</span></div>
+      <details class="view-settings"><summary>돌려 보기</summary><div class="camera-tools" aria-label="상자 보는 방향"><button id="rotate-left" aria-label="상자를 왼쪽에서 보기">↶</button><button id="rotate-right" aria-label="상자를 오른쪽에서 보기">↷</button><button id="zoom-out" aria-label="상자 작게 보기">−</button><button id="zoom-in" aria-label="상자 크게 보기">＋</button><button id="camera-reset">처음 방향</button></div></details>
+    </section>
+  </div>
+  <div id="lesson-utilities" class="lesson-utilities" hidden></div>
+  <section id="feedback" class="feedback" role="status" aria-live="polite" tabindex="-1" hidden></section>
+  <section class="answer-bar" aria-label="선택과 확인"><div id="selection-note" role="status" aria-live="polite">면 하나를 톡 눌러 보세요.</div><div class="action-dock"><div class="fold-tools"><button id="unfold" class="quiet"><span aria-hidden="true">↶</span> 펼치기</button><label class="slider-label" for="fold-range"><span class="slider-start">펼침</span><input id="fold-range" type="range" min="0" max="100" value="0" aria-label="상자 접힌 정도"><span>접힘</span></label><details class="fold-more"><summary>접기 도구</summary><div class="fold-buttons"><button id="step-fold" class="secondary">한 면 접기</button><button id="play-fold" class="secondary">모두 접기</button></div></details></div><div class="answer-actions"><button id="explore-opposite" class="secondary" hidden>마주 보는 면</button><button id="explore-action" class="primary">모두 접기</button><button id="hint" class="quiet" hidden>생각 힌트</button><button id="check" class="primary" hidden disabled>내 생각 확인</button><button id="next" class="primary" hidden>다음 문제 →</button></div></div></section>
+  <details id="extra-tools" class="extra-tools"><summary><span class="hint-menu-name">힌트</span><span class="help-menu-name">도움</span> · 도구</summary><div id="extra-tools-body"></div></details>
+  <div id="explore-tools" class="explore-tools" aria-label="더 살펴보기"></div>
+  <div class="bottom-note"><span>창용쌤 · 천천히 예상하고, 직접 확인해요. · v0.9.2</span><button id="help-open" class="quiet" aria-label="사용 방법">도움말</button><span id="save-state">기록은 이 기기에만 저장돼요</span></div>
+</main>
+<dialog id="help-dialog"><button class="dialog-close" aria-label="사용 방법 닫기">×</button><p class="eyebrow">처음 와도 괜찮아요</p><h2>세 번의 탭으로 시작해요</h2><ol class="help-steps"><li><b>먼저 골라요</b><span>펼친 종이에서 면이나 숫자를 톡 눌러요. 문제를 풀 때는 큰 답 버튼으로 골라도 같아요.</span></li><li><b>접어서 살펴봐요</b><span>‘한 면 접기’를 눌러 종이가 움직이는 모습을 따라가요. ‘펼치기’로 언제든 돌아올 수 있어요.</span></li><li><b>생각을 확인해요</b><span>문제에서는 답을 고른 뒤 ‘내 생각 확인’를 눌러요. 틀려도 다시 골라 볼 수 있어요.</span></li></ol><p>상자를 돌리려면 ↶ ↷ 버튼을 눌러요. 드래그도 가능하지만 꼭 할 필요는 없어요.</p><button class="primary dialog-close">해 볼게요</button></dialog>
+<dialog id="teacher-dialog"><button class="dialog-close" aria-label="선생님 도구 닫기">×</button><p class="eyebrow">수업 준비</p><h2>같은 문제를 함께 풀어요</h2><label>빠른 복습 12문제의 묶음 번호<input id="seed-input" inputmode="numeric" type="number" min="1" max="999999" value="511"></label><p class="muted">8단계 96문항은 누구에게나 같은 문제예요. 한 단계를 완주하면 다음 단계가 열려요.</p><label for="teacher-assistance">문제 풀이의 접기 도움</label><select id="teacher-assistance"><option value="auto">점점 혼자 해 보기</option><option value="guided">함께 접으며 풀기</option><option value="predict">먼저 예상하기</option></select><div class="row"><button id="apply-seed" class="primary">이 번호로 시작</button><button id="copy-link" class="secondary">수업 링크 복사</button></div><hr><p class="teacher-papers"><a href="./printables/cube-nets.pdf" target="_blank" rel="noopener">실측 도안 11종</a><a href="./printables/question-nets.pdf" target="_blank" rel="noopener">96문항 연결 도안</a><a href="./printables/teacher-guide.pdf" target="_blank" rel="noopener">정답·지도 자료</a></p><div class="row"><button id="print" class="secondary">현재 화면 관찰 학습지</button><button id="export" class="secondary">이 기기 기록 저장</button></div><label class="check-label"><input id="reduced" type="checkbox">움직임 줄이기 · 접힌 상태로 바로 이동</label><label class="check-label"><input id="private-session" type="checkbox">공용 기기 · 지금부터 기록을 저장하지 않기</label><p id="teacher-status" role="status"></p><p class="muted">이름·학급·계정을 받지 않습니다. 저장된 기록은 이 브라우저에만 남습니다.</p></dialog>
+<div id="print-sheet"></div><dialog id="entrance" aria-label="전개도 공작소 입장"><video id="entrance-video" muted playsinline preload="none" poster="media/intro-poster.jpg" aria-hidden="true"></video><div class="entrance-copy"><img src="icon.svg" width="44" height="44" alt=""><h1>전개도 공작소</h1><button id="enter-game" class="primary">시작하기 →</button><button id="enter-silent" class="quiet">소리 없이 시작</button><p id="entrance-status" role="status"></p></div><button id="skip-intro" class="quiet" hidden>건너뛰기 →</button></dialog>
+<noscript>이 활동을 하려면 JavaScript를 켜 주세요.</noscript>
+<script type="module">
+document.documentElement.dataset.appState='loading';
+import('./app.mjs').then(()=>{
+  if(document.documentElement.dataset.appState!=='ready')throw new Error('App initialization did not complete');
+}).catch(error=>{
+  console.error('전개도 공작소 시작 실패',error);
+  document.documentElement.dataset.appState='error';
+  const main=document.querySelector('main');
+  document.querySelector('header').inert=true;
+  for(const child of main.children)child.hidden=true;
+  for(const node of document.querySelectorAll('header nav, #teacher-open'))node.hidden=true;
+  const notice=document.createElement('section');
+  notice.id='startup-error';notice.className='feedback';notice.setAttribute('role','alert');notice.tabIndex=-1;
+  notice.innerHTML='<div class="feedback-heading"><strong>활동을 불러오지 못했어요.</strong></div><p>아래 버튼을 눌러 다시 열어 주세요. 저장된 기록은 그대로예요.</p><button id="startup-retry" class="primary">다시 열기</button>';
+  main.prepend(notice);
+  document.getElementById('startup-retry').onclick=()=>location.reload();
+  notice.focus();notice.scrollIntoView({block:'start'});
+});
+</script>
+</body></html>
