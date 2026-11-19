@@ -180,7 +180,7 @@ for(const b of document.querySelectorAll('[data-action]')){
  b.addEventListener('contextmenu',e=>e.preventDefault());
  b.addEventListener('pointerdown',e=>{if(e.button!==0)return;e.preventDefault();b.setPointerCapture(e.pointerId);const source='pointer:'+e.pointerId;
   const token={cancelled:false};pointerActions.set(e.pointerId,token);
-  if(['left','right'].includes(b.dataset.action))startRepeat(b.dataset.action,source,b,()=>!token.cancelled);else{b.classList.add('pressed');action(b.dataset.action,()=>!token.cancelled);}
+  if(['left','right','soft'].includes(b.dataset.action))startRepeat(b.dataset.action,source,b,()=>!token.cancelled);else{b.classList.add('pressed');action(b.dataset.action,()=>!token.cancelled);}
  });
  const release=e=>{const token=pointerActions.get(e.pointerId);if(token&&e.type!=='pointerup')token.cancelled=true;pointerActions.delete(e.pointerId);stopRepeat('pointer:'+e.pointerId);b.classList.remove('pressed');};
  b.addEventListener('pointerup',release);b.addEventListener('pointercancel',release);b.addEventListener('lostpointercapture',release);b.addEventListener('click',e=>{if(e.detail===0)action(b.dataset.action);});

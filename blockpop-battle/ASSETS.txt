@@ -38,3 +38,7 @@ https://nodejs.org/api/http.html
 https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events
 https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Best_practices
 브라우저의 사용자 조작 후 소리 시작, 입력과 상태 전송 분리, 표준 HTTP 스트림 구현 참고.
+
+제작자 로고 (2026-11-20)
+assets/changyong-logo.jpg: 사용자 기존 게임모음 dist/assets/changyong-logo-original.jpg를 원본 그대로 재사용. 사용자 요청 표기: 만든이: 창용쌤.
+
