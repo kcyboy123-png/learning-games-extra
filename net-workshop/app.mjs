@@ -474,7 +474,10 @@ function startMode(next){pendingFaces=[];clearPenalty();
     
     document.querySelector('.mobile-switch').before($('challenge-status'));
   }
-  $('extra-tools').open=false;$('extra-tools-body').prepend(document.querySelector('.activity-bar'));$('extra-tools-body').prepend($('hint'));
+  $('extra-tools').open=false;
+  if(next==='explore')document.querySelector('.task-heading').before(document.querySelector('.activity-bar'));
+  else $('extra-tools-body').prepend(document.querySelector('.activity-bar'));
+  $('extra-tools-body').prepend($('hint'));
   document.querySelector('.legend-help').open=false;
   if(next==='explore'){$('workbench').after($('explore-controls'),$('resume-banner'));$('explore-controls').prepend($('selection-note'));}
   else{document.querySelector('main').prepend($('resume-banner'));$('workbench').before($('explore-controls'));}
@@ -496,7 +499,7 @@ function startMode(next){pendingFaces=[];clearPenalty();
   $('model-title').textContent='접어서 확인';
   document.querySelector('.fold-more').open=false;
   document.querySelector('.view-settings').open=false;
-  $('activity-settings').open=false;$('settings-label').textContent=mode==='lesson'?'활동과 도움 고르기':mode==='create'?'만드는 방법 보기':dimensions[0]===1?'정육면체':'직육면체';
+  $('activity-settings').open=false;$('settings-label').textContent=mode==='lesson'?'활동과 도움 고르기':mode==='create'?'만드는 방법 보기':'다른 모양';
   $('shape-position').textContent=explorerIndex<0?'처음':`${explorerIndex+1} / 11`;
   document.querySelectorAll('button[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode||b.dataset.mode==='path'&&mode==='lesson')));
   $('lesson-progress').hidden=mode!=='lesson';$('hint').hidden=mode!=='lesson';$('check').hidden=mode==='explore';$('next').hidden=true;$('check').disabled=mode!=='create';

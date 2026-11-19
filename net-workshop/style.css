@@ -529,6 +529,16 @@ body[data-mode=lesson] .retry-feedback{display:flex;align-items:center;gap:10px 
 @media(max-width:480px){.chapter-card{flex-wrap:wrap;position:relative;min-height:118px}.stage-orb{display:none}.stage-chip{position:absolute;right:14px;top:18px}.chapter-card small time{display:block;margin:4px 0 0}.topbar #sound-toggle{position:absolute;right:8px;top:8px}.brand{padding-right:68px}#entrance{min-height:390px}#entrance video{height:390px;object-fit:cover}.resume-banner #fresh-lesson{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.chapter-card{transition:none}.chapter-card:hover:not(:disabled),.chapter-card:active:not(:disabled){transform:none}}
 @media print{#entrance,#sound-toggle{display:none!important}}
+/* Shape choice stays at the entrance to exploration, rather than in utility tools. */
+body[data-mode=explore] .activity-header{flex-direction:column;align-items:flex-start;gap:10px}
+body[data-mode=explore] .activity-bar{width:100%;padding:0;gap:12px;flex-wrap:wrap;justify-content:flex-start}
+body[data-mode=explore] #settings-label{min-width:130px;min-height:48px;font-size:16px}
+body[data-mode=explore] #activity-settings #mode-tools{left:0;right:auto;min-width:min(300px,calc(100vw - 48px))}
+body[data-mode=explore] .shape-pager span{font-size:15px}
+#entrance{width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;border:0;border-radius:0;background:#171819}
+#entrance video{width:100%;height:100%;min-height:0;aspect-ratio:auto;object-fit:contain}
+#entrance-status{font-size:16px;color:#f2d5ab}
+body.entrance-open{overflow:hidden}
 
 /* Keep the stage grid within the first tablet view. */
 .path-intro{margin:0;padding:4px 0}.path-intro h1{margin:8px 0}.stage-rules{margin-bottom:8px}.stage-orb svg{display:block}.chapter-card:focus-visible{outline:3px solid #f4d5a1;outline-offset:4px}.chapter-card[disabled]{opacity:1;color:#aaaeb4}.chapter-card[disabled] .stage-orb{color:#a7a8ab}.chapter-card.completed .stage-orb{background:#ead0a822;border-color:#d2b38266;color:#e7c799}
