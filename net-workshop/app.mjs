@@ -97,14 +97,14 @@ function resumeProgress(){
   $('check').disabled=!canCheckAnswer();$('check').hidden=solved||revealed;$('next').hidden=!(solved||revealed);$('hint').hidden=solved||revealed;
   if(solved||revealed)feedback(revealed?'설명과 함께 다시 배워요':attempts===1?'내 생각이 맞았어요!':'다시 살펴보고 찾았어요!',q.explanation,solved);
   else if(attempts)feedback('이어서 한 번 더 생각해 봐요',q.hint,false,retryControls());
-  else if(helped)feedback('이어서 살펴봐요',q.hint,false,retryControls());
+  else if(helped&&hintStage>0)feedback('이어서 살펴봐요',q.hint,false,retryControls());
   $('selection-note').textContent=solved||revealed?'확인한 문제예요. 접힌 모습을 비교하고 다음으로 가요.':q.answerMode==='all'?`이어서 풀어요. ${selected?.length??0}곳 선택했어요. 가능한 자리를 모두 고른 뒤 확인해요.`:q.type==='build'?`이어서 만들어요. 지금 ${createCells.length} / 6 면이에요. 주어진 면은 그대로 두어요.`:selected===null?'이어서 풀어요. 답을 하나 골라요.':`고른 답과 접힌 모습을 그대로 불러왔어요. ${sameResponse(selected,lastSubmitted)?'다른 답을 골라 다시 생각해 봐요.':'생각을 확인해 보세요.'}`;
   if(q.type==='build'&&!solved&&!revealed&&createCells.length<6)$('selection-note').textContent=`이어서 만들어요. ${6-createCells.length}면을 더 놓으면 생각을 확인할 수 있어요.`;
   syncJourney();restoring=false;if(challengeActive){challengeClock.reset(savedChallenge(s.challenge)?.elapsed??0);stageAssisted=!!s.challenge?.assisted||s.challenge?.version!==2;}updateChallenge();saveProgress();
   if(canCheckAnswer()){
     challengeReading=false;updateChallenge();$('check').focus({preventScroll:true});
     if($('check').getBoundingClientRect().top<0||$('check').getBoundingClientRect().bottom>innerHeight)$('check').scrollIntoView({block:'nearest',behavior:'instant'});
-  }else if(solved||revealed||attempts||helped){
+  }else if(solved||revealed||attempts||helped&&hintStage>0){
     if(solved||revealed)$('instruction').textContent=solved?'정답을 확인했어요. ‘'+$('next').textContent+'’를 눌러요.':'설명을 보고 ‘'+$('next').textContent+'’를 눌러요.';
     (solved||revealed?nextButton:$('feedback')).focus({preventScroll:true});
     const resumeTarget=solved?nextButton:$('feedback');if(resumeTarget.getBoundingClientRect().top<0||resumeTarget.getBoundingClientRect().bottom>innerHeight)resumeTarget.scrollIntoView({block:'nearest',behavior:'instant'});
@@ -453,8 +453,8 @@ function startMode(next){finishArrival();pendingFaces=[];clearPenalty();
 
   if(next==='lesson')pendingProgress=null;
   challengeClock.advance(performance.now(),false);
-  hintStage=0;delete document.body.dataset.questionType;
   if(mode==='lesson'&&next!=='lesson')saveProgress();
+  hintStage=0;delete document.body.dataset.questionType;
   challengeActive=next==='lesson'&&practice.startsWith('bank:');if(challengeActive){challengeClock.reset();challengeSaveSecond=-1;}
   if(mode==='create')freeMaker={cells:createCells,undo:undoStack};
   if(next==='create')({cells:createCells,undo:undoStack}=freeMaker);
