@@ -227,7 +227,20 @@ function foldTo(value,animate=true,faceAction=false){
     progress=next;folding=t<1;scene.update(progress,selectedFace(),markerItems());updateFoldControls();if(t<1)animation=requestAnimationFrame(frame);else{if(hintStage>1||mode==='explore')renderNet();saveProgress();finishAction();if(mode==='explore'&&pendingFaces.length)tapFace(pendingFaces.shift());}
   };frame(t0);
 }
+function inspectFold(target=1){
+  if(folding)return;
+  if(mode==='create'){check();return;}
+  if(mode==='lesson'&&target>0&&(solved||revealed))prepareAnswerNet();
+  locked=false;
+  smallView(true);
+  updateFoldControls();
+  foldTo(target);
+  saveProgress();
+}
 function updateFoldControls(){
+  $('model-fold').hidden=mode!=='lesson';
+  $('model-fold').disabled=folding;
+  $('model-fold').textContent=folding?'움직이는 중…':progress>.001?'다시 펼치기':'접어 보기';
   scene.setBusy(mode==='explore'?pendingFaces.length>=8:folding);
   if(mode==='explore'){$('face-taps').setAttribute('aria-busy',String(folding));$('face-taps').querySelectorAll('[data-action=choose]').forEach(b=>{const face=Number(b.dataset.value),waiting=pendingFaces.filter(f=>f===face).length;b.disabled=pendingFaces.length>=8||face===net.root;const state=b.querySelector('small');if(state)state.textContent=waiting?'대기 '+waiting:face===net.root?'고정':foldAngles(net,progress,sequence)[net.links.findIndex(l=>l.child===face)]>.999?'펼치기':'접기';b.setAttribute('aria-label',labels[face]+' 면 '+(waiting?'접기·펼치기 '+waiting+'회 대기':state?.textContent??''));});}
   if(mode==='lesson'&&q&&!document.body.classList.contains('course-finished'))$('chapter').textContent=`${chapterFor(practice)?.title??TYPES[q.type]} · ${locked?'먼저 예상해요':solved||revealed?'접어서 비교해요':helped?'도움을 받아 살펴봐요':'접으며 알아봐요'}`;
@@ -237,6 +250,7 @@ function updateFoldControls(){
   document.body.dataset.locked=String(locked);
   const count=net.links.length;
   $('fold-stage').textContent=progress<.001?'종이가 활짝 펼쳐져 있어요':progress>.999?(net.faces.length===6?'접힌 모습을 여러 방향에서 살펴봐요':`${6-net.faces.length}면이 부족해요. 빈자리를 찾아요`):`${Math.min(count,Math.floor(progress*count)+1)}번째 접는 선을 따라 움직여요`;
+  if(!net.connected||net.cycle)$('fold-stage').textContent=net.cycle?'네 면이 둘러 붙어 접을 수 없어요.':'면이 떨어져 있어 함께 접을 수 없어요.';
   $('step-fold').textContent=progress>.999?'모두 접었어요 ✓':'한 면 접기 ↗';
   ['unfold','step-fold','play-fold','fold-range'].forEach(id=>$(id).disabled=locked||!net.connected||net.cycle||!count||mode==='explore'&&selected===null);
   $('unfold').disabled||=progress<.001;
@@ -628,7 +642,8 @@ document.addEventListener('change',e=>{
 $('unfold').onclick=()=>{smallView(false,true);foldTo(0);};$('step-fold').onclick=()=>{smallView(true,true);foldTo((Math.floor(progress*net.links.length+.001)+1)/net.links.length);};$('play-fold').onclick=()=>{smallView(true,true);foldTo(1);};
 $('previous-shape').onclick=()=>{explorerIndex=explorerIndex<=-1?CUBE_NETS.length-1:explorerIndex-1;startMode('explore');};
 $('next-shape').onclick=()=>{explorerIndex=explorerIndex>=CUBE_NETS.length-1?-1:explorerIndex+1;startMode('explore');};
-$('show-net').onclick=()=>{if(mode==='create')returnToAnswers();else smallView(false);};$('show-model').onclick=()=>{if(mode==='create'){check();return;}if(mode==='lesson'&&solved)prepareAnswerNet();smallView(true);if(!locked)foldTo(1);};
+$('show-net').onclick=()=>{if(mode==='create')returnToAnswers();else smallView(false);};$('show-model').onclick=()=>inspectFold();
+$('model-fold').onclick=()=>inspectFold(progress>.001?0:1);
 $('context-back').onclick=returnToAnswers;
 $('explore-action').onclick=()=>{if(folding)return;if(progress>.999){smallView(false,true);foldTo(0);}else{smallView(true,true);foldTo(1);}};
 $('explore-opposite').onclick=()=>{if(selected===null)return;exploreOpposite=true;const other=opposite(net,Number(selected));feedback(`${labels[Number(selected)]} 면과 ${labels[other]} 면이 마주 봐요`,'두 면은 상자의 서로 반대쪽에 있어요. 푸른 테두리와 금빛 테두리를 찾아보세요.',true);smallView(true,true);scene.update(progress,selectedFace(),markerItems());};
