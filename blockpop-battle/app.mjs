@@ -12,6 +12,22 @@ state.reduced=typeof state.settings.reduced==='boolean'?state.settings.reduced:s
 function setText(id,value){const el=$(id),text=String(value);if(el.textContent!==text)el.textContent=text;}
 function settings(){document.body.classList.toggle('reduced',state.reduced);$('reducedMotion').checked=state.reduced;$('volume').value=Math.round(sound.volume*100);setText('soundButton',sound.enabled?'♪':'♪̸');$('soundButton').setAttribute('aria-pressed',String(sound.enabled));$('soundButton').setAttribute('aria-label',sound.enabled?'소리 끄기':'소리 켜기');setText('soundTest',!sound.enabled||sound.volume===0?'소리 켜고 들어 보기 ♪':'효과음 들어 보기 ♪');try{localStorage.setItem('blockpop-settings-v1',JSON.stringify({reduced:state.reduced,sound:sound.enabled,volume:sound.volume}));}catch{}}
 settings();
+const progressKey='blockpop-progress-v1';
+function readProgress(){
+ const raw=localStorage.getItem(progressKey);let saved;
+ try{saved=JSON.parse(raw);}catch{return 0;}
+ return Number.isInteger(saved?.cleared)&&saved.cleared>=0&&saved.cleared<=9?saved.cleared:0;
+}
+function progressUnavailable(){setText('progressNote','이 브라우저에서는 기록을 저장하지 못해요. 닫으면 진행이 사라져요.');}
+try{state.cleared=readProgress();state.selected=Math.min(state.cleared,8);}catch{progressUnavailable();}
+function saveProgress(){
+ try{
+  // A second open tab must not overwrite a further-cleared stage.
+  state.cleared=Math.max(state.cleared,readProgress());
+  localStorage.setItem(progressKey,JSON.stringify({cleared:state.cleared}));
+  setText('progressNote','완료한 단계는 이 브라우저에 자동 저장돼요.');
+ }catch{progressUnavailable();toast('단계 기록을 저장하지 못했어요. 이 화면에서는 계속할 수 있어요.');}
+}
 function toast(text){setText('toast',text);$('toast').classList.add('visible');clearTimeout(state.toastTimer);state.toastTimer=setTimeout(()=>$('toast').classList.remove('visible'),3200);}
 function open(id){stopInput();if(!$(id).open)$(id).showModal();}
 function close(id){$(id).close();}
@@ -231,6 +247,7 @@ function showResult(){
  state.series=advanceSeries(state.series,g.winner);
  const seriesWin=state.series.winner===0,seriesDone=state.series.winner!==null,wins=state.series.wins,round=wins[0]+wins[1];
  state.cleared=completeStage(state.cleared,state.rival,state.series.winner);
+ if(seriesWin)saveProgress();
  const newlyUnlocked=state.cleared>before&&state.cleared<9,finished=seriesWin&&state.rival===8;
  state.resultNext=seriesWin&&state.rival<8?state.rival+1:state.rival;
  $('resultDialog').dataset.outcome=win?'win':'retry';
