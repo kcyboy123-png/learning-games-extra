@@ -1,17 +1,17 @@
-import {renderWav} from './audio-export.mjs?v=20261120-welcome22';
-import {carolGuide} from './carol-guide.mjs?v=20261120-welcome22';
+import {renderWav} from './audio-export.mjs?v=20261120-film23';
+import {carolGuide} from './carol-guide.mjs?v=20261120-film23';
 import {playbackBeat} from './performance-motion.mjs';
 import {restGlyph,beamPairs} from './notation.mjs';
-import {createClassroomUI} from './classroom.mjs?v=20261120-welcome22';
-import {readPresentations} from './presentation.mjs?v=20261120-welcome22';
-import {PITCHES,PROGRESSIONS,makeSong,emptyBars,used,validateSong,isChordTone,chordAt,complete,hasNotes,clone,badges,editableSong,songForestMap,songParts,partBars,firstPart} from './core.mjs?v=20261120-welcome22';
-import {LENGTHS,register,allowedPitches,createHistory,commit,undo,redo,addNote,setNoteTicks,setNotePitch,shiftNote,deleteNote,pasteBar,clearPart,toggleShaker,nextOpenBar,soloPart,completionTarget,repeatIntoEmpty,clearMeasure} from './editor.mjs?v=20261120-welcome22';
-import {readLibrary,keepSong,openWork,isEmptySong,withLibraryLock,readDraft,createDraftSaver} from './library.mjs?v=20261120-welcome22';
-import {INSTRUMENTS,instrumentById} from './instruments.mjs?v=20261120-welcome22';
-import {Player} from './audio.mjs?v=20261120-welcome22';
-import {createForestAmbience} from './forest-ambience.mjs?v=20261120-welcome22';
-import {mountEntrance,openEntrance} from './entrance.mjs?v=20261120-welcome22';
-import {forestReduce,forestView,webglAvailable,FOREST_MAPS,forestMapId,forestMapName,BLACK_KEY_STEPS} from './forest-state.mjs?v=20261120-welcome22';
+import {createClassroomUI} from './classroom.mjs?v=20261120-film23';
+import {readPresentations} from './presentation.mjs?v=20261120-film23';
+import {PITCHES,PROGRESSIONS,makeSong,emptyBars,used,validateSong,isChordTone,chordAt,complete,hasNotes,clone,badges,editableSong,songForestMap,songParts,partBars,firstPart} from './core.mjs?v=20261120-film23';
+import {LENGTHS,register,allowedPitches,createHistory,commit,undo,redo,addNote,setNoteTicks,setNotePitch,shiftNote,deleteNote,pasteBar,clearPart,toggleShaker,nextOpenBar,soloPart,completionTarget,repeatIntoEmpty,clearMeasure} from './editor.mjs?v=20261120-film23';
+import {readLibrary,keepSong,openWork,isEmptySong,withLibraryLock,readDraft,createDraftSaver} from './library.mjs?v=20261120-film23';
+import {INSTRUMENTS,instrumentById} from './instruments.mjs?v=20261120-film23';
+import {Player} from './audio.mjs?v=20261120-film23';
+import {createForestAmbience} from './forest-ambience.mjs?v=20261120-film23';
+import {mountEntrance,openEntrance} from './entrance.mjs?v=20261120-film23';
+import {forestReduce,forestView,webglAvailable,FOREST_MAPS,forestMapId,forestMapName,BLACK_KEY_STEPS} from './forest-state.mjs?v=20261120-film23';
 let forestQualityMode='auto';
 try{const saved=localStorage.getItem('piano-forest-quality');if(['auto','clear','smooth'].includes(saved))forestQualityMode=saved;}catch{}
 function qualityChoice(){return `<label>숲 화면 <select id="forest-quality">${[['auto','자동 · 기기에 맞게'],['clear','선명하게'],['smooth','부드럽게 · 화면 부담 줄이기']].map(([v,label])=>`<option value="${v}" ${forestQualityMode===v?'selected':''}>${label}</option>`).join('')}</select></label>`;}
@@ -191,7 +191,7 @@ const forestBar=()=>`<div class="forest-bar">${mapChoice()}</div>${playing?`<div
 function forestSync(){ambienceSync();const v=forestView({phase:forestPhase,screen,playing,audible});if(listenWithScore)v.cinema=false;document.body.classList.toggle('forest-mode',v.visible);document.body.classList.toggle('forest-cinema',v.cinema);forest?.sync({quality:forestQualityMode,phase:forestPhase,visible:v.visible,cinema:v.cinema,avatar:forestAvatar||'girl',map:forestMap,parts:playing&&performanceOnly?[]:songParts(playing&&listening==='part'?song:performanceSong||song)});}
 function forestEvent(ev){if(ev==='friends-unavailable'){toast('친구 그림을 불러오지 못했어요. 합주는 그대로 들을 수 있어요.');return;}const next=forestReduce(forestPhase,ev);if(ev==='fail'){forest?.dispose();forest=null;forestLoad=null;document.querySelector('#forest-host').replaceChildren();if(forestPhase)toast('3D 숲을 열지 못해 기본 악보로 작곡해요.');}if(next===forestPhase)return;forestPhase=next;if(next==='compose')welcomeChristmas=false;render();const f=next==='compose'?'.key:not(:disabled)':next==='arrive'?'.forest-look':'';if(f)app.querySelector(f)?.focus({preventScroll:true});}
 // Entering never touches the song: no new song, no save, no undo step. Without WebGL the plain editor opens instead.
-function openForest(){stop();screen='edit';selected=-1;view='group';if(!webglAvailable()){forestPhase=null;render();toast('이 기기에서는 3D 숲을 열 수 없어 기본 악보로 작곡해요.');return;}forestPhase=forestReduce(forestPhase,'open');render();ambience.unlock();scrollTo(0,0);if(forest&&!forest.dead){forestEvent('ready');forestSync();return;}forestLoad??=import('./forest.mjs?v=20261120-welcome22').then(m=>m.createForest(document.querySelector('#forest-host'),{onEvent:forestEvent,audioTime:()=>player.outputTime()}));const loading=forestLoad;loading.then(f=>{if(loading!==forestLoad)return f.dispose();forest=f;forestEvent('ready');forestSync();},()=>{if(loading===forestLoad)forestEvent('fail');});}
+function openForest(){stop();screen='edit';selected=-1;view='group';if(!webglAvailable()){forestPhase=null;render();toast('이 기기에서는 3D 숲을 열 수 없어 기본 악보로 작곡해요.');return;}forestPhase=forestReduce(forestPhase,'open');render();ambience.unlock();scrollTo(0,0);if(forest&&!forest.dead){forestEvent('ready');forestSync();return;}forestLoad??=import('./forest.mjs?v=20261120-film23').then(m=>m.createForest(document.querySelector('#forest-host'),{onEvent:forestEvent,audioTime:()=>player.outputTime()}));const loading=forestLoad;loading.then(f=>{if(loading!==forestLoad)return f.dispose();forest=f;forestEvent('ready');forestSync();},()=>{if(loading===forestLoad)forestEvent('fail');});}
 function render(){const details=app.querySelector('details.more');if(details)moreOpen=details.open;pianoObserver?.disconnect();pianoObserver=null;clearForestInput();forestMap=welcomeChristmas?'christmas':songForestMap(song);const offsets=Object.fromEntries(Array.from(app.querySelectorAll('[data-scroll]'),e=>[e.dataset.scroll,e.scrollLeft]));app.innerHTML=screen==='home'?home():screen==='finish'?finish():screen==='library'?library():screen==='presentation'?presentation():screen==='classroom'?header()+classroomUI.view():forestPhase&&forestPhase!=='compose'?forestIntro():editor();lastKey=null;app.querySelectorAll('[data-scroll]').forEach(e=>e.scrollLeft=offsets[e.dataset.scroll]||0);const active=app.querySelector('.workspace .bar-bg.active');if(active&&bar!==shownBar){shownBar=bar;const box=active.closest('.staff-scroll'),r=active.getBoundingClientRect(),o=box.getBoundingClientRect();if(r.left<o.left||r.right>o.right)box.scrollLeft+=r.left-o.left-8;}bind();saveNotice();mountEntrance(app,songForestMap(song),()=>{stop();render();});forestSync();}
 async function play(target=song,start=0,end=8,only=false){
  if(!only&&!(target.accompaniment??true)&&songParts(target).every(p=>p.bars.slice(start,end).every(b=>b.every(n=>n.pitch===null)))){toast('들을 음표가 아직 없어요. 건반을 눌러 음을 넣거나 반주 함께를 켜 주세요.');return;}

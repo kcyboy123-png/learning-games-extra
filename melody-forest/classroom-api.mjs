@@ -1,4 +1,4 @@
-import {validateSong,hasNotes} from './core.mjs?v=20261120-welcome22';
+import {validateSong,hasNotes} from './core.mjs?v=20261120-film23';
 export const codeText=value=>String(value).trim().toUpperCase().replace(/[\s-]/g,'');
 export function validCode(value){const code=codeText(value);if(!/^[A-Z0-9]{8}$/.test(code))throw Error('학급 코드 8자리를 확인해 주세요.');return code;}
 export function submission(song,label){const studentLabel=String(label).trim();if(!studentLabel||studentLabel.length>30)throw Object.assign(Error(),{userMessage:'번호나 별명을 30자 이내로 적어 주세요.'});const safe=validateSong(song);if(!hasNotes(safe))throw Object.assign(Error(),{userMessage:'음을 하나 이상 만든 뒤 제출해 주세요.'});return {studentLabel,title:safe.title,songJSON:JSON.stringify(safe)};}
