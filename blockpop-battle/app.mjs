@@ -1,7 +1,7 @@
-import{match,step,snapshot,training,progress,resolve,queued,readyAttack,landingRows,attack,TICK,DURATION,W,H,TOP}from'./engine.mjs?v=233';
+import{match,step,snapshot,training,progress,resolve,queued,readyAttack,landingRows,attack,TICK,DURATION,W,H,TOP}from'./engine.mjs?v=234';
 import{drawBoard,drawNext,drawFlights,flightDuration,flightHits}from'./render.mjs?v=232';
 import{Sound}from'./audio.mjs?v=232';
-import{RIVALS,accessible,completeStage,advanceSeries,createBot,rivalActions}from'./rivals.mjs';
+import{RIVALS,accessible,completeStage,advanceSeries,createBot,rivalActions}from'./rivals.mjs?v=234';
 const shapeNames=['막대','네모','ㅗ 모양','ㄴ 모양','ㄱ 모양','계단 모양','반대 계단 모양'];
 const elements=new Map(),$=id=>{if(!elements.has(id))elements.set(id,document.getElementById(id));return elements.get(id);},sound=new Sound();
 const state={mode:'home',local:null,game:null,slot:0,actions:[],effects:[[],[]],lastEvent:0,paused:false,stage:0,stageDone:false,rival:0,selected:0,cleared:0,series:{wins:[0,0],winner:null},bot:null,seenResult:false,reduced:matchMedia('(prefers-reduced-motion: reduce)').matches,settings:{},toastTimer:0,inputEpoch:0};
@@ -66,7 +66,7 @@ function view(mode){
 function resetRound(){stopInput();clearTimeout(state.toastTimer);$('toast').classList.remove('visible');state.inputPiece=null;$('battleLane').querySelectorAll('.comet').forEach(el=>el.remove());for(const id of ['immediateBoard','nextBoard'])$(id).setAttribute('aria-label','다음 블록 준비 중');drawNext($('holdBoard'),[]);$('holdBoard').hidden=true;$('holdIcon').hidden=false;for(const id of ['myShell','otherShell','comboBadge','myQueueBox'])$(id).classList.remove('impact','defend','pop','reconnected');state.stageDone=false;state.game=null;$('myBoard').setAttribute('aria-label','내 블록판, 새 판 준비 중');drawBoard($('myBoard'),null);drawBoard($('otherBoard'),null);drawNext($('immediateBoard'),[]);drawNext($('nextBoard'),[]);$('comboBadge').classList.remove('hot');for(const id of ['comboNumber','myScore','otherScore','otherQueueCount'])$(id).textContent='0';setText('comboLabel','콤보 준비');setText('bestLabel','최고 0콤보');setText('mobileScore','내 0점');setText('timer','03:00');$('myQueueCount').innerHTML='0<span>줄</span>';$('myQueue').replaceChildren();$('myQueueBox').dataset.phase='empty';setText('queueHint','오는 공격 없음');setText('actionHint','준비가 끝나면 같이 시작해!');clearTimeout(state.comboTimer);$('comboImpact').hidden=true;$('gameMode').hidden=false;state.lastEvent=0;state.effects=[[],[]];state.actions=[];state.bot=null;state.seenResult=false;state.paused=false;$('countdown').hidden=true;$('eventBadge').className='event-badge';$('eventBadge').innerHTML='<span>차곡차곡 쌓아서</span><b>한 줄을 채워 봐!</b>';}
 async function localStart(mode='challenge',stage=0){
  clearTimeout(state.eventTimer);closeAll();resetRound();state.slot=0;state.stage=stage;state.stageDone=false;state.trainingRetrySuggested=false;
- state.bot=createBot(state.rival);state.local=mode==='training'?training(stage):match(Math.floor(Math.random()*2147483646)+1);state.game=snapshot(state.local);view(mode);$('myBoard').focus({preventScroll:true});const started=state.local;void sound.unlock().then(()=>{if(state.local===started&&state.mode===mode)sound.play('start');});
+ state.bot=createBot(state.rival);state.local=mode==='training'?training(stage):match(Math.floor(Math.random()*2147483646)+1);state.local.players[1].attackLimit=RIVALS[state.rival].attackLimit;state.game=snapshot(state.local);view(mode);$('myBoard').focus({preventScroll:true});const started=state.local;void sound.unlock().then(()=>{if(state.local===started&&state.mode===mode)sound.play('start');});
  setText('actionHint',mode==='training'?['점선 자리에 내려놓으면 한 줄 완성!','두 줄씩 터뜨려 6콤보에 도전!','한 줄만 지워도 공격을 막을 수 있어!'][stage]:'점선이 놓일 자리야. 옮기고, 돌리고, 내려놓기!');
  setText('trainingText',['① 한 줄 채우기','② 두 줄씩 터뜨려 6콤보','③ 오는 공격 막기','④ 저장하고 다음 블록 꺼내기'][stage]);$('trainingNext').hidden=true;update();
 }
@@ -118,7 +118,12 @@ function events(game){
    else setEvent(`공격 ${e.n}줄 적중!`,'상대 블록이 올라갔어');
   }
  }
- if(ownClear){const e=ownClear,sub=e.defended?(ownSent?`${e.defended}줄 막고 ${ownSent}줄 반격`:`${e.defended}줄 방어 성공`):ownSent?`공격 ${ownSent}줄 보냈어`:clashed?`${clashed}줄 서로 막았어`:e.newBest&&e.combo>=4?'내 최고 콤보 기록!':e.normal===0?'회색 줄 정리 · 득점은 그대로':`${e.lines}줄을 함께 지웠어`;setEvent(e.resumed?`${e.combo}콤보 연결!`:e.combo>=2?`${e.combo}콤보!`:'한 줄 완성!',sub,!!e.defended);}
+ if(ownClear){const e=ownClear,sub=e.defended?(ownSent?`${e.defended}줄 막고 ${ownSent}줄 반격`:`${e.defended}줄 방어 성공`):ownSent?`공격 ${ownSent}줄 보냈어`:clashed?`${clashed}줄 서로 막았어`:e.newBest&&e.combo>=4?'내 최고 콤보 기록!':e.normal===0?'회색 줄 정리 · 득점은 그대로':`${e.lines}줄을 함께 지웠어`;setEvent(e.resumed?`${e.combo}콤보 연결!`:e.combo>=2?`${e.combo}콤보!`:'한 줄 완성!',sub,!!e.defended);
+  if(ownSent)setText('impactDetail',`${ownSent}줄 ${e.defended?'반격':'공격'}!`);
+  else if(e.defended)setText('impactDetail',`${e.defended}줄 방어 성공!`);
+  else if(clashed)setText('impactDetail','서로 막았어!');
+  else if(e.attack)setText('impactDetail','상대칸 가득!');
+ }
 }
 function update(){
  const g=state.game;if(!g)return;events(g);const p=g.players[state.slot],other=g.players[1-state.slot];

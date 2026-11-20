@@ -1,6 +1,6 @@
 import {botPlan} from './engine.mjs';
 
-// Only thinking time and placement choices change. Both sides use the same rules.
+// Early rivals send smaller volleys; combo and defence rules remain shared.
 export const RIVALS = [
  {name:'모모',title:'첫 번째 친구',line:'천천히, 한 줄부터 같이 해 보자!',pace:'아주 천천히',delay:7400,think:800,interval:190,errorEvery:2,errorRank:4},
  {name:'토토',title:'발랄한 도전자',line:'빈칸을 찾아 착! 준비됐어?',pace:'천천히',delay:6500,think:700,interval:170,errorEvery:3,errorRank:3},
@@ -11,7 +11,7 @@ export const RIVALS = [
  {name:'이클립스',title:'고요한 반격',line:'한 번 막고, 다시 보내 볼까?',pace:'빠르고 정확하게',delay:3000,think:350,interval:90,errorEvery:0,errorRank:0},
  {name:'노바',title:'하늘의 기사',line:'네 최고의 콤보를 보여 줘!',pace:'매우 빠르게',delay:2500,think:300,interval:80,errorEvery:0,errorRank:0},
  {name:'오닉스',title:'마지막 챔피언',line:'여기까지 왔구나. 멋진 승부를 하자!',pace:'챔피언',delay:2100,think:250,interval:70,errorEvery:0,errorRank:0}
-].map((r,index)=>Object.freeze({...r,index,sheet:Math.floor(index/3)+1,column:index%3}));
+].map((r,index)=>Object.freeze({...r,index,attackLimit:index<3?2:index<6?3:4,sheet:Math.floor(index/3)+1,column:index%3}));
 
 export function accessible(index,cleared){return Number.isInteger(index)&&index>=0&&index<9&&index<=cleared;}
 export function completeStage(cleared,index,winner){return winner===0&&accessible(index,cleared)?Math.max(cleared,Math.min(9,index+1)):cleared;}

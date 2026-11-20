@@ -91,7 +91,7 @@ export function resolve(m,locks){
  const output=[0,0];
  locks.forEach((l,i)=>{if(!l)return;const p=m.players[i],q=queued(p),a=l.lines?attack(l.lines,l.combo):0;
   const d=l.lines?cancel(p,Math.min(q,Math.max(l.lines,a))):0;
-  output[i]=Math.max(0,a-q);p.blocked+=d;
+  output[i]=Math.min(p.attackLimit??4,Math.max(0,a-q));p.blocked+=d;
   emit(m,{type:'lock',player:i,...l,defended:d,attack:a});
  });
  const shared=Math.min(...output);if(shared){output[0]-=shared;output[1]-=shared;emit(m,{type:'clash',n:shared});}
