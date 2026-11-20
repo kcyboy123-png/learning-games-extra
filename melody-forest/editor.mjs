@@ -1,5 +1,5 @@
-import { PITCHES, clone, used, isChordTone, chordAt, editableSong, partBars, firstPart, emptyBars, complete, songParts } from './core.mjs?v=20261120-refine33';
-import {instrumentById} from './instruments.mjs?v=20261120-refine33';
+import { PITCHES, clone, used, isChordTone, chordAt, editableSong, partBars, firstPart, emptyBars, complete, songParts } from './core.mjs?v=20261120-refine36';
+import {instrumentById} from './instruments.mjs?v=20261120-refine36';
 
 // Pure editing steps: every operation returns { song } or { error } and never mutates its input.
 export const LENGTHS = { 1: '반 박', 2: '1박', 3: '1.5박', 4: '2박', 8: '4박' };
@@ -73,7 +73,7 @@ export function setNotePitch(song, bar, index, pitch, instrument) {
   return edit(song, instrument, next => {
     const note = next.bars[bar]?.[index];
     if (!note) return '바꿀 음표를 다시 골라 주세요.';
-    if (!isAllowed(song, bar, pitch)) return NOT_GUIDE;
+    if (pitch !== null && !isAllowed(song, bar, pitch)) return NOT_GUIDE;
     if (note.pitch === pitch) return '이미 그 음이에요.';
     note.pitch = pitch;
   });
