@@ -1,3 +1,4 @@
+import {homeRecord,guardedSave,AUTO_BACKUP} from './save-guard.mjs?v=savefix-20261120';
 import {createPhotoMode} from './photo-mode.mjs';
 import {playIdeas} from './play-ideas.mjs';
 import {ecoGuideDue,ecoGuideHTML,ecoAdvice} from './eco-guide.mjs';
@@ -10,7 +11,7 @@ import {createIslandScenery} from './dokdo-scenery.mjs';
 import {residentDialogue} from './resident-dialogue.mjs';
 import {createTownLibrary,readVisitHash} from './town-library.mjs';
 let sharedVisit=null,shareError='';try{sharedVisit=await readVisitHash();}catch(e){shareError=e.message;}
-let viewing=!!sharedVisit,visitReturn=null,voyage=null;
+let viewing=!!sharedVisit||!!shareError,visitReturn=null,voyage=null;
 import {createPaintUI} from './paint-ui.mjs?v=perf1';
 import {startCozyReview,cozyReviews,reviewSnapshot} from './cozy-review.mjs?v=perf1';
 import {createWelcomeLife} from './welcome-life.mjs?v=perf1';
@@ -33,9 +34,9 @@ const SERVICE={health:['의료','clinic','hospital'],education:['교육','school
 const $=id=>document.getElementById(id);
 function setText(id,value){const node=$(id),text=String(value);if(node.textContent!==text)node.textContent=text;}
 function panelHTML(id,html){const node=$(id);if(node._markup!==html){node.innerHTML=html;node._markup=html;}}
-let state,storageOK=true,storageUnread=false,fromSave=false,corrupt=null,raw=null;
+let state,storageOK=true,storageUnread=false,fromSave=false,corrupt=null,raw=null,hadSave=false,recoveredSave=false;
 // localStorage 접근 자체가 막히면(SecurityError) 저장 기능 전체를 끈다. 읽을 수는 있지만 검증에 실패하면 손상 원본을 보존하고 덮어쓰지 않는다.
-try{if(!viewing&&!shareError)raw=localStorage.getItem(KEY);}catch(e){storageOK=false;storageUnread=true;console.warn('저장소에 접근할 수 없어요',e);}
+try{if(!viewing&&!shareError){raw=localStorage.getItem(KEY);hadSave=raw!==null;if(raw===null){const recovery=homeRecord(localStorage);if(recovery){raw=recovery.text;recoveredSave=true;}}}}catch(e){storageOK=false;storageUnread=true;console.warn('저장소에 접근할 수 없어요',e);}
 if(raw){try{state=parseSave(raw);fromSave=true;}catch(e){corrupt=raw;console.warn('저장 기록을 읽지 못했어요',e);}}
 if(sharedVisit)state=sharedVisit.state;
 if(!state){state=startCozyReview(createState());state.money=600;state.sat=50;}
@@ -64,9 +65,8 @@ function save(reason=''){
  if(corrupt){$('saved').textContent='손상 기록 보호 중 · 저장 안 함';return false;}
  try{
   // An unread existing town must never be replaced by the temporary welcome town.
-  if(storageUnread){if(localStorage.getItem(KEY)!==null){$('saved').textContent='기존 기록 확인 필요 · 파일 보관 후 새로고침';$('saveRecovery').hidden=false;return false;}storageUnread=false;}
-  state.savedAt=Date.now();const text=serialize(state);localStorage.setItem(KEY,text);
-  if(localStorage.getItem(KEY)!==text)throw Error('저장 확인 실패');
+  if(storageUnread){if(localStorage.getItem(KEY)!==null||localStorage.getItem(AUTO_BACKUP)!==null){$('saved').textContent='기존 기록 확인 필요 · 파일 보관 후 새로고침';$('saveRecovery').hidden=false;return false;}storageUnread=false;}
+  state.savedAt=Date.now();guardedSave(localStorage,state,hadSave,['불러옴','손상 기록 보관 후 새 마을'].includes(reason));hadSave=true;
   storageOK=true;$('saveRecovery').hidden=true;$('saved').textContent='자동 저장됨'+(reason?' · '+reason:'');return true;
  }catch(e){const first=storageOK;storageOK=false;$('saveRecovery').hidden=false;$('saved').textContent=e.name==='QuotaExceededError'?'저장 공간 부족':e.name==='SecurityError'?'브라우저 저장 차단':'저장 재시도 필요';if(first)toast('저장하지 못했어요. 저장 재시도 또는 마을 파일 보관을 눌러 주세요.');return false;}
 }
@@ -374,7 +374,16 @@ const townLibrary=createTownLibrary({getState:()=>state,notify:toast,onNew:begin
 });
 function setVisitUI(name='친구 마을'){document.body.classList.toggle('visiting',viewing);$('visitBanner').hidden=!viewing;$('visitName').textContent=name+' · 감상 중';$('visitIsland').hidden=!ISLAND_OPEN||!viewing||!state.otherIsland;}
 $('visitIsland').onclick=()=>{if(!ISLAND_OPEN||!viewing||!state.otherIsland)return;switchIsland(state);resetSession();state.paused=false;ui();};
-$('returnVisit').onclick=()=>{if(sharedVisit){location.hash='';location.reload();return;}viewing=false;state=visitReturn;try{const latest=localStorage.getItem(KEY);if(latest)state=parseSave(latest);}catch{toast('최신 저장을 읽지 못해 귀환 전 기록을 보존했어요.');storageOK=false;}visitReturn=null;state.paused=true;resetSession();setVisitUI();ui();showPause();};
+$('returnVisit').onclick=()=>{
+ try{
+  const home=homeRecord(localStorage);
+  if(!home)throw Error('이 주소·브라우저에서 내 마을 저장을 찾지 못했어요. 처음 플레이한 주소와 브라우저로 돌아가 주세요. 새 마을로 덮어쓰지 않았어요.');
+  state=home.state;state.paused=true;hadSave=!home.recovered;storageOK=true;storageUnread=false;corrupt=null;
+  viewing=false;sharedVisit=null;shareError='';visitReturn=null;owned=false;
+  history.replaceState(null,'',location.pathname+location.search);$('error').hidden=true;
+  resetSession();setVisitUI();ui();showPause();toast(home.recovered?'복구본의 내 마을로 돌아왔어요. 파일로도 보관해 주세요.':'저장된 내 마을로 돌아왔어요.');
+ }catch(error){$('error').hidden=false;$('error').textContent=error.message+' 쿠키·사이트 데이터를 지우지 마세요.';toast('내 마을을 확인하지 못해 감상 상태를 유지했어요.');}
+};
 $('townLibrary').onclick=()=>{if(viewing||voyage)return;closePanels();townLibrary.open();};
 $('entranceLibrary').onclick=()=>townLibrary.open();
 const photo=createPhotoMode({world,getState:()=>state,getTime:()=>time,name:()=>townName(state),notify:toast});
@@ -398,11 +407,12 @@ function updateVoyage(dt){if(!voyage)return;voyage.t+=dt;
 const u=Math.min(1,voyage.t/voyage.duration);if(u>=.5&&!voyage.switched)changeRegion();const side=u>=.5?voyage.to:voyage.from;const pose=ferryPose(u,side===2?1:voyage.from,side===2?1:voyage.to);if(side===2){pose.x=9;pose.z=u>=.5?45-25*((u-.5)*2):20+25*u*2;}islandScenery.boat.position.set(pose.x,-.2,pose.z);islandScenery.boat.rotation.y=pose.angle;const shot=voyagePose(u,pose,state.island,world.aspect,voyage.arrival);applyEntrancePose(world,shot);$('voyageMist').style.opacity=String(shot.mist);$('voyageMist').style.setProperty('--opening',String(shot.opening||0));const caption=u<.25?(voyage.from===2?'독도야, 다음에 또 만나':'작은 배에 설렘을 싣고') :u<.5?'파도 너머에는 어떤 풍경이 기다릴까요?':u<.73?(state.island==='mist'?'안개 너머의 독도, 조금만 더 가까이':'익숙한 바람을 따라, 우리 마을로'):(state.island==='mist'?'안개가 열리고, 독도가 우리를 맞아요':'돌아왔어요. 내가 가꾼 우리의 마을');if($('voyageCaption').textContent!==caption)$('voyageCaption').textContent=caption;if(u>=1){if(!reduced){stopArrivalFilm();voyage.reveal=true;voyage.t=0;world.scene.add(world.player.g);islandScenery.boat.visible=false;resetSession();state.paused=true;$('voyageCaption').textContent='하늘에서 바라본 독도 · 이제 토끼와 함께 걸어요';}else finishVoyage();}}
 $('skipVoyage').onclick=finishVoyage;
 function prepareDokdo(){
+ if(corrupt||storageUnread||shareError)return;
  if(state.dokdoV===1){try{const probe=parseSave(serialize(state));if(!alignFacilities(probe))return;}catch{toast('시설을 안전하게 옮길 공간이 없어 기존 저장을 유지했어요.');return;}}
  if(viewing){migrateDokdo(state);return;}
  if(!storageOK||otherOwnerAlive())return;
  const before=serialize(state),key=BACKUP+'-before-dokdo-'+Date.now();
- try{localStorage.setItem(key,before);if(localStorage.getItem(key)!==before)throw Error('backup');const next=parseSave(before);migrateDokdo(next);parseSave(serialize(next));localStorage.setItem(KEY,serialize(next));state=next;}
+ try{localStorage.setItem(key,before);if(localStorage.getItem(key)!==before)throw Error('backup');const next=parseSave(before);migrateDokdo(next);parseSave(serialize(next));guardedSave(localStorage,next,hadSave);hadSave=true;state=next;}
  catch(e){storageOK=false;toast('독도 전환 백업을 저장하지 못했어요. 기존 마을을 유지합니다.');}
 }
 const gangchiStories=['안녕! 나는 옛날 독도 바다에 살던 강치야. 지금은 멸종했지만, 이 게임에서는 독도의 기억을 안내하는 친구로 찾아왔어.','실제 시설은 표시된 자리에! 나머지는 완만한 땅을 골라 네 취향으로 꾸며 봐!','태극기 전망쉼터는 무료야. 짓기에서 골라 마음에 드는 자리에 놓아 봐!','독도는 동도·서도와 89개 부속도서로 이루어져 있어. 게임 지형은 공식 개요지도를 참고한 표현이며 모든 바위의 실제 좌표·높이를 재현한 것은 아니야.','서도 남쪽의 코끼리바위는 파도가 깎아 만든 해식동굴 때문에 코끼리 코처럼 보여.','해국은 가을에 보랏빛 꽃을 피우고, 섬기린초는 초여름에 노란 별 모양 꽃을 피워. 이곳에서도 계절에 따라 꽃이 달라져. 낮게 자라는 잎을 살펴보자.','검은 날개 끝을 가진 괭이갈매기를 찾아봐. 실제 독도에서는 새와 둥지에 가까이 가지 않고 관찰해.','실제 독도에는 동도와 서도를 잇는 다리는 없어. 이곳의 다리·해안 데크·자유 꾸미기는 게임 속 상상이야.'];
@@ -417,6 +427,8 @@ $('gangchiTalk').onclick=()=>showGangchi();$('gangchiClose').onclick=()=>$('gang
 // ---- 시작 ----
 state.paused=true;resetSession();showPause();ui();
 if(!storageOK)toast('저장소를 쓸 수 없어 이번 플레이는 저장되지 않아요.');
-if(shareError){$('error').hidden=false;$('error').textContent=shareError+' 내 마을로 돌아가려면 주소의 # 뒤를 지우고 새로고침해 주세요.';}else if(viewing){state.paused=false;setVisitUI(sharedVisit.name);showPause();}else if(corrupt){$('corruptDialog').showModal();}else prepareEntrance();
+if(shareError){setVisitUI('공유 링크 확인 필요');$('error').hidden=false;$('error').textContent=shareError+' 링크 전체를 다시 복사하거나 친구에게 작품 파일을 받아 주세요. 내 마을로 돌아가기 버튼은 기존 저장을 먼저 확인해요.';}else if(viewing){state.paused=false;setVisitUI(sharedVisit.name);showPause();}else if(corrupt){$('corruptDialog').showModal();}else prepareEntrance();
 $('corruptExport').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([corrupt],{type:'application/json'}));a.download=`꾸며봐요-도토리마을-손상기록-${Date.now()}.json`;a.click();toast('손상된 기록을 파일로 내보냈어요.');};
 $('corruptNew').onclick=()=>{if(otherOwnerAlive()){toast('다른 탭에서 마을이 진행 중이에요. 먼저 이 탭에서 이어받아 주세요.');return;}try{localStorage.setItem(BACKUP+'-corrupt',corrupt);}catch{toast('백업에 보관하지 못해 새로 시작하지 않았어요.');return;}corrupt=null;$('corruptDialog').close();save('손상 기록 보관 후 새 마을');setPaused(false);};requestAnimationFrame(loop);
+
+if(recoveredSave)toast('자동 복구본을 열었어요. 메뉴에서 마을 파일도 보관해 주세요.');

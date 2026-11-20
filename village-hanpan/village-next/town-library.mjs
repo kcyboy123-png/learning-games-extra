@@ -54,10 +54,13 @@ export async function createVisitLink(state,name,note,base=new URL('./',import.m
  const packed=btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
  const url=new URL(base);url.search='';url.hash='visit=v1.'+packed;
  if(url.href.length>MAX_SHARE_LENGTH)throw Error('큰 마을은 링크 대신 마을 파일로 공유해 주세요.');
+ await readVisitHash(url.hash); // Verify the exact link before offering it to students.
  return url.href;
 }
 export async function readVisitHash(hash=location.hash){
- if(!hash.startsWith('#visit='))return null;
+ if(!/^#visit/i.test(hash))return null;
+ try{hash=decodeURIComponent(hash);}catch{throw Error('공유 주소가 잘렸거나 손상됐어요. 링크 전체를 다시 복사해 주세요.');}
+ hash=hash.replace(/[\s\u200b\ufeff]/g,'');
  if(hash.length>MAX_SHARE_LENGTH||!/^#visit=v1\.[A-Za-z0-9_-]+$/.test(hash))throw Error('공유 주소를 확인해 주세요.');
  if(typeof DecompressionStream==='undefined')throw Error('이 브라우저에서는 마을 파일로 감상해 주세요.');
  try{const packed=hash.slice(10).replace(/-/g,'+').replace(/_/g,'/'),binary=atob(packed),bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
@@ -94,7 +97,7 @@ export function createTownLibrary({getState,onVisit,onRestore,onNew,notify=()=>{
   }
  }
  file.onchange=async()=>{const files=Array.from(file.files||[]);file.value='';let added=0;try{for(const f of files){if(f.size>MAX_FILE_BYTES)throw Error('파일이 너무 커요.');const entry=parseTownFile(await f.text());archiveTown(storage,entry.state,{name:entry.name,note:entry.note});added++;}render();notify(`${added}개 작품을 전시회에 담았어요.`);}catch(e){render();notify(`${added}개 보관됨 · ${e.message}`);}};
- actions.append(button('지금 마을 보관',()=>{archiveCurrent();render();notify('현재 마을을 보관했어요.');}),button('친구 작품 모으기',()=>file.click()),button('감상 링크 만들기',share),button('작품 파일 내려받기',download));
+ actions.append(button('지금 마을 보관',()=>{archiveCurrent();render();notify('현재 마을을 보관했어요.');}),button('친구 작품 모으기',()=>file.click()),button('감상 링크 만들기',share),button('작품 파일 내려받기',()=>download()));
  dialog.append(top,intro,nameLabel,noteLabel,actions,shareBox,list,file);document.body.append(dialog);
  return {open(mode){try{render();shareBox.hidden=true;dialog.showModal();if(mode==='share')share().catch(e=>notify(e.message));}catch(e){notify(e.message);}},archiveCurrent,startNew,async readSharedVisit(){return readVisitHash();},element:dialog};
 }
