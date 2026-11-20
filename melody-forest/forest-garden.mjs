@@ -1,6 +1,6 @@
 import * as THREE from './lib/three.module.min.js';
 import {GLTFLoader} from './lib/GLTFLoader.js';
-import {barkTex,foliageDetailTex,surfaceData} from './garden-textures.mjs?v=20261120-drag47';
+import {barkTex,foliageDetailTex,surfaceData} from './garden-textures.mjs?v=20261120-opt48';
 
 // Local, self-made forest-studio models. Keep the piano terrace and approach open.
 export const GARDEN_PLANTS = {

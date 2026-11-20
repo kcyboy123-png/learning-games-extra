@@ -4,12 +4,12 @@ import {forestQuality} from './forest-quality.mjs';
 import {pianoPressure} from './performance-motion.mjs';
 import {loadChristmasTree,loadChristmasLantern,loadChristmasArch,loadDistantChristmasTree} from './christmas-tree.mjs';
 import * as THREE from './lib/three.module.min.js';
-import {loadFriendArt,createForestFriends,companionSpace} from './forest-friends.mjs?v=20261120-drag47';
-import {loadGarden} from './forest-garden.mjs?v=20261120-drag47';
-import {pianoKey, WHITE_KEYS, BLACK_KEY_STEPS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs?v=20261120-drag47';
-import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261120-drag47';
-import {createStorybookChild,backingKey} from './forest-character.mjs?v=20261120-drag47';
-import {forestInput, forestStep, forestOrbit, forestRoute, forestLook, forestEye, forestTurnToward} from './forest-controls.mjs?v=20261120-drag47';
+import {loadFriendArt,createForestFriends,companionSpace} from './forest-friends.mjs?v=20261120-opt48';
+import {loadGarden} from './forest-garden.mjs?v=20261120-opt48';
+import {pianoKey, WHITE_KEYS, BLACK_KEY_STEPS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs?v=20261120-opt48';
+import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261120-opt48';
+import {createStorybookChild,backingKey} from './forest-character.mjs?v=20261120-opt48';
+import {forestInput, forestStep, forestOrbit, forestRoute, forestLook, forestEye, forestTurnToward} from './forest-controls.mjs?v=20261120-opt48';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z), C = h => new THREE.Color(h);
 // The full A0–C8 piano has 52 white keys; the existing C3–C6 animation occupies slots 16–37.
@@ -565,12 +565,15 @@ export async function createForest(host, {onEvent = () => {}, audioTime = () => 
     notebookBand=header&&book?{top:header.getBoundingClientRect().bottom+scrollY+12,bottom:book.getBoundingClientRect().top+scrollY-54}:null;
   }
 
-  let lastWidth=0,lastHeight=0,lastRatio=0,qualityMode='auto';
+  let lastWidth=0,lastHeight=0,lastRatio=0,qualityMode='auto',qualityScenery=null,qualityParticles=null;
   function applyQuality(){
     const q=forestQuality(qualityMode,{touch:navigator.maxTouchPoints>0&&matchMedia('(pointer: coarse)').matches,width:host.clientWidth||innerWidth,height:host.clientHeight||innerHeight,dpr:devicePixelRatio||1});
     if(sun.shadow.mapSize.x!==q.shadow){sun.shadow.map?.dispose();sun.shadow.map=null;sun.shadow.mapSize.set(q.shadow,q.shadow);sun.shadow.needsUpdate=true;}
-    scenery.traverse(o=>{if(o.name==='winter-snow'||o.name==='winter-snow-near'||o.name==='soft-rain'){const count=o.geometry.attributes.position.count;const step=o.isLineSegments?2:1;o.geometry.setDrawRange(0,Math.floor(count*q.particles/step)*step);}});
-    world.motes.geometry.setDrawRange(0,Math.floor(world.motes.geometry.attributes.position.count*q.particles));
+    if(qualityScenery!==scenery||qualityParticles!==q.particles){
+      scenery.traverse(o=>{if(o.name==='winter-snow'||o.name==='winter-snow-near'||o.name==='soft-rain'){const count=o.geometry.attributes.position.count;const step=o.isLineSegments?2:1;o.geometry.setDrawRange(0,Math.floor(count*q.particles/step)*step);}});
+      world.motes.geometry.setDrawRange(0,Math.floor(world.motes.geometry.attributes.position.count*q.particles));
+      qualityScenery=scenery;qualityParticles=q.particles;
+    }
     return q;
   }
   function resize() {
@@ -600,7 +603,7 @@ export async function createForest(host, {onEvent = () => {}, audioTime = () => 
       const eye = forestEye(g, g.y, view);
       goalPos.set(eye.position.x, eye.position.y, eye.position.z); goalLook.set(eye.target.x, eye.target.y, eye.target.z); return Infinity;
     }
-    if(friends.count&&!orbitChanged){const narrow=host.clientWidth<600,wide=friends.count>=3;goalPos.set(wide?4.8:4.2,3.1,SEAT_Z+(friends.count===4?(narrow?13.5:9.8):narrow?(wide?12:10.5):(wide?9.8:8.4)));goalLook.set(friends.count===4?0:wide?.45:.1,.9,-.1);return 2.4;}
+    if(friends.count&&!orbitChanged){const narrow=lastWidth<600,wide=friends.count>=3;goalPos.set(wide?4.8:4.2,3.1,SEAT_Z+(friends.count===4?(narrow?13.5:9.8):narrow?(wide?12:10.5):(wide?9.8:8.4)));goalLook.set(friends.count===4?0:wide?.45:.1,.9,-.1);return 2.4;}
     if (state.cinema && !orbitChanged) {const t=motion.matches?0:1-Math.exp(-state.cineT/18),a=motion.matches?0:Math.sin(state.cineT*.09)*.18*t;goalPos.set(5.3-2.5*t+a,3.7-1.1*t,SEAT_Z+7.5-4.1*t-a);goalLook.set(.3,1.55,-2.0);return 2.4;}
     if (!orbitChanged) {goalPos.set(3.4,2.3,5.3);goalLook.set(-.25,1,-1.1);return 2.4;}
     goalLook.set(g.x,g.y+.8,g.z-.5);
@@ -619,9 +622,10 @@ export async function createForest(host, {onEvent = () => {}, audioTime = () => 
   }
 
   function pose(dt) {
-    state.hands.forEach(h=>{const t=audioTime(),age=t-(h.start??0);if(h.end&&age>=0&&h.nextKey!==undefined)h.key=h.nextKey;h.hit=pianoPressure(h,t,dt);});
-    girl.animate({dt,seated:state.seated>.6,moving:state.moving,heading:state.heading,camera,hands:state.hands,playing:audioTime()<state.pianoUntil,piano,reduced:motion.matches,groundY});
-    friends.animate(camera,audioTime(),state.phase==='compose',motion.matches,dt);
+    const t=audioTime();
+    state.hands.forEach(h=>{const age=t-(h.start??0);if(h.end&&age>=0&&h.nextKey!==undefined)h.key=h.nextKey;h.hit=pianoPressure(h,t,dt);});
+    girl.animate({dt,seated:state.seated>.6,moving:state.moving,heading:state.heading,camera,hands:state.hands,playing:t<state.pianoUntil,piano,reduced:motion.matches,groundY});
+    friends.animate(camera,t,state.phase==='compose',motion.matches,dt);
     girlBlob.position.set(girl.root.position.x,girl.root.position.y+.02,girl.root.position.z);
     // The standing child dissolves before the opening camera becomes the walking player.
     const shown = forestCharacter(state.phase, state.sitT, state.openingT);
@@ -665,7 +669,7 @@ export async function createForest(host, {onEvent = () => {}, audioTime = () => 
     if(notebook&&notebookBand){
       // Fit the seated child between the real header and book, including landscape phones.
       camera.clearViewOffset();camera.zoom=1;camera.updateProjectionMatrix();camera.updateMatrixWorld();
-      const top=projectedTop.set(GIRL_X,1.5,SEAT_Z).project(camera).y,bottom=projectedBottom.set(GIRL_X,.1,SEAT_Z).project(camera).y,h=host.clientHeight;
+      const top=projectedTop.set(GIRL_X,1.5,SEAT_Z).project(camera).y,bottom=projectedBottom.set(GIRL_X,.1,SEAT_Z).project(camera).y,h=lastHeight;
       const available=Math.max(48,notebookBand.bottom-notebookBand.top);
       if(!orbitChanged)zoomGoal=Math.min(.72,available/(Math.abs(top-bottom)*h*.5));
       liftGoal=.5-(top+bottom)*zoomGoal*.25-(notebookBand.top+notebookBand.bottom)/(2*h);
