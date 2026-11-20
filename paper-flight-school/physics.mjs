@@ -1,4 +1,4 @@
-import {G,PAPER_MASS,RAD,PRESETS,DEFAULT_ENV,DEFAULT_LAUNCH,clamp,cleanDesign as baseDesign,cleanLaunch,cleanEnv,geometry as oldGeometry,windAt,axes,coefficients} from './physics-v1.mjs?v=20261120-quality6';
+import {G,PAPER_MASS,RAD,PRESETS,DEFAULT_ENV,DEFAULT_LAUNCH,clamp,cleanDesign as baseDesign,cleanLaunch,cleanEnv,geometry as oldGeometry,windAt,axes,coefficients} from './physics-v1.mjs?v=20261120-quality6-2';
 export {G,PAPER_MASS,RAD,PRESETS,DEFAULT_ENV,DEFAULT_LAUNCH,clamp,cleanLaunch,cleanEnv,windAt,axes,coefficients};
 export const PHYSICS_VERSION='rigid-paper-2';
 export function cleanDesign(input={}){

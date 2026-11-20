@@ -1,6 +1,6 @@
-import {clamp} from './physics.mjs?v=20261120-quality6';
-import {designChanges} from './controls.mjs?v=20261120-quality6';
-import {sameConditions} from './gameplay.mjs?v=20261120-quality6';
+import {clamp} from './physics.mjs?v=20261120-quality6-2';
+import {designChanges} from './controls.mjs?v=20261120-quality6-2';
+import {sameConditions} from './gameplay.mjs?v=20261120-quality6-2';
 export function changedInputs(current,previous){
  if(!previous)return [];
  const names=designChanges(previous.design,current.design);

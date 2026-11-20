@@ -1,5 +1,5 @@
-import {cleanDesign,cleanLaunch,cleanEnv,PRESETS,simulate,PHYSICS_VERSION} from './physics.mjs?v=20261120-quality6';
-import {COURSES,courseById,courseEnv,nextCourse,flightName} from './tournament.mjs?v=20261120-quality6';
+import {cleanDesign,cleanLaunch,cleanEnv,PRESETS,simulate,PHYSICS_VERSION} from './physics.mjs?v=20261120-quality6-2';
+import {COURSES,courseById,courseEnv,nextCourse,flightName} from './tournament.mjs?v=20261120-quality6-2';
 export {COURSES,courseById,courseEnv,nextCourse,flightName};
 export const EVENTS={distance:{name:'멀리 날기',unit:'m',description:'출발점에서 착륙점까지, 더 멀리!'},airtime:{name:'오래 날기',unit:'초',description:'처음 땅에 닿을 때까지, 더 오래!'}};
 export const RULESET='sports-2-rigid-paper';

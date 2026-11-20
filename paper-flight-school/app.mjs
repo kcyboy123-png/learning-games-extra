@@ -1,11 +1,11 @@
-import {sound} from './audio.mjs?v=20261120-quality6';
-import {nextExperiment,flightProfile,comparisonSummary} from './flight-feedback.mjs?v=20261120-quality6';
-import {PRESETS,cleanDesign,cleanEnv,cleanLaunch,geometry,simulate,sampleFlight,windAt} from './physics.mjs?v=20261120-quality6';
-import {load,save} from './state.mjs?v=20261120-quality6';
-import {cleanMissions,sameConditions} from './gameplay.mjs?v=20261120-quality6';
-import {GAUGE_HALF_MS,gaugePower,launchFromGauge,designChanges} from './controls.mjs?v=20261120-quality6';
-import {EVENTS,eventInfo,formatScore,flightScore,COURSES,courseById,courseEnv,emptySports,currentRun,courseKey,selectEvent,unlocked,qualified,winningScore,startTournament,commitFlight,bestScore,nextCourse,flightName,standings} from './sports.mjs?v=20261120-quality6';
-import {FlightScene} from './scene.mjs?v=20261120-quality6';
+import {sound} from './audio.mjs?v=20261120-quality6-2';
+import {nextExperiment,flightProfile,comparisonSummary} from './flight-feedback.mjs?v=20261120-quality6-2';
+import {PRESETS,cleanDesign,cleanEnv,cleanLaunch,geometry,simulate,sampleFlight,windAt} from './physics.mjs?v=20261120-quality6-2';
+import {load,save} from './state.mjs?v=20261120-quality6-2';
+import {cleanMissions,sameConditions} from './gameplay.mjs?v=20261120-quality6-2';
+import {GAUGE_HALF_MS,gaugePower,launchFromGauge,designChanges} from './controls.mjs?v=20261120-quality6-2';
+import {EVENTS,eventInfo,formatScore,flightScore,COURSES,courseById,courseEnv,emptySports,currentRun,courseKey,selectEvent,unlocked,qualified,winningScore,startTournament,commitFlight,bestScore,nextCourse,flightName,standings} from './sports.mjs?v=20261120-quality6-2';
+import {FlightScene} from './scene.mjs?v=20261120-quality6-2';
 const $=id=>document.getElementById(id),clone=x=>structuredClone(x);
 function updateSound(){
  const b=$('soundButton');b.setAttribute('aria-pressed',String(!sound.settings.muted));b.setAttribute('aria-label',sound.settings.muted?'소리 켜기':'소리 끄기');b.title=sound.settings.muted?'소리 켜기':'소리 끄기';b.dataset.muted=String(sound.settings.muted);

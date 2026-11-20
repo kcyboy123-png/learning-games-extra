@@ -1,6 +1,6 @@
-import * as T from './vendor/three.module.js?v=20261120-quality6';
-import {artMaterial,addMesh,instances,spectators,plantedBorders,oak} from './art-assets.mjs?v=20261120-quality6';
-import {placeTrophy,refineSky} from './premium-art.mjs?v=20261120-quality6';
+import * as T from './vendor/three.module.js';
+import {artMaterial,addMesh,instances,spectators,plantedBorders,oak} from './art-assets.mjs?v=20261120-quality6-2';
+import {placeTrophy,refineSky} from './premium-art.mjs?v=20261120-quality6-2';
 const C={stone:0xd5cbb7,ivory:0xf4efdf,green:0x395e50,blue:0x245c80,gold:0xb99853},materials=new Map();
 function material(c){if(!materials.has(c))materials.set(c,artMaterial(c,c===C.gold?{metalness:.65,roughness:.29,envMapIntensity:.7}:{}));return materials.get(c);}
 const solid=(p,g,c,x=0,y=0,z=0)=>addMesh(p,g,typeof c==='number'?material(c):c,x,y,z);

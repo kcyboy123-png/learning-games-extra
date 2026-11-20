@@ -1,5 +1,5 @@
-import * as T from './vendor/three.module.js?v=20261120-quality6';
-import {GLTFLoader} from './vendor/GLTFLoader.js?v=20261120-quality6';
+import * as T from './vendor/three.module.js';
+import {GLTFLoader} from './vendor/GLTFLoader.js';
 
 const base=new URL('./assets/premium/',import.meta.url),textures=new T.TextureLoader();
 export const premiumStatus={loaded:[],failed:[]};

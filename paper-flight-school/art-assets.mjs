@@ -1,7 +1,7 @@
-import * as T from './vendor/three.module.js?v=20261120-quality6';
-import {woodlandTree,foliageGeometry} from './forest-geometry.mjs?v=20261120-quality6';
-import {refineOak} from './premium-art.mjs?v=20261120-quality6';
-import {readAsset} from './asset-load.mjs?v=20261120-quality6';
+import * as T from './vendor/three.module.js';
+import {woodlandTree,foliageGeometry} from './forest-geometry.mjs?v=20261120-quality6-2';
+import {refineOak} from './premium-art.mjs?v=20261120-quality6-2';
+import {readAsset} from './asset-load.mjs?v=20261120-quality6-2';
 
 const base=new URL('./assets/reused/',import.meta.url),loader=new T.TextureLoader();
 export const artStatus={loaded:[],failed:[]};

@@ -1,7 +1,7 @@
-import {cleanSports} from './sports.mjs?v=20261120-quality6';
-import {cleanDesign,cleanLaunch,cleanEnv} from './physics.mjs?v=20261120-quality6';
-import {cleanMissions,missionById} from './gameplay.mjs?v=20261120-quality6';
-import {cleanTournaments,courseById} from './tournament.mjs?v=20261120-quality6';
+import {cleanSports} from './sports.mjs?v=20261120-quality6-2';
+import {cleanDesign,cleanLaunch,cleanEnv} from './physics.mjs?v=20261120-quality6-2';
+import {cleanMissions,missionById} from './gameplay.mjs?v=20261120-quality6-2';
+import {cleanTournaments,courseById} from './tournament.mjs?v=20261120-quality6-2';
 export const ORDER=[0,1,1,0,0,1];
 export const KEY='changyong-paper-flight-v1';
 export function newMatch(design,env,method='gauge') {return {env:cleanEnv(env),method:method==='fixed'?'fixed':'gauge',designs:[cleanDesign(design),cleanDesign(design)],launches:[cleanLaunch({method}),cleanLaunch({method})],records:[],pending:false};}

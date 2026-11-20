@@ -1,9 +1,9 @@
-import * as T from './vendor/three.module.js?v=20261120-quality6';
-import {geometry,axes,poseAxes,sampleFlight,windAt,RAD} from './physics.mjs?v=20261120-quality6';
-import {studioDetails} from './scenery.mjs?v=20261120-quality6';
-import {gardenTrees,lawn,oak,artStatus,distantLandscape,updateCrowd} from './art-assets.mjs?v=20261120-quality6';
-import {createVenue,workshopPrize,schoolArchitecture} from './venues.mjs?v=20261120-quality6';
-import {refinePaper,placeTrophy,premiumStatus} from './premium-art.mjs?v=20261120-quality6';
+import * as T from './vendor/three.module.js';
+import {geometry,axes,poseAxes,sampleFlight,windAt,RAD} from './physics.mjs?v=20261120-quality6-2';
+import {studioDetails} from './scenery.mjs?v=20261120-quality6-2';
+import {gardenTrees,lawn,oak,artStatus,distantLandscape,updateCrowd} from './art-assets.mjs?v=20261120-quality6-2';
+import {createVenue,workshopPrize,schoolArchitecture} from './venues.mjs?v=20261120-quality6-2';
+import {refinePaper,placeTrophy,premiumStatus} from './premium-art.mjs?v=20261120-quality6-2';
 const color={paper:0xfffdf6,ink:0x4d483f,blue:0x208dcc};
 function material(c,extra={}){return new T.MeshStandardMaterial({color:c,roughness:.85,envMapIntensity:.22,...extra});}
 function mesh(geo,mat,parent,x=0,y=0,z=0){const m=new T.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
