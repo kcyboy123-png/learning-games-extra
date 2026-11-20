@@ -1,5 +1,5 @@
-import {NATURAL_SAMPLES} from './natural-samples.mjs?v=20261120-refine36';
-import {CELLO_SAMPLES} from './cello-samples.mjs?v=20261120-refine36';
+import {NATURAL_SAMPLES} from './natural-samples.mjs?v=20261120-keys42';
+import {CELLO_SAMPLES} from './cello-samples.mjs?v=20261120-keys42';
 export const INSTRUMENTS = [
   {id: 'piano', name: '피아노', version: 1},
   {id: 'marimba', name: '마림바', version: 1},

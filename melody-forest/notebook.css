@@ -641,3 +641,36 @@ body.forest-mode .entrance-control{display:block}
 /* Recommendation stays distinct from the key's ivory shading and playback glow. */
 .workspace .piano .key.carol-tone{outline:3px solid #b98836;outline-offset:-4px}
 .workspace .piano .key.carol-tone:focus-visible{outline:3px solid #285ac3;outline-offset:2px}
+/* Keyboard pass 1: a crafted walnut cabinet with a felt rail. */
+.workspace .piano{position:relative;min-width:804px;height:176px;min-height:176px;padding:25px 12px 15px;border:1px solid #533927;border-radius:12px;background:linear-gradient(180deg,#b28a5b,#755034 20%,#4b3326 78%,#8e603d);box-shadow:inset 0 2px 1px #f5d6a3,inset 0 -5px 0 #3a291f,0 5px 10px #31271d26}
+.workspace .piano::before{content:'';position:absolute;left:12px;right:12px;top:10px;height:1px;background:#e9c68d99;box-shadow:0 2px #34281d80;pointer-events:none}
+.workspace .piano-keys{height:132px;min-height:132px;border-top:4px solid #704347;border-radius:3px;background:#27231f;box-shadow:0 -2px 0 #2b201b,0 1px 0 2px #2b201b}
+/* Keyboard pass 2: ivory key faces, front lips and polished ebony caps. */
+.workspace .piano .key,.workspace .piano .key.tone,.workspace .piano .key.tone:hover:not(:disabled){flex:1 0 52px;min-width:52px;width:52px;height:132px;min-height:132px;padding:0 2px 13px;border:0;border-right:1px solid #b9b0a0;border-radius:0 0 5px 5px;color:#263d31;background:linear-gradient(180deg,#b9b2a3a6,transparent 34%),linear-gradient(90deg,#ded8cb,#fffef7 8%,#fffdf5 87%,#ede7d9);box-shadow:inset 0 -7px #c9bdab,inset 0 -9px #fffcf0,0 2px 1px #241f1d;transform:none}
+.workspace .piano .key:disabled{opacity:1;color:#64645b;background:linear-gradient(180deg,#b9b2a366,transparent 34%),linear-gradient(90deg,#d8d2c6,#eeeae0 12%,#eeeae0 88%,#d8d2c6);box-shadow:inset 0 -7px #c1b8a8,inset 0 -9px #f5f1e6}
+.workspace .piano .black-key{height:54%;width:calc(100%/15*.57);border:1px solid #151a18;border-radius:0 0 4px 4px;background:linear-gradient(90deg,#161b19,#424944 12%,#262d29 23%,#202723 80%,#101612);box-shadow:inset 0 -8px #101511,inset 0 -10px #5a6157,inset 1px 0 #a1a49966,2px 5px 4px #10180f55}
+.workspace .piano .black-key::after{inset:3px 4px 12px;border-top:1px solid #bdc4b37a;border-left:1px solid #8c968133;background:linear-gradient(110deg,#ffffff16,transparent 45%)}
+/* Keyboard pass 3: readable names and distinct guidance without tinting the ivory. */
+.workspace .piano .key b{font-size:20px;line-height:1.2;font-weight:800;text-shadow:0 1px #fff9;letter-spacing:0}
+.workspace .piano .key small{font-size:11px;line-height:1.5;color:#525c4e}
+.workspace .piano .key:disabled b,.workspace .piano .key:disabled small{color:#66655c;text-shadow:none}
+.workspace .piano .key .dot{width:6px;height:6px;margin:0 0 7px;background:#437547;box-shadow:0 0 0 3px #e5efdc;border-radius:50%}
+.workspace .piano .key.carol-tone{outline:2px solid #b98836;outline-offset:-4px}
+.workspace .piano .key.carol-tone::after{content:'';position:absolute;left:32%;right:32%;bottom:9px;height:3px;border-radius:2px;background:#b98836;pointer-events:none}
+.workspace .piano .key.current{outline:3px solid #386e93;outline-offset:-4px}
+.workspace .piano .key:focus-visible,.workspace .piano .key.carol-tone:focus-visible{outline:3px solid #285ac3;outline-offset:-4px}
+/* Keyboard pass 4: tactile feedback; selected, recommended and sounding are separate states. */
+.workspace .piano{background-image:linear-gradient(180deg,#edc38b55,#271b1644 30%,#25191266 85%,#b98a5255),url('./assets/ui/walnut-keyboard.webp');background-size:cover;background-position:center}
+.workspace .piano .key.current{box-shadow:inset 0 -7px #aebbc2,inset 0 -9px #f8fcff,0 2px 1px #241f1d}
+.workspace .piano .key.current b{color:#2d5875}
+.workspace .piano .key:is(.pressing,.playing-note):not(:disabled),.workspace .piano .key:is(.pressing,.playing-note):hover:not(:disabled){transform:translateY(2px);background:linear-gradient(180deg,#9ab2a0,#eaf5df 50%,#d7e8c4);box-shadow:inset 0 -3px #879e80,inset 0 -5px #f5ffe9;color:#213e2b}
+.workspace .piano .key.playing-note .dot{background:#305b35;box-shadow:0 0 0 4px #c3d9b2}
+.workspace .piano .key{transition:transform 80ms ease,box-shadow 80ms ease,background-color 80ms ease}
+@media(prefers-reduced-motion:reduce){.workspace .piano .key:is(.pressing,.playing-note):not(:disabled),.workspace .piano .key:is(.pressing,.playing-note):hover:not(:disabled){transform:none}.workspace .piano .key{transition:none}}
+/* Keyboard pass 5: thumb-sized keys and quiet navigation on small screens. */
+.workspace .piano-scroll{border-radius:12px;padding-bottom:4px;scroll-padding-inline:12px;scrollbar-color:#a88a5d #e9e2d1;scrollbar-width:thin}
+.workspace .piano-nav button{min-height:44px;min-width:80px;border:1px solid #b6bda7;border-radius:8px;background:linear-gradient(#fffef8,#e9eedf);color:#344d39;box-shadow:0 2px 0 #b9c2ac}
+.workspace .piano-nav button:disabled{box-shadow:none;opacity:.5}
+.workspace .piano-range{font-size:12px;color:#43513e;font-weight:600}
+.workspace .piano .key[data-key="72"],.workspace .piano .key[data-key="84"]{border-left:2px solid #ac9675}
+@media(max-width:600px){.workspace .piano-nav{margin:5px 0 2px;gap:5px}.workspace .piano-nav button{min-width:76px}.workspace .piano-hint{font-size:11px;line-height:1.6}.workspace .keyboard-edit-hint{font-size:12px;line-height:1.6}}

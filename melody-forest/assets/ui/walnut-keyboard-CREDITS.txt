@@ -1,0 +1,9 @@
+Piano Forest keyboard cabinet texture
+Generated with Runway, user-authorized existing workspace credits.
+Task: ecf34869-2e26-491c-82a5-56a2e61a3e4b
+Model: nano-banana-pro. Output: 3168x1344 PNG.
+Applied: walnut-keyboard.webp, proportional resize to 1536px wide, WebP quality88, 139782bytes.
+Observed balance: 9801 before, 9781 after task submission (20 credits).
+Original kept in local passes/keys42/walnut-original.png.
+Scenario: schema and dry-run only, estimate11CU; no billed generation.
+Tripo: connected availability confirmed through Runway, not generated for this 2D input keyboard.

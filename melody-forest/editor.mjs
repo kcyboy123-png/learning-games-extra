@@ -1,5 +1,5 @@
-import { PITCHES, clone, used, isChordTone, chordAt, editableSong, partBars, firstPart, emptyBars, complete, songParts } from './core.mjs?v=20261120-refine36';
-import {instrumentById} from './instruments.mjs?v=20261120-refine36';
+import { PITCHES, clone, used, isChordTone, chordAt, editableSong, partBars, firstPart, emptyBars, complete, songParts } from './core.mjs?v=20261120-keys42';
+import {instrumentById} from './instruments.mjs?v=20261120-keys42';
 
 // Pure editing steps: every operation returns { song } or { error } and never mutates its input.
 export const LENGTHS = { 1: '반 박', 2: '1박', 3: '1.5박', 4: '2박', 8: '4박' };
@@ -125,7 +125,7 @@ export function nextOpenBar(song,instrument,current){
 }
 
 export function soloPart(song,instrument){
- const result=structuredClone(song);result.parts=[{instrument,bars:structuredClone(partBars(song,instrument))}];result.accompaniment=false;return result;
+ const result=editableSong(song);result.parts=[{instrument,bars:structuredClone(partBars(song,instrument))}];result.accompaniment=false;return result;
 }
 
 export function completionTarget(song){
