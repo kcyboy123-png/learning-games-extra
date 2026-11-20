@@ -626,3 +626,14 @@ body.forest-mode .entrance-control{display:block}
 
 .entrance-overlay.christmas-entrance.portrait-entrance{background-image:linear-gradient(#101d32cc,#101d32e6),url('./assets/art/christmas-entrance-portrait-poster.jpg')}
 .entrance-overlay.christmas-entrance.portrait-entrance .entrance-film{width:min(calc(100% - 24px),1080px,calc((100vh - 120px)*9/16));width:min(calc(100% - 24px),1080px,calc((100dvh - 120px)*9/16));aspect-ratio:9/16;max-height:1920px}
+
+/* Keep listening and score controls visible instead of clipping them sideways. */
+@media(max-width:600px){
+ .workspace[data-view] .view-bar{flex-wrap:wrap;overflow:visible;gap:4px}
+ .workspace[data-view] .view-bar .quick-listen{order:2;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));flex:1 0 100%;width:100%;gap:4px}
+ .workspace[data-view] .view-bar .quick-listen button{grid-column:auto!important;grid-row:auto!important;min-width:0;padding:6px 2px;white-space:normal;font-size:12px}
+ .workspace .view-bar .focus-name{min-width:52px;font-size:12px}
+ .workspace .view-bar .view-toggle,.workspace .view-bar .focus-toggle{flex:1;min-width:76px;font-size:11px;padding:6px 3px}
+ .workspace .view-bar .group-switch{flex:1}
+ .workspace .view-bar .group-btn{min-width:70px}
+}
