@@ -595,14 +595,14 @@ body.forest-mode .entrance-control{display:block}
  .workspace .carol-guide{font-size:12px;padding:5px;margin:0 0 4px;line-height:1.4}
  .workspace .carol-guide small{display:none}
  .workspace .piano-nav{margin:3px 0}
- .workspace .piano .key{height:120px;min-height:120px}
+ .workspace .piano .key,.workspace .piano .key.tone{height:120px;min-height:120px}
  .workspace .piano .key small{font-size:10px}
 }
 @media(max-width:600px){
  body.forest-mode:not(.forest-cinema) .workspace{margin-top:56px}
  .workspace .focus-card{margin:4px 0;padding:4px}
  .workspace .focus-card .sheet{width:100%;min-width:0;max-height:140px}
- .workspace .piano{min-height:126px;height:126px}
+ .workspace .piano{min-height:150px;height:150px}
  .workspace .piano-keys{min-height:120px;height:120px}
 }
 @media(max-width:600px){

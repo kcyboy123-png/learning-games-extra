@@ -1,4 +1,4 @@
-import { validateSong, songParts } from './core.mjs?v=20261120-review25';
+import { validateSong, songParts } from './core.mjs?v=20261120-review25b';
 
 // Kept works live beside, never inside, the current-song key. A broken or full store is reported, never replaced.
 export const LEGACY_LIBRARY_KEY = 'changyong-eight-bars-library-v1';
