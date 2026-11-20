@@ -1,4 +1,4 @@
-import {postalCut} from './postal-cut.mjs?v=gift-focus-20261118';
+import {postalCut} from './postal-cut.mjs?v=three-pass-20261120';
 import {paperSurface} from './paper-surface.mjs?v=carton-material-20261119';
 // 단계(step) 종류별 조작 화면. 각 렌더러는 {el, tools, getAnswer, markWrong, afterCheck?, undo?} 를 돌려준다.
 // 채점은 data/workshops.mjs의 check가 하고, 여기서는 답을 모으고 틀린 부분만 표시한다.
@@ -7,7 +7,7 @@ import {unfoldByFolds} from '../lib/net.mjs';
 import {planBoard} from '../lib/board-layout.mjs';
 import {createSolidView, meshFor, solidFigure} from './solid-view.mjs?v=gifts-math-final-20261119';
 import {createSketchView, orthoFigure, sketchFigure, fullEdges} from './sketch-view.mjs?v=gifts-math-final-20261119';
-import {createNetBoard, netFigure, createFoldView} from './net-board.mjs?v=hint-free-play-20261120';
+import {createNetBoard, netFigure, createFoldView} from './net-board.mjs?v=paper-guidance-20261120';
 import {createRobotView} from './robot-view.mjs?v=ui-journey-20261118';
 import {node, svg, button, setPressed, clear, announce, reducedMotion, pressable} from './dom.mjs?v=tactile-audit-e-20261118';
 
@@ -303,7 +303,7 @@ const RENDERERS = {
     const fieldNav=node('div',{class:'field-nav'},[previous,fieldPosition,next]);
     function showField(index,focus=false){
       fieldIndex=Math.max(0,Math.min(index,rows.length-1));
-      if(ctx.postal&&rows.length>1){rows.forEach((r,i)=>r.row.hidden=i!==fieldIndex);previous.disabled=fieldIndex===0;const missing=rows.findIndex(r=>!r.el.value.trim());next.disabled=fieldIndex===rows.length-1&&(missing<0||missing===fieldIndex);next.querySelector('span:last-child').textContent=fieldIndex===rows.length-1&&missing<0?'입력 완료':fieldIndex===rows.length-1&&missing===fieldIndex?(rows[fieldIndex].el.tagName==='SELECT'?'먼저 골라요':'먼저 적어요'):fieldIndex===rows.length-1&&missing>=0?'남은 빈칸':'다음 빈칸';fieldPosition.textContent=`${fieldIndex+1} / ${rows.length}`;}
+      if(ctx.postal&&rows.length>1){rows.forEach((r,i)=>r.row.hidden=i!==fieldIndex);previous.disabled=fieldIndex===0;const missing=rows.findIndex(r=>!r.el.value.trim());next.disabled=!rows[fieldIndex].el.value.trim()||(fieldIndex===rows.length-1&&(missing<0||missing===fieldIndex));next.querySelector('span:last-child').textContent=fieldIndex===rows.length-1&&missing<0?'입력 완료':fieldIndex===rows.length-1&&missing===fieldIndex?(rows[fieldIndex].el.tagName==='SELECT'?'먼저 골라요':'먼저 적어요'):fieldIndex===rows.length-1&&missing>=0?'남은 빈칸':'다음 빈칸';fieldPosition.textContent=`${fieldIndex+1} / ${rows.length}`;}
       if(focus)rows[fieldIndex]?.el.focus();
       updateReference();
     }
@@ -331,8 +331,8 @@ const RENDERERS = {
     else if (fig?.marks) {
       const edgeLabels = {}, vertexLabels = {}, faceMarks = {};
       for (const m of fig.marks) (m.type === 'edge' ? edgeLabels : m.type === 'vertex' ? vertexLabels : faceMarks)[m.id] = m.label;
-      figView = createSolidView({dims: fig.dims, size: 300, mode: 'none', edgeLabels, vertexLabels, faceMarks});
-      wrap.append(node('div', {class: 'panel'}, [figView.el, node('p', {class: 'note', text: '돌려 볼 수 있어요.'})]));
+      figView = createSolidView({postal:ctx.postal,dims: fig.dims, size: 300, mode: 'none', edgeLabels, vertexLabels, faceMarks});
+      wrap.append(node('div', {class: 'panel'}, [figView.el, node('p', {class: 'reference-cue', text: '↔ 끌어서 돌려요'})]));
     } else if (fig?.dims) {
       wrap.append(node('div', {class: 'panel'}, [sketchFigure(fig.dims, {size: 260, showLengths: !!fig.showLengths,fit:ctx.postal}), fig.highlight ? node('p', {class: 'note', text: `${FACE_LABEL[fig.highlight]}을 구해요.`}) : null]));
     }
@@ -456,7 +456,7 @@ const RENDERERS = {
       blankInput.addEventListener('input', () => blankInput.parentElement.classList.remove('wrong'));
       tools.push(node('div', {class: 'field'}, [node('label', {for: 'blank-len', text: '빈칸 ? 길이'}), blankInput, node('span', {class: 'unit', text: 'cm'})]));
     }
-    if (step.part) side.prepend(node('p', {class: 'note', text: `부품: ${step.part}`}));
+    if (step.part) side.prepend(node('p', {class: 'note', text: ctx.postal?step.part.replace('(2개 복제)',' · 하나 만들면 두 개가 돼요'):`부품: ${step.part}`}));
     const el = node('div', {class: 'row net-layout', style: {gap: '14px', alignItems: 'flex-start', flexWrap: 'nowrap'}}, [board.el, side, foldSlot]);
     return {el, tools, destroy(){board.destroy();clearResult();}, getAnswer: () => ({pieces: board.getPieces(), values: blankInput ? {blank: blankInput.value} : {}, board:board.snapshot()}), restore(a){if(a.board)board.restore(a.board);else if(a.pieces)board.restore({...board.snapshot(),pieces:a.pieces});if(blankInput)blankInput.value=a.values?.blank??'';},
       markWrong(result) { board.markWrong((result.wrong || []).filter(id => id !== 'blank')); blankInput?.parentElement.classList.toggle('wrong',(result.wrong || []).includes('blank')); },
@@ -575,7 +575,7 @@ const RENDERERS = {
       [...table.children].forEach((cell,i)=>cell.hidden=!(i===3+row*3||i===3+row*3+(kind==='sketch'?1:2)));
       [...legend.children].forEach((cell,i)=>cell.hidden=kind==='sketch'?i>=step.sketches.length:i<step.sketches.length);
       [...legend.children].forEach(cell=>{const picked=cell.dataset.kind===kind&&cell.dataset.option===links[s.id][kind];setPressed(cell,picked);cell.classList.toggle('wrong',picked&&cells.get(s.id+':'+kind).classList.contains('wrong'));});
-      position.textContent=`그림 ${matchIndex+1}/${matches.length} · ${matches.filter(({s,kind})=>links[s.id][kind]).length}개 선택`;back.disabled=matchIndex===0;const missing=matches.findIndex(({s,kind})=>!links[s.id][kind]);forward.disabled=matchIndex===matches.length-1&&(missing<0||missing===matchIndex);forward.querySelector('span:last-child').textContent=matchIndex===matches.length-1&&missing<0?'선택 완료':matchIndex===matches.length-1&&missing===matchIndex?'이 그림을 골라요':matchIndex===matches.length-1&&missing>=0?'남은 그림으로':'다음 그림';
+      position.textContent=`${matchIndex+1} / ${matches.length}`;back.disabled=matchIndex===0;const missing=matches.findIndex(({s,kind})=>!links[s.id][kind]);forward.disabled=matchIndex===matches.length-1&&(missing<0||missing===matchIndex);forward.querySelector('span:last-child').textContent=matchIndex===matches.length-1&&missing<0?'선택 완료':matchIndex===matches.length-1&&missing===matchIndex?'이 그림을 골라요':matchIndex===matches.length-1&&missing>=0?'남은 그림으로':'다음 그림';
       if(focus)cells.get(s.id+':'+kind).querySelector('select').focus();
     }
     cells.forEach(cell=>cell.querySelector('select').addEventListener('change',()=>showMatch(matchIndex)));

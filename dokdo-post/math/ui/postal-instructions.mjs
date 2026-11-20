@@ -15,7 +15,7 @@ export function actionFor(step,kind=step.mode){
   if(kind==='pairs')return '조건에 맞는 면 두 개를 짝지어요';
   return Number.isInteger(step.count)?`${step.counterLabel||'면'} ${step.count}개를 찾아 눌러요`:'조건에 맞는 면을 찾아 눌러요';
  }
- if(step.kind==='net-build')return (step.part?step.part+' · ':'')+(step.replaceable?'맞지 않는 조각을 바꿔요':step.movable?'조각을 옮겨 전개도를 고쳐요':step.fixedBase?'빠진 면에 종이 조각을 붙여요':'종이 조각을 골라 전개도를 만들어요')+(step.blankLength?' · 빈칸도 채워요':'');
+ if(step.kind==='net-build')return (step.part?step.part.replace('(2개 복제)',' 한 쌍')+' · ':'')+(step.replaceable?'맞지 않는 조각을 바꿔요':step.movable?'조각을 옮겨 전개도를 고쳐요':step.fixedBase?'빠진 면에 종이 조각을 붙여요':'종이 조각을 골라 전개도를 만들어요')+(step.blankLength?' · 빈칸도 채워요':'');
  return {peel:'면 하나를 누르고, 모양을 골라요',sort:step.mode==='mark'?'정육면체를 모두 표시해요':'직육면체를 모두 배송대에 올려요',fill:'빈칸에 답을 적거나 골라요',choice:step.answer?.length>1?'조건에 맞는 답을 모두 골라요':'조건에 맞는 답 하나를 골라요',sketch:step.tool==='draw'?'꼭짓점 두 개를 눌러 빠진 선을 그려요':'선을 눌러 실선·점선을 바꿔요','cut-plan':'잘라도 한 장으로 이어지는 그림을 골라요','net-predict':'종이를 접은 상자를 떠올리고 골라요','net-points':step.ask==='segment'?'접으면 만나는 모서리를 찾아요':'접으면 만나는 점을 모두 찾아요','tray-count':'상자에 필요한 종이 장수를 맞춰요',link:'상자와 알맞은 그림을 연결해요'}[step.kind];
 }
 
@@ -42,7 +42,7 @@ export function questionFor(step,kind=step.mode){
  if(step.kind==='net-build'){
   if(step.replaceable)return step.blankLength?'크기가 맞지 않는 조각을 바꾸고 길이를 적어요':'크기가 맞지 않는 조각을 바꿔요';
   if(step.movable)return '겹치는 조각을 다른 자리로 옮겨요';
-  if(step.fixedBase)return (step.part?step.part+' · ':'')+'빠진 면 하나를 붙여요';
+  if(step.fixedBase)return (step.part?step.part.replace('(2개 복제)',' 한 쌍')+' · ':'')+'빠진 면 하나를 붙여요';
   if(step.instruction.includes('다른 모양'))return '앞에서 만든 것과 다른 전개도를 만들어요';
   return '종이 조각으로 상자 전개도를 만들어요';
  }

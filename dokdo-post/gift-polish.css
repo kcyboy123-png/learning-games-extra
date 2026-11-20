@@ -113,3 +113,13 @@
 .creator-credit{position:fixed;right:max(20px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));display:flex;align-items:center;gap:7px;padding:3px 12px 3px 4px;border:1px solid #d8c8a2;border-radius:12px;background:#fff9e9f5;box-shadow:0 2px 0 #836b4130;color:#365b49;line-height:1.2;pointer-events:none}
 .creator-credit img{display:block;width:30px;height:30px;flex:none}.creator-credit span{font-size:13px;white-space:nowrap}.creator-credit strong{font-size:15px;font-weight:800}
 @media(max-width:600px){.creator-credit{right:12px;gap:5px;padding-right:8px}.creator-credit img{width:26px;height:26px}.creator-credit span{font-size:11px}.creator-credit strong{font-size:13px}body>footer{max-width:calc(100% - 184px)}}
+
+/* One forward action: the primary button advances a selected matching card. */
+.postal .one-match>.field-nav>button:last-child{display:none}
+.postal .one-match>.field-nav{justify-content:flex-start}.postal .one-match>.field-nav .field-position{margin-left:auto}
+.postal .answer-workbench>.panel.net-reference{flex-basis:340px}
+.portrait .postal .answer-workbench>.panel.net-reference{width:360px!important;max-width:100%}
+.postal .net-reference>svg{width:100%}
+.portrait .postal .answer-workbench:has(.net-reference)>.answer-fields{padding:14px!important}
+.portrait .postal .answer-workbench:has(.net-reference) .field:not([hidden]){padding:6px 0!important;gap:8px!important}
+.postal .net-reference>h3{display:none}

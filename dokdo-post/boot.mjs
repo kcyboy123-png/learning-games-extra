@@ -5,7 +5,7 @@ const openingSound=createPostSound(soundStorage);
 
 // Show the film without waiting for the map's 3D dependency graph.
 let ready=false;
-const village=import('./post.mjs?v=hint-free-play-20261120').then(module=>{
+const village=import('./post.mjs?v=paper-guidance-20261120').then(module=>{
   ready=true;return module;
 }).catch(error=>{console.error('Village loading failed',error);return null;});
 entryOpening(async()=>{

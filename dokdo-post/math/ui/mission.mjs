@@ -3,9 +3,9 @@ import {parcelCustomizer,parcelDimensions,packingMilestone} from '../../parcel-l
 // 상황 한 문장 → 직접 조작 → 명시적 제출 → 피드백(오답 시 조작 보존) → 학습 정리 → 명시적 다음 버튼.
 import {STORIES,portrait,itemImage,coachFor} from '../../story.mjs?v=gifts-math-final-20261119';
 import {createSolidView} from './solid-view.mjs?v=gifts-math-final-20261119';
-import {netFigure} from './net-board.mjs?v=hint-free-play-20261120';
-import {actionFor,questionFor,moveFor,hasResponse} from './postal-instructions.mjs?v=gifts-math-final-20261119';
-import {renderStep} from './steps.mjs?v=hint-free-play-20261120';
+import {netFigure} from './net-board.mjs?v=paper-guidance-20261120';
+import {actionFor,questionFor,moveFor,hasResponse} from './postal-instructions.mjs?v=three-more-20261120';
+import {renderStep} from './steps.mjs?v=paper-guidance-20261120';
 import {newEventId, answerSignature} from '../lib/progress.mjs';
 import {sfx} from './audio.mjs?v=audio-journey-20261117';
 import {createRobotView} from './robot-view.mjs?v=ui-journey-20261118';

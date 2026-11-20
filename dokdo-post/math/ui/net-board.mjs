@@ -180,7 +180,7 @@ export function createNetBoard(opts = {}) {
       landed=state.held.id;
       state.pieces.push({id: state.held.id, x: nx, y: ny, w: state.held.w, h: state.held.h, fromTray: state.held.fromTray});
       state.held = null; state.wrong.clear();
-      say(opts.postal?(state.pieces.length<6?`면 ${state.pieces.length}/6 · 종이를 한 장 더 골라요.`:state.pieces.length===6?'여섯 면을 놓았어요. 아래에서 접어서 확인해요.':`면이 ${state.pieces.length}개예요. 필요한 면은 6개예요.`):'조각을 놓았어요.'); draw(); refreshTray(); if(opts.postal)sfx.place();onChange(api.getPieces()); return;
+      say(opts.postal?(state.pieces.length<6?`면 ${state.pieces.length}/6 · 종이를 한 장 더 골라요.`:state.pieces.length===6?(opts.blank?'여섯 면을 놓았어요. 빈칸 길이도 확인해요.':'여섯 면을 놓았어요. 아래에서 접어서 확인해요.'):`면이 ${state.pieces.length}개예요. 필요한 면은 6개예요.`):'조각을 놓았어요.'); draw(); refreshTray(); if(opts.postal)sfx.place();onChange(api.getPieces()); return;
     }
     if (target && canPick(target)) {
       state.pieces = state.pieces.filter(p => p !== target);
@@ -214,7 +214,7 @@ export function createNetBoard(opts = {}) {
   function refreshTray() {
     clear(trayEl);
     if (mode !== 'build') return;
-    bRotate.disabled=!state.held;
+    bRotate.disabled=!state.held||(opts.postal&&state.held.w===state.held.h);
     bReturn.disabled=!state.held;
     state.tray.forEach((t, i) => {
       const b = button('', () => {
@@ -231,12 +231,14 @@ export function createNetBoard(opts = {}) {
       const s = Math.min(56 / Math.max(t.w, 1), 32 / Math.max(t.h, 1), 12);
       pic.append(svg('rect', {x: 30 - t.w * s / 2, y: 18 - t.h * s / 2, width: t.w * s, height: t.h * s, fill: '#d6b283', stroke: '#5a3d1c', 'stroke-width': 2}));
       b.append(pic, node('span', {text: `${t.w}×${t.h}`}), node('span', {class: 'cnt', text: `${t.count}장`}));
-      const held=state.held&&state.held.fromTray&&((state.held.w===t.w&&state.held.h===t.h)||(state.held.w===t.h&&state.held.h===t.w));
+      const held=state.held&&state.held.fromTray&&state.held.w===t.w&&state.held.h===t.h;
       b.setAttribute('aria-pressed',String(Boolean(held)));if(held)b.classList.add('on');
       if(opts.postal){b.style.touchAction='none';b.addEventListener('pointerdown',e=>{if(!b.disabled)beginDrag(e,()=>b.click(),null);});}
       trayEl.append(b);
     });
-    const heldInfo = node('p', {class: state.held?'mini held-piece':'mini', text: state.held ? `들고 있는 조각: ${state.held.w}×${state.held.h}` : '들고 있는 조각 없음'});
+    const changed=state.pieces.some(p=>!(opts.pieces||[]).some(q=>q.x===p.x&&q.y===p.y&&q.w===p.w&&q.h===p.h));
+    const idleCue=state.pieces.length===6&&changed?(opts.blank?'빈칸 길이를 확인해요':'아래에서 접어 확인해요'):opts.replaceable?'바꿀 종이를 톡 집어요':opts.movable?'옮길 종이를 톡 집어요':'옆에서 종이를 골라요';
+    const heldInfo = node('p', {class: state.held?'mini held-piece':'mini', text: state.held ? (opts.postal?`가로 ${state.held.w}cm · 세로 ${state.held.h}cm`:`들고 있는 조각: ${state.held.w}×${state.held.h}`) : opts.postal?idleCue:'들고 있는 조각 없음'});
     if(opts.postal&&state.held){
       const preview=svg('svg',{viewBox:'0 0 120 74',class:'held-preview','aria-hidden':'true'});
       const scale=Math.min(100/state.held.w,54/state.held.h);
@@ -365,7 +367,7 @@ export function netFigure(pieces, {size = 150, showLengths = false, blanks = [],
         continue;
       }
       el.append(svg('text', {x: p.x * s + offX + p.w * s / 2, y: p.y * s + offY + fs + 2, class: 'label', 'data-blank-id':bw?.id||'', style: `font-size:${fs}px${bw ? ';fill:#c74b3f' : ''}`, 'text-anchor': 'middle', text: bw ? (bw.label || '?') : p.w}));
-      el.append(svg('text', {x: p.x * s + offX + fs - 2, y: p.y * s + offY + p.h * s / 2 + 5, class: 'label', 'data-blank-id':bh?.id||'', style: `font-size:${fs}px${bh ? ';fill:#c74b3f' : ''}`, 'text-anchor': 'middle', text: bh ? (bh.label || '?') : p.h}));
+      el.append(svg('text', {x: p.x * s + offX + fs - 2, y: p.y * s + offY + (labelSize ? p.h * s - 6 : p.h * s / 2 + 5), class: 'label', 'data-blank-id':bh?.id||'', style: `font-size:${fs}px${bh ? ';fill:#c74b3f' : ''}`, 'text-anchor': 'middle', text: bh ? (bh.label || '?') : p.h}));
     }
   }
   const {full} = adjacency(pieces);
