@@ -1,0 +1,28 @@
+피아노의 숲 — 플루트·클래식 기타 녹음 음원
+
+배포 라이브러리: tonejs-instruments, Nicholaus P. Brosowsky
+https://github.com/nbrosowsky/tonejs-instruments
+샘플 라이선스: Creative Commons Attribution 3.0 (CC BY 3.0)
+https://creativecommons.org/licenses/by/3.0/
+라이브러리의 샘플 라이선스 표기:
+https://github.com/nbrosowsky/tonejs-instruments/blob/master/LICENSE.md
+
+플루트 원본: Versilian Studios / Sam Gossner, VSCO 2 Community Edition (CC0)
+https://github.com/sgossner/VSCO-2-CE
+https://github.com/sgossner/VSCO-2-CE/blob/master/LICENSE
+
+클래식 기타 원본: quartertone, ClassicalGuitar-multisampled
+https://freesound.org/people/quartertone/packs/11573/
+확인한 원본 음원 페이지는 Attribution 4.0을 표시합니다:
+https://freesound.org/people/quartertone/sounds/183089/
+https://creativecommons.org/licenses/by/4.0/
+이 게임에 포함된 MP3 사본은 위 tonejs-instruments 배포본이며 해당 배포본의 CC BY 3.0 표기도 함께 보존합니다.
+
+변경 사항:
+- 녹음 MP3 파일은 배포본 그대로 복사했습니다. 포함 파일별 Git blob 및 SHA-256은 new-instruments-manifest.json에 기록했습니다.
+- 게임 재생 시 가까운 녹음 음을 음높이에 맞추고, 악기별 음량과 시작/끝 엔벌로프를 적용합니다.
+- 짧은 저음의 반응을 위해 플루트 C4는 0.20초, E4는 0.12초부터 재생합니다. 다른 음은 시작점을 유지합니다. 원본 파일은 편집하지 않았습니다.
+- Tone.js 코드나 별도 오디오 라이브러리를 추가하지 않았으며 기존 Web Audio 재생기를 사용합니다.
+- 저자들이 이 게임을 후원하거나 보증한다는 의미는 아닙니다.
+
+기존 피아노 출처는 piano/ATTRIBUTION.txt를 참고해 주세요.

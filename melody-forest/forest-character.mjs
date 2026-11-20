@@ -1,4 +1,6 @@
 import * as THREE from './lib/three.module.min.js';
+import {handRig} from './performance-motion.mjs';
+import {createMusicianRig} from './musician-rig.mjs';
 
 export function backingKey(midi) {
   if(!Number.isInteger(midi))return null;
@@ -7,7 +9,7 @@ export function backingKey(midi) {
   return midi;
 }
 const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
-// The whole illustration may only bob and sway this much while walking; its vertices are never edited.
+// Walking moves the whole plane; seated hand motion is handled separately.
 export const WALK_BOB=.02, WALK_SWAY=.008;
 export const SEATED_LIFT={girl:.12,boy:.15};
 const frames=[
@@ -15,7 +17,7 @@ const frames=[
   [193,514,387,1008],[660,516,852,1008],[1098,567,1377,998]
 ];
 
-export function createStorybookChild(scene,atlas,seatedGirl,seatedBoy,posesGirl,posesBoy) {
+export function createStorybookChild(scene,atlas,seatedGirl,seatedBoy,posesGirl,posesBoy,puppetGirl,puppetBoy) {
   const root=new THREE.Group();scene.add(root);
   const textures=frames.map(([x,y,r,b],i)=>{
     const source=i===2?seatedGirl:i===5?seatedBoy:atlas,t=source.clone();
@@ -24,24 +26,31 @@ export function createStorybookChild(scene,atlas,seatedGirl,seatedBoy,posesGirl,
     else {t.repeat.set((r-x)/1536,(b-y)/1024);t.offset.set(x/1536,1-b/1024);}
     t.needsUpdate=true;return t;
   });
-  // Equal-size UV windows align shoes and hips without stretching the painted limbs.
-  const playingTextures=[posesGirl,posesBoy].map((source,gender)=>source?[0,1,2].map(i=>{
+  // Keep one painting registered; only the two hand regions respond to notes.
+  const playingTextures=[posesGirl,posesBoy].map((source,gender)=>source?(()=>{
     const t=source.clone(),width=gender?2172:1996,cell=gender?430:500;
-    t.repeat.set(cell/width,1);t.offset.set((gender?[257,861,1466]:[96,743,1458])[i]/width,0);t.needsUpdate=true;return t;
-  }):null);
-  textures.push(...playingTextures.flatMap(t=>t||[]));
-  const material=new THREE.MeshBasicMaterial({map:textures[1],alphaTest:.4,side:THREE.DoubleSide,toneMapped:false,color:0xf9f5ea,transparent:true});
-  const geometry=new THREE.PlaneGeometry(1,1,20,36).translate(0,.5,0);
+    t.repeat.set(cell/width,1);t.offset.set((gender?257:96)/width,0);t.needsUpdate=true;return t;
+  })():null);
+  textures.push(...playingTextures.filter(Boolean));
+  const material=new THREE.MeshBasicMaterial({map:textures[1],alphaTest:.22,side:THREE.DoubleSide,toneMapped:false,color:0xf9f5ea,transparent:true});
+  const geometry=new THREE.PlaneGeometry(1,1,72,112).translate(0,.5,0);
+  const rigs=[
+    handRig(geometry,[{x:.29,y:.434,rx:.19,ry:.024,dy:-.012},{x:.32,y:.469,rx:.23,ry:.031,dy:-.014}]),
+    handRig(geometry,[{x:.26,y:.464,rx:.21,ry:.026,dy:-.012},{x:.32,y:.512,rx:.23,ry:.031,dy:-.014}]),
+  ],pressure=[0,0];
   const mesh=new THREE.Mesh(geometry,material);root.add(mesh);
-  let avatar='girl',frame=-1,stride=0,weight=0,last=V(),placed=false,facingFront=false,time=0,poseTime=0;
+  const puppets=[puppetGirl,puppetBoy].map((t,i)=>t?createMusicianRig(t,i?'boy':'girl'):null);
+  for(const p of puppets)if(p){root.add(p.group);p.group.visible=false;textures.push(p.texture);}
+  let avatar='girl',frame=-1,stride=0,weight=0,last=V(),placed=false,facingFront=false,profileSign=1;
   function setFrame(i){const n=i+(avatar==='boy'?3:0);if(n!==frame){frame=n;material.map=textures[n];}const [x,y,r,b]=frames[n];const height=i===2?1.35:1.4,aspect=i===2?(avatar==='boy'?766/1380:627/836):(r-x)/(b-y);mesh.scale.set(aspect*height,height,1);}
   return {root,mesh,textures,setFrame,
-    setEnvironment(tint){material.color.set(tint);},
+    resetPerformance(){pressure.fill(0);rigs[0]([]);},
+    setEnvironment(tint){material.color.set(tint);puppets.forEach(p=>p?.setEnvironment(tint));},
     setCharacter(value){avatar=value==='boy'?'boy':'girl';frame=-1;},
     // Whole-sheet fade for sitting down; the stage decides visibility, the drawing is never altered.
-    setOpacity(k){material.opacity=Math.max(0,Math.min(1,k));material.depthWrite=material.opacity===1;material.alphaTest=.4*Math.max(.001,material.opacity);},
+    setOpacity(k){material.opacity=Math.max(0,Math.min(1,k));material.depthWrite=material.opacity===1;material.alphaTest=.22*Math.max(.001,material.opacity);puppets.forEach(p=>p?.setOpacity(material.opacity));},
     animate({dt,seated,moving,heading=0,camera,hands=[],playing=false,reduced=false}){
-      time+=dt;const p=root.position;
+      const p=root.position;
       const distance=placed?Math.min(.15,p.distanceTo(last)):0;last.copy(p);placed=true;
       // The step rhythm follows real root travel only; a held stick against a wall does not bounce the picture.
       const walking=moving&&!seated&&!reduced&&distance>1e-6;
@@ -57,19 +66,25 @@ export function createStorybookChild(scene,atlas,seatedGirl,seatedBoy,posesGirl,
       setFrame(seated?2:facingFront?0:1);
       const poses=playingTextures[avatar==='boy'?1:0];
       if(seated&&poses){
-        poseTime=playing&&!reduced?poseTime+dt:0;
-        const pose=[0,1,0,2][Math.floor(poseTime/.48)%4];
-        material.map=poses[pose];frame=-1;
+        material.map=poses;frame=-1;
         mesh.scale.set(1.35*(avatar==='boy'?430/724:500/788),1.35,1);
-      }else poseTime=0;
+      }
+      for(let i=0;i<2;i++){
+        const target=seated&&!reduced?(hands[i]?.hit||0):0;
+        pressure[i]+=(target-pressure[i])*(1-Math.exp(-dt*(target>pressure[i]?32:12)));
+        if(reduced||!seated||pressure[i]<.0001)pressure[i]=0;
+      }
+      rigs[avatar==='boy'?1:0](poses?pressure:[]);
       // Keep the profile facing the piano as the free camera crosses behind it.
-      if(seated)mesh.scale.x*=Math.sin(yaw)>=0?-1:1;
+      if(Math.sin(yaw)>.18)profileSign=-1;else if(Math.sin(yaw)<-.18)profileSign=1;
+      if(seated)mesh.scale.x*=profileSign;
       mesh.position.x=seated?(mesh.scale.x<0?1:-1)*.03:0;
-      // The drawing itself is never deformed: the whole sheet lifts a little at each step and sways a hair.
+      // Walking uses a small whole-sheet lift and sway.
       mesh.position.y=seated?SEATED_LIFT[avatar]:weight*WALK_BOB*.5*(1-Math.cos(stride*2));
       mesh.rotation.z=weight*WALK_SWAY*Math.sin(stride);
-      // shortcut: three complete painted poses suggest playing; exact finger-to-key motion needs a rigged character.
-      if(seated&&!reduced)mesh.rotation.z=Math.sin(time*3)*.004*Math.max(0,...hands.map(h=>h.hit));
+      const puppet=puppets[avatar==='boy'?1:0];mesh.visible=!(seated&&puppet);
+      puppets.forEach(p=>{if(p)p.group.visible=seated&&p===puppet;});
+      if(seated&&puppet){puppet.group.scale.x=profileSign;puppet.group.position.set(mesh.position.x,SEATED_LIFT[avatar],0);puppet.pose({dt,hands,playing,reduced});}
     }
   };
 }

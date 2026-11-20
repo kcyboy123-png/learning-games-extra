@@ -1,0 +1,14 @@
+첼로 독주: Karoryfer x bigcat cello
+연주: Kamila Borowiak / 제작: Karoryfer Lecolds & bigcat instruments
+공식 소개: https://shop.karoryfer.com/pages/free-karoryfer-x-bigcat-cello
+공식 배포: https://github.com/sfzinstruments/karoryfer-bigcat.cello
+확인한 커밋: 6fd75fbfc1dbb3109bf26220ba1adea46188a18b
+라이선스: CC0 1.0 Universal (동봉 LICENSE-CC0.txt)
+
+44.1 kHz / 24-bit / mono 실제 독주 첼로 녹음 18개.
+긴 음 9개 + 짧은 음 9개, 실제 C3~C5, 단3도 간격.
+원본 PCM과 디코딩 결과가 일치하는 무손실 FLAC.
+노이즈 제거, 시간 늘이기, 루프, 가상 합주를 적용하지 않음.
+재생 시 음량 보정, 가까운 음의 피치 이동, 시작점과 끝 여운 적용.
+악보 데이터의 음높이는 보존하며 실제 첼로 재생만 한 옥타브 낮음.
+각 원본 URL / SHA-256 / 검사 결과는 SOURCE.json 참고.

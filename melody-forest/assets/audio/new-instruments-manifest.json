@@ -1,0 +1,137 @@
+[
+  {
+    "folder": "flute",
+    "note": "C4",
+    "gitBlob": "186f5822be429415df812af5b2c082275c05127c",
+    "source": "https://github.com/nbrosowsky/tonejs-instruments/blob/master/samples/flute/C4.mp3",
+    "base64Length": 254616,
+    "bytes": 190962,
+    "sha256": "d6837b9e7c524e7b733a11530d930316d85a91cd80dbba38a497047624bb63e3"
+  },
+  {
+    "folder": "flute",
+    "note": "E4",
+    "gitBlob": "4292a74a0994f4f79c7fe8008e0c94f4a365eba2",
+    "source": "https://github.com/nbrosowsky/tonejs-instruments/blob/master/samples/flute/E4.mp3",
+    "base64Length": 340588,
+    "bytes": 255440,
+    "sha256": "39fa9c7004bc2d168c98839475cc52448abdfb43486a11cf076b72dfcfa2b1d3"
+  },
+  {
+    "folder": "flute",
+    "note": "A4",
+    "gitBlob": "217d28967a9202a3530aa8df9043e21a317d83e4",
+    "source": "https://github.com/nbrosowsky/tonejs-instruments/blob/master/samples/flute/A4.mp3",
+    "base64Length": 257956,
+    "bytes": 193466,
+    "sha256": "615376784bd2a716baa8c7b1c57a3d55048a62cf89b313ed005d85da06a1d918"
+  },
+  {
+    "folder": "flute",
+    "note": "C5",
+    "gitBlob": "f184ace719a2b41e7d1011397acb5ef34bda8979",
+    "source": "https://github.com/nbrosowsky/tonejs-instruments/blob/master/samples/flute/C5.mp3",
+    "base64Length": 244600,
+    "bytes": 183450,
+    "sha256": "1b6ec4d5bf2caeca80da4c53f6d9f09eb3a49e8de04588965c55ca8f00ff296d"
+  },
+  {
+    "folder": "flute",
+    "note": "E5",
+    "gitBlob": "89db47bf9ed935387d85808c539184192a5bc38c",
+    "source": "https://github.com/nbrosowsky/tonejs-instruments/blob/master/samples/flute/E5.mp3",
+    "base64Length": 261296,
+    "bytes": 195970,
+    "sha256": "2d024d4cd56412bcb8cc3ecbce0736b63c9ba1d77de2e9601ba4efeda559a157"
+  },
+  {
+    "folder": "flute",
+    "note": "A5",
+    "gitBlob": "206f907797287fa48c3137f1d62be6c163bdd4e9",
+    "source": "https://github.com/nbrosowsky/tonejs-instruments/blob/master/samples/flute/A5.mp3",
+    "base64Length": 236256,
+    "bytes": 177190,
+    "sha256": "0735eccfb744176f253d1f715f7a70cf045694cce1da99d934e52a3a3544f968"
+  },
+  {
+    "folder": "flute",
+    "note": "C6",
+    "gitBlob": "83b86027fde989f9e433c151b86970c8fe74a936",
+    "source": "https://github.com/nbrosowsky/tonejs-instruments/blob/master/samples/flute/C6.mp3",
+    "base64Length": 235420,
+    "bytes": 176564,
+    "sha256": "535d1fbfaddbdb7f91c415708470f0860669c08733823212e81e98909afc9a64"
+  },
+  {
+    "folder": "guitar-nylon",
+    "note": "B3",
+    "gitBlob": "7382e39e4ab5dba4aa9ee98011fa152fb368839d",
+    "source": "https://github.com/nbrosowsky/tonejs-instruments/blob/master/samples/guitar-nylon/B3.mp3",
+    "base64Length": 101872,
+    "bytes": 76404,
+    "sha256": "9e4b3df9cda03761dc093b910000bfc68083d9ce40605fdd2af370140521f2cd"
+  },
+  {
+    "folder": "guitar-nylon",
+    "note": "Ds4",
+    "gitBlob": "23fdd08422d4c841d0091096290f49eb100fdf5e",
+    "source": "https://github.com/nbrosowsky/tonejs-instruments/blob/master/samples/guitar-nylon/Ds4.mp3",
+    "base64Length": 101872,
+    "bytes": 76404,
+    "sha256": "05cbeaf46e110136346e855eb3a94d2db6756e5903b74de2e78eca58c8a6e77b"
+  },
+  {
+    "folder": "guitar-nylon",
+    "note": "Fs4",
+    "gitBlob": "6b5e437fea7a70a27ea57b6124d1c066e83df5bf",
+    "source": "https://github.com/nbrosowsky/tonejs-instruments/blob/master/samples/guitar-nylon/Fs4.mp3",
+    "base64Length": 101872,
+    "bytes": 76404,
+    "sha256": "33a2f0b2ccee800cae58bfdbbd2680fdabd866548efbb9e2696a5462a0e433c5"
+  },
+  {
+    "folder": "guitar-nylon",
+    "note": "A4",
+    "gitBlob": "c64a999362eaa8dfe1ceb70e092c77fb54194efa",
+    "source": "https://github.com/nbrosowsky/tonejs-instruments/blob/master/samples/guitar-nylon/A4.mp3",
+    "base64Length": 101872,
+    "bytes": 76404,
+    "sha256": "3436e55cf99281a40467dce558ea3009b929080d837193492fb110b7afd348e7"
+  },
+  {
+    "folder": "guitar-nylon",
+    "note": "Cs5",
+    "gitBlob": "ff0c6b16fc0cbb4fc9ee4ee322f3d5d8d62e4eb4",
+    "source": "https://github.com/nbrosowsky/tonejs-instruments/blob/master/samples/guitar-nylon/Cs5.mp3",
+    "base64Length": 51792,
+    "bytes": 38844,
+    "sha256": "a8c85d0ea7188ed1f7794a7ce96c462824f89f5b2f153052f9b9c438e4c2b2e5"
+  },
+  {
+    "folder": "guitar-nylon",
+    "note": "E5",
+    "gitBlob": "da8375361da2e13c1a86734581becf6dba34f786",
+    "source": "https://github.com/nbrosowsky/tonejs-instruments/blob/master/samples/guitar-nylon/E5.mp3",
+    "base64Length": 48456,
+    "bytes": 36340,
+    "sha256": "9ab5b711d43f7bd0cf5a7ec2c5d5a382c701b0258341a0a4483ccb377c4fd63c"
+  },
+  {
+    "folder": "guitar-nylon",
+    "note": "Gs5",
+    "gitBlob": "e1def0915e8d4d629e1c462173ea0df7bb073f3e",
+    "source": "https://github.com/nbrosowsky/tonejs-instruments/blob/master/samples/guitar-nylon/Gs5.mp3",
+    "base64Length": 51792,
+    "bytes": 38844,
+    "sha256": "3714d1e2cd35be502a8b522db02207031b37d1495c6608548c31f1402532db3a"
+  },
+  {
+    "folder": "guitar-nylon",
+    "note": "As5",
+    "gitBlob": "84c89b591829d12cf81765b3630f1fd5f4e5c006",
+    "source": "https://github.com/nbrosowsky/tonejs-instruments/blob/master/samples/guitar-nylon/As5.mp3",
+    "base64Length": 51792,
+    "bytes": 38844,
+    "sha256": "8b58374042aa47d7aef055afca8492a0e25faeecee9ac44fb098afff53e6cb97"
+  }
+]

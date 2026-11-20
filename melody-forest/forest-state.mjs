@@ -46,16 +46,19 @@ export function forestCharacter(phase, sitT = 0, openingT = 0) {
   return {visible: opacity > 0, opacity};
 }
 
-// Six stages, one per featured backing. The UI protects the current song before changing maps.
+// Every scenery starts a fresh score with its own default backing.
 export const FOREST_MAPS = [
-  {id: 'basic', name: '햇살이 머무는 숲', icon: '☀'},
-  {id: 'pop', name: '리듬 놀이터', icon: '🎈'},
-  {id: 'warm', name: '바람의 숲', icon: '🌾'},
-  {id: 'dream', name: '별빛 오솔길', icon: '✨'},
-  {id: 'journey', name: '구름섬', icon: '☁'},
-  {id: 'moon', name: '달빛 우체국', icon: '🌙'}
+  {id:'christmas',name:'1장 · 크리스마스 숲',icon:'🎄',progression:'christmas-carol',art:'basic',version:3},
+  {id: 'basic', name: '햇살이 머무는 숲', icon: '☀', progression:'basic'},
+  {id: 'pop', name: '리듬 놀이터', icon: '🎈', progression:'pop'},
+  {id: 'warm', name: '바람의 숲', icon: '🌾', progression:'warm'},
+  {id: 'dream', name: '별빛 오솔길', icon: '✨', progression:'dream'},
+  {id: 'journey', name: '구름섬', icon: '☁', progression:'journey'},
+  {id: 'moon', name: '달빛 우체국', icon: '🌙', progression:'moon'},
+  {id: 'rain', name: '비 내리는 숲', icon: '☂', progression: 'd-minor', art: 'moon', version: 3},
+  {id: 'sunset', name: '노을 호숫가', icon: '◒', progression: 'a-minor', art: 'warm', version: 3}
 ];
-const LEGACY_MAP = {walk: 'basic', letter: 'warm', adventure: 'pop'};
+const LEGACY_MAP = {'christmas-carol':'christmas',walk: 'basic', letter: 'warm', adventure: 'pop'};
 export function forestMapId(id) { return FOREST_MAPS.some(m => m.id === id) ? id : 'basic'; }
 export function forestMapFor(progression) { return forestMapId(LEGACY_MAP[progression] || progression); }
 export function forestMapName(id) { const m = FOREST_MAPS.find(m => m.id === forestMapId(id)); return `${m.icon} ${m.name}`; }

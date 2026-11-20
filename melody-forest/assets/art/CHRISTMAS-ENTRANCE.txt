@@ -1,0 +1,9 @@
+Christmas entrance film — 2026-11-20
+User-requested Runway generation, task b9291f2d-14ef-4cfd-95bf-ab9138afb5d4.
+Model: gen-4.5. One generation, 6 seconds requested; returned 6.041667 s, 1280x720, 24 fps, 4,033,392 bytes.
+1080p requested in tool input but returned 720p. Original returned file preserved, not upscaled.
+Credits verified 10434 before / 10362 accepted request response: 72 credits. No purchase/topup.
+Content: Christmas forest, lantern path, golden tree, wooden piano, cottage, sleigh, snowman. Generated interpretation, not exact geometry of live game.
+File: christmas-entrance.mp4. Poster: christmas-entrance-poster.jpg, captured from actual video frame using browser canvas.
+Silent film; existing ambience system unchanged. No personal/student data uploaded.
+Verified 145 decoded frames, 0 dropped in one headless Edge standalone playback; visual samples at .1, 1.5, 3, 4.5 and 5.8 seconds. Actual mobile performance not measured.

@@ -1,0 +1,8 @@
+VSCO 2 Community Edition — Cello Section, sustained vibrato, soft layer v1.
+Recorded by Sam Gossner & Simon Dalzell; sample cutting by Elan Hickler / Soundemote.
+CC0 1.0 Universal.
+Source: https://github.com/sgossner/VSCO-2-CE/tree/440300901dfe9275fd84e0b7763af1f8443ae62e/Strings/Cello%20Section/susvib
+9 original 44.1 kHz / 24-bit stereo WAV recordings converted losslessly to FLAC, without resampling or trimming.
+Runtime per-sample gain and start offset, attack/release envelope. Score plays one octave lower for cello.
+Source octave convention: source C3 sounds concert C4 (MIDI 60), verified from waveform spectrum.
+These are a cello section recording, not a claimed solo cello recording.

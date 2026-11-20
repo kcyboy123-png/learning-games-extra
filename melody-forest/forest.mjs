@@ -1,11 +1,15 @@
+import {forestQuality} from './forest-quality.mjs';
 // '햇살이 머무는 숲' — a real-time three.js stage that follows the app; it never owns the song or the sound.
 // Illustrated cutouts live in a real 3D woodland; vegetation is instanced to keep draw calls low.
+import {pianoPressure} from './performance-motion.mjs';
+import {loadChristmasTree,loadChristmasLantern,loadChristmasArch,loadDistantChristmasTree} from './christmas-tree.mjs';
 import * as THREE from './lib/three.module.min.js';
-import {loadGarden} from './forest-garden.mjs?v=20261110-polish5';
-import {pianoKey, WHITE_KEYS, BLACK_KEY_STEPS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs?v=20261110-polish5';
-import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261110-polish5';
-import {createStorybookChild,backingKey} from './forest-character.mjs?v=20261110-polish5';
-import {forestInput, forestStep, forestOrbit, forestRoute, forestLook, forestEye, forestTurnToward} from './forest-controls.mjs?v=20261110-polish5';
+import {loadFriendArt,createForestFriends,companionSpace} from './forest-friends.mjs?v=20261120-release21';
+import {loadGarden} from './forest-garden.mjs?v=20261120-release21';
+import {pianoKey, WHITE_KEYS, BLACK_KEY_STEPS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs?v=20261120-release21';
+import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261120-release21';
+import {createStorybookChild,backingKey} from './forest-character.mjs?v=20261120-release21';
+import {forestInput, forestStep, forestOrbit, forestRoute, forestLook, forestEye, forestTurnToward} from './forest-controls.mjs?v=20261120-release21';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z), C = h => new THREE.Color(h);
 // The full A0–C8 piano has 52 white keys; the existing C3–C6 animation occupies slots 16–37.
@@ -79,7 +83,7 @@ function freezeTransforms(root){root.traverse(o=>{o.updateMatrix();o.matrixAutoU
 function buildScenery(...args){const steps=scenerySteps(...args);let part;do{part=steps.next();}while(!part.done);return part.value;}
 async function prepareScenery(...args){const steps=scenerySteps(...args);for(;;){const part=steps.next();if(part.done)return part.value;await prepareYield();}}
 function* scenerySteps(scene, R, leafTexture, theme=PALETTES.basic) {
-  const dryGround=(x,z)=>theme!==PALETTES.moon||Math.hypot((x+5.2)/3.15,(z+3.6)/4.05)>1;
+  const dryGround=(x,z)=>(theme!==PALETTES.moon&&!theme.lake)||Math.hypot((x+5.2)/3.15,(z+3.6)/4.05)>1;
   const surfaceY=(x,z)=>groundY(x,z)-(dryGround(x,z)?0:.15)-(theme===PALETTES.journey?Math.min(25,Math.hypot(Math.max(0,Math.abs(x)-7),Math.max(0,z-15,-5-z))*4):0);
   const lambert = o => new THREE.MeshLambertMaterial({vertexColors: true, ...o});
   const breezeTime={value:0};
@@ -94,7 +98,7 @@ function* scenerySteps(scene, R, leafTexture, theme=PALETTES.basic) {
   scene.add(sky);
 
   const ground = new THREE.PlaneGeometry(150, 150, 80, 80).rotateX(-Math.PI / 2);
-  const gp = ground.attributes.position, gc = [], grass = C(theme.ground), warm = C(theme.warm), deep = C(theme.deep), earth = C(0xc9b88a), tmp = new THREE.Color();
+  const gp = ground.attributes.position, gc = [], grass = C(theme.ground), warm = C(theme.warm), deep = C(theme.deep), earth = C(theme.path??0xc9b88a), tmp = new THREE.Color();
   for (let i = 0; i < gp.count; i++) {
     const x = gp.getX(i), z = gp.getZ(i), r = Math.hypot(x, z + .6);
     gp.setY(i, surfaceY(x, z));
@@ -106,15 +110,15 @@ function* scenerySteps(scene, R, leafTexture, theme=PALETTES.basic) {
   yield;
   // Soft painted grain prevents the meadow from reading as a flat plastic plane.
   const groundCanvas = document.createElement('canvas'); groundCanvas.width = groundCanvas.height = 512;
-  const paint = groundCanvas.getContext('2d'); paint.fillStyle = '#e9ebdc'; paint.fillRect(0,0,512,512);
+  const paint = groundCanvas.getContext('2d'); paint.fillStyle = theme.winter?'#f0f4f8':'#e9ebdc'; paint.fillRect(0,0,512,512);
   const grain = rng(8037);
-  for(let n=0;n<8500;n++) {const x=grain()*512,y=grain()*512,v=grain();paint.fillStyle=v<.5?'rgba(78,97,59,.055)':'rgba(255,255,231,.13)';paint.fillRect(x,y,1+grain()*3,2+grain()*5);}
-  for(let n=0;n<45;n++){const x=grain()*512,y=grain()*512,r=12+grain()*38,gr=paint.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,n%3?'rgba(68,92,40,.18)':'rgba(164,132,72,.16)');gr.addColorStop(1,'rgba(80,100,50,0)');paint.fillStyle=gr;paint.fillRect(x-r,y-r,r*2,r*2);}
+  for(let n=0;n<8500;n++) {const x=grain()*512,y=grain()*512,v=grain();paint.fillStyle=theme.winter?(v<.5?'rgba(104,133,169,.045)':'rgba(248,252,255,.16)'):(v<.5?'rgba(78,97,59,.055)':'rgba(255,255,231,.13)');paint.fillRect(x,y,1+grain()*3,2+grain()*5);}
+  for(let n=0;n<45;n++){const x=grain()*512,y=grain()*512,r=12+grain()*38,gr=paint.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,n%3?(theme.winter?'rgba(102,132,166,.07)':'rgba(68,92,40,.18)'):(theme.winter?'rgba(230,237,245,.10)':'rgba(164,132,72,.16)'));gr.addColorStop(1,'rgba(80,100,50,0)');paint.fillStyle=gr;paint.fillRect(x-r,y-r,r*2,r*2);}
   const groundTexture = new THREE.CanvasTexture(groundCanvas);groundTexture.colorSpace=THREE.SRGBColorSpace;groundTexture.wrapS=groundTexture.wrapT=THREE.RepeatWrapping;groundTexture.repeat.set(12,12);
   const groundMesh = new THREE.Mesh(ground,new THREE.MeshStandardMaterial({vertexColors:true,map:groundTexture,bumpMap:groundTexture,bumpScale:.045,roughness:1})); groundMesh.receiveShadow = true; scene.add(groundMesh);
 
   const glow = radialTexture();
-  const pool = new THREE.Mesh(new THREE.CircleGeometry(5, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({map: glow, color: theme.character?0xa8c7ef:0xffe6a6, transparent: true, opacity: theme.character?.035:.05, blending: THREE.AdditiveBlending, depthWrite: false, fog: false}));
+  const pool = new THREE.Mesh(new THREE.CircleGeometry(5, 40).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({map: glow, color: theme.winter?0xffc17b:theme.character?0xa8c7ef:0xffe6a6, transparent: true, opacity: theme.winter?.16:theme.character?.035:.05, blending: THREE.AdditiveBlending, depthWrite: false, fog: false}));
   pool.position.set(.3, .03, -.4); pool.scale.set(1.2, 1, 1); scene.add(pool);
   const pathLight=pool.clone();pathLight.material=pool.material.clone();pathLight.material.opacity=theme.character?.07:.12;
   pathLight.position.set(1,surfaceY(1,8)+.025,8);pathLight.scale.set(.65,1,.85);scene.add(pathLight);
@@ -146,9 +150,9 @@ function* scenerySteps(scene, R, leafTexture, theme=PALETTES.basic) {
   yield;
   // Mossy rocks: faceted stone with moss baked on upward faces.
   const rockBase = lumpy(new THREE.IcosahedronGeometry(1, 3), .09, 2.3);
-  const rockGeo = merge([[rockBase, null, 0xb7ae9c, (y, ny) => ny > .45 ? 1 : .82]]), rc = rockGeo.attributes.color, rn = rockGeo.attributes.normal, moss = C(0x7d9a45);
-  for(let i=0;i<rc.count;i++){const c=new THREE.Color(rc.getX(i),rc.getY(i),rc.getZ(i));const rp=rockGeo.attributes.position,patch=.35+.5*(.5+.5*Math.sin(rp.getX(i)*12+rp.getZ(i)*7)*Math.cos(rp.getZ(i)*11));c.lerp(moss,smooth(.3,.88,rn.getY(i))*patch);rc.setXYZ(i,c.r,c.g,c.b);}
-  const rocks = [[-1.9, -.4, .55], [2.3, .6, .4], [-2.6, 2.2, .35], [1.9, 5.4, .45], [-2.1, 7.4, .6], [3.1, -2.6, .7], [-3.4, -2.9, .9], [3.6, 9.5, .5], [-.4, 10.4, .38], [2.8, 2.2, .3], [-1.4, 4.0, .28]];
+  const rockGeo = merge([[rockBase, null, 0xb7ae9c, (y, ny) => ny > .45 ? 1 : .82]]), rc = rockGeo.attributes.color, rn = rockGeo.attributes.normal, moss = C(theme.winter?0xe5edf4:0x7d9a45);
+  for(let i=0;i<rc.count;i++){const c=new THREE.Color(rc.getX(i),rc.getY(i),rc.getZ(i));const rp=rockGeo.attributes.position,patch=.35+.5*(.5+.5*Math.sin(rp.getX(i)*12+rp.getZ(i)*7)*Math.cos(rp.getZ(i)*11));c.lerp(moss,smooth(.3,.88,rn.getY(i))*(theme.winter?.92:patch));rc.setXYZ(i,c.r,c.g,c.b);}
+  const rocks = [[-1.9, -.4, .55], [2.3, .6, .4], [-2.6, 2.2, .35], [1.9, 5.4, .45], [-2.1, 7.4, .6], [3.1, -2.6, .7], [-3.4, -2.9, .9], [3.6, 9.5, .5], [-.4, 10.4, .38], [2.8, 2.2, .3], [-1.4, 4.0, .28]].filter(([x,z])=>!theme.lake||dryGround(x,z));
   add(rockGeo, lambert({flatShading: false}), rocks.map(([x, z, s]) => ({p: V(x, surfaceY(x, z) + s * .15, z), r: [R() * .4, R() * 6, 0], s: [s * 1.2, s * .65, s]})), null, true);
 
   yield;
@@ -162,8 +166,8 @@ function* scenerySteps(scene, R, leafTexture, theme=PALETTES.basic) {
   const bark=new THREE.CanvasTexture(barkCanvas);bark.colorSpace=THREE.SRGBColorSpace;bark.wrapS=bark.wrapT=THREE.RepeatWrapping;bark.repeat.set(2,3);
   const trunkGeo=trunkG;
   const trunkMaterial=new THREE.MeshStandardMaterial({map:bark,bumpMap:bark,bumpScale:.065,roughness:1,color:0xc2ae91});
-  const trunks = [], leaves = [], greens = [0x5f8f3e, 0x6e9e44, 0x86ad4c, 0x4f7f3a, 0x9bb957];
-  const clear = (x, z) => !(theme===PALETTES.moon&&(Math.hypot(x-1.8,z+7.8)<3.2||Math.hypot(x+5.2,z+3.6)<4.1)) && Math.hypot(x, z + .6) > 6.2 && pathDist(x, z) > 2.8 && !(z > 3 && x > 1 && Math.abs(z / Math.max(x, .01) - 1.5) < .9) && !(z > 2 && Math.abs(x - 2.6) < 2.8);
+  const trunks = [], leaves = [], greens = theme.winter?[0xaebfc8,0xc9d6de,0xe0e8ed,0x92aab7,0xb9cbd4]:[0x5f8f3e, 0x6e9e44, 0x86ad4c, 0x4f7f3a, 0x9bb957];
+  const clear = (x, z) => !((theme===PALETTES.moon||theme.lake)&&(Math.hypot(x-1.8,z+7.8)<3.2||Math.hypot(x+5.2,z+3.6)<4.1)) && Math.hypot(x, z + .6) > 6.2 && pathDist(x, z) > 2.8 && !(z > 3 && x > 1 && Math.abs(z / Math.max(x, .01) - 1.5) < .9) && !(z > 2 && Math.abs(x - 2.6) < 2.8);
   let tries = 0;
   while (trunks.length < theme.trees && tries++ < 900) {
     const a = R() * Math.PI * 2, r = 6.4 + R() * 9, x = Math.cos(a) * r, z = Math.sin(a) * r - 1.5;
@@ -202,16 +206,18 @@ function* scenerySteps(scene, R, leafTexture, theme=PALETTES.basic) {
   // Curved leaf clusters keep depth and soft silhouettes with one instanced draw.
   const sprigs=[];
   for(const t of leaves){const bush=t.p.y<2,near=Math.hypot(t.p.x,t.p.z)<23,count=bush?10:near?18:10;
-    for(let i=0;i<count;i++){const a=i*2.4+R()*.4,v=R()*1.6-.8,r=Math.sqrt(1-v*v);sprigs.push({p:V(t.p.x+Math.cos(a)*r*t.s[0]*.65,t.p.y+v*t.s[1]*.65,t.p.z+Math.sin(a)*r*t.s[2]*.65),r:[(R()-.5)*.9,a,(R()-.5)*.6],s:(bush?.85:1.8)+R()*(bush?.3:.65),c:theme===PALETTES.warm?[0xffb05a,0xff8037,0xf6d9a7,0xd9a963][i%4]:[0xf2f0df,0xcbdac4,0xe3e9dc,0xb6cbb4][i%4]});}
+    for(let i=0;i<count;i++){const a=i*2.4+R()*.4,v=R()*1.6-.8,r=Math.sqrt(1-v*v);sprigs.push({p:V(t.p.x+Math.cos(a)*r*t.s[0]*.65,t.p.y+v*t.s[1]*.65,t.p.z+Math.sin(a)*r*t.s[2]*.65),r:[(R()-.5)*.9,a,(R()-.5)*.6],s:(bush?.85:1.8)+R()*(bush?.3:.65),c:theme.foliage?theme.foliage[i%4]:theme===PALETTES.warm?[0xffb05a,0xff8037,0xf6d9a7,0xd9a963][i%4]:[0xf2f0df,0xcbdac4,0xe3e9dc,0xb6cbb4][i%4]});}
   }
   const sprigGeo=new THREE.PlaneGeometry(1,1,3,3),sprigPosition=sprigGeo.attributes.position;
   for(let i=0;i<sprigPosition.count;i++)sprigPosition.setZ(i,Math.sin(sprigPosition.getX(i)*Math.PI)*.1);sprigGeo.computeVertexNormals();
   const sprigMaterial=new THREE.MeshLambertMaterial({map:leafTexture,color:theme.leaf,emissive:theme.leaf,emissiveMap:leafTexture,emissiveIntensity:theme===PALETTES.warm?.12:.055,alphaTest:.45,side:THREE.DoubleSide});
+  sprigMaterial.customProgramCacheKey=()=>theme.winter?'snow-leaves':'forest-leaves';
   const sprigMesh=add(sprigGeo,sprigMaterial,sprigs,t=>C(t.c),true);
   sprigMesh.customDepthMaterial=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:leafTexture,alphaTest:.45,side:THREE.DoubleSide});
   yield;
   // The leaf edges and their shadows follow the same slow breeze without CPU instance updates.
   for(const material of [sprigMaterial,sprigMesh.customDepthMaterial])material.onBeforeCompile=shader=>{
+    if(theme.winter&&material===sprigMaterial)shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>','#include <map_fragment>\ndiffuseColor.rgb=mix(diffuseColor.rgb,vec3(.78,.85,.91),mix(.45,.88,smoothstep(.15,.85,vMapUv.y)));');
     shader.uniforms.breezeTime=breezeTime;shader.vertexShader='uniform float breezeTime;\n'+shader.vertexShader;
     shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed.z += sin(breezeTime*.7 + instanceMatrix[3].x*.7 + instanceMatrix[3].z*.4)*.035*(position.y+.5);');
   };
@@ -237,7 +243,7 @@ function* scenerySteps(scene, R, leafTexture, theme=PALETTES.basic) {
     }
   }
   const fernSpots=[];
-  for(let i=0;i<72;i++) {const a=R()*6.28,r=2.5+R()*9,x=Math.cos(a)*r,z=Math.sin(a)*r;
+  for(let i=0;i<(theme.winter?0:72);i++) {const a=R()*6.28,r=2.5+R()*9,x=Math.cos(a)*r,z=Math.sin(a)*r;
     if(!dryGround(x,z) || pathDist(x,z)<.8 || Math.hypot(x,z+.9)<2)continue;
     fernSpots.push({p:V(x,surfaceY(x,z),z),r:[0,R()*6.28,0],s:.55+R()*.6});
   }
@@ -250,7 +256,7 @@ function* scenerySteps(scene, R, leafTexture, theme=PALETTES.basic) {
     for(const side of[-1,1])parts.push([new THREE.SphereGeometry(.035,6,3),mat({p:V(side*.027,.09,0),r:[0,0,side*.6],s:[1.35,.25,.6]}),0x729547]);
     parts.push([new THREE.SphereGeometry(.02, 6, 4), mat({p: V(0, .208, 0)}), 0xf3b63f]); return merge(parts); };
   const flowerMat = lambert();
-  (theme===PALETTES.warm?[0xe0a247,0xffedb2,0xc78065]:theme===PALETTES.pop?[0xed8fad,0xffeed9,0xa896cb]:theme===PALETTES.journey?[0xf7edcc,0xa4c9e5,0xe8bccd]:theme.character?[0xb8b6e6,0xe4ebf2,0x92afcb]:[0xf1b8bf,0xfff4e4,0xc3b3df]).forEach((tint, f) => {
+  (theme.flowers??(theme===PALETTES.warm?[0xe0a247,0xffedb2,0xc78065]:theme===PALETTES.pop?[0xed8fad,0xffeed9,0xa896cb]:theme===PALETTES.journey?[0xf7edcc,0xa4c9e5,0xe8bccd]:theme.character?[0xb8b6e6,0xe4ebf2,0x92afcb]:[0xf1b8bf,0xfff4e4,0xc3b3df])).forEach((tint, f) => {
     const list = [];
     for (let k = 0; k < 110; k++) { let x, z;
       if (k < 58) { const p = PATH.getPointAt(R() * .97), side = R() < .5 ? -1 : 1; x = p.x + side * (.55 + R() * .9); z = p.z + (R() - .5) * .6; }
@@ -261,14 +267,14 @@ function* scenerySteps(scene, R, leafTexture, theme=PALETTES.basic) {
     // Loose flower drifts give the middle distance a garden scale without filling the path.
     for(let k=0;k<45;k++){const side=k%2?1:-1,cx=side*(4.3+f*.7),cz=-3.7+f*2.1,a=k*2.4,r=.2+R()*.85,x=cx+Math.cos(a)*r,z=cz+Math.sin(a)*r;
       if(dryGround(x,z))list.push({p:V(x,surfaceY(x,z),z),r:[0,R()*6.28,0],s:.65+R()*.55});}
-    add(flower(tint), flowerMat, list);
+    add(flower(tint), flowerMat, list.filter(t=>!companionSpace(t.p.x,t.p.z)));
   });
   yield;
   // Bell-shaped woodland flowers add a second silhouette at the edge of the clearing.
-  const bells=[];for(let k=0;k<36;k++){const p=PATH.getPointAt(.15+R()*.7),side=k%2?1:-1,x=p.x+side*(1+R()*.6),z=p.z;if(Math.hypot(x,z)<2.2)continue;bells.push({p:V(x,surfaceY(x,z),z),r:[0,R()*6.28,0],s:.8+R()*.6});}
+  const bells=[];for(let k=0;k<(theme.winter?0:36);k++){const p=PATH.getPointAt(.15+R()*.7),side=k%2?1:-1,x=p.x+side*(1+R()*.6),z=p.z;if(Math.hypot(x,z)<2.2)continue;bells.push({p:V(x,surfaceY(x,z),z),r:[0,R()*6.28,0],s:.8+R()*.6});}
   const bellParts=[[new THREE.CylinderGeometry(.009,.012,.42,6),mat({p:V(0,.21,0)}),0x628144]];
   for(let j=0;j<3;j++){const y=.23+j*.08,x=j%2?.07:-.07;bellParts.push(rod(V(0,y,0),V(x,y+.025,0),.006,5));bellParts.push([new THREE.CylinderGeometry(.018,.04,.07,10,1,true),mat({p:V(x,y,0),r:[0,0,x*3]}),j%2?0xc5b4e7:0xa0aed5]);}
-  add(merge(bellParts),lambert({side:THREE.DoubleSide}),bells);
+  add(merge(bellParts),lambert({side:THREE.DoubleSide}),bells.filter(t=>!companionSpace(t.p.x,t.p.z)));
   const bladeParts=[];
   for(let k=0;k<4;k++){
     const pos=[],indices=[],h=.20+k*.025;
@@ -276,21 +282,21 @@ function* scenerySteps(scene, R, leafTexture, theme=PALETTES.basic) {
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(indices);g.computeVertexNormals();
     bladeParts.push([g,mat({r:[(k-2)*.12,k*1.3,0]}),0xffffff,y=>.68+y*.85]);
   }
-  const meadowTints=theme.character?[0x788d89,0x93a099,0x607b78]:theme===PALETTES.warm?[0xa49c63,0xbdb17b,0x8b8d52]:[0x879954,0xa4ad69,0x667d48];
+  const meadowTints=theme.meadow??(theme.character?[0x788d89,0x93a099,0x607b78]:theme===PALETTES.warm?[0xa49c63,0xbdb17b,0x8b8d52]:[0x879954,0xa4ad69,0x667d48]);
   const tufts = [];
-  for (let k = 0; k < 2100; k++) { const a = R() * Math.PI * 2, r = 2.2 + R() * 10.5, x = Math.cos(a) * r, z = Math.sin(a) * r - .6;
+  for (let k = 0; k < (theme.winter?220:2100); k++) { const a = R() * Math.PI * 2, r = 2.2 + R() * 10.5, x = Math.cos(a) * r, z = Math.sin(a) * r - .6;
     if (!dryGround(x,z) || pathDist(x, z) < .75 || Math.hypot(x, z + .9) < 2.25 || Math.hypot(x - GIRL_X, z - .4) < 1.4) continue;
     tufts.push({p: V(x, surfaceY(x, z), z), r: [0, R() * 6, 0], s: .4 + R() * .7, c: meadowTints[k % 3]}); }
   const grassTime=breezeTime,grassMaterial=lambert({side:THREE.DoubleSide});
   grassMaterial.onBeforeCompile=shader=>{shader.uniforms.grassTime=grassTime;shader.vertexShader='uniform float grassTime;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed.x += sin(grassTime*1.4 + instanceMatrix[3].x*.8 + instanceMatrix[3].z*.4)*.045*pow(clamp(position.y/.4,0.,1.),2.);');};
-  add(merge(bladeParts),grassMaterial,tufts,t=>C(t.c));
+  add(merge(bladeParts),grassMaterial,tufts.filter(t=>!companionSpace(t.p.x,t.p.z)),t=>C(t.c));
 
   yield;
   // Quiet, close-up details sit beside the path, leaving the playable clearing open.
   const detailRandom=rng(431902), mushroomBeds=[[-2.3,2.5],[2.8,2.8],[-2.2,5.5],[3.2,6.4],[-3.1,-1.8],[2.7,-2.2]];
   const caps=new THREE.LatheGeometry([[0,.18],[.05,.18],[.12,.19],[.125,.205],[.1,.255],[.045,.285],[0,.29]].map(([x,y])=>new THREE.Vector2(x,y)),12);
   const stem=new THREE.CylinderGeometry(.022,.033,.19,8).translate(0,.095,0);
-  [0xb9774e,0xe7d5a8].forEach(color=>{
+  (theme.winter?[]:[0xb9774e,0xe7d5a8]).forEach(color=>{
     const parts=[[stem,null,0xf2e7ce],[caps,null,color,(y,ny)=>ny<-.2?.8:1]];
     for(let j=0;j<4;j++){const a=j*Math.PI/2+.4;parts.push([new THREE.SphereGeometry(.018,6,3),mat({p:V(Math.cos(a)*.068,.269,Math.sin(a)*.068),s:[1,.18,.7]}),0xf5e8cd]);}
     const clusters=[];
@@ -302,7 +308,7 @@ function* scenerySteps(scene, R, leafTexture, theme=PALETTES.basic) {
   });
   caps.dispose();stem.dispose();
   const litter=[];
-  for(let i=0;i<100;i++){
+  for(let i=0;i<(theme.winter?0:100);i++){
     const a=detailRandom()*Math.PI*2,r=2.3+detailRandom()*5,x=Math.cos(a)*r,z=Math.sin(a)*r;
     if(!dryGround(x,z)||pathDist(x,z)<.6)continue;
     litter.push({p:V(x,surfaceY(x,z)+.025,z),r:[-Math.PI/2,0,detailRandom()*6.28],s:[.14+detailRandom()*.1,.18+detailRandom()*.12,.2],c:[0xbfa05a,0xd1b66d,0x9e794b][i%3]});
@@ -329,10 +335,18 @@ function* scenerySteps(scene, R, leafTexture, theme=PALETTES.basic) {
   for (let i = 0; i < N; i++) { const b = [(R() - .5) * 11, .3 + R() * 4.5, (R() - .5) * 11 - .5, R() * 6.3]; base.push(b); mp.set(b.slice(0, 3), i * 3); }
   const mg = new THREE.BufferGeometry(); mg.setAttribute('position', new THREE.BufferAttribute(mp, 3));
   const motes = new THREE.Points(mg, new THREE.PointsMaterial({map: glow, color: theme.character?0xd2def4:0xffe3a0, size: .065, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: .6}));
+  const moteTime={value:0},moteActive={value:0};
+  mg.setAttribute('motePhase',new THREE.Float32BufferAttribute(base.map(b=>b[3]),1));
+  motes.material.onBeforeCompile=shader=>{
+    shader.uniforms.moteTime=moteTime;shader.uniforms.moteActive=moteActive;
+    shader.vertexShader='uniform float moteTime; uniform float moteActive; attribute float motePhase;\n'+shader.vertexShader;
+    shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed+=moteActive*vec3(sin(moteTime*.21+motePhase)*.5,sin(moteTime*.33+motePhase*2.)*.35,cos(moteTime*.17+motePhase)*.5);');
+  };
+  mg.computeBoundingSphere();mg.boundingSphere.radius+=.8;
   motes.renderOrder = 3; scene.add(motes);
   const colliders = [...rocks.map(([x,z,s])=>({x,z,radius:s*1.2,height:s*1.2})), ...trunks.map(t=>({x:t.p.x,z:t.p.z,radius:t.s[0]*.45,height:20}))];
   freezeTransforms(scene);
-  return {sky,shaftMat, motes, moteBase: base, glow, grassTime, colliders};
+  return {sky,shaftMat, motes, moteTime, moteActive, glow, grassTime, colliders};
 }
 
 // ---------- grand piano and bench ----------
@@ -397,7 +411,7 @@ function buildPiano(scene) {
   caseMesh.castShadow = caseMesh.receiveShadow = goldMesh.castShadow = true; g.add(caseMesh, goldMesh);
   // The score has its own matte paper material; it must not share the polished wood finish.
   const paper=document.createElement('canvas');paper.width=256;paper.height=320;const ink=paper.getContext('2d');
-  ink.fillStyle='#fff8e7';ink.fillRect(0,0,256,320);ink.strokeStyle='#736f63';ink.lineWidth=1.4;
+  ink.fillStyle='#fffdf3';ink.fillRect(0,0,256,320);ink.strokeStyle='#565c50';ink.lineWidth=1.4;
   for(let row=0;row<3;row++){for(let line=0;line<5;line++){ink.beginPath();ink.moveTo(24,58+row*86+line*9);ink.lineTo(232,58+row*86+line*9);ink.stroke();}for(let note=0;note<5;note++){const x=43+note*36,y=78+row*86+((note+row)%4-2)*4.5;ink.fillStyle='#55564f';ink.beginPath();ink.ellipse(x,y,6,4,-.3,0,Math.PI*2);ink.fill();ink.beginPath();ink.moveTo(x+5,y);ink.lineTo(x+5,y-23);ink.stroke();}}
   const scoreMap=new THREE.CanvasTexture(paper);scoreMap.colorSpace=THREE.SRGBColorSpace;scoreMap.anisotropy=4;
   const paperMat=new THREE.MeshStandardMaterial({map:scoreMap,roughness:1});
@@ -412,34 +426,42 @@ function buildPiano(scene) {
   blacks.forEach((i,k)=>black.setMatrixAt(k,mat({p:V((i-25.5+.5)*KEY_W,.744,.065)})));
   white.castShadow=black.castShadow=white.receiveShadow=black.receiveShadow=true;g.add(white,black);
   const base = C(0xfffbf0), hot = C(0xffcf6e), tmpC = new THREE.Color(), press = new Float32Array(WHITE_KEYS);
+  const drawnPress=new Float32Array(52).fill(NaN),keyPose=new THREE.Object3D();
   function drawKeys() {
+    let changed=false;
     for (let i = 0; i < 52; i++) {
       const down=press[i-16]||0;
-      white.setMatrixAt(i,mat({p:V((i-25.5)*KEY_W,.72-down*.007,.1),r:[down*.06,0,0]}));
+      if(drawnPress[i]===down)continue;drawnPress[i]=down;changed=true;
+      keyPose.position.set((i-25.5)*KEY_W,.72-down*.007,.1);keyPose.rotation.set(down*.06,0,0);keyPose.updateMatrix();white.setMatrixAt(i,keyPose.matrix);
       white.setColorAt(i,tmpC.copy(base).lerp(hot,down*.85));
     }
-    white.instanceMatrix.needsUpdate = true; white.instanceColor.needsUpdate = true;
+    if(changed){white.instanceMatrix.needsUpdate = true; white.instanceColor.needsUpdate = true;}
   }
   drawKeys();
   return {group: g, press, drawKeys, woodMap, keyWorld: i => V(keyX(i), .73, .14 + g.position.z)};
 }
 
 // ---------- complete storybook illustration for the opening and the piano ----------
-function buildGirl(scene, atlas, seatedGirl, seatedBoy, posesGirl, posesBoy) { return createStorybookChild(scene,atlas,seatedGirl,seatedBoy,posesGirl,posesBoy); }
+function buildGirl(scene, atlas, seatedGirl, seatedBoy, posesGirl, posesBoy, puppetGirl, puppetBoy) { return createStorybookChild(scene,atlas,seatedGirl,seatedBoy,posesGirl,posesBoy,puppetGirl,puppetBoy); }
 
 // ---------- stage ----------
 const prepareYield=()=>new Promise(resolve=>setTimeout(resolve,0));
-export async function createForest(host, {onEvent = () => {}} = {}) {
+export async function createForest(host, {onEvent = () => {}, audioTime = () => 0} = {}) {
   const gardenReady=loadGarden();
-  const loader=new THREE.TextureLoader();
-  const art=await loadForestArt(loader,['./assets/forest/children-storybook-v3.webp','./assets/forest/leaf-cluster-v3.webp','./assets/forest/girl-storybook-v2.webp','./assets/forest/boy-seated-v4.webp','./assets/forest/girl-playing-poses-v1.webp','./assets/forest/boy-playing-poses-v1.webp']);
-  const [girlAtlas,leafTexture,seatedGirl,seatedBoy,posesGirl,posesBoy]=art;
+  const christmasTreeReady=loadChristmasTree();
+  const christmasLanternReady=loadChristmasLantern();
+  const christmasArchReady=loadChristmasArch();
+  const distantTreeReady=loadDistantChristmasTree();
+  const loader=new THREE.TextureLoader(),friendArtReady=loadFriendArt(loader);
+  const art=await loadForestArt(loader,['./assets/forest/children-storybook-v3.webp','./assets/forest/leaf-cluster-v3.webp','./assets/forest/girl-storybook-v2.webp','./assets/forest/boy-seated-v4.webp','./assets/forest/girl-playing-poses-v1.webp','./assets/forest/boy-playing-poses-v1.webp','./assets/forest/girl-puppet-v1.png','./assets/forest/boy-puppet-v1.png']);
+  const [girlAtlas,leafTexture,seatedGirl,seatedBoy,posesGirl,posesBoy,puppetGirl,puppetBoy]=art;
   for(const t of art){t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;}
   const canvas = document.createElement('canvas'); canvas.className = 'forest-canvas'; canvas.setAttribute('aria-hidden', 'true');
   let renderer;
   try { renderer = new THREE.WebGLRenderer({canvas, antialias: true, powerPreference: 'high-performance'}); }
   catch (e) { art.forEach(t=>t.dispose());throw new Error('WebGL unavailable', {cause: e}); }
   host.append(canvas);
+  const textureDetail=Math.min(8,renderer.capabilities.getMaxAnisotropy());for(const texture of art)texture.anisotropy=textureDetail;
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const scene = new THREE.Scene(), R = rng(20261021);
@@ -455,17 +477,21 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
   pianoRim.position.set(2.5,3.8,-1.5);pianoRim.target.position.set(0,.7,-.6);scene.add(pianoRim,pianoRim.target);
   let mapId='basic',theme=PALETTES.basic,scenery=new THREE.Group();scene.add(scenery);
   const garden=await gardenReady;
+  const christmasTree=await christmasTreeReady;
+  const christmasLantern=await christmasLanternReady;
+  const christmasArch=await christmasArchReady;
+  const distantTree=await distantTreeReady;
   await prepareYield();
-  const piano=buildPiano(scene);
+  const piano=buildPiano(scene);piano.woodMap.anisotropy=textureDetail;
   await prepareYield();
   let world=await prepareScenery(scenery,R,leafTexture,theme);
   await prepareYield();
-  let landmarks=buildLandmarks(scenery,mapId,groundY,leafTexture,piano.woodMap,world.glow);
+  let landmarks=buildLandmarks(scenery,mapId,groundY,leafTexture,piano.woodMap,world.glow,christmasTree,christmasLantern,christmasArch,distantTree);
   world.colliders.push(...landmarks.colliders);
   await prepareYield();
   world.colliders.push(...garden.build(scenery,groundY));
   await prepareYield();
-  const girl=buildGirl(scene,girlAtlas,seatedGirl,seatedBoy,posesGirl,posesBoy);
+  const girl=buildGirl(scene,girlAtlas,seatedGirl,seatedBoy,posesGirl,posesBoy,puppetGirl,puppetBoy);
   girl.setEnvironment(theme.character || 0xf9f5ea);
   for(const t of girl.textures){renderer.initTexture(t);await prepareYield();}
   // Soft contact shadows under piano, bench and girl, on top of the real sun shadow.
@@ -473,15 +499,22 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
   const blobGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
   const blobs = [[0, -.85, 1.9, 2.6], [GIRL_X, SEAT_Z, .9, .55]].map(([x, z, w, d]) => { const b = new THREE.Mesh(blobGeo, shadowMat); b.position.set(x, .015, z); b.scale.set(w, 1, d); scene.add(b); return b; });
   const girlBlob = new THREE.Mesh(blobGeo, shadowMat); girlBlob.scale.set(.6, 1, .6); scene.add(girlBlob);
+  const friendArt=await friendArtReady;
+  const friends=createForestFriends(scene,friendArt,groundY,shadowMat,blobGeo);
+  for(const texture of friendArt.filter(Boolean)){texture.anisotropy=textureDetail;renderer.initTexture(texture);await prepareYield();}
+  if(friendArt.some(texture=>!texture))onEvent('friends-unavailable');
   // Image-based light from the scene's own sky, so ivory lacquer and gold read as real materials.
   let env;
+  const environmentCache=new Map(),pmrem=new THREE.PMREMGenerator(renderer);
   function refreshEnvironment(){
-    const pmrem=new THREE.PMREMGenerator(renderer),envScene=new THREE.Scene();
+    if(environmentCache.has(mapId)){env=environmentCache.get(mapId);environmentCache.delete(mapId);environmentCache.set(mapId,env);scene.environment=env.texture;return;}
+    const envScene=new THREE.Scene();
     envScene.add(world.sky.clone());
     const ground=new THREE.Mesh(new THREE.CircleGeometry(60,24).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:theme.ground}));
     ground.position.y=-1;envScene.add(ground);
-    const next=pmrem.fromScene(envScene,.04);scene.environment=next.texture;env?.dispose();env=next;
-    pmrem.dispose();ground.geometry.dispose();ground.material.dispose();
+    const next=pmrem.fromScene(envScene,.04);scene.environment=next.texture;env=next;environmentCache.set(mapId,next);
+    if(environmentCache.size>3){const oldest=environmentCache.keys().next().value;environmentCache.get(oldest).dispose();environmentCache.delete(oldest);}
+    ground.geometry.dispose();ground.material.dispose();
   }
   await prepareYield();
   refreshEnvironment();
@@ -495,25 +528,25 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     id=forestMapId(id);if(id===mapId)return;
     const nextTheme=PALETTES[id],next=new THREE.Group();
     let nextWorld,nextLandmarks;
-    try{nextWorld=buildScenery(next,rng(20261021),leafTexture,nextTheme);nextLandmarks=buildLandmarks(next,id,groundY,leafTexture,piano.woodMap,nextWorld.glow);nextWorld.colliders.push(...garden.build(next,groundY,id));}
+    try{nextWorld=buildScenery(next,rng(20261021),leafTexture,nextTheme);nextLandmarks=buildLandmarks(next,id,groundY,leafTexture,piano.woodMap,nextWorld.glow,christmasTree,christmasLantern,christmasArch,distantTree);nextWorld.colliders.push(...garden.build(next,groundY,id));}
     catch(error){releaseScenery(next);throw error;}
     scene.remove(scenery);releaseScenery(scenery);scenery=next;scene.add(scenery);
     mapId=id;theme=nextTheme;world=nextWorld;landmarks=nextLandmarks;world.colliders.push(...landmarks.colliders);
     scene.fog.color.set(theme.fog);scene.fog.near=id==='journey'?35:18;scene.fog.far=id==='journey'?100:60;scene.background.set(theme.horizon);
     ambient.intensity=theme.ambient*.94;sun.color.set(theme.sun);sun.intensity=theme.power;sun.position.set(...theme.light);
     ambient.color.set(theme.character ? 0xc7d6f5 : 0xe7eef0);
-    ambient.groundColor.set(theme.character ? 0x394d65 : 0x69735e);
+    ambient.groundColor.set(theme.winter?0x899bb4:theme.character ? 0x394d65 : 0x69735e);
     fill.color.set(theme.character ? 0xd7e1ff : 0xd7e6ed);
-    pianoRim.intensity=theme.character?16:0;
-    girl.setEnvironment(theme.character || 0xf9f5ea);
+    pianoRim.intensity=theme.winter?10:theme.character?16:0;
+    girl.setEnvironment(theme.character || 0xf9f5ea);friends.setEnvironment(theme.character || 0xf9f5ea);
     renderer.toneMappingExposure=theme.exposure;world.shaftMat.uniforms.opacity.value=theme.shafts;world.shaftMat.uniforms.color.value.set(theme.sun);
-    input={x:0,z:0};state.moving=false;route=[];routeIndex=0;state.hands.forEach(h=>h.hit=0);
+    input={x:0,z:0};state.moving=false;route=[];routeIndex=0;state.hands.forEach(h=>{h.hit=0;h.end=0;});
     if(forestCamera(state.phase)!=='seated'){placeOnPath(WALK_FROM);view={...FIRST_VIEW};state.openingT=motion.matches?1:0;shotFor(state.phase==='opening'?'opening':'arrive');camPos.copy(goalPos);camLook.copy(goalLook);}
-    piano.press.fill(0);piano.drawKeys();refreshEnvironment();
+    piano.press.fill(0);piano.drawKeys();refreshEnvironment();applyQuality();
   }
 
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
-  const state = {phase: null, visible: false, cinema: false, openingT: 0, walkT: 0, sitT: 0, seated: 0, time: 0, cineT: 0, lift: 0, hands: [{x: 0, hit: 0, key: -1}, {x: 0, hit: 0, key: -1}], dead: false};
+  const state = {pianoUntil:0,phase: null, visible: false, cinema: false, openingT: 0, walkT: 0, sitT: 0, seated: 0, time: 0, cineT: 0, lift: 0, hands: [{x: 0, hit: 0, key: -1}, {x: 0, hit: 0, key: -1}], dead: false};
   Object.assign(state, {moving:false, heading:Math.PI, walkDistance:0});
   // `view` is the first-person look while exploring; `orbit` is the optional free view around the seated child.
   let input = {x:0,z:0}, view = {...FIRST_VIEW}, orbit = {...SEATED_ORBIT}, orbitChanged = false, route = [], routeIndex = 0;
@@ -526,10 +559,17 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     notebookBand=header&&book?{top:header.getBoundingClientRect().bottom+scrollY+12,bottom:book.getBoundingClientRect().top+scrollY-54}:null;
   }
 
-  let lastWidth=0,lastHeight=0,lastRatio=0;
+  let lastWidth=0,lastHeight=0,lastRatio=0,qualityMode='auto';
+  function applyQuality(){
+    const q=forestQuality(qualityMode,{touch:navigator.maxTouchPoints>0&&matchMedia('(pointer: coarse)').matches,width:host.clientWidth||innerWidth,height:host.clientHeight||innerHeight,dpr:devicePixelRatio||1});
+    if(sun.shadow.mapSize.x!==q.shadow){sun.shadow.map?.dispose();sun.shadow.map=null;sun.shadow.mapSize.set(q.shadow,q.shadow);sun.shadow.needsUpdate=true;}
+    scenery.traverse(o=>{if(o.name==='winter-snow'||o.name==='winter-snow-near'||o.name==='soft-rain'){const count=o.geometry.attributes.position.count;const step=o.isLineSegments?2:1;o.geometry.setDrawRange(0,Math.floor(count*q.particles/step)*step);}});
+    world.motes.geometry.setDrawRange(0,Math.floor(world.motes.geometry.attributes.position.count*q.particles));
+    return q;
+  }
   function resize() {
     const w = host.clientWidth || innerWidth, h = host.clientHeight || innerHeight;
-    const ratio=Math.min(devicePixelRatio || 1,1.5);
+    const ratio=applyQuality().ratio;
     if(w!==lastWidth||h!==lastHeight||ratio!==lastRatio){
       lastWidth=w;lastHeight=h;lastRatio=ratio;renderer.setPixelRatio(ratio);
       renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w/h<.8?52:40;camera.updateProjectionMatrix();
@@ -554,6 +594,7 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
       const eye = forestEye(g, g.y, view);
       goalPos.set(eye.position.x, eye.position.y, eye.position.z); goalLook.set(eye.target.x, eye.target.y, eye.target.z); return Infinity;
     }
+    if(friends.count&&!orbitChanged){const narrow=host.clientWidth<600,wide=friends.count>=3;goalPos.set(wide?4.8:4.2,3.1,SEAT_Z+(friends.count===4?(narrow?13.5:9.8):narrow?(wide?12:10.5):(wide?9.8:8.4)));goalLook.set(friends.count===4?0:wide?.45:.1,.9,-.1);return 2.4;}
     if (state.cinema && !orbitChanged) {const t=motion.matches?0:1-Math.exp(-state.cineT/18),a=motion.matches?0:Math.sin(state.cineT*.09)*.18*t;goalPos.set(5.3-2.5*t+a,3.7-1.1*t,SEAT_Z+7.5-4.1*t-a);goalLook.set(.3,1.55,-2.0);return 2.4;}
     if (!orbitChanged) {goalPos.set(3.4,2.3,5.3);goalLook.set(-.25,1,-1.1);return 2.4;}
     goalLook.set(g.x,g.y+.8,g.z-.5);
@@ -572,8 +613,9 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
   }
 
   function pose(dt) {
-    state.hands.forEach(h=>h.hit=Math.max(0,h.hit-dt*6));
-    girl.animate({dt,seated:state.seated>.6,moving:state.moving,heading:state.heading,camera,hands:state.hands,playing:state.cinema,piano,reduced:motion.matches,groundY});
+    state.hands.forEach(h=>{const t=audioTime(),age=t-(h.start??0);if(h.end&&age>=0&&h.nextKey!==undefined)h.key=h.nextKey;h.hit=pianoPressure(h,t,dt);});
+    girl.animate({dt,seated:state.seated>.6,moving:state.moving,heading:state.heading,camera,hands:state.hands,playing:audioTime()<state.pianoUntil,piano,reduced:motion.matches,groundY});
+    friends.animate(camera,audioTime(),state.phase==='compose',motion.matches,dt);
     girlBlob.position.set(girl.root.position.x,girl.root.position.y+.02,girl.root.position.z);
     // The standing child dissolves before the opening camera becomes the walking player.
     const shown = forestCharacter(state.phase, state.sitT, state.openingT);
@@ -637,11 +679,7 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     sun.intensity = theme.power * (1 + entrance * .38);
     renderer.toneMappingExposure = theme.exposure * (1 + entrance * .09);
     world.grassTime.value=rm?0:state.time;
-    if (!rm) {
-      const p = world.motes.geometry.attributes.position;
-      world.moteBase.forEach((b, i) => p.setXYZ(i, b[0] + Math.sin(state.time * .21 + b[3]) * .5, b[1] + Math.sin(state.time * .33 + b[3] * 2) * .35, b[2] + Math.cos(state.time * .17 + b[3]) * .5));
-      p.needsUpdate = true;
-    }
+    if(!rm){world.moteTime.value=state.time;world.moteActive.value=1;}
     return busy;
   }
   function tick(now) {
@@ -650,7 +688,7 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     const dt = Math.min(.05, last ? (now - last) / 1000 : .016); last = now; frame++;
     const busy = update(dt);
     // A calm composing view renders at half rate to spare tablet batteries.
-    if (state.phase === 'compose' && !state.cinema && !busy && state.hands.every(h => h.hit <= 0) && frame % 2) return;
+    if (state.phase === 'compose' && !state.cinema && !busy && state.hands.every(h => h.hit <= 0) && !friends.isMoving(audioTime()) && frame % 2) return;
     renderer.render(scene, camera);
   }
   function start() { if (!raf && !state.dead) { last = 0; resize(); raf = requestAnimationFrame(tick); } }
@@ -662,10 +700,10 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
   const observer = new ResizeObserver(onResize); observer.observe(host);
   canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); state.dead = true; halt(); onEvent('fail'); });
 
-  function strikeKey(index, handIndex, strength) {
+  function strikeKey(index, handIndex, strength, start=audioTime(), duration=.25) {
     if (index === null) return;
     piano.press[index] = Math.max(piano.press[index], strength); state.keysDirty = true;
-    const hand = state.hands[handIndex]; hand.key = index; hand.hit = 1;
+    const hand = state.hands[handIndex]; hand.nextKey = index; hand.hit = 0;hand.start=start;hand.end=start+duration;
   }
   resize();scene.updateMatrixWorld(true);
   if(renderer.compileAsync)await renderer.compileAsync(scene,camera);
@@ -680,8 +718,10 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
     resetControls() {input={x:0,z:0};state.moving=false;},
     // Mirrors the app: phase, visibility and the cinematic flag come from app state, never the other way round.
     setCharacter(value) {girl.setCharacter(value);},
-    sync({phase, visible, cinema,avatar,map}) {
+    sync({phase, visible, cinema,avatar,map,parts=[],quality=qualityMode}) {
       if (state.dead) return;
+      if(quality!==qualityMode){qualityMode=quality;resize();}
+      friends.sync(parts);
       if(map)setMap(map);
       if(avatar&&avatar!==state.avatar){girl.setCharacter(avatar);state.avatar=avatar;}
       if (phase !== state.phase) {
@@ -699,13 +739,24 @@ export async function createForest(host, {onEvent = () => {}} = {}) {
       if(phase==='compose'&&!cinema)measureNotebook();
       if (visible !== state.visible) { state.visible = visible; host.hidden = !visible; if (visible) start(); else {input={x:0,z:0};state.moving=false;halt();} }
     },
+    silence(){friends.stop();girl.resetPerformance();state.hands.forEach(h=>{h.hit=0;h.end=0;});state.pianoUntil=0;},
+    note(instrument,pitch,start,duration){
+      if(instrument==='flute'||instrument==='guitar'||instrument==='shaker'||instrument==='cello'){friends.note(instrument,pitch,start,instrument==='shaker'?Math.min(.18,duration):duration);return;}
+      if(pitch===null)return;state.pianoUntil=Math.max(state.pianoUntil,start+duration);
+      const i=pianoKey(pitch);if(i!==null)strikeKey(i,1,1,start,duration);
+    },
     // Melody and actual backing events use independent hands, including low melody notes.
     strike(midi) { const i = pianoKey(midi); if (i !== null) strikeKey(i, 1, 1); },
-    beat(root) { const i = pianoKey(backingKey(root)); if (i !== null) strikeKey(i, 0, .7); },
+    beat(root,start=audioTime(),duration=.25) { state.pianoUntil=Math.max(state.pianoUntil,start+duration);const i = pianoKey(backingKey(root)); if (i !== null) strikeKey(i, 0, .7,start,duration); },
     dispose() {
+      if(christmasTree)releaseScenery(christmasTree);
+      if(christmasLantern)releaseScenery(christmasLantern);
+      if(christmasArch)releaseScenery(christmasArch);
+      if(distantTree)releaseScenery(distantTree);
       halt(); scene.remove(scenery);releaseScenery(scenery);garden.dispose(); state.dead = true; removeEventListener('resize', onResize); observer.disconnect();document.removeEventListener('visibilitychange',onVisibility);
-      scene.traverse(o => { o.geometry?.dispose(); o.customDepthMaterial?.dispose(); [].concat(o.material || []).forEach(m => { m.map?.dispose(); m.dispose(); }); });
-      girl.textures.forEach(t=>t.dispose());art.forEach(t=>t.dispose());env.dispose(); world.glow.dispose(); renderer.dispose(); canvas.remove(); host.hidden = true;
+      scene.traverse(o => { o.shadow?.dispose(); o.skeleton?.dispose(); o.geometry?.dispose(); o.customDepthMaterial?.dispose(); [].concat(o.material || []).forEach(m => { m.map?.dispose(); m.dispose(); }); });
+      girl.textures.forEach(t=>t.dispose());art.forEach(t=>t.dispose());friendArt.forEach(t=>t?.dispose());for(const target of environmentCache.values())target.dispose();environmentCache.clear();pmrem.dispose(); world.glow.dispose(); renderer.dispose(); canvas.remove(); host.hidden = true;
     }
   };
 }
+

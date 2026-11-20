@@ -43,6 +43,7 @@ export function createForestAmbience({AudioClass=globalThis.Audio,chime=false,on
     get playing(){return !!bgm?.playing;},
     sync(next={}){
       if(dead)return;
+      if(next.map!==undefined&&next.map!==state.map){tracks.forEach(halt);chimed=false;}
       state={...state,...next};state.volume=Number.isFinite(state.volume)?Math.max(0,Math.min(1,state.volume)):0;
       reconcile();
     },

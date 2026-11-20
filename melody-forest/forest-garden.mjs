@@ -1,13 +1,13 @@
 import * as THREE from './lib/three.module.min.js';
 import {GLTFLoader} from './lib/GLTFLoader.js';
-import {barkTex,foliageDetailTex,surfaceData} from './garden-textures.mjs?v=20261110-polish5';
+import {barkTex,foliageDetailTex,surfaceData} from './garden-textures.mjs?v=20261120-release21';
 
 // Local, self-made forest-studio models. Keep the piano terrace and approach open.
 export const GARDEN_PLANTS = {
   cherry: [[-4.8,-5.5,1.12,.3]],
   hydrangea: [[-2.7,-1.8,.90,0],[-3.3,-.5,.72,.8],[-3.8,1.1,.82,1.7],
     [2.6,-2.3,.82,.4],[3.5,-1.1,.92,2.1],[4.4,1.4,.80,1.2]],
-  cosmos: [[-2.4,1.8,.72,.4],[-3.2,3.3,.85,1.1],[-4.4,-.1,.80,2.1],
+  cosmos: [[-3.3,1.1,.72,.4],[-3.2,3.3,.85,1.1],[-4.4,-.1,.80,2.1],
     [3.5,2.2,.76,2.6],[4.8,.3,.82,.8],[1.8,-3.8,.70,1.5]]
 };
 
@@ -17,7 +17,7 @@ export const MAP_GARDENS = {
   warm:{maple:[[-3.6,-7.5,1.05,.7]],cosmos:[[-2.8,-2.8,.85,0],[-3.6,-.8,.9,1],[-3.5,2.3,.85,2],[3.4,-3.7,.8,.4],[3.8,-1.7,.9,2],[4.1,1.4,.75,1]],liriope:[[-3,-1,.9,0],[-4.1,3.4,1,1],[3,-2.9,.8,2],[4.3,2.8,.9,.5]]},
   dream:{hydrangea:[[-3.1,-3.3,.95,0],[-3.8,-1.2,.85,.8],[-3.5,1.4,.8,2],[3.2,-3.1,.9,.4],[4.1,-.6,.85,1.4]],cosmos:[[-2.7,2.8,.65,0],[4.5,2,.65,2]],liriope:[[-2.8,-1,.85,1],[-4.5,3.2,.9,2],[3.1,-1.7,.8,0],[4.8,3.4,.9,1]]},
   journey:{hydrangea:[[-4.7,-1.5,.75,0],[-3.4,.2,.8,1],[-4.1,2.3,.7,2],[4.5,-1.5,.7,.4],[4.8,1.2,.8,1]],cosmos:[[-2.7,1.5,.65,.4],[-3.6,3.5,.75,1],[3.5,-2,.65,2],[4.7,3.6,.7,.7]],liriope:[[-4.9,4.4,.85,0],[4.8,5.4,.85,1]]},
-  moon:{hydrangea:[[-3.5,1.2,.8,0],[-4.8,1.5,.9,1],[-6.7,.8,.75,2],[3.8,-3.5,.9,.4],[4.7,-1.6,.85,1]],cosmos:[[-2.8,2.7,.65,0],[3.1,-2.5,.6,1]],liriope:[[-3.6,3.2,.9,0],[-5.8,1.1,.8,2],[4.6,.1,.85,1],[4.8,3.5,.8,2]]}
+  moon:{hydrangea:[[-3.5,1.2,.8,0],[-4.8,1.5,.9,1],[-6.7,.8,.75,2],[3.8,-3.5,.9,.4],[4.7,-1.6,.85,1]],cosmos:[[-2.8,2.7,.65,0],[3.1,-2.5,.6,1]],liriope:[[-4.15,3.25,.9,0],[-5.8,1.1,.8,2],[4.6,.1,.85,1],[4.8,3.5,.8,2]]}
 };
 // Low planting ribbons frame the piano approach; never fill the terrace itself.
 for(const [id,plants] of Object.entries(MAP_GARDENS)){
@@ -32,7 +32,11 @@ for(const [id,plants] of Object.entries(MAP_GARDENS)){
  plants[kind]=[...(plants[kind]||[]),[-2.9,.4,.95,.2],[3.6,1.5,1,1.7]];
  plants.cosmos=plants.cosmos.map(([x,z,s,a])=>[x,z,s*1.10,a]);
 }
-const MAP_TINTS={pop:[0xfff2eb,0xe7efcd],warm:[0xffdfb2,0xdac48d],dream:[0xd4daff,0xb5d4dc],journey:[0xfff6f4,0xe4efdc],moon:[0xd8e8ff,0xb9d6ce]};
+// Sparse planting leaves the minor scenes' water and solitary bench visible.
+MAP_GARDENS.rain={hydrangea:[[-3.5,1.2,.8,0],[4.7,-1.6,.75,1]],liriope:[[-4.15,3.25,.9,0],[4.6,.1,.85,1],[4.8,3.5,.8,2]]};
+MAP_GARDENS.sunset={maple:[[-3.6,-7.5,1.05,.7]],cosmos:[[-3.7,2.1,.65,0],[3.1,-2.5,.6,1]],liriope:[[-4.15,3.25,.9,0],[-5.8,1.1,.8,2],[4.8,3.5,.8,2]]};
+MAP_GARDENS.christmas={};
+const MAP_TINTS={pop:[0xfff2eb,0xe7efcd],warm:[0xffdfb2,0xdac48d],dream:[0xd4daff,0xb5d4dc],journey:[0xfff6f4,0xe4efdc],moon:[0xd8e8ff,0xb9d6ce],rain:[0xb4c8d1,0x92b4ac],sunset:[0xd6b3ac,0xb7b098]};
 
 export async function loadGarden() {
   const loader=new GLTFLoader(),templates=new Map();

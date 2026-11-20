@@ -1,0 +1,8 @@
+Small shaker recording: Versilian Community Sample Library (VCSL), Versilian Studios / Sam Gossner.
+License: CC0 1.0, full text in LICENSE.txt.
+Official source: https://github.com/sgossner/VCSL
+Pinned revision: c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e
+Original: Idiophones/Struck Idiophones/Shaker, Small/Mid_ShakerLowFaster_Down_rr1.wav
+Applied: small-shaker.wav (original PCM bytes, 44.1 kHz 16-bit stereo, no resampling or time stretch).
+SHA256: 4f8c887b138696c2dc47003d6b35a2be29da33e548afc4e43e07a4a60723ef65
+Playback: gain calibration and brief end fade in Web Audio; one shot per authored beat, no automatic repeating pattern.

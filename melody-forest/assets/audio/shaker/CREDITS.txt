@@ -1,0 +1,11 @@
+Active shaker: FreePats World percussion, Egg shaker fast_03.flac (2020-09-05).
+Recorded January 2019 by Xavimart (Javier), Gonzalo and Roberto, using Zoom H1 recorders.
+Original sample editing by Roberto; see FREEPATS-README.txt.
+CC0 1.0: FREEPATS-LICENSE.txt.
+Official: https://freepats.zenvoid.org/Percussion/world-and-rare-percussion.html
+Pinned source: https://github.com/freepats/world-percussion/blob/e54eb2912a0d6d4444ab205d52f778e27da0fc96/samples/EggShaker/fast_03.flac
+Applied egg-shaker-48k24.flac is byte-identical to published source: 48,000 Hz, 24-bit, mono, lossless FLAC, 0.309458 s.
+No upsampling, pitch change, time stretch, artificial stereo or looping. Playback gain 0.5; existing 2 ms attack and final 20 ms fade.
+Each child-authored beat plays one recorded shake. The original natural decay runs independently of beat length.
+Browser decodes to its audio device rate; 48 kHz output on every device is not guaranteed.
+Previous VCSL 16-bit sample retained as small-shaker.wav; inactive. See VCSL-CREDITS.txt and LICENSE.txt.

@@ -219,6 +219,9 @@ body.forest-mode .brand small{font-size:12px}.workspace .piano-hint{font-size:13
 /* The landscape label needs its own paper backing over every scene. */
 .workspace .forest-map-choice{padding:4px 6px 4px 10px;border:1px solid #bcc8a8;border-radius:12px;background:#fffdf1f5;box-shadow:0 2px 5px #263f3520;color:#35543f}
 .workspace .forest-map-choice select{min-width:0;border:0;background:transparent;padding-left:4px}
+.forest-map-choice{flex-wrap:wrap}
+.forest-map-choice small{flex-basis:100%;font-size:11px;line-height:1.3;color:#526248}
+.workspace>.forest-bar{top:auto;bottom:calc(100% + 8px)}
 .score-scroll-hint{display:none}
 @media(max-width:700px){.workspace .score-scroll-hint{display:block;margin:0 3px 6px;color:#526248;font-size:12px;text-align:right}}
 
@@ -325,3 +328,237 @@ body.forest-mode header .head-actions{gap:8px;align-items:center}
 
 
 .workspace .group-btn[aria-pressed=false]{background:#edf1e4;color:#3d5a44;border-color:#b9c8ac}
+
+/* One shared score; these controls choose the backing and the part being edited. */
+.compose-tools{display:flex;align-items:center;justify-content:space-between;gap:10px 18px;flex-wrap:wrap;padding:0 0 12px;margin-bottom:12px;border-bottom:1px solid var(--line)}
+.backing-choice,.part-tabs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.backing-choice>label:first-child,.part-tabs>span{font-size:13px;color:#426049;font-weight:700}
+.backing-choice select{min-height:44px;max-width:230px;min-width:140px;background:#fffef8;border:1px solid #aebfa5;border-radius:8px;color:#294638;padding:8px;font:inherit}
+.backing-enabled{display:flex;align-items:center;gap:6px;min-height:44px;font-size:13px;white-space:nowrap}
+.backing-enabled input{width:20px;height:20px;accent-color:#315d49}
+.part-tabs button{min-height:44px;padding:8px 12px;white-space:nowrap}
+.part-tabs button[aria-pressed=true]{background:#315d49;border-color:#315d49;color:white}
+.compose-tools :focus-visible,.part-tabs button:focus-visible{outline:3px solid #2e6957;outline-offset:3px}
+.part-score-title{font-size:17px;color:#31543e}
+@media(max-width:600px){.compose-tools{display:grid;gap:8px}.backing-choice{gap:7px}.backing-choice select{flex:1;min-width:0}.part-tabs{gap:6px}.part-tabs>span{width:100%}.part-tabs button{flex:1;padding:7px 8px;font-size:13px}}
+@media print{.compose-tools,.part-tabs{display:none}}
+
+/* Reuse the supplied creator logo beside the title and credit. */
+.brand .brand-mark{width:46px;height:46px;border-radius:10px;background:#fff;border:1px solid #c0cbb8;overflow:hidden}
+.brand-mark img{display:block;width:44px;height:44px;object-fit:contain}
+.brand small{font-weight:600}
+
+.playback-score{margin:20px 0;padding:18px;background:#fffdf3;border:1px solid #b8c8a7;border-radius:14px;color:#294b38}
+.playback-score-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.playback-score-head h2{margin:0;font-size:24px}.playback-position{font-size:16px;font-weight:700}
+.score-parts{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.score-parts button[aria-pressed=true]{background:#315d49;color:white}
+.playback-score .sheet{min-width:620px;max-height:none}.playback-score .staff-scroll{overflow-x:auto}
+.playback-score .note.sounding .note-head{fill:#d77a22;stroke:#844614;stroke-width:2}
+.playback-score .note.sounding .note-hit{fill:#ffe8b4;opacity:.55}
+@media(max-width:600px){.playback-score{padding:10px}.playback-score-head h2{font-size:20px}}
+
+/* Keep the composing surface close to the keyboard; concert view still fills the forest. */
+body.forest-mode{--band:128px}
+.workspace .compose-tools{padding-bottom:8px;margin-bottom:6px;gap:8px 14px}
+.workspace .part-tabs{gap:8px}.part-written{margin-left:5px;font-size:15px}
+.workspace .view-bar{gap:8px;padding:4px 0 8px}
+.workspace .compose-context{padding-bottom:6px;line-height:1.5}
+.workspace .score-book{padding:6px}
+.workspace .measure-select{gap:8px;padding-top:4px;padding-bottom:4px}
+.workspace .measure-select button{min-height:44px}
+.workspace .palette{padding:8px 0 4px;gap:8px}
+.workspace .duration-group{gap:8px}.workspace .duration-group button{min-height:48px}
+.workspace .duration-help{margin:0 2px 5px;font-size:13px}
+.workspace .history-buttons{gap:8px}
+.workspace .piano{border-radius:10px;padding:14px 8px 9px;background:linear-gradient(#bc9970,#826345 12px,#c1a47d 15px,#b18c63);box-shadow:inset 0 2px #f0dfbf,inset 0 -3px #775839,0 3px 8px #233b2920}
+.workspace .piano-keys{box-shadow:0 0 0 1px #544c3e,0 0 0 3px #dbcbaa;border-radius:2px}
+.workspace .piano-keys::before{background:#6a493e;height:3px}
+.workspace .piano .key,.workspace .piano .key.tone{height:140px;min-height:140px;background:linear-gradient(180deg,#d5d1c5,#fffdf3 24%,#fffef7 75%,#eee6d5);border-right:1px solid #a39a88;box-shadow:inset 1px 0 #fff,inset -1px 0 #e5dece,inset 0 -5px #c8bda8,inset 0 -7px #fff8e7}
+.workspace .piano .key b{font-size:20px;line-height:1.2}
+.workspace .piano .key small{font-size:12px;color:#59634f;line-height:1.3}
+.workspace .piano .key .dot{width:5px;height:5px;margin-bottom:7px}
+.workspace .piano .key.tone::after{width:18px;left:calc(50% - 9px);height:2px;bottom:7px}
+.workspace .piano .key:disabled{background:linear-gradient(#d3d0c6,#eeeae0 24%,#e4dfd3);box-shadow:inset 0 -5px #c0b7a6,inset 0 -7px #e9e2d2}
+.workspace .piano .black-key{height:53%;width:calc(100%/15*.57);background:linear-gradient(90deg,#111914,#475047 13%,#29332b 24%,#202a23 80%,#101710);box-shadow:inset 0 -6px #101711,inset 0 -8px #536052,inset 1px 0 #88917e,1px 3px 3px #0004}
+.workspace .piano .black-key::after{inset:4px 4px 10px;border-top-color:#b1b7a880;background:linear-gradient(100deg,#fff1,transparent 65%)}
+.workspace .piano .key.pressing,.workspace .piano .key.playing-note{transform:translateY(2px);background:linear-gradient(#c5d4b8,#f1f8df 50%,#dce9c7);box-shadow:inset 0 -2px #8d9f7c,inset 0 -4px #eff5dd;color:#24432d}
+.workspace .piano .key.current{outline:3px solid #ad762c;outline-offset:-4px}
+.workspace .piano .key:focus-visible{outline:3px solid #285ac3;outline-offset:-4px}
+.workspace .piano .key.struck{animation-duration:.28s}
+.workspace .more summary{min-height:44px;display:flex;align-items:center}
+.playback-score-head h2{overflow-wrap:anywhere;min-width:0}
+.score-parts button{min-height:44px}.score-parts{gap:8px}
+.playback-score .bar-bg.playing{fill:#f6deb0;fill-opacity:.65}
+.cinema-bar{gap:8px}.cinema-bar button{min-height:48px}
+@media(min-width:700px) and (max-height:850px){body.forest-mode{--band:96px}.workspace .score-system .sheet{height:auto}.workspace .piano .key{height:132px;min-height:132px}.workspace .piano .black-key{height:51%}}
+@media(max-width:600px){body.forest-mode{--band:120px}.compose-tools{width:100%}.backing-choice select{max-width:none}.workspace .part-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;gap:8px}.workspace .part-tabs>span{grid-column:1/-1}.workspace .part-tabs button{padding:8px 4px;min-width:0}.workspace .duration-group{gap:6px}.workspace .quick-listen{gap:8px}.workspace .score-system{min-width:760px}.workspace .score-system .sheet{height:auto}.workspace .piano .key{min-width:52px;width:52px;flex-basis:52px}.workspace .keyboard-panel .free-choice small{display:none}.workspace .piano-hint::after{content:''}.playback-score .sheet{min-width:620px}.cinema-bar{max-width:calc(100vw - 24px);padding:12px}}
+@media(prefers-reduced-motion:reduce){.workspace .piano .key.pressing,.workspace .piano .key.playing-note{transform:none}.workspace .piano .key{transition:none;animation:none}}
+@media print{.playback-score{border:0;padding:0}.score-parts{display:none}.playback-score .sheet{min-width:0}.playback-score .note.sounding .note-hit{fill:none}.playback-score .note.sounding .note-head{fill:currentColor;stroke:currentColor}}
+
+/* The rhythm part uses the same bar selection, with eight direct on/off beats. */
+.rhythm-system{display:flex;gap:8px;padding:12px 4px;min-height:120px}
+.rhythm-measure{flex:1;min-width:0;border-radius:8px;padding:8px 6px;background:#f5f7ed}
+.rhythm-measure>strong{font-size:13px;color:#46634c}
+.rhythm-marks{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:2px;margin-top:10px}
+.rhythm-marks .note{display:grid;place-items:center;border-radius:5px;color:#6c7568;min-height:48px}
+.rhythm-marks small{font-size:12px}.rhythm-marks b{font-size:18px}.rhythm-marks .rhythm-hit{color:#315d49;background:#dce9cb}
+.rhythm-marks .sounding{background:#f6d28b;color:#603b0e;outline:2px solid #a46b20}
+.rhythm-measure.playing{background:#fff0cd}
+.rhythm-editor{margin:12px 0;padding:14px;background:#fffdf3;border:1px solid #becab9;border-radius:12px}
+.rhythm-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}
+.rhythm-heading span,.rhythm-editor p{font-size:13px;color:#526458}.rhythm-editor p{margin:10px 0 0}
+.rhythm-pads{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px}
+.rhythm-pad{display:grid;gap:4px;place-items:center;min-width:0;min-height:68px;padding:8px 2px;border-radius:10px;background:#f2f5e9;color:#465d42;border:1px solid #b4c4a7}
+.rhythm-pad span{font-size:20px;font-weight:700}.rhythm-pad b{font-size:13px}
+.rhythm-pad:nth-child(2n){background:#fafbf4}
+.rhythm-pad[aria-pressed=true]{background:#315d49;color:white;border-color:#315d49;box-shadow:inset 0 -3px #1e402e}
+.rhythm-pad.playing-note{outline:3px solid #c28a32;outline-offset:2px}
+.rhythm-pad:focus-visible{outline:3px solid #285ac3;outline-offset:3px}
+.rhythm-history{justify-content:flex-end}
+@media(max-width:600px){.workspace .part-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.rhythm-pads{grid-template-columns:repeat(4,minmax(0,1fr))}.rhythm-editor{padding:12px}.rhythm-history{display:flex!important;flex-wrap:wrap}.rhythm-history button{flex:1;min-height:44px}.rhythm-heading{flex-wrap:wrap}.rhythm-marks b{font-size:16px}}
+@media print{.rhythm-measure{break-inside:avoid;background:white;border:1px solid #888}.rhythm-marks .rhythm-hit{background:white;color:black}}
+
+.finish-help{flex-basis:100%;margin:0;color:#465d42;font-size:13px;line-height:1.6}
+.rhythm-pad{touch-action:manipulation;user-select:none;-webkit-user-select:none}
+.save-status:empty{display:none}
+
+/* Ivory highlights stay quiet so note labels remain the focal point. */
+.workspace .piano .key,.workspace .piano .key.tone{background:linear-gradient(180deg,#ded9cc,#fffdf5 22%,#fffef8 76%,#eae2d1);box-shadow:inset 1px 0 #fff,inset -1px 0 #e4ddcf,inset 0 -5px #c7bda9,inset 0 -7px #fff9ea}
+.workspace .piano .key:disabled{background:linear-gradient(#d8d4ca,#eeeae1 25%,#e3ded2)}
+
+.workspace .piano .black-key{background:linear-gradient(90deg,#101812,#3c483f 12%,#28332b 24%,#1e2821 80%,#101711);box-shadow:inset 0 -5px #0d150f,inset 0 -7px #4b594c,inset 1px 0 #73816e,1px 3px 3px #0003}
+.workspace .piano .black-key::after{border-top-color:#c0c9b580;background:linear-gradient(100deg,#fff1,transparent 58%)}
+
+.workspace .piano .key.current{outline:0;box-shadow:inset 0 -5px #a87930,inset 0 -8px #f2d99d,inset 2px 0 #c5a45f,inset -2px 0 #c5a45f}
+.workspace .piano .key.current b{color:#795016}
+.workspace .piano .key.pressing,.workspace .piano .key.playing-note{background:linear-gradient(#c7d6bb,#f1f8df 50%,#dce9c7);box-shadow:inset 0 -2px #8d9f7c,inset 0 -4px #eff5dd}
+.workspace .piano .key:focus-visible{outline:3px solid #285ac3;outline-offset:-4px}
+
+.workspace .score-book,.workspace .focus-card{background:#fffef8;border-color:#bac6b2;box-shadow:0 2px 0 #d8decd,0 5px 12px #2c493a09}
+.workspace .score-system{background:#fffef8}
+.workspace .staff-line{stroke:#899780;stroke-width:1.15}
+.workspace .bar-line{stroke:#60745c}
+
+.concert .concert-art{width:min(320px,80vw);aspect-ratio:3/2;object-fit:contain;border:1px solid #c4cfb8;border-radius:12px;box-shadow:0 7px 18px #263c2920}
+.concert-hero h1{color:#294b3a}.concert .badge-row span{background:#f0f4e7;border:1px solid #c0ceb0;color:#36563d}
+@media print{.concert .concert-art{display:none}.workspace .score-book{box-shadow:none}}
+
+.part-check{display:inline-block;width:13px;margin-right:3px;font-weight:800}.part-tabs button[aria-pressed=true]{box-shadow:inset 0 -3px #789766}.part-written{color:inherit}
+
+.workspace .measure-select button{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:3px 8px}.measure-progress{font-size:11px;font-weight:500;color:inherit;opacity:.85;white-space:nowrap}
+
+.save-status>span{font-size:12px;color:#506650;white-space:nowrap}@media(max-width:600px){.head-actions .save-status{flex-basis:100%;text-align:right;min-height:16px}}
+
+.keyboard-edit-hint{margin:0 0 8px;padding:8px 10px;background:#f2f5e8;border-left:3px solid #819668;font-size:13px;line-height:1.5;color:#405a3e}
+
+.focus-toggle{min-height:44px;white-space:nowrap}@media(max-width:600px){.workspace .focus-toggle{grid-column:1/-1;grid-row:3}.workspace .quick-listen{min-width:0}}
+
+#toast{bottom:max(24px,env(safe-area-inset-bottom));overflow-wrap:anywhere}@media(max-width:600px){#toast{font-size:15px;padding:12px 16px;max-width:calc(100vw - 24px)}}
+
+@media(max-width:600px){.workspace .history-buttons button,.workspace .palette>button,.workspace .part-tabs button{font-size:14px;min-height:48px}.backing-choice select,.settings input,.song-title{font-size:16px}.backing-enabled{min-height:48px}.workspace .duration-group button{min-height:48px}.workspace .duration-group span{font-size:14px}}
+
+.focus-scroll{overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin}.workspace .sheet.focus-sheet{min-width:480px;width:100%;max-width:760px;max-height:none;height:auto;margin:0 auto}.focus-card{overflow:hidden}
+
+.rest-mark{fill:currentColor;pointer-events:none}
+
+.beat-guide{stroke:#9aac8c;stroke-width:1;stroke-dasharray:2 5;opacity:.35;pointer-events:none}.beat-count{font-size:12px;fill:#62765b;text-anchor:middle;pointer-events:none}
+
+.note-beam{fill:currentColor;pointer-events:none}
+
+.score-playhead{stroke:#a96b21;stroke-width:2;opacity:.85;pointer-events:none}@media print{.score-playhead{display:none}}
+
+.register-mark{font-size:10px;fill:#5d7354;text-anchor:middle;letter-spacing:1px;pointer-events:none}.note.selected .note-name{font-weight:800;fill:#245ba5}.note.sounding .note-name{font-weight:800;fill:#895014}
+
+.continue-bar{font-size:13px;min-height:44px;margin-left:auto}.compose-context .continue-bar{flex-shrink:0}@media(max-width:600px){.compose-context .continue-bar{margin-left:0}}
+
+.solo-listen{font-size:13px}@media(max-width:600px){.workspace .quick-listen .solo-listen{grid-column:1/-1}}
+
+/* A phone gets three compact rows of composing controls, not a vertical button list. */
+@media(max-width:600px){
+ .workspace .part-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .workspace .part-tabs button{padding:8px 3px}
+ .workspace[data-view=group] .quick-listen{display:contents}
+ .workspace[data-view=group] .quick-listen [data-action=listen-all]{grid-column:1;grid-row:2}
+ .workspace[data-view=group] .quick-listen [data-action=listen-bar]{grid-column:2;grid-row:2}
+ .workspace[data-view=group] .quick-listen .solo-listen{grid-column:1;grid-row:3}
+ .workspace[data-view=group] .focus-toggle{grid-column:2;grid-row:3}
+ .workspace:not([data-view=group]) .view-bar{display:flex;flex-wrap:wrap}
+ .workspace:not([data-view=group]) .quick-listen{width:100%;display:grid;grid-template-columns:1fr 1fr}
+ .workspace:not([data-view=group]) .focus-name{flex:1;text-align:center}
+ .workspace .continue-bar{font-size:12px;padding:6px 9px;min-height:44px}
+ .workspace .compose-context span:last-of-type{font-size:12px}
+ .head-actions .save-status{grid-column:1/-1;grid-row:2;min-height:14px;text-align:right}
+}
+
+.cinema-bar{background:rgba(255,254,246,.95);border:1px solid #c2ccb5;box-shadow:0 4px 18px #172c2433}.cinema-bar .playing-harmony{color:#294b3a}
+
+.workspace .piano .key[data-key="72"],.workspace .piano .key[data-key="84"]{border-left:2px solid #a29579}
+
+.workspace .piano .key:disabled{color:#737463;opacity:1}.workspace .piano .key:disabled b{color:#737463}.workspace .piano .key:disabled small{color:#737463}
+
+.workspace .measure-select button[aria-pressed=true]{box-shadow:inset 0 -3px #315d49;border-color:#6c8955}.workspace .measure-progress{font-variant-numeric:tabular-nums}
+
+.rhythm-pad:nth-child(2n+1){border-left:3px solid #81996c}.rhythm-pad:nth-child(2n){border-right:3px solid #81996c}.rhythm-marks .note:nth-child(2n){border-right:1px solid #aab99b}
+
+.staff-scroll,.piano-scroll,.focus-scroll{scrollbar-color:#91a080 #edf1e4;scrollbar-width:thin}.staff-scroll:focus-visible,.piano-scroll:focus-visible,.focus-scroll:focus-visible{outline:3px solid #285ac3;outline-offset:2px}
+
+@media print{.score-book,.score-system,.focus-card,.sheet{background:white!important;box-shadow:none!important}.sheet .staff-line,.sheet .bar-line,.sheet .ledger{stroke:#333}.sheet .chord-guide,.sheet .guide-dot,.beat-guide,.beat-count{display:none}.sheet{color:#111}}
+
+.playback-score .note.sounding .note-head.hollow,.sheet .note.sounding .note-head.hollow{fill:#fffef8;stroke:currentColor}@media print{.playback-score .note.sounding .note-head.hollow,.sheet .note .note-head.hollow{fill:white;stroke:#111}}
+
+.note-beam.beam-selected{fill:#245ba5}
+
+.workspace[data-view=full] .sheet{max-height:none;height:auto}.workspace .note-name{paint-order:stroke;stroke:#fffef8;stroke-width:2px;stroke-linejoin:round}.workspace .register-mark{paint-order:stroke;stroke:#fffef8;stroke-width:1px}@media print{.workspace .note-name,.workspace .register-mark{stroke:white}}
+
+.workspace .palette>button:disabled{color:#78826f;border-color:#d2d9c8;background:#f4f6ef;box-shadow:none;cursor:default;opacity:.65}
+@media(max-width:600px){header{position:relative}.head-actions .save-status:has(>span){position:absolute;right:14px;top:31px;min-height:0}}
+
+.workspace .sheet .note.selected{color:#245ba5}.workspace .sheet .note.selected .note-hit{fill:#dce9fa;fill-opacity:.5;stroke:#245ba5}.workspace .sheet .note.selected ellipse{stroke:#245ba5}
+
+.workspace .sheet .note.selected.sounding .note-hit{fill:#ffe0a0;stroke:#245ba5;stroke-width:2}.workspace .sheet .note.sounding .note-name{fill:#895014}
+
+.concert-hero h1,.work-list strong,.presentation .work-list small{overflow-wrap:anywhere;min-width:0}.work-list li>div{min-width:0}.concert-hero h1{line-height:1.35}
+
+dialog.dialog{max-width:min(520px,calc(100vw - 28px));max-height:calc(100dvh - 32px);overflow:auto;border:1px solid #9caf8c;border-radius:14px;background:#fffef7;color:#294b3a;box-shadow:0 12px 50px #19372944}dialog.dialog::backdrop{background:#172c2466}
+
+.workspace .piano .key .dot{width:7px;height:7px;box-shadow:0 0 0 1px #fffef8}.workspace .piano .key.tone::after{height:3px}
+
+.rhythm-pad.playing-note{box-shadow:inset 0 0 0 3px #ffe1a1;outline:2px solid #a96b21;outline-offset:1px}.rhythm-marks .sounding{box-shadow:inset 0 -3px #a96b21}
+
+.workspace .score-system .sheet{width:100%;height:auto;max-height:none}
+
+.next-note-guide{stroke:#779262;stroke-width:1.5;stroke-dasharray:3 5;opacity:.7;pointer-events:none}@media print{.next-note-guide{display:none}}
+
+/* Rhythm workbench: one playable measure and a compact eight-measure arrangement. */
+.rhythm-workbench{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,1fr);gap:28px;padding:24px 8px 18px;color:#294b3a}
+.rhythm-board-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}.rhythm-kicker{font-size:13px;font-weight:700;color:#68805c}.rhythm-board h2{font-size:25px;margin:5px 0 0;line-height:1.35}.rhythm-instruction,.rhythm-arrangement>p{font-size:14px;line-height:1.6;color:#5b7058;margin:10px 0 20px}.rhythm-live-position{font-size:12px;white-space:nowrap;color:#926222}
+.rhythm-beat-groups{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.rhythm-beat-pair>strong{display:block;text-align:center;margin-bottom:9px;font-size:15px}.rhythm-beat-pair>div{display:grid;grid-template-columns:1fr 1fr;gap:5px}.rhythm-workbench .rhythm-pad{display:flex;flex-direction:column;gap:6px;min-height:118px;min-width:44px;border:1px solid #bac9aa;border-radius:14px;padding:10px 3px;background:#f0f4e6;color:#466448;box-shadow:none}.rhythm-workbench .rhythm-pad>span{font-size:15px}.rhythm-workbench .rhythm-pad>b{font-size:24px}.rhythm-workbench .rhythm-pad>small{font-size:11px}.rhythm-workbench .rhythm-pad[aria-pressed=true]{background:#315d49;color:white;border-color:#315d49;box-shadow:inset 0 -4px #214735}
+.rhythm-arrangement h3{font-size:17px;margin:0}.rhythm-arrangement>p{margin:5px 0 12px}.rhythm-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.rhythm-mini{display:grid;gap:8px;padding:10px 6px;min-width:0;min-height:82px;border:1px solid #cdd7c1;border-radius:9px;background:#fffef8;color:#566e4e;text-align:left}.rhythm-mini>strong{font-size:18px;line-height:1}.rhythm-mini strong small{font-size:11px;font-weight:400;margin-left:3px}.rhythm-mini>small{font-size:11px}.rhythm-mini[aria-pressed=true]{background:#e1ecd3;border:2px solid #527747;padding:9px 5px;color:#294b3a}.rhythm-mini-notes{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:2px}.rhythm-mini-notes i{height:8px;border-radius:2px;background:#dde5d3}.rhythm-mini-notes .rhythm-mini-hit{background:#46744e}.rhythm-mini.playing{box-shadow:inset 0 0 0 2px #b77d2e;background:#fff2d0}.rhythm-mini-notes .note.sounding{background:#b77d2e;outline:1px solid #724b15}
+.rhythm-arrangement .quick-listen{display:flex!important;flex-wrap:wrap;gap:7px;margin-top:16px}.rhythm-arrangement .quick-listen button{flex:1;min-height:44px;font-size:12px;white-space:nowrap;padding:9px 8px}.rhythm-arrangement .rhythm-history{padding:8px 0 0!important;margin:0!important;justify-content:flex-start}.shaker-workspace .transport{margin-top:12px}
+@media(max-width:800px){.rhythm-workbench{grid-template-columns:1fr;gap:24px;padding:18px 0}.rhythm-arrangement .quick-listen button{font-size:13px}.rhythm-beat-groups{gap:10px}}
+@media(max-width:480px){.rhythm-board h2{font-size:22px}.rhythm-beat-groups{grid-template-columns:repeat(2,minmax(0,1fr))}.rhythm-workbench .rhythm-pad{min-height:90px}.rhythm-live-position{font-size:11px}.rhythm-mini{min-height:80px}.rhythm-workbench .quick-listen .solo-listen{grid-column:auto}}
+
+/* The orbit makes one 4/4 measure tangible; the arrangement never scrolls sideways. */
+.rhythm-workbench{grid-template-columns:minmax(320px,.95fr) minmax(300px,1fr);gap:40px;padding:24px 12px;align-items:center}
+.rhythm-board-heading h2{margin:0;font-size:26px}.rhythm-instruction{margin:8px 0 14px;font-size:14px}.rhythm-board-heading{min-height:36px}.rhythm-orbit{position:relative;width:min(100%,336px);aspect-ratio:1;margin:0 auto;border-radius:50%;background:radial-gradient(circle,#fffef8 0 31%,#eaf0df 32% 50%,#f4f7ed 51% 68%,transparent 69%)}
+.rhythm-orbit-track{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}.rhythm-orbit-track circle{fill:none;stroke:#b3c69e;stroke-width:3}.rhythm-orbit-track path{fill:#819e68;stroke:none}
+.rhythm-workbench .orbit-step{position:absolute;left:var(--x);top:var(--y);width:70px;height:70px;min-height:0;min-width:0;border-radius:50%;padding:6px;gap:1px;justify-content:center;transform:translate(-50%,-50%);border:2px solid #bacba9;background:#fffef8;box-shadow:0 3px 0 #d5dfc7;color:#3c6044}.rhythm-workbench .orbit-step>span{font-size:16px;font-weight:700;color:inherit}.rhythm-workbench .orbit-step>b{font-size:24px;line-height:1.05;color:inherit}.rhythm-workbench .orbit-between{width:54px;height:54px;background:#eaf0df;border-style:dashed}.rhythm-workbench .orbit-between>span{font-size:12px;font-weight:500}.rhythm-workbench .orbit-between>b{font-size:21px}
+.shaker-workspace .rhythm-workbench .orbit-step[aria-pressed=true],.shaker-workspace .rhythm-workbench .orbit-step[aria-pressed=true]:hover{background:#315d49;border-color:#315d49;border-style:solid;color:#fffef8;box-shadow:0 3px 0 #173c2a}.shaker-workspace .rhythm-workbench .orbit-step[aria-pressed=false]:hover{background:#e2ecd4;color:#294b3a}.shaker-workspace .rhythm-workbench .orbit-step:active{transform:translate(-50%,calc(-50% + 2px))}.rhythm-orbit-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:138px;display:grid;justify-items:center;text-align:center;gap:7px}.rhythm-orbit-center>strong{font-size:38px;line-height:1;font-weight:700;color:#315d49}.rhythm-orbit-center strong small{font-size:14px;font-weight:500;margin-left:4px;color:inherit}.rhythm-orbit-center>span{font-size:11px;color:#607453;min-height:15px}.rhythm-orbit-center .orbit-listen{min-height:44px;border-radius:22px;border:1px solid #bccca9;background:#fffef8;color:#315d49;padding:10px 16px;font-size:13px;white-space:nowrap}
+.rhythm-orbit-key{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:14px 0 0;color:#607453;font-size:12px;line-height:1.5}.rhythm-orbit-key span:first-child{color:#315d49;font-weight:700}.rhythm-arrangement .quick-listen{display:grid!important;grid-template-columns:1fr 1fr}.shaker-workspace .rhythm-mini[aria-pressed=true]:hover{background:#d4e4c1;color:#294b3a}.rhythm-workbench .rhythm-mini strong small,.rhythm-workbench .rhythm-mini>small{color:inherit}
+@media(max-width:820px){.rhythm-workbench{grid-template-columns:1fr;gap:24px;padding:18px 0}.rhythm-board,.rhythm-arrangement{width:100%;max-width:520px;margin:0 auto}.rhythm-board-heading{justify-content:center}.rhythm-instruction{text-align:center}}
+@media(max-width:480px){.rhythm-board-heading h2{font-size:23px}.rhythm-orbit{width:min(100%,324px)}.rhythm-workbench .orbit-step{width:64px;height:64px}.rhythm-workbench .orbit-between{width:50px;height:50px}.rhythm-orbit-center{width:126px}.rhythm-orbit-center>strong{font-size:34px}.rhythm-orbit-key{gap:6px;font-size:11px}.rhythm-live-position:empty{display:none}}
+
+.carol-guide{padding:10px 14px;background:#fff4d9;border-left:4px solid #a97827;border-radius:8px;color:#4d3b20;margin:6px 0 12px}.carol-guide strong{margin-right:12px}.carol-guide small{display:block;margin-top:4px}.piano .key.carol-tone{box-shadow:inset 0 0 0 3px #b98836}
+.rhythm-workbench .rhythm-pad.current-beat{outline:3px solid #bb872f;outline-offset:4px}
+.rhythm-workbench .rhythm-pad.playing-note{box-shadow:0 0 0 6px #f0dba4}
+
+.export-format{display:grid;gap:8px;margin-top:14px}.export-format select{width:100%;min-width:0;font:inherit;white-space:normal}
+
+.ensemble-hint{margin:8px 0 0;color:#40604d;font-size:13px;line-height:1.5}
+.forest-start-card{position:fixed;z-index:4;right:24px;bottom:30px;display:grid;gap:10px;max-width:310px;padding:16px;background:#fffdf3ed;border:1px solid #b9ccb5;border-radius:18px;box-shadow:0 8px 28px #142a3024;color:#284c3c}
+.forest-start-card span{font-size:14px;line-height:1.5}
+body.forest-mode .entrance-control{display:block}
+@media(max-width:600px){.forest-start-card{left:16px;right:16px;bottom:215px;max-width:none;padding:12px;gap:6px}.forest-start-card span{font-size:13px}}
+
+.christmas-entrance{background:radial-gradient(ellipse at center,#294359,#101d32 75%)}
+.entrance-title{position:absolute;z-index:1;top:7%;left:16px;right:16px;margin:0;text-align:center;color:#fff1ce;font-size:clamp(22px,4vw,36px);text-shadow:0 2px 12px #16273b}

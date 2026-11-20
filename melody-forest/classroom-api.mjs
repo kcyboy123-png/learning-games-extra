@@ -1,7 +1,7 @@
-import {validateSong} from './core.mjs?v=20261110-polish5';
+import {validateSong,hasNotes} from './core.mjs?v=20261120-release21';
 export const codeText=value=>String(value).trim().toUpperCase().replace(/[\s-]/g,'');
 export function validCode(value){const code=codeText(value);if(!/^[A-Z0-9]{8}$/.test(code))throw Error('학급 코드 8자리를 확인해 주세요.');return code;}
-export function submission(song,label){const studentLabel=String(label).trim();if(!studentLabel||studentLabel.length>30)throw Object.assign(Error(),{userMessage:'번호나 별명을 30자 이내로 적어 주세요.'});const safe=validateSong(song);if(!safe.bars.some(b=>b.some(n=>n.pitch!==null)))throw Object.assign(Error(),{userMessage:'음을 하나 이상 만든 뒤 제출해 주세요.'});return {studentLabel,title:safe.title,songJSON:JSON.stringify(safe)};}
+export function submission(song,label){const studentLabel=String(label).trim();if(!studentLabel||studentLabel.length>30)throw Object.assign(Error(),{userMessage:'번호나 별명을 30자 이내로 적어 주세요.'});const safe=validateSong(song);if(!hasNotes(safe))throw Object.assign(Error(),{userMessage:'음을 하나 이상 만든 뒤 제출해 주세요.'});return {studentLabel,title:safe.title,songJSON:JSON.stringify(safe)};}
 // Content-addressed receipts make a retry safe while preserving every different work.
 export async function submissionId(uid,data){
  const bytes=new TextEncoder().encode(JSON.stringify([uid,data.studentLabel,data.songJSON]));

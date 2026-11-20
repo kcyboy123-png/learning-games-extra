@@ -1,0 +1,15 @@
+피아노의 숲 — 원본 음원 적용 (2026-11-20)
+피아노: Salamander Grand Piano V3, Alexander Holm. CC BY 3.0.
+https://github.com/sfzinstruments/SalamanderGrandPiano
+https://creativecommons.org/licenses/by/3.0/
+원본 FLAC을 무손실 FLAC으로 재인코딩해 PCM 음질을 유지. 중간 타건 v8, 시작 지점·게임 볼륨/릴리스 조정. 저자가 이 게임을 보증한다는 의미가 아닙니다.
+플루트: VSCO 2 CE, Versilian Studios / Sam Gossner. CC0 1.0.
+https://github.com/sgossner/VSCO-2-CE
+지속음과 스타카토 WAV를 무손실 FLAC으로 변환. 시작 지점·음량·호흡 간격 조정. 낮은 C4/E4는 짧은 원본 부재로 지속음 사용.
+기타: Meta Open Sound / Meta Nylon Guitar. CC0 1.0.
+https://github.com/facebookincubator/Meta-open-sound/tree/main/systems/instruments/meta-nylon-guitar
+손가락 연주 WAV를 무손실 FLAC으로 변환. 시작 지점·음량·감쇠 조정.
+각 전문: PIANO-LICENSE.txt, FLUTE-LICENSE.txt, GUITAR-LICENSE.txt.
+원본 WAV/FLAC과 이전 게임 MP3는 별도 보존했습니다. 리샘플링·소음 제거·EQ·불필요한 루프는 하지 않았습니다.
+
+2026-11-20 합주 균형 조정: 원본 PCM 보존. 피아노 재생 gain 0.6배, 기타 음역별 1.2~2배. 플루트 짧은 음의 음량 급증을 긴 음의 실제 RMS 기준으로 보정하고 저음 시작점을 소폭 조정. 직접 청취 검증은 별도.
