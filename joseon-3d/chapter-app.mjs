@@ -1,3 +1,4 @@
+import {mobileDevice,renderRatio,frameReady} from './render-budget.mjs';
 import {bindBackgroundAudio,bindFeedbackSounds} from './game-audio.mjs';
 import {bindGameMenu,bindStart} from './game-menu.mjs';
 import {createSnowWalk} from './snow-walk.mjs';
@@ -27,7 +28,8 @@ try{
  const unlocked=unlockedChapter(safeStorage(),location.search);
  if(chapter>unlocked){location.replace(chapterURL(unlocked));}else{
  await document.fonts.load('24px "Gowun Batang"','기록 조선 농사 가족');
- const renderer=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+ const mobile=mobileDevice({width:innerWidth,height:innerHeight,touch:navigator.maxTouchPoints>0});
+const renderer=new THREE.WebGLRenderer({canvas,antialias:!mobile,powerPreference:'high-performance'});renderer.setPixelRatio(renderRatio({width:innerWidth,height:innerHeight,dpr:devicePixelRatio,mobile}));canvas.dataset.quality=mobile?'mobile':'desktop';renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;renderer.shadowMap.enabled=!mobile;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
  const scene=new THREE.Scene(),world=createChapterWorld(THREE,scene,chapter),camera=new THREE.PerspectiveCamera(50,innerWidth/innerHeight,.1,300);
  const snowWalk=chapter===4?createSnowWalk(THREE,scene):null;
  if(snowWalk){addEventListener('pointerdown',snowWalk.unlock,{passive:true});addEventListener('keydown',snowWalk.unlock);addEventListener('pagehide',snowWalk.quiet);}
@@ -102,10 +104,11 @@ try{
  for(const b of document.querySelectorAll('[data-dir]')){b.addEventListener('pointerdown',e=>{if(!started||paused||transition)return;e.preventDefault();b.setPointerCapture(e.pointerId);held.add(b.dataset.dir);b.classList.add('active');path=[];pending=-1;closeProp();});const end=()=>{held.delete(b.dataset.dir);b.classList.remove('active');};b.addEventListener('pointerup',end);b.addEventListener('pointercancel',end);b.addEventListener('lostpointercapture',end);}
  const ray=new THREE.Raycaster(),floor=new THREE.Plane(new THREE.Vector3(0,1,0),0),hit=new THREE.Vector3();
  canvas.addEventListener('pointerdown',e=>{if(!started||paused||transition||e.button!==0)return;ray.setFromCamera(new THREE.Vector2(e.clientX/innerWidth*2-1,1-e.clientY/innerHeight*2),camera);if(ray.ray.intersectPlane(floor,hit)){path=route(world,pos,{x:hit.x,z:hit.z});pending=-1;portalWalk=false;closeProp();if(!path.length)notice('열린 마당이나 길을 눌러 주세요.');}});
- function resize(){renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}addEventListener('resize',resize);resize();
+ function resize(){renderer.setPixelRatio(renderRatio({width:innerWidth,height:innerHeight,dpr:devicePixelRatio,mobile}));renderer.setSize(innerWidth,innerHeight,false);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}addEventListener('resize',resize);resize();
  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();paused=true;notice('화면 연결이 끊겼어요. 새로고침하면 저장된 기록에서 이어집니다.');});
- function frame(now){
-  requestAnimationFrame(frame);if(document.hidden){last=0;return;}const dt=Math.min(.035,last?(now-last)/1000:0);last=now;if(!paused)time+=dt;
+ let diagnosticAt=0;
+function frame(now){
+  requestAnimationFrame(frame);if(document.hidden){last=0;return;}if(!frameReady(now,last,mobile?(paused?250:1000/30):0))return;const dt=Math.min(mobile ? .05 : .035,last?(now-last)/1000:0);last=now;if(!paused)time+=dt;
   const before={...pos},catBefore={...catPos};const wantsMove=started&&!paused&&!transition&&(keys.size||held.size||path.length);walkBlend=wantsMove?Math.min(1,walkBlend+dt/0.12):0;const walkSpeed=WALK_SPEED*walkBlend;
   if(started&&!paused&&!transition){
    const x=Number(keys.has('right')||held.has('right'))-Number(keys.has('left')||held.has('left')),z=Number(keys.has('down')||held.has('down'))-Number(keys.has('up')||held.has('up'));
@@ -120,7 +123,7 @@ try{
   snowWalk?.update(before,pos,catBefore,catPos,started&&!paused&&!transition);
   const was=gate.running(),travel=gate.update(paused?0:dt,reduced);if(was&&!gate.running()){if(transition){if(chapter===8){transition=false;$('#hud').hidden=false;lessons.review();}else{location.href=chapterURL(chapter+1);return;}}else{$('#hud').hidden=false;notice('네 곳의 기록을 살펴보세요. 사람을 누르면 길을 찾아 걸어가요.');}}
   look.lerp(new THREE.Vector3(pos.x,1.4,pos.z-2.2),1-Math.exp(-5*dt));camera.position.copy(look).add(new THREE.Vector3(2.15+Math.sin(pos.z*.06)*.5,4.1,9.7).multiplyScalar(innerWidth<600?1.2:1));if(travel)camera.position.add(new THREE.Vector3(1.5,2.5,6).multiplyScalar(travel));camera.fov=50+travel*15;camera.updateProjectionMatrix();camera.lookAt(look);back.set(camera.position.x-look.x,0,camera.position.z-look.z).normalize();right.set(back.z,0,-back.x);
-  const state=lessons.state(),near=nearest(),ready=lessons.allComplete(),next=[0,1,2,3].find(i=>!state.done.includes(i));$('#progress').textContent=`기록 ${state.done.length}/4 · ${state.score}점`;$('#distance').textContent=ready?'이 시간의 모든 기록을 모았어요':next===undefined?'여행의 기억으로 배운 내용을 이어 봐요':data.missions[next].title;
+  const state=lessons.state(),near=nearest(),ready=state.complete,next=[0,1,2,3].find(i=>!state.done.includes(i));$('#progress').textContent=`기록 ${state.done.length}/4 · ${state.score}점`;$('#distance').textContent=ready?'이 시간의 모든 기록을 모았어요':next===undefined?'여행의 기억으로 배운 내용을 이어 봐요':data.missions[next].title;
   $('#find-next').textContent=ready?(chapter<8?'다음 시간문으로 →':'귀환 시간문으로 →'):next===undefined?'여행의 기억 3문제 →':'다음 기록으로 걸어가기 →';
   $('#talk').disabled=near<0&&!portalNear();$('#talk').textContent=portalNear()?(ready?(chapter<8?'다음 시대로 시간여행 · E':'귀환하여 기록 펼치기 · E'):'잠든 시간문 살펴보기 · E'):near>=0?data.missions[near].title+' · E':'이야기가 있는 곳에 다가가요';
   const questRect=$('#quest').getBoundingClientRect(),placed=[];tags.forEach((b,i)=>{const title=(state.done.includes(i)?'✓ ':'')+data.missions[i].title;if(b.textContent!==title)b.textContent=title;const s=world.stations[i],v=new THREE.Vector3(s.x,s.tagY??4,s.z).project(camera);b.hidden=!started||paused||gate.running()||v.z>1||Math.abs(v.x)>1.1;if(b.hidden)return;const half=Math.min(innerWidth/2-12,b.offsetWidth/2||110);let x=Math.max(half+12,Math.min(innerWidth-half-12,(v.x*.5+.5)*innerWidth)),y=Math.max(110,Math.min(innerHeight-170,(-v.y*.5+.5)*innerHeight));if(x-half<questRect.right+12&&y<questRect.bottom+60)y=questRect.bottom+60;for(const o of placed)if(Math.abs(o.x-x)<o.half+half+8&&Math.abs(o.y-y)<54)y=o.y+54;if(y>innerHeight-170){b.hidden=true;return;}placed.push({x,y,half});b.style.left=Math.round(x)+'px';b.style.top=Math.round(y)+'px';b.classList.toggle('nearby',i===near);b.classList.toggle('done',state.done.includes(i));});
@@ -143,7 +146,7 @@ try{
    const pr=portalTag.getBoundingClientRect();for(const b of tags){if(b.hidden)continue;const r=b.getBoundingClientRect();if(r.left<pr.right+8&&r.right>pr.left-8&&r.top<pr.bottom+8&&r.bottom>pr.top-8)b.hidden=true;}
   }
   const hidden=new Set();for(const p of [hero.group.position.clone().add(new THREE.Vector3(0,1.5,0)),cat.group.position.clone().add(new THREE.Vector3(0,.5,0))]){const d=p.clone().sub(camera.position);ray.set(camera.position,d.clone().normalize());ray.far=d.length();for(const h of ray.intersectObjects(world.occluders||[],false))hidden.add(h.object);}for(const m of world.occluders||[]){if(!m.material||Array.isArray(m.material))continue;m.material.opacity+=((hidden.has(m)?.16:1)-m.material.opacity)*Math.min(1,dt*12);m.material.depthWrite=m.material.opacity>.98;}ray.far=Infinity;
-  world.update(time,reduced);renderer.render(scene,camera);canvas.dataset.position=JSON.stringify({hero:pos,cat:catPos,route:path.length});canvas.dataset.progress=JSON.stringify(state);
+  world.update(time,reduced);renderer.render(scene,camera);if(now>=diagnosticAt){diagnosticAt=now+100;canvas.dataset.renderFrame=renderer.info.render.frame;canvas.dataset.position=JSON.stringify({hero:pos,cat:catPos,route:path.length});canvas.dataset.progress=JSON.stringify(state);}
  }
  requestAnimationFrame(frame);
 }
