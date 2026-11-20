@@ -593,7 +593,7 @@ body.forest-mode .entrance-control{display:block}
  .workspace .duration-help{margin:3px 0;font-size:11px}
  .workspace .keyboard-panel{padding:6px;margin-top:4px}
  .workspace .carol-guide{font-size:12px;padding:5px;margin:0 0 4px;line-height:1.4}
- .workspace .carol-guide small{display:none}
+ .workspace .carol-guide small{display:block;font-size:11px;margin-top:3px}
  .workspace .piano-nav{margin:3px 0}
  .workspace .piano .key,.workspace .piano .key.tone{height:120px;min-height:120px}
  .workspace .piano .key small{font-size:10px}

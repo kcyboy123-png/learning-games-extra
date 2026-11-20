@@ -1,5 +1,5 @@
-import {connectClassroom,codeText,validCode,connectionMessage} from './classroom-api.mjs?v=20261120-review25b';
-import {firebaseConfig} from './classroom-config.mjs?v=20261120-review25b';
+import {connectClassroom,codeText,validCode,connectionMessage} from './classroom-api.mjs?v=20261120-guide26';
+import {firebaseConfig} from './classroom-config.mjs?v=20261120-guide26';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const button=(text,id,disabled=false,selected=null)=>`<button type="button" data-room="${id}" ${disabled?'disabled':''} ${selected===null?'':`aria-pressed="${selected}"`}>${text}</button>`;
 export function createClassroomUI({changed,getSong,play,stop,download,isPlaying,scoreView=()=>''}){
