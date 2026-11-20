@@ -637,3 +637,7 @@ body.forest-mode .entrance-control{display:block}
  .workspace .view-bar .group-switch{flex:1}
  .workspace .view-bar .group-btn{min-width:70px}
 }
+
+/* Recommendation stays distinct from the key's ivory shading and playback glow. */
+.workspace .piano .key.carol-tone{outline:3px solid #b98836;outline-offset:-4px}
+.workspace .piano .key.carol-tone:focus-visible{outline:3px solid #285ac3;outline-offset:2px}

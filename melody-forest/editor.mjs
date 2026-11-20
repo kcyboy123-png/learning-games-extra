@@ -1,5 +1,5 @@
-import { PITCHES, clone, used, isChordTone, chordAt, editableSong, partBars, firstPart, emptyBars, complete, songParts } from './core.mjs?v=20261120-guide28';
-import {instrumentById} from './instruments.mjs?v=20261120-guide28';
+import { PITCHES, clone, used, isChordTone, chordAt, editableSong, partBars, firstPart, emptyBars, complete, songParts } from './core.mjs?v=20261120-fix30';
+import {instrumentById} from './instruments.mjs?v=20261120-fix30';
 
 // Pure editing steps: every operation returns { song } or { error } and never mutates its input.
 export const LENGTHS = { 1: '반 박', 2: '1박', 3: '1.5박', 4: '2박', 8: '4박' };
@@ -40,6 +40,13 @@ export function redo(history, song) {
   if (!history.future.length) return null;
   history.past.push(clone(song));
   return history.future.pop();
+}
+
+// Keep undo/redo focused on a changed measure, including edits in another part.
+export function historyBar(before,after,instrument,currentBar){
+ const oldBars=partBars(before,instrument),newBars=partBars(after,instrument);
+ const changed=Array.from({length:8},(_,bar)=>bar).filter(bar=>!same(oldBars[bar],newBars[bar]));
+ return changed.includes(currentBar)?currentBar:changed[0]??null;
 }
 
 export function addNote(song, bar, pitch, ticks, instrument) {

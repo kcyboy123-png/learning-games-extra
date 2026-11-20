@@ -1,17 +1,17 @@
-import {renderWav} from './audio-export.mjs?v=20261120-guide28';
-import {carolGuide} from './carol-guide.mjs?v=20261120-guide28';
+import {renderWav} from './audio-export.mjs?v=20261120-fix30';
+import {carolGuide} from './carol-guide.mjs?v=20261120-fix30';
 import {playbackBeat} from './performance-motion.mjs';
 import {restGlyph,beamPairs} from './notation.mjs';
-import {createClassroomUI} from './classroom.mjs?v=20261120-guide28';
-import {readPresentations} from './presentation.mjs?v=20261120-guide28';
-import {PITCHES,PROGRESSIONS,makeSong,emptyBars,used,validateSong,isChordTone,chordAt,complete,hasNotes,clone,badges,editableSong,songForestMap,songParts,partBars,firstPart} from './core.mjs?v=20261120-guide28';
-import {LENGTHS,register,allowedPitches,createHistory,commit,undo,redo,addNote,setNoteTicks,setNotePitch,shiftNote,deleteNote,pasteBar,clearPart,toggleShaker,nextOpenBar,soloPart,completionTarget,repeatIntoEmpty,clearMeasure} from './editor.mjs?v=20261120-guide28';
-import {readLibrary,keepSong,openWork,isEmptySong,withLibraryLock,readDraft,createDraftSaver} from './library.mjs?v=20261120-guide28';
-import {INSTRUMENTS,instrumentById} from './instruments.mjs?v=20261120-guide28';
-import {Player} from './audio.mjs?v=20261120-guide28';
-import {createForestAmbience} from './forest-ambience.mjs?v=20261120-guide28';
-import {mountEntrance,openEntrance} from './entrance.mjs?v=20261120-guide28';
-import {forestReduce,forestView,webglAvailable,FOREST_MAPS,forestMapId,forestMapName,BLACK_KEY_STEPS} from './forest-state.mjs?v=20261120-guide28';
+import {createClassroomUI} from './classroom.mjs?v=20261120-fix30';
+import {readPresentations} from './presentation.mjs?v=20261120-fix30';
+import {PITCHES,PROGRESSIONS,makeSong,emptyBars,used,validateSong,isChordTone,chordAt,complete,hasNotes,clone,badges,editableSong,songForestMap,songParts,partBars,firstPart} from './core.mjs?v=20261120-fix30';
+import {LENGTHS,register,allowedPitches,createHistory,historyBar,commit,undo,redo,addNote,setNoteTicks,setNotePitch,shiftNote,deleteNote,pasteBar,clearPart,toggleShaker,nextOpenBar,soloPart,completionTarget,repeatIntoEmpty,clearMeasure} from './editor.mjs?v=20261120-fix30';
+import {readLibrary,keepSong,openWork,isEmptySong,withLibraryLock,readDraft,createDraftSaver} from './library.mjs?v=20261120-fix30';
+import {INSTRUMENTS,instrumentById} from './instruments.mjs?v=20261120-fix30';
+import {Player} from './audio.mjs?v=20261120-fix30';
+import {createForestAmbience} from './forest-ambience.mjs?v=20261120-fix30';
+import {mountEntrance,openEntrance} from './entrance.mjs?v=20261120-fix30';
+import {forestReduce,forestView,webglAvailable,FOREST_MAPS,forestMapId,forestMapName,BLACK_KEY_STEPS} from './forest-state.mjs?v=20261120-fix30';
 let forestQualityMode='auto';
 try{const saved=localStorage.getItem('piano-forest-quality');if(['auto','clear','smooth'].includes(saved))forestQualityMode=saved;}catch{}
 function qualityChoice(){return `<label>숲 화면 <select id="forest-quality">${[['auto','자동 · 기기에 맞게'],['clear','선명하게'],['smooth','부드럽게 · 화면 부담 줄이기']].map(([v,label])=>`<option value="${v}" ${forestQualityMode===v?'selected':''}>${label}</option>`).join('')}</select></label>`;}
@@ -146,7 +146,7 @@ function presentation(){return `${header()}<main class="library presentation"><d
 function exportDialog(format='json'){
  const returnAction=document.activeElement?.dataset.action;stop();render();
  const d=document.createElement('dialog'),controller=new AbortController();d.className='dialog';d.setAttribute('aria-labelledby','export-title');
- d.innerHTML='<form method="dialog"><h2 id="export-title">작품·음악 저장</h2><label>파일에 표시할 이름과 제목<input name="title" maxlength="80" required value="'+esc(song.title)+'" placeholder="예: 3반 12번 김하늘 - 햇살 노래"></label><label class="export-format">저장할 파일<select name="format"><option value="json">작품 파일 (JSON)</option><option value="wav">음악 파일 (WAV)</option></select></label><p>JSON은 피아노의 숲에서 열어요. WAV는 모든 악기와 선택한 반주를 소리로 저장해요. WAV로는 악보를 다시 편집할 수 없어요.</p><p role="status" aria-live="polite" data-export-status></p><div class="dialog-actions"><button type="submit" class="primary">파일 저장</button><button type="button" data-cancel>취소</button></div></form>';
+ d.innerHTML='<form method="dialog"><h2 id="export-title">작품·음악 저장</h2><label>내보낼 파일의 이름<input name="title" maxlength="80" required value="'+esc(song.title)+'" placeholder="예: 3반 12번 김하늘 - 햇살 노래"></label><label class="export-format">저장할 파일<select name="format"><option value="json">작품 파일 (JSON)</option><option value="wav">음악 파일 (WAV)</option></select></label><p>현재 작품의 제목과 음표는 바뀌지 않아요. JSON은 피아노의 숲에서 열어요. WAV는 모든 악기와 선택한 반주를 소리로 저장해요. WAV로는 악보를 다시 편집할 수 없어요.</p><p role="status" aria-live="polite" data-export-status></p><div class="dialog-actions"><button type="submit" class="primary">파일 저장</button><button type="button" data-cancel>취소</button></div></form>';
  d.querySelector('[name=format]').value=format;
  d.querySelector('[data-cancel]').onclick=()=>d.close();
  d.onclose=()=>{controller.abort();d.remove();const back=[...app.querySelectorAll('[data-action="'+returnAction+'"]')].find(e=>e.getClientRects().length&&!e.closest('details:not([open])'));(back||app.querySelector('.header-more summary'))?.focus({preventScroll:true});};
@@ -154,10 +154,10 @@ function exportDialog(format='json'){
   e.preventDefault();const field=d.querySelector('input'),name=field.value.trim(),submit=d.querySelector('[type=submit]'),format=d.querySelector('select'),status=d.querySelector('[data-export-status]');
   if(submit.disabled)return;
   if(!name){field.setCustomValidity('이름이나 제목을 적어 주세요.');field.reportValidity();return;}
-  change(()=>song.title=name);
-  if(format.value==='json'){download();d.close();return;}
+  const exported=clone(song);exported.title=name;
+  if(format.value==='json'){download(exported);d.close();return;}
   submit.disabled=true;format.disabled=true;field.disabled=true;status.textContent='합주 음악을 만들고 있어요… 잠시 기다려 주세요.';
-  try{const blob=await renderWav(song,controller.signal);if(!d.open)return;download(song,blob);d.close();}
+  try{const blob=await renderWav(exported,controller.signal);if(!d.open)return;download(exported,blob);d.close();}
   catch(error){if(!controller.signal.aborted){status.textContent=error.message;submit.disabled=false;format.disabled=false;field.disabled=false;}}
  };
  d.querySelector('input').oninput=e=>e.target.setCustomValidity('');document.body.append(d);d.showModal();d.querySelector('input').focus();
@@ -192,7 +192,7 @@ const forestBar=()=>`<div class="forest-bar">${mapChoice()}</div>${playing?`<div
 function forestSync(){ambienceSync();const v=forestView({phase:forestPhase,screen,playing,audible});if(listenWithScore)v.cinema=false;document.body.classList.toggle('forest-mode',v.visible);document.body.classList.toggle('forest-cinema',v.cinema);forest?.sync({quality:forestQualityMode,phase:forestPhase,visible:v.visible,cinema:v.cinema,avatar:forestAvatar||'girl',map:forestMap,parts:playing&&performanceOnly?[]:songParts(playing&&listening==='part'?song:performanceSong||song)});}
 function forestEvent(ev){if(ev==='map-loading'){toast('새 풍경을 준비하고 있어요…');return;}if(ev==='friends-unavailable'){toast('친구 그림을 불러오지 못했어요. 합주는 그대로 들을 수 있어요.');return;}const next=forestReduce(forestPhase,ev);if(ev==='fail'){forest?.dispose();forest=null;forestLoad=null;document.querySelector('#forest-host').replaceChildren();if(forestPhase)toast('3D 숲을 열지 못해 기본 악보로 작곡해요.');}if(next===forestPhase)return;forestPhase=next;if(next==='compose')welcomeChristmas=false;render();if(next==='compose'&&matchMedia('(max-width:600px)').matches)app.querySelector('.workspace')?.scrollIntoView({block:'start'});const f=next==='compose'?'.key:not(:disabled)':next==='arrive'?'.forest-look':'';if(f)app.querySelector(f)?.focus({preventScroll:true});}
 // Entering never touches the song: no new song, no save, no undo step. Without WebGL the plain editor opens instead.
-function openForest(){stop();screen='edit';selected=-1;view=matchMedia('(max-width:600px)').matches?'focus':'group';if(!webglAvailable()){forestPhase=null;render();toast('이 기기에서는 3D 숲을 열 수 없어 기본 악보로 작곡해요.');return;}forestPhase=forestReduce(forestPhase,'open');render();ambience.unlock();scrollTo(0,0);if(forest&&!forest.dead){forestEvent('ready');forestSync();return;}forestLoad??=import('./forest.mjs?v=20261120-guide28').then(m=>m.createForest(document.querySelector('#forest-host'),{onEvent:forestEvent,audioTime:()=>player.outputTime(),initialMap:forestMap}));const loading=forestLoad;loading.then(f=>{if(loading!==forestLoad)return f.dispose();forest=f;forestEvent('ready');forestSync();},()=>{if(loading===forestLoad)forestEvent('fail');});}
+function openForest(){stop();screen='edit';selected=-1;view=matchMedia('(max-width:600px)').matches?'focus':'group';if(!webglAvailable()){forestPhase=null;render();toast('이 기기에서는 3D 숲을 열 수 없어 기본 악보로 작곡해요.');return;}forestPhase=forestReduce(forestPhase,'open');render();ambience.unlock();scrollTo(0,0);if(forest&&!forest.dead){forestEvent('ready');forestSync();return;}forestLoad??=import('./forest.mjs?v=20261120-fix30').then(m=>m.createForest(document.querySelector('#forest-host'),{onEvent:forestEvent,audioTime:()=>player.outputTime(),initialMap:forestMap}));const loading=forestLoad;loading.then(f=>{if(loading!==forestLoad)return f.dispose();forest=f;forestEvent('ready');forestSync();},()=>{if(loading===forestLoad)forestEvent('fail');});}
 function render(){const details=app.querySelector('details.more');if(details)moreOpen=details.open;pianoObserver?.disconnect();pianoObserver=null;clearForestInput();forestMap=welcomeChristmas?'christmas':songForestMap(song);const offsets=Object.fromEntries(Array.from(app.querySelectorAll('[data-scroll]'),e=>[e.dataset.scroll,e.scrollLeft]));app.innerHTML=screen==='home'?home():screen==='finish'?finish():screen==='library'?library():screen==='presentation'?presentation():screen==='classroom'?header()+classroomUI.view():forestPhase&&forestPhase!=='compose'?forestIntro():editor();lastKey=null;app.querySelectorAll('[data-scroll]').forEach(e=>e.scrollLeft=offsets[e.dataset.scroll]||0);const active=app.querySelector('.workspace .bar-bg.active');if(active&&bar!==shownBar){shownBar=bar;const box=active.closest('.staff-scroll'),r=active.getBoundingClientRect(),o=box.getBoundingClientRect();if(r.left<o.left||r.right>o.right)box.scrollLeft+=r.left-o.left-8;}bind();saveNotice();mountEntrance(app,songForestMap(song),()=>{stop();render();});forestSync();}
 async function play(target=song,start=0,end=8,only=false){
  if(!only&&!(target.accompaniment??true)&&songParts(target).every(p=>p.bars.slice(start,end).every(b=>b.every(n=>n.pitch===null)))){toast('들을 음표가 아직 없어요. 건반을 눌러 음을 넣거나 반주 함께를 켜 주세요.');return;}
@@ -250,7 +250,7 @@ function action(a){if(a.startsWith('shake-')){if(activePart!=='shaker'||screen!=
  else if(a==='audition-note'){const n=current()[selected];if(n&&n.pitch!==null){stop();render();preview(n.pitch,n.ticks*30/song.bpm);}}
  else if(a==='add-rest')add(null);
  else if(a==='delete'&&selected>=0)apply(deleteNote(song,bar,selected,activePart),()=>selected=-1);
- else if(a==='undo'||a==='redo'){const entry=(a==='undo'?history.past:history.future).at(-1);if(entry){const next=(a==='undo'?undo:redo)(history,{song,part:entry.part});stop();song=next.song;activePart=next.part;selected=-1;save();render();}}
+ else if(a==='undo'||a==='redo'){const entry=(a==='undo'?history.past:history.future).at(-1);if(entry){const next=(a==='undo'?undo:redo)(history,{song,part:entry.part});stop();const changed=historyBar(song,next.song,next.part,bar);song=next.song;activePart=next.part;if(changed!==null)bar=changed;selected=-1;save();render();toast((changed===null?'변경을':`${partName()} ${bar+1}마디 변경을`)+(a==='undo'?' 되돌렸어요.':' 다시 적용했어요.'));}}
  else if(a==='repeat-empty'){const result=repeatIntoEmpty(song,activePart,bar);if(apply(result,()=>{bar=result.bar;selected=-1;}))toast(`${bar+1}마디에 이어 썼어요. 음을 바꾸어 새 가락을 만들어 보세요. 되돌리기도 할 수 있어요.`);}
  else if(a==='copy-bar'&&current().length){clip=clone(current());clipFrom=bar;clipRhythm=activePart==='shaker';render();toast(`${bar+1}마디를 복사했어요. 다른 마디를 고르고 붙여넣기를 눌러요.`);}
  else if(a==='paste-bar'&&clip){if(clipRhythm!==(activePart==='shaker')){toast('셰이커 박자는 셰이커 파트에 붙여 넣어 주세요.');return;}const result=pasteBar(song,bar,clip,activePart);if(result.error){toast(result.error);return;}if(current().length&&!confirm(`${bar+1}마디에 있는 음표를 ${clipFrom+1}마디 복사본으로 바꿀까요?`))return;if(apply(result,()=>selected=-1))toast(`${bar+1}마디에 붙여 넣었어요. ↶ 되돌리기로 취소할 수 있어요.`);}
