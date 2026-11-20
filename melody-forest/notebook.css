@@ -676,3 +676,9 @@ body.forest-mode .entrance-control{display:block}
 @media(max-width:600px){.workspace .piano-nav{margin:5px 0 2px;gap:5px}.workspace .piano-nav button{min-width:76px}.workspace .piano-hint{font-size:11px;line-height:1.6}.workspace .keyboard-edit-hint{font-size:12px;line-height:1.6}}
 /* Give the two four-measure ranges their own row on narrow screens. */
 @media(max-width:600px){.workspace[data-view=group] .view-bar .group-switch{flex:1 0 100%;width:100%;min-width:0}.workspace[data-view=group] .view-bar .group-btn{flex:1;min-width:0}}
+/* Keep the four-measure overview, with a separate touch-sized edit staff below it. */
+.mobile-detail{margin:10px 0;border:1px solid #b7c5ab;border-radius:10px;background:#fffef8;padding:10px 8px}
+.mobile-detail h3{margin:0 0 4px;font-size:15px;color:#31573e}
+.mobile-detail p{margin:0 0 6px;font-size:12px;line-height:1.5;color:#56664c}
+.workspace .mobile-detail .sheet.focus-sheet{min-width:480px;max-height:none;height:auto}
+.workspace .mobile-detail .focus-scroll{max-width:100%}

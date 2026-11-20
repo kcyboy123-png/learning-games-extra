@@ -4,12 +4,12 @@ import {forestQuality} from './forest-quality.mjs';
 import {pianoPressure} from './performance-motion.mjs';
 import {loadChristmasTree,loadChristmasLantern,loadChristmasArch,loadDistantChristmasTree} from './christmas-tree.mjs';
 import * as THREE from './lib/three.module.min.js';
-import {loadFriendArt,createForestFriends,companionSpace} from './forest-friends.mjs?v=20261120-fit43';
-import {loadGarden} from './forest-garden.mjs?v=20261120-fit43';
-import {pianoKey, WHITE_KEYS, BLACK_KEY_STEPS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs?v=20261120-fit43';
-import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261120-fit43';
-import {createStorybookChild,backingKey} from './forest-character.mjs?v=20261120-fit43';
-import {forestInput, forestStep, forestOrbit, forestRoute, forestLook, forestEye, forestTurnToward} from './forest-controls.mjs?v=20261120-fit43';
+import {loadFriendArt,createForestFriends,companionSpace} from './forest-friends.mjs?v=20261120-review45';
+import {loadGarden} from './forest-garden.mjs?v=20261120-review45';
+import {pianoKey, WHITE_KEYS, BLACK_KEY_STEPS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs?v=20261120-review45';
+import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261120-review45';
+import {createStorybookChild,backingKey} from './forest-character.mjs?v=20261120-review45';
+import {forestInput, forestStep, forestOrbit, forestRoute, forestLook, forestEye, forestTurnToward} from './forest-controls.mjs?v=20261120-review45';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z), C = h => new THREE.Color(h);
 // The full A0–C8 piano has 52 white keys; the existing C3–C6 animation occupies slots 16–37.
