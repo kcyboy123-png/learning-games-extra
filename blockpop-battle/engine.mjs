@@ -1,4 +1,5 @@
 export const W=10,H=24,TOP=4,TICK=50,DURATION=180000;
+export const ATTACK_DELAY=600;
 export const SHAPES=[
  [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
  [[1,1],[1,1]], [[0,1,0],[1,1,1],[0,0,0]],
@@ -72,9 +73,12 @@ export function progress(p,actions,dt,now){
  }else p.ground=0;
  return null;
 }
+export function readyAttack(p,now){const q=p.queue[0];return q&&q.due<=now?Math.min(4,q.n):0;}
 export function insert(p,now){
+ const limit=readyAttack(p,now);if(!limit)return 0;
+ // Land one attack packet together; queued volleys still require separate placements.
  let n=0;
- while(n<2&&p.queue[0]?.due<=now){const q=p.queue[0];
+ while(n<limit){const q=p.queue[0];
   if(p.board[0].some(Boolean))p.dead=true;
   p.board.shift();p.rows.shift();p.board.push(Array.from({length:W},(_,x)=>x===q.hole?0:8));p.rows.push(true);
   q.n--;n++;if(!q.n)p.queue.shift();
@@ -92,7 +96,7 @@ export function resolve(m,locks){
  });
  const shared=Math.min(...output);if(shared){output[0]-=shared;output[1]-=shared;emit(m,{type:'clash',n:shared});}
  output.forEach((n,i)=>{if(!n)return;const target=m.players[1-i],accepted=Math.min(n,8-queued(target));
-  if(accepted){target.queue.push({n:accepted,hole:Math.floor(m.rng()*W),due:m.time+3000,id:m.eid+1});m.players[i].sent+=accepted;emit(m,{type:'send',player:i,n:accepted,counter:!!locks[i]&&locks[i].lines>0&&m.events.some(e=>e.type==='lock'&&e.time===m.time&&e.player===i&&e.defended>0)});}
+  if(accepted){target.queue.push({n:accepted,hole:Math.floor(m.rng()*W),due:m.time+ATTACK_DELAY,id:m.eid+1});m.players[i].sent+=accepted;emit(m,{type:'send',player:i,n:accepted,counter:!!locks[i]&&locks[i].lines>0&&m.events.some(e=>e.type==='lock'&&e.time===m.time&&e.player===i&&e.defended>0)});}
  });
  locks.forEach((l,i)=>{if(!l)return;const p=m.players[i];if(!l.lines){const n=insert(p,m.time);if(n)emit(m,{type:'rise',player:i,n});}spawn(p);if(p.board.slice(0,TOP).some(r=>r.some(Boolean)))p.dead=true;});
 }

@@ -128,6 +128,10 @@ dialog .close{width:44px;min-height:44px;top:5px;right:6px}
 @keyframes comboStreak{0%{opacity:0;transform:scaleX(.15)}22%{opacity:1;transform:scaleX(.95)}50%{opacity:.25}70%{opacity:.85;transform:scaleX(1)}100%{opacity:0;transform:scaleX(1)}}
 .queue-box.attack-hit{animation:attackHit .34s ease-out}
 .board-shell.attack-hit::before{content:'';position:absolute;inset:0;border:4px solid transparent;border-radius:inherit;pointer-events:none;animation:attackRim .2s ease-out}
+.board-shell.attack-hit{animation:attackJolt .18s ease-out}
+.board-shell.attack-hit[data-attack-power="3"]::before,.board-shell.attack-hit[data-attack-power="4"]::before{border-width:5px;filter:drop-shadow(0 0 7px #ffd28b)}
+@keyframes attackJolt{0%,100%{transform:none}18%{transform:translateY(-3px)}42%{transform:translateY(2px)}68%{transform:translateY(-1px)}}
+.reduced .board-shell::before,.reduced .board-shell::after{animation:none!important}
 @keyframes attackRim{0%,100%{border-color:transparent}18%{border-color:#fff0ca}42%{border-color:#f4c77a}70%{border-color:#ffe5a177}}
 @keyframes comboStamp{0%{transform:translateX(-7px) scale(.72);filter:brightness(1.6)}22%{transform:translateX(2px) scale(1.08)}42%{transform:translateX(-2px) scale(.98)}61%{transform:translateX(1px) scale(1.04)}100%{transform:none;filter:none}}
 @keyframes comboDetail{0%,18%{opacity:0;transform:translateX(-8px)}100%{opacity:1;transform:none}}

@@ -1,9 +1,9 @@
-import {W,H,TOP,cells,ghost,matrix,landingRows} from './engine.mjs';
+import {W,H,TOP,cells,ghost,matrix,landingRows} from './engine.mjs?v=232';
 export const COLORS=['#54c5df','#f9d76c','#b990f1','#f69c57','#689ceb','#83cf80','#f07a70','#9fa9b3'];
 const backgrounds=new WeakMap(),gridPaths=[];
 const tileImages=new Map(),nextImages=new WeakMap(),boardImages=new WeakMap();
 const activeFlightCanvases=new WeakSet();
-export const FLIGHT_MS=400,FLIGHT_GAP=65,FLIGHT_FADE=260;
+export const FLIGHT_MS=200,FLIGHT_GAP=28,FLIGHT_FADE=180;
 export function flightDuration(n){return FLIGHT_MS+(Math.max(1,Math.min(4,n))-1)*FLIGHT_GAP+FLIGHT_FADE;}
 export function flightHits(age,n){return Math.max(0,Math.min(n,1+Math.floor((age-FLIGHT_MS)/FLIGHT_GAP)));}
 export function drawFlights(canvas,flights,now){
@@ -25,7 +25,7 @@ export function drawFlights(canvas,flights,now){
    const age=now-f.born-i*FLIGHT_GAP;if(age<0||age>FLIGHT_MS+FLIGHT_FADE)continue;
    const iy=ty+(i-(f.n-1)/2)*size*.85;
    if(age<FLIGHT_MS){
-    const u=age/FLIGHT_MS,p=.2*u+.8*u*u,cy=Math.min(box.height-size*.6,Math.max(sy,iy,queue.y+queue.h+size));
+    const u=age/FLIGHT_MS,p=.8*u+.2*u*u,cy=Math.min(box.height-size*.6,Math.max(sy,iy,queue.y+queue.h+size));
     const near=dir>0?Math.max(sx,queue.x-size):Math.min(sx,queue.x+queue.w+size),far=dir>0?Math.min(tx,queue.x+queue.w+size):Math.max(tx,queue.x-size);
     const first=Math.max(1,Math.abs(near-sx)+Math.abs(cy-sy)),middle=Math.max(1,Math.abs(far-near)),last=Math.max(1,Math.abs(tx-far)+Math.abs(iy-cy));
     const point=q=>{const d=q*(first+middle+last);

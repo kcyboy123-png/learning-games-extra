@@ -1,6 +1,6 @@
-import{match,step,snapshot,training,progress,resolve,queued,landingRows,attack,TICK,DURATION,W,H,TOP}from'./engine.mjs';
-import{drawBoard,drawNext,drawFlights,flightDuration,flightHits}from'./render.mjs';
-import{Sound}from'./audio.mjs';
+import{match,step,snapshot,training,progress,resolve,queued,readyAttack,landingRows,attack,TICK,DURATION,W,H,TOP}from'./engine.mjs?v=232';
+import{drawBoard,drawNext,drawFlights,flightDuration,flightHits}from'./render.mjs?v=232';
+import{Sound}from'./audio.mjs?v=232';
 import{RIVALS,accessible,completeStage,advanceSeries,createBot,rivalActions}from'./rivals.mjs';
 const shapeNames=['막대','네모','ㅗ 모양','ㄴ 모양','ㄱ 모양','계단 모양','반대 계단 모양'];
 const elements=new Map(),$=id=>{if(!elements.has(id))elements.set(id,document.getElementById(id));return elements.get(id);},sound=new Sound();
@@ -111,7 +111,12 @@ function events(game){
    else{sound.play('start');setText('actionHint',`공격 ${e.n}줄이 왔어. 줄을 지워 막아 봐!`);}
    launchAttack(e,game);
   }else if(e.type==='clash'){clashed+=e.n;setEvent(`${e.n}줄 서로 막기`,'두 공격이 만났어',true);sound.play('defend');}
-  else if(e.type==='rise'){if(e.player===state.slot){sound.play('rise');setEvent(`${e.n}줄 올라왔어`,'빈칸을 채우면 지울 수 있어');}recoil(e.player===state.slot?$('myShell'):$('otherShell'),3);}
+  else if(e.type==='rise'){
+   sound.play('rise',e.n,e.n);
+   const shell=$(e.player===state.slot?'myShell':'otherShell');shell.dataset.attackPower=e.n;animate(shell,'attack-hit');recoil(shell,2+e.n);
+   if(e.player===state.slot)setEvent(`${e.n}줄 올라왔어`,'빈칸을 채우면 지울 수 있어');
+   else setEvent(`공격 ${e.n}줄 적중!`,'상대 블록이 올라갔어');
+  }
  }
  if(ownClear){const e=ownClear,sub=e.defended?(ownSent?`${e.defended}줄 막고 ${ownSent}줄 반격`:`${e.defended}줄 방어 성공`):ownSent?`공격 ${ownSent}줄 보냈어`:clashed?`${clashed}줄 서로 막았어`:e.newBest&&e.combo>=4?'내 최고 콤보 기록!':e.normal===0?'회색 줄 정리 · 득점은 그대로':`${e.lines}줄을 함께 지웠어`;setEvent(e.resumed?`${e.combo}콤보 연결!`:e.combo>=2?`${e.combo}콤보!`:'한 줄 완성!',sub,!!e.defended);}
 }
@@ -129,13 +134,13 @@ function update(){
  if(!state.stageDone&&p.combo&&!rows.length)hint=p.comboMisses===2?'이번 블록으로 줄을 지워 이어 봐!':p.comboMisses===1?'한 블록 더 놓아도 콤보 유지!':'줄 안 지워도 2블록까지 유지!';
  if(state.mode==='training'&&state.stage===3&&!state.stageDone&&p.hold===null)hint='막대는 잠깐 저장! 보관함을 눌러 봐.';
  const q=queued(p),due=p.queue.filter(x=>x.due<=g.time).reduce((n,x)=>n+x.n,0);const count=$('myQueueCount').firstChild;if(count.data!==String(q))count.data=q;setText('otherQueueCount',queued(other));const dots=$('myQueue');if(dots.children.length!==8)dots.replaceChildren(...Array.from({length:8},()=>document.createElement('i')));for(let i=0;i<8;i++){const name=i<q?'on'+(i<due?' due':''):'';if(dots.children[i].className!==name)dots.children[i].className=name;}
- const ready=due>0;
- if(!state.stageDone&&ready&&!rows.length)hint=`줄을 못 지우면 ${Math.min(2,due)}줄 올라와!`;
+ const rising=readyAttack(p,g.time),ready=rising>0;
+ if(!state.stageDone&&ready&&!rows.length)hint=`줄을 못 지우면 ${rising}줄 올라와!`;
  if(state.mode==='training'&&state.stage===2&&!state.stageDone&&rows.length)hint='내려놓으면 공격을 막아!';
  setText('actionHint',hint);
  $('myQueueBox').dataset.phase=q?(ready?'ready':'waiting'):'empty';
  const willBlock=rows.length?Math.min(q,Math.max(rows.length,attack(rows.length,p.combo+rows.length))):0;
- setText('queueHint',willBlock?`이번에 ${willBlock}줄 방어!`:q?(ready?`못 지우면 ${Math.min(2,due)}줄 올라와`:'줄을 지우면 막아!'):'오는 공격 없음');
+ setText('queueHint',willBlock?`이번에 ${willBlock}줄 방어!`:q?(ready?`못 지우면 ${rising}줄 올라와`:'줄을 지우면 막아!'):'오는 공격 없음');
  $('myQueueBox').setAttribute('aria-label',q?`오는 공격 ${q}줄. 줄을 지우면 막을 수 있어요.`:'오는 공격 없음');
 
  const left=Math.max(0,Math.ceil((DURATION-g.time)/1000));setText('timer',state.mode==='training'?'천천히':`${String(Math.floor(left/60)).padStart(2,'0')}:${String(left%60).padStart(2,'0')}`);
@@ -239,7 +244,7 @@ function frame(){const g=state.game,now=performance.now();if(g&&state.mode!=='ho
  state.effects=state.effects.map(es=>es.filter(e=>now-e.born<850));drawBoard($('myBoard'),g.players[state.slot],state.effects[state.slot],now,state.reduced);drawBoard($('otherBoard'),g.players[1-state.slot],state.effects[1-state.slot],now,state.reduced);
  if(state.reduced||state.paused)state.flights=[];
  state.flights=state.flights.filter(f=>now-f.born<flightDuration(f.n));
- for(const f of state.flights){const hits=flightHits(now-f.born,f.n);if(hits>f.hits){animate($(f.own?'otherShell':'myShell'),'attack-hit');if(!f.hit){if(f.own)sound.play('hit',f.n,f.n);else animate($('myQueueBox'),'attack-hit');}f.hit=true;f.hits=hits;}}
+ for(const f of state.flights){const hits=flightHits(now-f.born,f.n);if(hits>f.hits){const shell=$(f.own?'otherShell':'myShell');shell.dataset.attackPower=f.n;animate(shell,'attack-hit');if(!f.hit){sound.play('hit',f.n,f.n);if(!f.own)animate($('myQueueBox'),'attack-hit');}f.hit=true;f.hits=hits;}}
  }drawFlights($('battleEffects'),state.flights,now);requestAnimationFrame(frame);}requestAnimationFrame(frame);
 function pause(){stopInput();state.paused=true;open('pauseDialog');setText('pauseTitle','잠깐 쉬어 가자');setText('pauseText',state.mode==='challenge'?`현재 ${state.series.wins[0]} : ${state.series.wins[1]}. 계속하기를 누르면 이어서 해요. 목록으로 나가면 이번 대결은 0 : 0부터 다시 시작해요.`:'준비되면 이어서 할 수 있어.');setText('leaveButton',state.mode==='challenge'?'대결 끝내고 목록':'라이벌 목록');$('resumeButton').disabled=false;setText('resumeButton','계속하기');update();}
 function showResult(){

@@ -1,6 +1,6 @@
 export function synth(kind,combo=1,rate=44100,lines=1){
- const durations={land:.12,clear:.62,defend:.36,send:.32,rise:.3,win:.7,start:.24,rotate:.07};
- const level=Math.min(4,Math.max(1,lines)),duration=kind==='clear'?.36+level*.095:kind==='hit'?.2+(level-1)*.065:durations[kind]||.16,n=Math.ceil(rate*duration),out=new Float32Array(n);
+ const durations={land:.12,clear:.62,defend:.36,send:.13,rise:.26,win:.7,start:.24,rotate:.07};
+ const level=Math.min(4,Math.max(1,lines)),duration=kind==='clear'?.36+level*.095:kind==='hit'?.16+(level-1)*.028:durations[kind]||.16,n=Math.ceil(rate*duration),out=new Float32Array(n);
  const notes=[523.25,587.33,659.25,783.99,880,1046.5],freq=notes[Math.min(5,Math.max(0,combo-1))];let seed=731;
  for(let i=0;i<n;i++){
   const t=i/rate,attack=Math.min(1,t/.006),end=Math.min(1,(duration-t)/.025);seed=(Math.imul(seed,1664525)+1013904223)>>>0;const noise=seed/2147483648-1;
@@ -16,9 +16,9 @@ export function synth(kind,combo=1,rate=44100,lines=1){
    if(combo>=6){const d=t-.14;if(d>0)value+=.4*Math.sin(2*Math.PI*freq*2*d)*Math.min(1,d/.015)*Math.exp(-d*9);}
   }
   else if(kind==='defend')value=(Math.sin(2*Math.PI*1174.66*t)*.65+Math.sin(2*Math.PI*783.99*t)*.4)*Math.exp(-t*17);
-  else if(kind==='send')value=(noise*.25+Math.sin(2*Math.PI*(450*t+1100*t*t))*.25)*Math.sin(Math.PI*t/duration);
-  else if(kind==='hit'){for(let hit=0;hit<level;hit++){const d=t-hit*.065;if(d>=0)value+=(Math.sin(2*Math.PI*(105*d+1.4*(1-Math.exp(-35*d))))*.8+noise*.24)*Math.min(1,d/.004)*Math.exp(-d*35);}}
-  else if(kind==='rise')value=(Math.sin(2*Math.PI*145*t)*.7+noise*.08)*Math.exp(-t*23);
+  else if(kind==='send')value=(noise*.4+Math.sin(2*Math.PI*(620*t+2200*t*t))*.35)*Math.exp(-t*28);
+  else if(kind==='hit'){for(let hit=0;hit<level;hit++){const d=t-hit*.028;if(d>=0)value+=(Math.sin(2*Math.PI*(90*d+1.6*(1-Math.exp(-45*d))))*.95+noise*.38)*Math.min(1,d/.003)*Math.exp(-d*42);}}
+  else if(kind==='rise')value=(Math.sin(2*Math.PI*((92-level*6)*t+1.8*(1-Math.exp(-32*t))))*(.7+level*.15)+noise*.22)*Math.exp(-t*24);
   else if(kind==='win'){for(let j=0;j<3;j++){const d=t-j*.12;if(d>=0)value+=.5*Math.sin(2*Math.PI*[523.25,659.25,783.99][j]*d)*Math.exp(-d*8);}}
   else value=Math.sin(2*Math.PI*523.25*t)*Math.exp(-t*15)*.6;
   out[i]=Math.tanh(value*1.5)*attack*end*.28;
