@@ -1,5 +1,5 @@
-import * as T from './vendor/three.module.js';
-import {loadTexture} from './art-assets.mjs';
+import * as T from './vendor/three.module.js?v=20261120-quality6';
+import {loadTexture} from './art-assets.mjs?v=20261120-quality6';
 const mat=(c,extra={})=>new T.MeshStandardMaterial({color:c,roughness:.86,...extra});
 function mesh(g,m,s,x=0,y=0,z=0){const o=new T.Mesh(g,m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;s.add(o);return o;}
 function box(s,w,h,d,x,y,z,c){return mesh(new T.BoxGeometry(w,h,d),mat(c),s,x,y,z);}

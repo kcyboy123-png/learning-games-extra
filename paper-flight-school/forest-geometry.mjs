@@ -1,5 +1,5 @@
 // Reused from the user's forest-full-15min art.mjs; original tree and curved leaf geometry.
-import * as T from './vendor/three.module.js';
+import * as T from './vendor/three.module.js?v=20261120-quality6';
 export function woodlandTree(variant=0){
   const positions=[],normals=[],uv=[],crowns=[];
   const trunk=new T.CatmullRomCurve3([[0,0,0],[.32-variant*.48,2,.12+variant*.18],[-.85+variant*.82,5,.55-variant*.25],[.65-variant*.72,7.4,-.36],[.3+variant*.35,10,.55]].map(p=>new T.Vector3(...p)));

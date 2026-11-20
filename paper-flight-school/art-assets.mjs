@@ -1,8 +1,16 @@
-import * as T from './vendor/three.module.js';
-import {woodlandTree,foliageGeometry} from './forest-geometry.mjs';
+import * as T from './vendor/three.module.js?v=20261120-quality6';
+import {woodlandTree,foliageGeometry} from './forest-geometry.mjs?v=20261120-quality6';
+import {refineOak} from './premium-art.mjs?v=20261120-quality6';
+import {readAsset} from './asset-load.mjs?v=20261120-quality6';
 
 const base=new URL('./assets/reused/',import.meta.url),loader=new T.TextureLoader();
 export const artStatus={loaded:[],failed:[]};
+const crowdTime={value:0},crowdMotion={value:0},crowdArrival={value:0};
+export function updateCrowd(time,phase,reduced,settle=1,venue='school'){
+ const response=venue==='world'?1.12:venue==='city'?.9:1;
+ crowdTime.value=time;crowdMotion.value=(reduced?0:phase==='flying'?Math.min(1,time/.25):phase==='result'?1-settle:0)*response;
+ crowdArrival.value=!reduced&&phase==='result'?Math.sin(Math.PI*settle)*.065*response:0;
+}
 export const artMaterial=(color,extra={})=>new T.MeshStandardMaterial({color,roughness:.78,envMapIntensity:.22,...extra});
 export function addMesh(parent,geometry,material,x=0,y=0,z=0){const o=new T.Mesh(geometry,material);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;parent.add(o);return o;}
 export function instances(parent,geometry,material,items){
@@ -14,7 +22,7 @@ export function loadTexture(name,onChange,{repeat=[1,1],linear=false}={}){
  const t=loader.load(new URL(name,base).href,()=>{artStatus.loaded.push(name);onChange();},undefined,()=>{artStatus.failed.push(name);onChange();});
  t.colorSpace=linear?T.NoColorSpace:T.SRGBColorSpace;t.wrapS=t.wrapT=T.RepeatWrapping;t.repeat.set(...repeat);t.anisotropy=8;return t;
 }
-export function oak(onChange,repeat=[2,2]){const map=loadTexture('bridge-wood.webp',onChange,{repeat});return artMaterial(0xf1dcc1,{map,bumpMap:map,bumpScale:.001,roughness:.52});}
+export function oak(onChange,repeat=[2,2]){const map=loadTexture('bridge-wood.webp',onChange,{repeat});return refineOak(artMaterial(0xf1dcc1,{map,bumpMap:map,bumpScale:.001,roughness:.52}),onChange,repeat);}
 
 export function gardenTrees(parent,onChange){
  const leaves=loadTexture('forest-foliage-v2.png',onChange),bark=loadTexture('woodland-bark.webp',onChange),normal=loadTexture('woodland-bark-normal.webp',onChange,{linear:true}),rough=loadTexture('woodland-bark-rough.webp',onChange,{linear:true});
@@ -36,8 +44,7 @@ export function gardenTrees(parent,onChange){
 const spectatorAssets=new Map();
 async function spectator(id,onChange){
  if(!spectatorAssets.has(id))spectatorAssets.set(id,(async()=>{
-  const response=await fetch(new URL('../crowd/'+id+'.bin',base),{signal:AbortSignal.timeout(12000)});if(!response.ok)throw Error('Spectator mesh '+id);
-  const buffer=await response.arrayBuffer();if(buffer.byteLength<8)throw Error('Truncated spectator');const h=new DataView(buffer),n=h.getUint32(0,true),count=h.getUint32(4,true);
+  const buffer=await readAsset(new URL('../crowd/'+id+'.bin',base),'arrayBuffer',12000);if(buffer.byteLength<8)throw Error('Truncated spectator');const h=new DataView(buffer),n=h.getUint32(0,true),count=h.getUint32(4,true);
   if(n>60000||count>180000||buffer.byteLength!==8+n*36+count*4)throw Error('Invalid spectator layout');
   const geo=new T.BufferGeometry();let offset=8;
   for(const [key,size] of [['position',3],['normal',3],['uv',2],['clothMask',1]]){geo.setAttribute(key,new T.BufferAttribute(new Float32Array(buffer,offset,n*size),size));offset+=n*size*4;}
@@ -45,7 +52,25 @@ async function spectator(id,onChange){
   const map=await loader.loadAsync(new URL('../crowd/'+id+'.webp',base).href);map.colorSpace=T.SRGBColorSpace;map.anisotropy=4;
   const mat=artMaterial(0xfff8ef,{map,roughness:.86});
   mat.onBeforeCompile=shader=>{shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nattribute float clothMask; varying float vCloth; varying vec3 vOutfit;').replace('#include <color_vertex>','#include <color_vertex>\nvCloth=clothMask; vOutfit=instanceColor;');shader.fragmentShader=shader.fragmentShader.replace('#include <common>','#include <common>\nvarying float vCloth; varying vec3 vOutfit;').replace('#include <color_fragment>','float clothLight=dot(diffuseColor.rgb,vec3(.2126,.7152,.0722)); diffuseColor.rgb=mix(diffuseColor.rgb,vOutfit*(.24+clothLight*1.6),clamp(vCloth,0.,1.)*.94);');};mat.customProgramCacheKey=()=> 'spectator-clothes-v2';
-  artStatus.loaded.push('crowd/'+id);return {geo,mat};
+  geo.computeBoundingBox();const bounds=geo.boundingBox,height=bounds.max.y-bounds.min.y,neck=bounds.min.y+height*.78,center=bounds.getCenter(new T.Vector3());
+  const patchMotion=shader=>{
+    shader.uniforms.crowdTime=crowdTime;shader.uniforms.crowdMotion=crowdMotion;shader.uniforms.crowdArrival=crowdArrival;
+    shader.vertexShader=shader.vertexShader.replace('#include <common>',`#include <common>
+      uniform float crowdTime;uniform float crowdMotion;uniform float crowdArrival;
+      float arrivalNod(vec3 p){return crowdArrival*(.5+.5*fract(instanceMatrix[3].z*.731))*step(abs(instanceMatrix[3].x),10.)*step(instanceMatrix[3].z,20.)*step(4.,instanceMatrix[3].z)*smoothstep(${neck.toFixed(6)},${(neck+height*.08).toFixed(6)},p.y);}
+      float headTurn(vec3 p){float nearSeat=step(abs(instanceMatrix[3].x),10.)*step(instanceMatrix[3].z,20.)*step(4.,instanceMatrix[3].z);
+      float seed=instanceMatrix[3].z*1.71+instanceMatrix[3].x*2.13;
+      return sin(crowdTime*(1.05+fract(seed)*.4)+seed)*.13*crowdMotion*nearSeat*smoothstep(${neck.toFixed(6)},${(neck+height*.08).toFixed(6)},p.y);}
+      vec2 turn(vec2 p,float a){return mat2(cos(a),-sin(a),sin(a),cos(a))*p;}
+    `).replace('#include <beginnormal_vertex>','#include <beginnormal_vertex>\nobjectNormal.xz=turn(objectNormal.xz,headTurn(position));objectNormal.yz=turn(objectNormal.yz,arrivalNod(position));')
+    .replace('#include <begin_vertex>',`#include <begin_vertex>
+      transformed.xz=turn(transformed.xz-vec2(${center.x.toFixed(6)},${center.z.toFixed(6)}),headTurn(position))+vec2(${center.x.toFixed(6)},${center.z.toFixed(6)});
+      transformed.yz=turn(transformed.yz-vec2(${neck.toFixed(6)},${center.z.toFixed(6)}),arrivalNod(position))+vec2(${neck.toFixed(6)},${center.z.toFixed(6)});
+    `);
+  };
+  const clothes=mat.onBeforeCompile;mat.onBeforeCompile=shader=>{clothes(shader);patchMotion(shader);};mat.customProgramCacheKey=()=> 'spectator-clothes-motion-'+id;
+  const depth=new T.MeshDepthMaterial({depthPacking:T.RGBADepthPacking});depth.onBeforeCompile=patchMotion;depth.customProgramCacheKey=()=> 'spectator-motion-depth-'+id;
+  artStatus.loaded.push('crowd/'+id);return {geo,mat,depth};
  })().catch(error=>{artStatus.failed.push(id+'-seated.bin');return null;}));
  const asset=await spectatorAssets.get(id);onChange();return asset;
 }
@@ -54,7 +79,7 @@ export async function spectators(parent,places,onChange){
  await Promise.all(roster.map(async(id,index)=>{
   const asset=await spectator(id,onChange);if(!asset)return;
   const items=places.filter((_,i)=>(i*5+Math.floor(i/7))%roster.length===index).map((p,i)=>{const h=(id.startsWith('teacher')?.93:.91)+(i%4)*.045;return {p:[p.x,p.y,p.z],r:[0,p.yaw+.19*Math.sin(i*7+index),.025*Math.sin(i*3)],s:[h*(.92+(i%3)*.06),h,h],c:coats[(i*3+index)%coats.length]};});
-  if(items.length)instances(parent,asset.geo,asset.mat,items);
+  if(items.length)instances(parent,asset.geo,asset.mat,items).customDepthMaterial=asset.depth;
  }));onChange();
 }
 
@@ -62,7 +87,7 @@ const plantAssets=new Map();
 export async function plantedBorders(parent,beds,onChange){
  await Promise.all(['liriope','daisy','hydrangea'].map(async(kind,k)=>{
   if(!plantAssets.has(kind))plantAssets.set(kind,(async()=>{
-   const r=await fetch(new URL('landscape-'+kind+'.json',base),{signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('Plant mesh');const data=await r.json();
+   const data=await readAsset(new URL('landscape-'+kind+'.json',base),'json',10000);
    if(!data.position?.length||data.position.length>36000||data.normal?.length!==data.position.length||data.color?.length!==data.position.length)throw Error('Invalid plant geometry');
    const g=new T.BufferGeometry();for(const key of ['position','normal','color'])g.setAttribute(key,new T.Float32BufferAttribute(data[key],3));g.computeBoundingSphere();return g;
   })().catch(()=>{artStatus.failed.push('landscape-'+kind);return null;}));

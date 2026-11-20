@@ -1,8 +1,9 @@
-import * as T from './vendor/three.module.js';
-import {geometry,axes,poseAxes,sampleFlight,windAt,RAD} from './physics.mjs';
-import {studioDetails} from './scenery.mjs';
-import {gardenTrees,lawn,oak,artStatus,distantLandscape} from './art-assets.mjs';
-import {createVenues,workshopPrize,schoolArchitecture} from './venues.mjs';
+import * as T from './vendor/three.module.js?v=20261120-quality6';
+import {geometry,axes,poseAxes,sampleFlight,windAt,RAD} from './physics.mjs?v=20261120-quality6';
+import {studioDetails} from './scenery.mjs?v=20261120-quality6';
+import {gardenTrees,lawn,oak,artStatus,distantLandscape,updateCrowd} from './art-assets.mjs?v=20261120-quality6';
+import {createVenue,workshopPrize,schoolArchitecture} from './venues.mjs?v=20261120-quality6';
+import {refinePaper,placeTrophy,premiumStatus} from './premium-art.mjs?v=20261120-quality6';
 const color={paper:0xfffdf6,ink:0x4d483f,blue:0x208dcc};
 function material(c,extra={}){return new T.MeshStandardMaterial({color:c,roughness:.85,envMapIntensity:.22,...extra});}
 function mesh(geo,mat,parent,x=0,y=0,z=0){const m=new T.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
@@ -15,7 +16,7 @@ function textSprite(text,fg='#475657',bg=null){
 }
 export class FlightScene {
   constructor(host,onFail){
-    this.host=host;this.onFail=onFail;this.mode='workshop';this.viewRotation=.18;this.artStatus=artStatus;
+    this.host=host;this.onFail=onFail;this.mode='workshop';this.viewRotation=.18;this.artStatus=artStatus;this.premiumStatus=premiumStatus;
     this.artChanged=()=>{this.needsDraw=true;this.windowDirty=true;};
     this.renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
     this.renderer.setPixelRatio(Math.min(devicePixelRatio,2));this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=T.PCFSoftShadowMap;
@@ -24,19 +25,19 @@ export class FlightScene {
     this.renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();onFail('3D 화면 연결이 끊겼어요. 기록은 보관했어요. 새로고침해 주세요.');});
     host.append(this.renderer.domElement);this.camera=new T.PerspectiveCamera(42,1,.015,250);
     this.workshop=this.makeWorkshop();this.world=this.makeWorld();this.world.scale.x=-1;this.plane=new T.Group();this.workshop.add(this.plane);
-    this.windowTarget=new T.WebGLRenderTarget(1536,576);this.windowScreen.material.map=this.windowTarget.texture;this.paper=paperTexture();this.resize=new ResizeObserver(()=>this.resizeToHost());this.resize.observe(host);this.resizeToHost();this.makeReflections();
+    this.windowTarget=new T.WebGLRenderTarget(1536,576);this.windowScreen.material.map=this.windowTarget.texture;this.paper=paperTexture();refinePaper(this.paper,this.artChanged);this.resize=new ResizeObserver(()=>this.resizeToHost());this.resize.observe(host);this.resizeToHost();this.makeReflections();
   }
   makeReflections(){
     const environment=new T.Scene();environment.background=new T.Color(0xb8d0de);
     const room=new T.Mesh(new T.BoxGeometry(12,10,12),new T.MeshBasicMaterial({color:0xd2c5ac,side:T.BackSide}));environment.add(room);
     for(const [x,y,z,w,h,c] of [[-5,2,0,3,6,0xfffff4],[4,3,-5,5,4,0xdceeff],[0,4.9,0,6,4,0xffffff]]){const m=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({color:c}));m.position.set(x,y,z);m.lookAt(0,0,0);environment.add(m);}
-    const pmrem=new T.PMREMGenerator(this.renderer);this.reflection=pmrem.fromScene(environment,.08);this.workshop.environment=this.world.environment=this.reflection.texture;pmrem.dispose();environment.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});
+    const pmrem=new T.PMREMGenerator(this.renderer);this.reflection=pmrem.fromScene(environment,.04);this.workshop.environment=this.world.environment=this.reflection.texture;pmrem.dispose();environment.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});
   }
   light(scene,world=false){
-    const hemisphere=new T.HemisphereLight(0xe4f3ff,0x77785d,.88);scene.add(hemisphere);
-    const sun=new T.DirectionalLight(0xffefd2,2.05);sun.position.set(world?-12:-.6,world?25:1.2,world?-8:.2);sun.castShadow=true;
+    const hemisphere=new T.HemisphereLight(0xe4f3ff,0x77785d,world?.88:1.05);scene.add(hemisphere);
+    const sun=new T.DirectionalLight(0xffefd2,world?2.05:1.55);sun.position.set(world?-12:-.6,world?25:1.2,world?-8:.2);sun.castShadow=true;
     const e=world?35:.8;Object.assign(sun.shadow.camera,{left:-e,right:e,top:e,bottom:-e,near:.01,far:world?100:5});sun.shadow.mapSize.set(world?3072:2048,world?3072:2048);sun.shadow.radius=2;sun.shadow.normalBias=world?.012:.0006;sun.shadow.bias=-.00002;scene.add(sun);
-    const fill=new T.DirectionalLight(0xbfdff5,.6);fill.position.set(3,5,6);scene.add(fill);if(world)this.venueLights={sun,fill,hemisphere};
+    const fill=new T.DirectionalLight(0xbfdff5,.6);fill.position.set(3,5,6);scene.add(fill);if(world){const rim=new T.DirectionalLight(0xffe9ca,.24);rim.position.set(14,12,16);scene.add(rim);this.venueLights={sun,fill,hemisphere,rim};}
   }
   makeWorkshop(){
     const s=new T.Scene();s.background=new T.Color(0xeee9dd);this.light(s);
@@ -48,23 +49,23 @@ export class FlightScene {
     box(s,.99,.018,.035,-.1,.20,-.62,0xf8f6ed);
     box(s,1,.025,.09,-.1,.01,-.61,0xf3eee2);
     box(s,.22,.018,.29,-.38,-.047,-.31,0x6c8e95);box(s,.20,.012,.27,-.38,-.032,-.31,0xf3eee1);
-    const cup=mesh(new T.CylinderGeometry(.036,.031,.09,24),material(0xd6c9af),s,.26,-.015,-.4);
-    for(let i=0;i<4;i++){const pencil=box(s,.006,.17,.006,.245+i*.01,.06,-.4,0xb59765);pencil.rotation.z=(i-1.5)*.10;}
+    const cup=mesh(new T.CylinderGeometry(.036,.031,.09,24),material(0xd6c9af),s,.38,-.015,-.4);
+    for(let i=0;i<4;i++){const pencil=box(s,.006,.17,.006,.365+i*.01,.06,-.4,0xb59765);pencil.rotation.z=(i-1.5)*.10;}
     const ruler=box(s,.025,.002,.30,.27,-.057,.12,0xeedfc3);
     const ticks=canvasTexture(96,1024,(c,w,h)=>{c.fillStyle='#dfca9f';c.fillRect(0,0,w,h);c.strokeStyle='#8d7752';for(let i=0;i<=60;i++){c.beginPath();c.moveTo(0,i*h/60);c.lineTo(i%5===0?45:24,i*h/60);c.stroke();}c.fillStyle='#6c5942';c.font='24px sans-serif';for(let i=1;i<12;i++)c.fillText(String(i),53,i*h/12+8);});
     const rulerTop=mesh(new T.PlaneGeometry(.025,.30),material(0xffffff,{map:ticks}),s,.27,-.0558,.12);rulerTop.rotation.x=-Math.PI/2;
-    studioDetails(s,this.artChanged);workshopPrize(s);
+    studioDetails(s,this.artChanged);const oldPrize=workshopPrize(s);placeTrophy(s,this.artChanged,{height:.145,position:[.23,-.059,-.33],yaw:.65,fallback:oldPrize});
     const contactMap=canvasTexture(256,256,c=>{const g=c.createRadialGradient(128,128,15,128,128,124);g.addColorStop(0,'rgba(32,45,30,.24)');g.addColorStop(.5,'rgba(32,45,30,.10)');g.addColorStop(1,'rgba(32,45,30,0)');c.fillStyle=g;c.fillRect(0,0,256,256);});
-    this.paperContact=mesh(new T.PlaneGeometry(.20,.32),new T.MeshBasicMaterial({map:contactMap,transparent:true,depthWrite:false}),s,0,-.0561,0);this.paperContact.rotation.x=-Math.PI/2;this.paperContact.castShadow=false;return s;
+    this.paperContact=mesh(new T.PlaneGeometry(.24,.34),new T.MeshBasicMaterial({map:contactMap,transparent:true,depthWrite:false}),s,0,-.0561,0);this.paperContact.rotation.x=-Math.PI/2;this.paperContact.castShadow=false;return s;
   }
   makeWorld(){
     const s=new T.Scene();s.background=new T.Color(0xc5e0e8);s.fog=new T.Fog(0xc5e0e8,60,150);this.light(s,true);
     const ground=mesh(new T.PlaneGeometry(200,200),material(0x80966a),s,0,-.006,30);ground.rotation.x=-Math.PI/2;
-    this.fieldSurface=new T.Group();s.add(this.fieldSurface);lawn(this.fieldSurface,this.artChanged);
+    this.fieldSurface=new T.Group();s.add(this.fieldSurface);
     for(let z=-4;z<70;z+=5){const stripe=mesh(new T.PlaneGeometry(25,2.5),material(0xffffff,{transparent:true,opacity:.035,depthWrite:false}),this.fieldSurface,0,.004,z);stripe.rotation.x=-Math.PI/2;}
     for(const x of [-3.5,3.5]){const sideline=mesh(new T.PlaneGeometry(.055,44),material(0xf1ead7),this.fieldSurface,x,.008,18);sideline.rotation.x=-Math.PI/2;}
     box(s,3,.04,85,-14,0,27,0xdccfb7);box(s,3,.04,85,14,0,27,0xdccfb7);
-    this.schoolBuilding=new T.Group();schoolArchitecture(this.schoolBuilding);s.add(this.schoolBuilding);this.parkSurroundings=new T.Group();s.add(this.parkSurroundings);gardenTrees(this.parkSurroundings,this.artChanged);this.landscape=new T.Group();s.add(this.landscape);distantLandscape(this.landscape,this.artChanged);this.venues=createVenues(this.artChanged);for(const venue of Object.values(this.venues))s.add(venue);
+    this.schoolBuilding=new T.Group();s.add(this.schoolBuilding);this.parkSurroundings=new T.Group();s.add(this.parkSurroundings);this.landscape=new T.Group();s.add(this.landscape);this.venues={};
     for(const side of [-1,1])for(const z of [6,18,30]){
       box(s,1.8,.11,.55,side*12.5,.5,z,0xab8154);box(s,1.8,.45,.09,side*12.5,.82,z+.26,0xb78f60);
       for(const x of [-.65,.65])box(s,.07,.5,.43,side*12.5+x,.25,z,0x5c625b);
@@ -84,8 +85,12 @@ export class FlightScene {
     this.windSock.position.set(-4,0,3);s.add(this.windSock);return s;
   }
   setVenue(id){
-    if(this.venue===id)return;this.venue=id;for(const [key,g] of Object.entries(this.venues))g.visible=key===id;this.schoolBuilding.visible=id==='school';this.parkSurroundings.visible=id!=='world';this.landscape.visible=id==='school';this.fieldSurface.visible=id==='school';this.world.background.set(id==='world'?0xaacbdc:0xc5e0e8);
-    const {sun,fill,hemisphere}=this.venueLights;
+    if(this.venue===id)return;
+    if(!this.venues[id]){this.venues[id]=createVenue(id,this.artChanged);this.world.add(this.venues[id]);}
+    if(id==='school'&&!this.schoolBuilt){schoolArchitecture(this.schoolBuilding);lawn(this.fieldSurface,this.artChanged);distantLandscape(this.landscape,this.artChanged);this.schoolBuilt=true;}
+    if(id!=='world'&&!this.parkBuilt){gardenTrees(this.parkSurroundings,this.artChanged);this.parkBuilt=true;}
+    this.venue=id;for(const [key,g] of Object.entries(this.venues))g.visible=key===id;this.schoolBuilding.visible=id==='school';this.parkSurroundings.visible=id!=='world';this.landscape.visible=id==='school';this.fieldSurface.visible=id==='school';this.world.background.set(id==='world'?0xaacbdc:0xc5e0e8);
+    const {sun,fill,hemisphere,rim}=this.venueLights;rim.color.set(id==='city'?0xffd5ab:id==='world'?0xe8f5ff:0xffe9ca);rim.intensity=id==='world'?.42:id==='city'?.32:.18;
     sun.color.set(id==='world'?0xd6e9ff:id==='city'?0xffc294:0xffefd2);sun.intensity=id==='world'?1.1:id==='city'?1.8:2.05;hemisphere.intensity=id==='world'?.7:.88;
     sun.position.set(id==='city'?44:-12,id==='city'?16:25,id==='city'?80:-8);fill.color.set(id==='city'?0xb6c5ed:0xbfdff5);hemisphere.groundColor.set(id==='city'?0x8a7770:0x77785d);
     this.world.fog.color.set(id==='world'?0x142840:id==='city'?0xc7a0a1:0xc5e0e8);this.world.fog.near=id==='school'?60:85;this.world.fog.far=id==='school'?150:240;
@@ -97,15 +102,22 @@ export class FlightScene {
   setDesign(d,selected=''){
     const g=geometry(d);this.g=g;
     this.plane.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});this.plane.clear();
+    const contact=this.paperContact.material.map,canvas=contact.image,ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);ctx.save();ctx.filter='blur(9px)';ctx.fillStyle='rgba(35,43,28,.17)';
+    for(const panel of g.panels){ctx.beginPath();panel.points.forEach((v,i)=>{const x=(v[0]/.24+.5)*canvas.width,y=((v[2]-g.cgZ)/.34+.5)*canvas.height;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.closePath();ctx.fill();}ctx.restore();contact.needsUpdate=true;
     for(const panel of g.panels){const points=panel.points.map(p=>[p[0],p[1],p[2]-g.cgZ]),positions=[];for(let i=1;i<points.length-1;i++)positions.push(...points[0],...points[i],...points[i+1]);const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(positions,3));const uv=[];for(let i=0;i<positions.length;i+=3)uv.push(positions[i]/.21+.5,positions[i+2]/.297+.5);geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));geo.computeVertexNormals();
       const shades=[];for(let i=0;i<positions.length;i+=3){const shade=.87+.13*Math.min(1,Math.abs(positions[i])/.024);shades.push(shade,shade,shade*.995);}geo.setAttribute('color',new T.Float32BufferAttribute(shades,3));
-      mesh(geo,material(panel.kind===selected?0xc7e5df:color.paper,{side:T.DoubleSide,vertexColors:true,map:this.paper,bumpMap:this.paper,bumpScale:.000018,roughness:.91}),this.plane).receiveShadow=true;
+      mesh(geo,material(panel.kind===selected?0xf0f5e9:color.paper,{side:T.DoubleSide,vertexColors:true,map:this.paper,bumpMap:this.paper,bumpScale:.000018,roughness:.91}),this.plane).receiveShadow=true;
       const edgePositions=[];for(let i=0;i<points.length;i++){const a=points[i],b=points[(i+1)%points.length];edgePositions.push(...a,...b,b[0],b[1]-.00018,b[2],...a,b[0],b[1]-.00018,b[2],a[0],a[1]-.00018,a[2]);}const edgeGeo=new T.BufferGeometry();edgeGeo.setAttribute('position',new T.Float32BufferAttribute(edgePositions,3));edgeGeo.computeVertexNormals();mesh(edgeGeo,material(0xc6bfae,{side:T.DoubleSide}),this.plane);
       if(panel.kind==='wing'){
         const nose=points.reduce((a,b)=>a[2]>b[2]?a:b),aft=points.reduce((a,b)=>a[2]<b[2]?a:b);
         const outside=points.reduce((a,b)=>Math.abs(a[0])>Math.abs(b[0])?a:b),root=points.filter(p=>Math.abs(p[0])<.006).sort((a,b)=>a[2]-b[2])[0]??aft;
         const seam=[root[0]+(outside[0]-root[0])*.48,root[1]+(outside[1]-root[1])*.48,root[2]+(outside[2]-root[2])*.48];
         const layer=new T.BufferGeometry();layer.setAttribute('position',new T.Float32BufferAttribute([nose[0],nose[1]+.0003,nose[2],root[0],root[1]+.0003,root[2],seam[0],seam[1]+.0003,seam[2]],3));layer.setAttribute('color',new T.Float32BufferAttribute([.99,.985,.965,.90,.89,.85,.97,.96,.93],3));layer.computeVertexNormals();mesh(layer,material(0xffffff,{side:T.DoubleSide,vertexColors:true,roughness:.91}),this.plane);
+        const seamShadow=new T.BufferGeometry(),shadowPoints=[];
+        const dx=seam[0]-nose[0],dz=seam[2]-nose[2],length=Math.max(.001,Math.hypot(dx,dz)),width=.0012;
+        const a=[nose[0],nose[1]+.00012,nose[2]],b=[seam[0],seam[1]+.00012,seam[2]],c=[b[0]-dz/length*width,b[1],b[2]+dx/length*width],d=[a[0]-dz/length*width,a[1],a[2]+dx/length*width];
+        shadowPoints.push(...a,...b,...c,...a,...c,...d);seamShadow.setAttribute('position',new T.Float32BufferAttribute(shadowPoints,3));
+        mesh(seamShadow,new T.MeshBasicMaterial({color:0x82755b,transparent:true,opacity:.15,depthWrite:false,side:T.DoubleSide}),this.plane).castShadow=false;
         for(let k=0;k<3;k++){const ridge=[nose,seam].map(p=>new T.Vector3(p[0],p[1]+.00036+k*.00004,p[2]+k*.00032));this.plane.add(new T.Line(new T.BufferGeometry().setFromPoints(ridge),new T.LineBasicMaterial({color:k===0?0xb1a990:0xfffcef,transparent:true,opacity:k===0?.45:.75})));}
       }
       const line=new T.Line(new T.BufferGeometry().setFromPoints(points.concat([points[0]]).map(p=>new T.Vector3(...p))),new T.LineBasicMaterial({color:panel.kind===selected?0x197d88:0xa49d87,transparent:true,opacity:panel.kind===selected?1:.28}));this.plane.add(line);
@@ -118,7 +130,8 @@ export class FlightScene {
       const pts=wire.map(([x,z])=>new T.Vector3(clipX+x,.002,g.nose-g.d.clipPosition/100-g.cgZ+z));const clip=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts,false,'centripetal'),100,.00065,6,false),material(selected==='clip'?0xc0a05e:0x8a989b,{metalness:.9,roughness:.2}));clip.name='paperclip-'+ci;this.plane.add(clip);
     }
     if(selected==='clip'){const balance=mesh(new T.RingGeometry(.004,.006,32),new T.MeshBasicMaterial({color:0x087e9b,side:T.DoubleSide,depthTest:false}),this.plane,0,.009,0);balance.rotation.x=-Math.PI/2;balance.renderOrder=3;}
-    this.plane.traverse(o=>{if(o.isMesh)o.receiveShadow=false;});this.setPose([0,0,0,0,0,0,0,0,0,0]);
+    // Thin overlapping paper uses local fold shading; the workshop shadow map adds depth without changing flight geometry.
+    this.plane.traverse(o=>{if(o.isMesh)o.receiveShadow=true;});this.setPose([0,0,0,0,0,0,0,0,0,0]);
   }
   setPose(s){const a=poseAxes(s),m=new T.Matrix4().makeBasis(new T.Vector3(...a.right),new T.Vector3(...a.up),new T.Vector3(...a.forward));this.plane.quaternion.setFromRotationMatrix(m);this.plane.position.set(s[0],s[1],s[2]);}
   setMode(mode){this.mode=mode;const s=mode==='workshop'?this.workshop:this.world;s.add(this.plane);this.landingMark.visible=false;this.flight=null;this.currentTrail?.removeFromParent();this.previousTrail?.removeFromParent();this.wake?.removeFromParent();if(this.aimArrow)this.aimArrow.visible=false;}
@@ -133,13 +146,14 @@ export class FlightScene {
     const material=new T.ShaderMaterial({uniforms:{strength:{value:0}},transparent:true,depthWrite:false,side:T.DoubleSide,vertexShader:'attribute float fade;attribute float edge;varying float vFade;varying float vEdge;void main(){vFade=fade;vEdge=edge;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'uniform float strength;varying float vFade;varying float vEdge;void main(){float soft=1.-smoothstep(.3,1.,abs(vEdge));gl_FragColor=vec4(mix(vec3(.12,.55,.68),vec3(.70,.95,.97),vFade),vFade*.5*soft*strength);}',toneMapped:false});this.wake=new T.Mesh(geometry,material);this.wake.name='flight-wake';this.wake.frustumCulled=false;this.world.add(this.wake);
   }
   draw(t=0,phase='workshop',reduced=false,settle=1){
+    updateCrowd(t,phase,reduced,settle,this.venue);
     this.lastDraw=[t,phase,reduced,settle];const land=Math.max(0,Math.min(1,settle)),landEase=land*land*(3-2*land);
     if(this.windowDirty&&this.mode==='workshop')this.renderWindow();
     const target=new T.Vector3(),closeWorkshop=this.mode==='workshop'&&this.host.clientHeight<=240;let camera,bank=0;
     const flightSpeed=this.flight&&phase==='flying'?Math.hypot(...sampleFlight(this.flight,t).slice(3,6)):0,release=Math.min(1,t/.36),releaseEase=release*release*(3-2*release);
     const fov=this.mode==='workshop'?48:phase==='result'&&!reduced&&this.flightView?this.flightView.fov+(50-this.flightView.fov)*landEase:50+(!reduced&&phase==='flying'?5*Math.min(1,flightSpeed/12)*releaseEase:0);if(this.camera.fov!==fov){this.camera.fov=fov;this.camera.updateProjectionMatrix();}
     if(this.mode==='workshop'){
-      this.setPose([0,-.0558+this.g.d.fold/100,0,0,0,0,0,0,this.viewRotation,0]);this.paperContact.rotation.z=-this.viewRotation;this.paperContact.scale.x=this.g.span/.145;camera=new T.Vector3(.19,.23,.35);target.set(-.015,.045,-.09);
+      this.setPose([0,-.0558+this.g.d.fold/100,0,0,0,0,0,0,this.viewRotation,0]);this.paperContact.rotation.z=-this.viewRotation;camera=new T.Vector3(.19,.23,.35);target.set(-.015,.045,-.09);
       if(closeWorkshop){camera.set(.12,.16,.22);target.set(0,-.02,0);}
     }else if(this.flight&&(phase==='flying'||phase==='result')){
       const s=sampleFlight(this.flight,t);this.setPose(s);if(phase==='flying'&&!reduced&&this.releaseOffset){const u=Math.min(1,t/.1);this.plane.position.addScaledVector(this.releaseOffset,1-u*u*(3-2*u));}const horizontal=Math.hypot(s[3],s[5]),a={forward:horizontal>.05?[s[3]/horizontal,0,s[5]/horizontal]:axes(0,this.flight.launch.yaw*RAD).forward},wind=windAt(this.flight.env,t);if(this.flight.env.windSpeed>0)this.sock.rotation.y=Math.atan2(wind[0],wind[2]);

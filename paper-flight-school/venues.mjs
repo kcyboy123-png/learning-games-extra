@@ -1,5 +1,6 @@
-import * as T from './vendor/three.module.js';
-import {artMaterial,addMesh,instances,spectators,plantedBorders,oak} from './art-assets.mjs';
+import * as T from './vendor/three.module.js?v=20261120-quality6';
+import {artMaterial,addMesh,instances,spectators,plantedBorders,oak} from './art-assets.mjs?v=20261120-quality6';
+import {placeTrophy,refineSky} from './premium-art.mjs?v=20261120-quality6';
 const C={stone:0xd5cbb7,ivory:0xf4efdf,green:0x395e50,blue:0x245c80,gold:0xb99853},materials=new Map();
 function material(c){if(!materials.has(c))materials.set(c,artMaterial(c,c===C.gold?{metalness:.65,roughness:.29,envMapIntensity:.7}:{}));return materials.get(c);}
 const solid=(p,g,c,x=0,y=0,z=0)=>addMesh(p,g,typeof c==='number'?material(c):c,x,y,z);
@@ -53,10 +54,11 @@ function school(p,onChange){
  }
  spectators(p,places,onChange);borders(p,40,onChange);const frame=oak(onChange,[3,.5]);box(p,9.5,1.85,.22,0,4.6,32.14,frame);for(const y of [3.74,5.46])box(p,9.65,.13,.32,0,y,31.99,C.ivory);for(const x of [-4.7,4.7])box(p,.13,1.75,.32,x,4.6,31.99,C.ivory);const sign=label('우리 학교 종이비행기 컵',9,'OUR SCHOOL · FLIGHT FESTIVAL',true);sign.position.set(0,4.6,32);p.add(sign);for(const x of [-4.6,4.6])box(p,.13,5.5,.13,x,2.75,32,C.stone);
 }
-export function createVenues(onChange){
- const venues={};for(const id of ['school','city','world']){const g=new T.Group();g.name='venue-'+id;g.visible=false;venues[id]=g;
-  if(id==='school'){school(g,onChange);campusWings(g);}else if(id==='city'){cityPark(g,onChange);waterfront(g);skyVault(g,false);}else {championshipBowl(g,onChange);championshipFloor(g);skyVault(g,true);arenaLighting(g);arenaGallery(g);}eventDetails(g,id,onChange);officialDesk(g,id,onChange);if(id==='school')schoolFestival(g);if(id==='city')cityProduction(g);supportSections(g,id);
- }return venues;
+export function createVenue(id,onChange){
+ if(!['school','city','world'].includes(id))throw new Error('Unknown venue');
+ const g=new T.Group();g.name='venue-'+id;g.visible=false;
+  if(id==='school'){school(g,onChange);campusWings(g);}else if(id==='city'){cityPark(g,onChange);waterfront(g);skyVault(g,false,onChange);}else {championshipBowl(g,onChange);championshipFloor(g);skyVault(g,true,onChange);arenaLighting(g);arenaGallery(g);}eventDetails(g,id,onChange);officialDesk(g,id,onChange);if(id==='school')schoolFestival(g);if(id==='city')cityProduction(g);supportSections(g,id);
+ return g;
 }
 export function schoolArchitecture(p){
  const brick=texture(512,512,(c,w,h)=>{c.fillStyle='#a18d72';c.fillRect(0,0,w,h);for(let r=0;r<16;r++)for(let j=-1;j<6;j++){const v=Math.abs((r*29+j*17)%19);c.fillStyle=`rgb(${164+v},${135+v},${104+v})`;c.fillRect(j*103+(r%2)*51,r*32,99,28);}});brick.wrapS=brick.wrapT=T.RepeatWrapping;brick.repeat.set(8,2);const wall=artMaterial(0xf4e6cf,{map:brick,bumpMap:brick,bumpScale:.035});
@@ -94,6 +96,7 @@ function officialDesk(p,id,onChange){
  const sign=label('기록석',1.7,'FLIGHT OFFICIALS');sign.position.set(x,.48,z-.57);p.add(sign);
  for(const dx of [-.65,.65]){const screen=box(p,.37,.27,.045,x+dx,1.10,z-.06,0x264757);screen.rotation.x=-.2;box(p,.34,.014,.20,x+dx,.96,z-.30,0x8d9995);}
  spectators(p,[{x:x-.6,y:0,z:z+.85,yaw:Math.PI},{x:x+.6,y:0,z:z+.85,yaw:Math.PI}],onChange);
+ placeTrophy(p,onChange,{height:id==='world'?.65:.42,position:[x,.95,z],yaw:Math.PI});
 }
 
 function schoolFestival(p){
@@ -146,9 +149,9 @@ function waterfront(p){
  for(let x=-77;x<=77;x+=3)box(p,.055,.85,.055,x,3.95,86.6,0xdfc69d);
 }
 
-function skyVault(p,night){
+function skyVault(p,night,onChange){
  const mat=new T.ShaderMaterial({side:T.BackSide,depthWrite:false,toneMapped:false,uniforms:{zenith:{value:new T.Color(night?0x070e24:0x4f6c9c)},horizon:{value:new T.Color(night?0x233958:0xf5b98e)},night:{value:night?1:0}},vertexShader:'varying vec3 direction;void main(){direction=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'uniform vec3 zenith;uniform vec3 horizon;uniform float night;varying vec3 direction;float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}float clouds(vec2 p){float v=0.,a=.5;for(int i=0;i<4;i++){v+=a*noise(p);p=p*2.03+vec2(7.,13.);a*=.5;}return v;}void main(){vec3 d=normalize(direction);float h=pow(clamp(d.y,0.,1.),.42);vec3 c=mix(horizon,zenith,h);float sun=max(dot(d,normalize(vec3(.55,.16,1.))),0.);c+=vec3(1.,.62,.28)*(pow(sun,48.)*.23+pow(sun,1800.)*.7)*(1.-night);float cloud=smoothstep(.42,.68,clouds(vec2(atan(d.x,d.z)*5.,d.y*16.)+vec2(17.,3.)))*smoothstep(.005,.10,d.y)*(1.-night);c=mix(c,mix(vec3(.40,.34,.37),vec3(.80,.59,.43),sun),cloud*.48);gl_FragColor=vec4(c,1.);\n#include <colorspace_fragment>\n}'});
- const sky=new T.Mesh(new T.SphereGeometry(195,48,24),mat);sky.renderOrder=-100;p.add(sky);
+ const sky=new T.Mesh(new T.SphereGeometry(195,48,24),mat);sky.renderOrder=-100;p.add(sky);if(!night)refineSky(sky,onChange);
 }
 
 function championshipBowl(p,onChange){
@@ -171,7 +174,18 @@ function championshipFloor(p){
  const court=solid(p,new T.PlaneGeometry(180,180),artMaterial(0xffffff,{map:rubber,roughness:.72}),0,.003,25);court.rotation.x=-Math.PI/2;
  const laneMap=texture(512,1024,c=>{const shade=c.createLinearGradient(0,0,512,0);shade.addColorStop(0,'#426b86');shade.addColorStop(.5,'#54839b');shade.addColorStop(1,'#426b86');c.fillStyle=shade;c.fillRect(0,0,512,1024);c.strokeStyle='#aac9d01b';c.lineWidth=1.2;for(let y=0;y<1024;y+=256){c.beginPath();c.moveTo(0,y);c.lineTo(512,y);c.stroke();}for(const x of [128,256,384]){c.beginPath();c.moveTo(x,0);c.lineTo(x,1024);c.stroke();}});laneMap.wrapS=laneMap.wrapT=T.RepeatWrapping;laneMap.repeat.set(1,8);const lane=solid(p,new T.PlaneGeometry(7.1,72),artMaterial(0xffffff,{map:laneMap,roughness:.67}),0,.012,22);lane.name='championship-flight-lane';lane.rotation.x=-Math.PI/2;lane.castShadow=false;
  for(const side of [-1,1]){box(p,3.5,.01,72,side*5.4,.009,22,0x263e61);for(const x of [3.6,7.1])box(p,.065,.006,72,side*x,.017,22,0x9bd7e8);box(p,.09,.008,72,side*3.72,.019,22,artMaterial(0x9ccdde,{emissive:0x3d9dcb,emissiveIntensity:.35}));}
- 
+ // One transparent overlay keeps metre marks and side light pools to one draw call.
+ const markings=texture(1024,2048,(c,w,h)=>{
+  const x=v=>(v+6)/12*w,y=v=>v/50*h;
+  for(const side of [-1,1]){
+   for(let metre=1;metre<50;metre++){const major=metre%5===0;c.strokeStyle=major?'#e9d7aed0':'#b1cbd780';c.lineWidth=major?3:1.5;c.beginPath();c.moveTo(x(side*3.48),y(metre));c.lineTo(x(side*(major?2.95:3.22)),y(metre));c.stroke();}
+   for(const z of [5,15,25,35]){c.save();c.translate(x(side*5.35),y(z));c.scale(1,.95);const g=c.createRadialGradient(0,0,0,0,0,145);g.addColorStop(0,'#b7e5f825');g.addColorStop(1,'#9ddbf000');c.fillStyle=g;c.fillRect(-145,-145,290,290);c.restore();}
+  }
+  c.fillStyle='#eee0c1';c.font='bold 46px sans-serif';c.textAlign='center';c.textBaseline='middle';
+  for(let z=5;z<=40;z+=5)c.fillText(z+' m',x(-4.35),y(z));
+ });
+ const overlay=solid(p,new T.PlaneGeometry(12,50),artMaterial(0xffffff,{map:markings,transparent:true,depthWrite:false,roughness:.85}),0,.026,25);overlay.name='world-metre-overlay';overlay.rotation.x=-Math.PI/2;overlay.scale.x=-1;overlay.castShadow=false;
+
 }
 
 function arenaLighting(p){

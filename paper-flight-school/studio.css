@@ -137,4 +137,31 @@ body[data-phase=flying][data-motion=full] .flight-progress:after{animation:power
 @media(max-width:360px){.masthead{column-gap:6px}.brand{font-size:16px;gap:5px}.brand svg{width:28px}.masthead .icon-button{min-width:44px;padding:7px}}
 
 /* Keep the maker mark outside the flight canvas and launch controls. */
+/* Keep the paper visible while editing, with the same action directly beneath it. */
+@media(max-width:900px){
+ body[data-phase=workshop] .flight-deck{display:grid;height:auto;grid-template-rows:clamp(160px,24dvh,240px) auto;position:sticky;top:8px;z-index:4;background:#eeeee7;border-radius:20px;box-shadow:0 8px 18px #233d361c;gap:8px}
+ body[data-phase=workshop] .stage{height:100%;min-height:0}
+ body[data-phase=workshop] .flight-dock{position:static;grid-template-columns:minmax(0,1fr) minmax(140px,34%);min-height:76px;padding:10px 14px;box-shadow:none;gap:10px}
+ body[data-phase=workshop] .flight-dock .primary{min-height:50px;font-size:16px}
+ body[data-phase=workshop] #dockContent{display:block}
+ body[data-phase=workshop] .dock-message strong{font-size:14px}
+ body[data-phase=workshop] .dock-message span{font-size:11px}
+ body[data-phase=workshop] .controls :is(button,input,summary){scroll-margin-top:calc(clamp(160px,24dvh,240px) + 116px);scroll-margin-bottom:24px}
+ body[data-phase=workshop] .controls{overflow:visible}
+}
+@media(max-width:900px) and (max-height:600px){body[data-phase=workshop] .flight-deck{position:relative;top:0;grid-template-rows:170px auto}body[data-phase=workshop] .controls :is(button,input,summary){scroll-margin-top:16px}}
+.experiment-mark{position:absolute;top:-5px;bottom:-5px;width:3px;background:#a97418;border:1px solid #fff4cd;border-radius:3px;transform:translateX(-50%);z-index:2;pointer-events:none}
+.experiment-note small{display:block;color:#52665f;font-size:12px;line-height:1.5;margin-top:5px}
 footer{flex-wrap:wrap;align-items:center}footer #status{flex:1;min-width:180px}.creator-credit{display:inline-flex;align-items:center;gap:8px;flex:none;white-space:nowrap;font-size:12px;color:#234d40}.creator-credit img{display:block;object-fit:contain;border-radius:7px}.creator-credit strong{font-weight:700}@media(max-width:600px){footer #status{flex-basis:100%}.creator-credit{margin-right:auto}}
+
+/* Result decisions stay above optional analysis; the physical launch dock remains beneath the map. */
+.next-experiment{padding:16px;border:1px solid #c6d8cd;border-radius:15px;background:linear-gradient(130deg,#edf5ef,#faf7ed);margin:16px 0}
+.experiment-eyebrow{font-size:12px;font-weight:700;letter-spacing:.3px;color:#486b60}.next-experiment p{font-size:14px;line-height:1.65;margin:8px 0 12px}.next-experiment .experiment-button{margin:0;min-height:52px}.next-experiment .text-button{width:100%;margin-top:6px;min-height:44px}
+.flight-analysis{margin:16px 0;border:1px solid #d5ddd2;border-radius:12px;padding:0 12px}.flight-analysis summary{min-height:48px;display:flex;align-items:center;cursor:pointer;font-weight:600;font-size:13px}.flight-analysis summary:before{content:'＋';margin-right:8px}.flight-analysis[open] summary:before{content:'−'}.comparison-note{font-size:14px;line-height:1.7;padding:12px;background:#f2efdf;border-left:3px solid #9f824a;border-radius:4px}
+.range-block.experiment-changed{outline:2px solid #98743a;outline-offset:7px;border-radius:7px;background:#fff8e3;animation:experiment-confirm 1.2s ease-out}
+.flight-analysis summary:after,.flight-analysis[open]>summary:after{content:none}
+@keyframes experiment-confirm{from{box-shadow:0 0 0 12px #c2a06435}to{box-shadow:0 0 0 0 transparent}}
+body[data-motion=reduced] .experiment-changed{animation:none}
+@media(max-width:900px){body[data-phase=workshop] .app:has(#foldDetails[open]) .flight-deck{height:auto;grid-template-rows:clamp(160px,24dvh,240px) auto}body[data-phase=workshop] .app:has(#foldDetails[open]) .stage{height:100%}body[data-phase=workshop] #controlContent{padding-bottom:25dvh}body[data-phase=workshop] #anglePreview{scroll-margin-top:calc(clamp(160px,24dvh,240px) + 116px)}}
+@media(max-width:360px){body[data-phase=workshop] .flight-dock{grid-template-columns:1fr;gap:8px}body[data-phase=workshop] .dock-message strong{font-size:13px}body[data-phase=workshop] .dock-message span{margin-top:4px}}
+@media(max-width:900px) and (max-height:600px){body[data-phase=workshop] .app:has(#foldDetails[open]) .flight-deck{position:relative;top:0;grid-template-rows:170px auto}body[data-phase=workshop] #controlContent{padding-bottom:24px}}

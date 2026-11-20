@@ -1,11 +1,11 @@
-import {sound} from './audio.mjs';
-import {changedInputs,nextExperiment,flightProfile} from './flight-feedback.mjs';
-import {PRESETS,cleanDesign,cleanEnv,cleanLaunch,geometry,simulate,sampleFlight,windAt} from './physics.mjs';
-import {load,save} from './state.mjs';
-import {cleanMissions,sameConditions} from './gameplay.mjs';
-import {GAUGE_HALF_MS,gaugePower,launchFromGauge,designChanges} from './controls.mjs';
-import {EVENTS,eventInfo,formatScore,flightScore,COURSES,courseById,courseEnv,emptySports,currentRun,courseKey,selectEvent,unlocked,qualified,winningScore,startTournament,commitFlight,bestScore,nextCourse,flightName,standings} from './sports.mjs';
-import {FlightScene} from './scene.mjs';
+import {sound} from './audio.mjs?v=20261120-quality6';
+import {nextExperiment,flightProfile,comparisonSummary} from './flight-feedback.mjs?v=20261120-quality6';
+import {PRESETS,cleanDesign,cleanEnv,cleanLaunch,geometry,simulate,sampleFlight,windAt} from './physics.mjs?v=20261120-quality6';
+import {load,save} from './state.mjs?v=20261120-quality6';
+import {cleanMissions,sameConditions} from './gameplay.mjs?v=20261120-quality6';
+import {GAUGE_HALF_MS,gaugePower,launchFromGauge,designChanges} from './controls.mjs?v=20261120-quality6';
+import {EVENTS,eventInfo,formatScore,flightScore,COURSES,courseById,courseEnv,emptySports,currentRun,courseKey,selectEvent,unlocked,qualified,winningScore,startTournament,commitFlight,bestScore,nextCourse,flightName,standings} from './sports.mjs?v=20261120-quality6';
+import {FlightScene} from './scene.mjs?v=20261120-quality6';
 const $=id=>document.getElementById(id),clone=x=>structuredClone(x);
 function updateSound(){
  const b=$('soundButton');b.setAttribute('aria-pressed',String(!sound.settings.muted));b.setAttribute('aria-label',sound.settings.muted?'소리 켜기':'소리 끄기');b.title=sound.settings.muted?'소리 켜기':'소리 끄기';b.dataset.muted=String(sound.settings.muted);
@@ -18,6 +18,7 @@ let storage=null,loaded;try{storage=localStorage;loaded=load(storage);}catch{loa
 const data=loaded.data??{version:1,design:cleanDesign(),launch:cleanLaunch(),env:cleanEnv(),last:null,match:null};
 data.missions=cleanMissions(data.missions);data.sports??=emptySports();data.launch.method='gauge';
 let saveBlocked=!!loaded.error,phase='workshop',part='wing',editor='design',foldOpen=false,envOpen=false,flight=null,previous=null,scene=null,presetBefore=null;
+let experimentPower=null,appliedExperiment=null;
 let chargeAt=0,chargePower=0,flightAt=0,flightTime=0,flightHiddenAt=0,landingAt=0,renderDirty=true,reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 const design=()=>data.design,launch=()=>data.launch,course=()=>courseById(data.sports.current),run=()=>currentRun(data.sports);
 const environment=()=>course()?courseEnv(course()):data.env;
@@ -89,22 +90,22 @@ function preparedControls(){
  const d=design(),l=launch();return cupBanner()+'<div class="plane-card">'+planePlan(d)+'<strong>'+PRESETS[d.type].name+'</strong><span>'+info().description+'</span><span class="mod-summary">'+d.paperGsm+' g/m² · 클립 '+d.clipCount+'개<br>날개 끝 '+(d.tip===0?'접지 않음':d.tip+' cm · '+(d.tipDirection===1?'위로 ':'아래로 ')+d.tipAngle+'°')+'</span></div><div class="flight-settings"><div><span>위아래</span><strong>'+(l.pitch<0?'아래로 ':'위로 ')+Math.abs(l.pitch)+'°</strong></div><div><span>좌우</span><strong>'+(l.yaw===0?'가운데':(l.yaw<0?'왼쪽 ':'오른쪽 ')+Math.abs(l.yaw)+'°')+'</strong></div><div><span>종목</span><strong>'+info().name+'</strong></div></div><p class="help">'+(phase==='flying'?'처음 땅에 닿으면 기록이 정해져요.':'맵 아래 버튼을 누르고, 원하는 힘에서 한 번 더 눌러요.')+'</p>'+(phase==='flying'?'<p class="flight-power">이번에 던진 힘 <strong>'+flight.launch.power+'%</strong></p>':'');
 }
 function experimentMarkup(){
- if(!flight||flight.reason!=='landed')return '';const p=previous&&sameConditions(previous,flight)?previous:null,names=changedInputs(flight,p),next=nextExperiment(flight,event());
- return flightProfile(flight,p,event())+'<div class="experiment-note"><strong>'+next.observation+'</strong><p>'+(p?(names.length?'바뀐 것: '+names.join(', '):'같은 설정으로 다시 날렸어요.'):'각도 한 곳을 바꿔 다음 비행과 비교해요.')+'</p></div><button class="experiment-button" data-action="experiment">각도 '+flight.launch.pitch+'° → '+next.pitch+'°로 준비해 보기</button><button class="secondary" data-action="modify">접기를 바꿔 다시 도전</button>';
+ if(!flight||flight.reason!=='landed')return '';const p=previous&&sameConditions(previous,flight)?previous:null,next=nextExperiment(flight,event(),p);
+ return '<section class="next-experiment" aria-label="다음 비행 실험"><span class="experiment-eyebrow">다음에는 한 가지만</span><p>'+next.reason+'</p><button class="experiment-button" data-action="experiment">'+next.label+'</button><button class="text-button" data-action="modify">직접 접기를 바꾸기</button></section><details class="flight-analysis"><summary>지난 비행과 자세히 비교하기</summary><p class="comparison-note">'+comparisonSummary(flight,previous)+'</p>'+flightProfile(flight,p,event())+'<div class="result-stats"><span>던진 힘 <b>'+flight.launch.power+'%</b></span><span>체공시간 <b>'+flight.duration.toFixed(2)+'초</b></span><span>비거리 <b>'+flight.distance.toFixed(2)+' m</b></span></div><p class="small">'+next.observation+' 추천은 비교할 방법이며, 더 좋은 기록을 보장하지 않아요.</p></details>'+cupBanner();
 }
 function resultControls(){
  if(cupDone())return cupBanner()+cupResults();if(!flight||flight.reason!=='landed')return '<h3>작업대에서 다시 준비해요</h3><p class="help">이번 비행은 계산 범위를 벗어나 기록에 넣지 않았어요.</p>';
  const value=flightScore(flight,event()),comparable=previous&&sameConditions(previous,flight),delta=comparable?value-flightScore(previous,event()):null;
- return cupBanner()+'<div class="result-heading success"><span>'+info().name+'</span><h3>'+(delta>0?'지난 기록을 넘었어요!':'이번 비행의 기록이에요.')+'</h3></div><div class="metric"><strong>'+(value/100).toFixed(2)+'</strong><span>'+info().unit+'</span><small>'+(event()==='airtime'?'출발부터 첫 지면 접촉까지':'출발점과 착륙점 사이의 수평 직선거리')+'</small></div>'+(delta!==null?'<p class="improvement">'+(delta===0?'지난번과 같은 기록이에요.':delta>0?'지난번보다 '+scoreText(delta)+' 더 '+(event()==='airtime'?'오래':'멀리')+'!':'지난 기록까지 '+scoreText(-delta)+' 남았어요.')+'</p>':'')+'<div class="result-stats"><span>던진 힘 <b>'+flight.launch.power+'%</b></span><span>체공시간 <b>'+flight.duration.toFixed(2)+'초</b></span><span>비거리 <b>'+flight.distance.toFixed(2)+' m</b></span></div>'+experimentMarkup();
+ return '<div class="result-heading success"><span>'+info().name+'</span><h3>'+(delta>0?'지난 기록을 넘었어요!':'이번 비행의 기록이에요.')+'</h3></div><div class="metric"><strong>'+(value/100).toFixed(2)+'</strong><span>'+info().unit+'</span><small>'+(event()==='airtime'?'출발부터 첫 지면 접촉까지':'출발점과 착륙점 사이의 수평 직선거리')+'</small></div>'+(delta!==null?'<p class="improvement">'+(delta===0?'지난번과 같은 기록이에요.':delta>0?'지난번보다 '+scoreText(delta)+' 더 '+(event()==='airtime'?'오래':'멀리')+'!':'지난 기록까지 '+scoreText(-delta)+' 남았어요.')+'</p>':'')+experimentMarkup();
 }
 function gaugeMarkup(){
  const prior=priorCompatible()?priorConfig():null;
- return `<div class="dock-gauge"><div class="gauge-heading"><strong id="gaugeLabel">${phase==='charging'?'② 원하는 힘에서 던져요':'① 힘 조절 시작'}</strong><span><b id="gaugeNumber">0</b><small>%</small></span></div><div class="gauge-track" role="meter" aria-label="던지는 힘" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="gaugeFill"></div><div class="gauge-ticks" aria-hidden="true"><i></i><i></i><i></i></div>${prior?`<i class="previous-mark" style="left:${prior.launch.power}%" aria-label="지난번 ${prior.launch.power}%"></i>`:''}<i id="gaugeNeedle" style="left:0%"></i></div><div class="gauge-scale" aria-hidden="true"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div><div class="gauge-foot"><span id="gaugeDirection">살짝</span><span>${prior?'지난번 '+prior.launch.power+'% · 점선':'힘과 각도를 바꾸며 기록을 비교해요'}</span><span>힘껏</span></div></div>`;
+ return `<div class="dock-gauge"><div class="gauge-heading"><strong id="gaugeLabel">${phase==='charging'?'② 원하는 힘에서 던져요':'① 힘 조절 시작'}</strong><span><b id="gaugeNumber">0</b><small>%</small></span></div><div class="gauge-track" role="meter" aria-label="던지는 힘" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="gaugeFill"></div><div class="gauge-ticks" aria-hidden="true"><i></i><i></i><i></i></div>${prior?`<i class="previous-mark" style="left:${prior.launch.power}%" aria-label="지난번 ${prior.launch.power}%"></i>`:''}${experimentPower!==null?`<i class="experiment-mark" style="left:${experimentPower}%" aria-label="이번 비교 힘 ${experimentPower}%"></i>`:''}<i id="gaugeNeedle" style="left:0%"></i></div><div class="gauge-scale" aria-hidden="true"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div><div class="gauge-foot"><span id="gaugeDirection">살짝</span><span>${experimentPower!==null?'비교 '+experimentPower+'% · 실선'+(prior?' / 지난 '+prior.launch.power+'% · 점선':''):prior?'지난번 '+prior.launch.power+'% · 점선':'힘과 각도를 바꾸며 기록을 비교해요'}</span><span>힘껏</span></div></div>`;
 }
 function renderDock(){
  const working=phase==='workshop',timing=['ready','charging'].includes(phase);
  const complete=cupDone()&&phase!=='flying',next=course()?nextCourse(course()):null,advance=!!next&&unlocked(data.sports,next.id);
- $('dockContent').innerHTML=complete?'<div class="dock-message"><strong>이번 대회 최고 '+scoreText(bestScore(run()))+'</strong><span>'+cupOutcome()+'</span></div>':timing?gaugeMarkup():working?`<div class="dock-message"><strong>${cupDone()?cupOutcome():priorConfig()?'이 비행기로 다시 날려 볼까요?':course()?'내 비행기로 대회에 참가해요':'준비됐으면, 경기장으로!'}</strong><span>${cupDone()?'기록과 비행기 모양은 보관했어요.':info().name+' · '+windText(environment())}</span></div>`:phase==='flying'?`<div class="dock-message"><strong>${flight.launch.power}%로 출발!</strong><span>중력과 바람을 따라 날아가요.</span><div class="flight-progress" role="meter" aria-label="확정된 던지는 힘" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${flight.launch.power}" style="--locked-power:${flight.launch.power}%"><i id="launchedPower" style="transform:scaleX(${flight.launch.power/100})"></i></div></div>`:`<div class="dock-message"><strong>${flight?.reason==='landed'?flight.launch.power+'% → '+scoreText(flightScore(flight,event())):'다시 준비할 수 있어요.'}</strong><span>${flight?.reason==='landed'?(event()==='distance'?'체공 '+flight.duration.toFixed(2)+'초':'비거리 '+flight.distance.toFixed(2)+' m'):'작업대에서 준비하고 새로운 힘으로 던져요.'}</span></div>`;
+ $('dockContent').innerHTML=complete?'<div class="dock-message"><strong>이번 대회 최고 '+scoreText(bestScore(run()))+'</strong><span>'+cupOutcome()+'</span></div>':timing?gaugeMarkup():working?`<div class="dock-message"><strong>${cupDone()?cupOutcome():appliedExperiment?appliedExperiment.text:priorConfig()?'이 비행기로 다시 날려 볼까요?':course()?'내 비행기로 대회에 참가해요':'준비됐으면, 경기장으로!'}</strong><span>${cupDone()?'기록과 비행기 모양은 보관했어요.':appliedExperiment&&appliedExperiment.kind!=='power'?'다음에는 지난 힘 '+priorConfig().launch.power+'%에 맞춰 직접 던져요.':experimentPower!==null?'다음 힘 게이지에서 '+experimentPower+'% 금빛 선에 맞춰요.':info().name+' · '+windText(environment())}</span></div>`:phase==='flying'?`<div class="dock-message"><strong>${flight.launch.power}%로 출발!</strong><span>중력과 바람을 따라 날아가요.</span><div class="flight-progress" role="meter" aria-label="확정된 던지는 힘" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${flight.launch.power}" style="--locked-power:${flight.launch.power}%"><i id="launchedPower" style="transform:scaleX(${flight.launch.power/100})"></i></div></div>`:`<div class="dock-message"><strong>${flight?.reason==='landed'?flight.launch.power+'% → '+scoreText(flightScore(flight,event())):'다시 준비할 수 있어요.'}</strong><span>${flight?.reason==='landed'?(event()==='distance'?'체공 '+flight.duration.toFixed(2)+'초':'비거리 '+flight.distance.toFixed(2)+' m'):'작업대에서 준비하고 새로운 힘으로 던져요.'}</span></div>`;
  const label=complete?(advance?'다음 대회 준비':'같은 대회 다시 준비'):working?'경기장으로':phase==='ready'?'힘 조절 시작':phase==='charging'?'지금 던지기':phase==='flying'?'날아가는 중':course()?flightName(run().records.length)+' 준비':'작업대에서 다시 준비';
  $('actionArea').innerHTML=`<button id="mainAction" class="primary" data-action="${complete?(advance?'next-cup':'restart-cup'):working?'field':timing?'throw':phase==='result'?'workshop':'none'}" ${phase==='flying'||!scene?'disabled':''}><span>${label}</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${phase==='charging'||phase==='flying'?'M3 10 21 3 15 21 11 13 3 10z M11 13 21 3':'M4 12h15M13 5l7 7-7 7'}"/></svg></button>${timing?`<button class="dock-cancel" data-action="${phase==='charging'?'cancel':'workshop'}">${phase==='charging'?'힘 조절 취소':'작업대로'}</button>`:''}`;
 }
@@ -142,11 +143,21 @@ function render(keepScroll=false){
  updateNumbers();renderDock();layoutDock();renderDirty=true;
 }
 function revealDeck(){if(matchMedia('(max-width:900px)').matches)document.querySelector('.flight-deck').scrollIntoView({block:'start',behavior:'instant'});}
-function toWorkshop(){sound.setPhase('workshop');if(run()?.pending){run().pending=false;persist();}phase='workshop';scene?.setMode('workshop');scene?.setDesign(design(),editor==='design'?part:'');render();if(matchMedia('(max-width:900px)').matches&&priorConfig())document.querySelector('.controls').scrollIntoView({block:'start',behavior:'instant'});else revealDeck();$('workbenchTitle').focus({preventScroll:true});status('이대로 힘만 바꾸거나, 접기와 각도를 바꿔 다시 날려요.');}
+function toWorkshop(){sound.setPhase('workshop');if(run()?.pending){run().pending=false;persist();}phase='workshop';scene?.setMode('workshop');scene?.setDesign(design(),editor==='design'?part:'');render();revealDeck();$('workbenchTitle').focus({preventScroll:true});status('이대로 힘만 바꾸거나, 접기와 각도를 바꿔 다시 날려요.');}
+function focusExperiment(kind){
+ requestAnimationFrame(()=>{
+  const input=$(kind==='fold'?'fold':'pitch'),anchor=kind==='fold'?input?.closest('.range-block'):$('anglePreview');
+  if(!anchor||!input)return;
+  const deck=document.querySelector('.flight-deck'),sticky=getComputedStyle(deck).position==='sticky';
+  anchor.style.scrollMarginTop=(sticky?deck.getBoundingClientRect().height+24:16)+'px';
+  anchor.scrollIntoView({block:'start',behavior:'instant'});input.focus({preventScroll:true});
+  input.closest('.range-block').classList.add('experiment-changed');
+ });
+}
 function toReady(){if(phase!=='workshop'||!scene||cupDone())return;phase='ready';sound.setPhase('ready');scene.setMode('field');scene.setDesign(design());scene.setReady(launch());render();revealDeck();$('mainAction').focus({preventScroll:true});status('맵 아래 힘 조절 시작을 누르고, 원하는 힘에서 한 번 더 눌러요.');}
 function cancelCharge(){if(phase!=='charging')return;phase='ready';sound.setPhase('ready');chargePower=0;render();$('mainAction').focus({preventScroll:true});status('힘 조절을 취소했어요. 다시 시작할 수 있어요.');}
 function beginFlight(input){
- sound.setPhase('ready');
+ experimentPower=null;appliedExperiment=null;sound.setPhase('ready');
  presetBefore=null;const last=priorConfig();previous=last?simulate(last.design,last.launch,last.env):null;
  const d=clone(design()),e=clone(environment());data.launch=input;flight=simulate(d,input,e);flightTime=0;
  if(flight.reason==='landed'){if(course()&&!commitFlight(data.sports,run().id+'-'+(run().records.length+1),flight)){phase='workshop';render();status('작업대에서 다음 비행을 준비해요.');return;}if(!course())data.sports.practice[event()]={id:crypto.randomUUID(),score:flightScore(flight,event()),design:d,launch:clone(input),env:e};persist();}
@@ -164,22 +175,23 @@ function openMissions(){
 }
 function layoutDock(){
  const dock=document.querySelector('.flight-dock'),deck=document.querySelector('.flight-deck');
- const parent=phase==='workshop'&&matchMedia('(max-width:900px)').matches?document.querySelector('.app'):deck;
+ const parent=deck;
  if(dock.parentElement!==parent)parent.append(dock);
 }
 matchMedia('(max-width:900px)').addEventListener('change',layoutDock);
 function restorePending(){
  const r=run();if(!r?.pending||!scene)return false;
- const latest=r.records.at(-1),prior=r.records.at(-2);flight=simulate(latest.design,latest.launch,environment());previous=prior?simulate(prior.design,prior.launch,environment()):null;
+ const latest=r.records.at(-1),prior=r.records.at(-2)??r.previous;flight=simulate(latest.design,latest.launch,environment());previous=prior?simulate(prior.design,prior.launch,environment()):null;
  if(flight.reason!=='landed')return false;
  phase='result';landingAt=0;flightTime=flight.duration;scene.setMode('field');scene.setDesign(latest.design);scene.setEnvironment(environment());scene.showFlight(flight,previous);render();scene.draw(flightTime,'result',reduced);status('저장된 비행 결과예요. 같은 비행을 두 번 세지 않아요.');return true;
 }
 function enterCup(id){
+ experimentPower=null;appliedExperiment=null;
  if(!startTournament(data.sports,id,crypto.randomUUID()))return;
  editor='design';part='wing';persist();$('missionDialog').close();
  if(!restorePending())toWorkshop();
 }
-function storeDesign(){presetBefore=null;document.querySelector('[data-action="undo-preset"]')?.remove();data.design=cleanDesign(design());persist();scene?.setDesign(design(),part);updateNumbers();renderDirty=true;}
+function storeDesign(){experimentPower=null;appliedExperiment=null;document.querySelectorAll('.experiment-changed').forEach(e=>e.classList.remove('experiment-changed'));presetBefore=null;document.querySelector('[data-action="undo-preset"]')?.remove();data.design=cleanDesign(design());persist();scene?.setDesign(design(),part);updateNumbers();renderDock();renderDirty=true;}
 document.addEventListener('click',event=>{
  if(event.target instanceof HTMLDialogElement){const r=event.target.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)event.target.close();return;}
  const b=event.target.closest('button');if(!b||b.disabled)return;const action=b.dataset.action;
@@ -193,11 +205,18 @@ document.addEventListener('click',event=>{
  if(['charging','flying'].includes(phase))return;
  if(action==='archive'){const a=data.sports.archive;if(!a)return;$('archiveContent').innerHTML='<p>이전 비행 계산의 기록이에요. 현재 대회의 최고 기록과 따로 보관해요. 다음 대회는 현재 비행 계산에서 1등을 해야 열려요.</p><table class="standings"><thead><tr><th>종목 · 대회</th><th>기록</th></tr></thead><tbody>'+Object.entries(a.best).map(([key,score])=>{const [sport,place]=key.split('-');return '<tr><th>'+eventInfo(sport).name+' · '+courseById(place).short+'</th><td>'+formatScore(score,sport)+'</td></tr>';}).join('')+'</tbody></table><p>이전 시즌의 대회 비행 '+Object.values(a.runs).reduce((n,r)=>n+r.records.length,0)+'회도 원래 입력과 함께 보관했어요.</p>';$('archiveDialog').showModal();return;}
  if(action==='modify'&&phase==='result'&&flight&&!cupDone()){editor='design';foldOpen=true;toWorkshop();document.querySelector('[data-part="'+part+'"]')?.focus();status('바꾸고 싶은 부분을 고른 뒤 다시 날려 보세요.');return;}
- if(action==='experiment'&&phase==='result'&&flight){const next=nextExperiment(flight,data.sports.event);launch().pitch=next.pitch;editor='aim';persist();toWorkshop();status('각도를 '+next.pitch+'도로 바꿨어요. 지난 힘의 점선도 맞춰 비교해 보세요.');return;}
+ if(action==='experiment'&&phase==='result'&&flight){
+  const next=nextExperiment(flight,data.sports.event,previous);experimentPower=null;
+  appliedExperiment={kind:next.kind,text:next.kind==='pitch'?'각도 '+launch().pitch+'° → '+next.value+'°로 바꿨어요':next.kind==='fold'?'접는 길이 '+design().fold+' → '+next.value+' cm로 바꿨어요':'힘 '+next.value+'%에 비교 표시를 놓았어요'};
+  if(next.kind==='pitch'){launch().pitch=next.value;editor='aim';}
+  else if(next.kind==='fold'){design().fold=next.value;part='wing';foldOpen=true;editor='design';}
+  else {experimentPower=next.value;editor='aim';}
+  persist();toWorkshop();if(next.kind!=='power')focusExperiment(next.kind);status(next.kind==='power'?'다음 힘 게이지의 금빛 표시에 맞춰 직접 눌러 보세요.':next.reason);return;
+ }
  if(action==='field'){toReady();return;}
- if(b.id==='practiceNav'){data.sports.current=null;persist();toWorkshop();return;}
+ if(b.id==='practiceNav'){experimentPower=null;appliedExperiment=null;data.sports.current=null;persist();toWorkshop();return;}
  if(b.id==='missionNav'||action==='missions'){openMissions();return;}
- if(b.dataset.sport){if(b.dataset.sport===data.sports.event||!selectEvent(data.sports,b.dataset.sport))return;persist();toWorkshop();if($('missionDialog').open)openMissions();return;}
+ if(b.dataset.sport){if(b.dataset.sport===data.sports.event||!selectEvent(data.sports,b.dataset.sport))return;experimentPower=null;appliedExperiment=null;persist();toWorkshop();if($('missionDialog').open)openMissions();return;}
  if(b.dataset.course){enterCup(b.dataset.course);return;}
  if(action==='next-cup'){const next=nextCourse(course());if(next)enterCup(next.id);return;}
  if(action==='restart-cup'){enterCup(course().id);return;}
@@ -215,7 +234,7 @@ document.addEventListener('click',event=>{
  if(scene&&(b.id==='rotateLeft'||b.id==='rotateRight')){scene.viewRotation+=(b.id==='rotateLeft'?1:-1)*Math.PI/6;renderDirty=true;}
 });
 document.addEventListener('input',event=>{
- const el=event.target,id=el.id;if(id==='musicVolume'||id==='effectsVolume'){sound.configure(id==='musicVolume'?'music':'effects',Number(el.value)/100);return;}if(event.isTrusted)sound.unlock();if(id==='reducedMotion'){reduced=el.checked;document.body.dataset.motion=reduced?'reduced':'full';renderDirty=true;return;}if(phase!=='workshop')return;
+ const el=event.target,id=el.id;if(['pitch','yaw','windSpeed','windDirection','gust'].includes(id)){experimentPower=null;appliedExperiment=null;document.querySelectorAll('.experiment-changed').forEach(e=>e.classList.remove('experiment-changed'));if(phase==='workshop')renderDock();}if(id==='musicVolume'||id==='effectsVolume'){sound.configure(id==='musicVolume'?'music':'effects',Number(el.value)/100);return;}if(event.isTrusted)sound.unlock();if(id==='reducedMotion'){reduced=el.checked;document.body.dataset.motion=reduced?'reduced':'full';renderDirty=true;return;}if(phase!=='workshop')return;
  if(['fold','tip','elevator','clipPosition'].includes(id)){design()[id]=Number(el.value);storeDesign();if(id==='tip'){document.querySelectorAll('[data-tip],[data-tip-angle]').forEach(b=>b.disabled=design().tip===0);$('tipHint').textContent=tipHint();}}
  if(['pitch','yaw'].includes(id)){launch()[id]=Number(el.value);persist();$('anglePreview')?.insertAdjacentHTML('afterend',anglePreview());const previews=document.querySelectorAll('#anglePreview');if(previews.length>1)previews[0].remove();}
  if(['windSpeed','windDirection','gust'].includes(id)&&!course()){data.env[id]=id==='gust'?el.checked:Number(el.value);persist();updateNumbers();renderDock();renderDirty=true;}

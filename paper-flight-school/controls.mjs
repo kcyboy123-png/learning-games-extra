@@ -1,4 +1,4 @@
-import {cleanLaunch,cleanDesign} from './physics.mjs';
+import {cleanLaunch,cleanDesign} from './physics.mjs?v=20261120-quality6';
 export const GAUGE_HALF_MS=1600, MIN_CHARGE_MS=300;
 export function gaugePower(elapsed){
   if(!Number.isFinite(elapsed)||elapsed<0)return 0;

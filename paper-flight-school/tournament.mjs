@@ -1,4 +1,4 @@
-import {cleanDesign,cleanLaunch,cleanEnv,PRESETS,simulate} from './physics-v1.mjs';
+import {cleanDesign,cleanLaunch,cleanEnv,PRESETS,simulate} from './physics-v1.mjs?v=20261120-quality6';
 
 export const RULESET='cup-1-physics-737cc14c';
 export const COURSES=[

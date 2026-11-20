@@ -1,0 +1,4 @@
+기존 승인된 생성 자산을 게임에 사용했습니다.
+종이비행기 트로피: Tripo H3.1 / Runway 경유, 게임용 메시·텍스처 최적화.
+원목·도시 하늘: Runway / Nano Banana Pro.
+종이 질감: Scenario / BFL Flux 2 Dev.

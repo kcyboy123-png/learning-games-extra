@@ -1,4 +1,4 @@
-import {cleanEnv} from './physics-v1.mjs';
+import {cleanEnv} from './physics-v1.mjs?v=20261120-quality6';
 export const TARGET_RADIUS=1;
 export const MISSIONS=[
   {id:'near',name:'첫 착륙',target:7,description:'7 m 앞 파란 과녁 안에 내려요.'},
