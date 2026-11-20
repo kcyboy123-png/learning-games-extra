@@ -680,5 +680,12 @@ body.forest-mode .entrance-control{display:block}
 .mobile-detail{margin:10px 0;border:1px solid #b7c5ab;border-radius:10px;background:#fffef8;padding:10px 8px}
 .mobile-detail h3{margin:0 0 4px;font-size:15px;color:#31573e}
 .mobile-detail p{margin:0 0 6px;font-size:12px;line-height:1.5;color:#56664c}
-.workspace .mobile-detail .sheet.focus-sheet{min-width:480px;max-height:none;height:auto}
+.workspace .mobile-detail .sheet.focus-sheet,.workspace .focus-card .sheet.focus-sheet{min-width:480px;max-height:none;height:auto}
 .workspace .mobile-detail .focus-scroll{max-width:100%}
+
+/* Keep navigation outside draggable notes, with the same touch size as piano controls. */
+.score-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0}
+.score-nav[hidden]{display:none}
+.workspace .score-nav button{min-height:44px;min-width:84px;padding:6px 10px;border:1px solid #b6bda7;border-radius:8px;background:#f4f7ec;color:#344d39;font-size:13px}
+.workspace .score-nav button:disabled{opacity:.45}
+.score-nav output{font-size:12px;color:#43513e;font-weight:600;text-align:center}
