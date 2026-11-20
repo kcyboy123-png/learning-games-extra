@@ -1,6 +1,6 @@
 import * as THREE from './lib/three.module.min.js';
 import {GLTFLoader} from './lib/GLTFLoader.js';
-import {barkTex,foliageDetailTex,surfaceData} from './garden-textures.mjs?v=20261120-film23';
+import {barkTex,foliageDetailTex,surfaceData} from './garden-textures.mjs?v=20261120-review25';
 
 // Local, self-made forest-studio models. Keep the piano terrace and approach open.
 export const GARDEN_PLANTS = {
@@ -38,9 +38,12 @@ MAP_GARDENS.sunset={maple:[[-3.6,-7.5,1.05,.7]],cosmos:[[-3.7,2.1,.65,0],[3.1,-2
 MAP_GARDENS.christmas={};
 const MAP_TINTS={pop:[0xfff2eb,0xe7efcd],warm:[0xffdfb2,0xdac48d],dream:[0xd4daff,0xb5d4dc],journey:[0xfff6f4,0xe4efdc],moon:[0xd8e8ff,0xb9d6ce],rain:[0xb4c8d1,0x92b4ac],sunset:[0xd6b3ac,0xb7b098]};
 
-export async function loadGarden() {
-  const loader=new GLTFLoader(),templates=new Map();
-  await Promise.all([...new Set(Object.values(MAP_GARDENS).flatMap(Object.keys))].map(async kind=>{
+export async function loadGarden(initialMap='basic') {
+  const loader=new GLTFLoader(),templates=new Map(),pending=new Map(),loaded=new Set();
+  let disposed=false;
+  const kinds=id=>Object.keys(MAP_GARDENS[id]||GARDEN_PLANTS);
+  async function load(kind){
+
     try {
       const {scene}=await loader.loadAsync(new URL(`./assets/garden/${kind}.glb`,import.meta.url).href);
       scene.updateMatrixWorld(true);
@@ -59,10 +62,15 @@ export async function loadGarden() {
         }
         parts.push({name,geometry});o.geometry.dispose();o.material.dispose();
       });
-      templates.set(kind,parts);
+      if(disposed)parts.forEach(p=>p.geometry.dispose());else templates.set(kind,parts);
     }catch(error){console.warn(`[garden] ${kind} unavailable; original forest retained`,error.message);}
-  }));
+    finally{loaded.add(kind);}
+  }
+  async function ensure(id){await Promise.all(kinds(id).map(kind=>{if(!pending.has(kind))pending.set(kind,load(kind));return pending.get(kind);}));}
+  await ensure(initialMap);
   return {
+    ensure,
+    ready:id=>kinds(id).every(kind=>loaded.has(kind)),
     build(parent,groundY,id='basic'){
       const plants=MAP_GARDENS[id]||GARDEN_PLANTS,[flowerTint,leafTint]=MAP_TINTS[id]||[0xfff7f3,0xe0ead1];
       const root=new THREE.Group();root.name='garden-transplant';parent.add(root);
@@ -87,6 +95,6 @@ export async function loadGarden() {
       root.traverse(o=>{o.updateMatrix();o.matrixAutoUpdate=false;});
       return ['cherry','maple'].flatMap(kind=>templates.has(kind)?plants[kind]||[]:[]).map(([x,z,s])=>({x,z,radius:.25*s,height:4*s}));
     },
-    dispose(){for(const parts of templates.values())for(const p of parts)p.geometry.dispose();templates.clear();}
+    dispose(){disposed=true;for(const parts of templates.values())for(const p of parts)p.geometry.dispose();templates.clear();}
   };
 }

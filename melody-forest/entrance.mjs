@@ -12,15 +12,16 @@ export function mountEntrance(root,theme=null,onReplay=()=>{}){
 export function openEntrance(root,theme=null){
   if(active)return;
   const christmas=theme==='christmas';
+  const portrait=christmas&&matchMedia('(max-aspect-ratio: 1/1)').matches;
   const motion=matchMedia('(prefers-reduced-motion: reduce)');
   const previousFocus=document.activeElement,previousInert=root.inert,previousOverflow=document.body.style.overflow;
   const overlay=document.createElement('section');
-  overlay.className='entrance-overlay'+(christmas?' christmas-entrance':'');overlay.tabIndex=-1;
+  overlay.className='entrance-overlay'+(christmas?' christmas-entrance':'');overlay.tabIndex=-1;if(portrait)overlay.classList.add('portrait-entrance');
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
   overlay.setAttribute('aria-label','피아노의 숲 입장 영상');
   const video=document.createElement('video');
   video.className='entrance-film';video.muted=true;video.playsInline=true;video.preload='auto';video.loop=false;
-  video.setAttribute('aria-hidden','true');video.poster=christmas?'assets/art/christmas-entrance-poster.jpg':'assets/art/entrance-poster.webp';
+  video.setAttribute('aria-hidden','true');video.poster=portrait?'assets/art/christmas-entrance-portrait-poster.jpg':christmas?'assets/art/christmas-entrance-poster.jpg':'assets/art/entrance-poster.webp';
   const status=document.createElement('p');status.className='entrance-status';
   status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const actions=document.createElement('div');actions.className='entrance-actions';
@@ -78,7 +79,8 @@ export function openEntrance(root,theme=null){
   video.onplaying=()=>{if(!closed&&!leaving){clearWatchdog();message('');}};
   video.ontimeupdate=()=>{if(!closed&&!leaving&&!video.paused){clearWatchdog();message('');}};
   video.onwaiting=video.onstalled=()=>{if(!closed&&!leaving){message('영상을 이어서 불러오고 있어요…');watch();}};
-  video.onended=finish;video.onerror=showFailure;
+  let fallback=false;
+  video.onended=finish;video.onerror=()=>{if(portrait&&!fallback&&!closed&&!leaving){fallback=true;clearWatchdog();overlay.classList.remove('portrait-entrance');video.poster='assets/art/christmas-entrance-poster.jpg';video.src='assets/art/christmas-entrance.mp4';if(!motion.matches)start();else showFailure();}else showFailure();};
   overlay.onkeydown=event=>{
     event.stopPropagation();
     if(event.key==='Escape'){event.preventDefault();finish();return;}
@@ -89,6 +91,6 @@ export function openEntrance(root,theme=null){
     event.preventDefault();controls[(index+(event.shiftKey?-1:1)+controls.length)%controls.length].focus();
   };
   motion.addEventListener('change',onMotion);window.addEventListener('pagehide',onPageHide);
-  video.src=christmas?'assets/art/christmas-entrance.mp4':'assets/art/entrance.mp4';
+  video.src=portrait?'assets/art/christmas-entrance-portrait.mp4':christmas?'assets/art/christmas-entrance.mp4':'assets/art/entrance.mp4';
   if(motion.matches){message('움직임 줄이기가 켜져 있어요. 원하면 입장 영상을 재생할 수 있어요.');play.hidden=false;}else start();
 }

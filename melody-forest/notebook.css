@@ -567,3 +567,62 @@ body.forest-mode .entrance-control{display:block}
 .entrance-overlay.christmas-entrance{background:linear-gradient(#101d32cc,#101d32e6),url('./assets/art/christmas-entrance-poster.jpg') center/cover no-repeat}
 .entrance-overlay.christmas-entrance .entrance-film{inset:auto;left:50%;top:50%;transform:translate(-50%,-50%);width:min(calc(100% - 32px),1280px,calc((100vh - 152px)*16/9));width:min(calc(100% - 32px),1280px,calc((100dvh - 152px)*16/9));height:auto;aspect-ratio:16/9;max-height:720px;object-fit:contain;object-position:center;border-radius:12px;box-shadow:0 12px 60px #0007}
 
+/* Phone composer: keep the same controls, but remove stacked toolbar rows. */
+@media(max-width:600px){
+ body.forest-mode{--band:90px}
+ body.forest-mode:not(.forest-cinema) .workspace{margin-top:100px;padding:8px 10px}
+ .workspace .compose-tools{padding:0;margin:0}
+ .workspace .part-tabs{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0}
+ .workspace .part-tabs>span{width:100%;font-size:12px}
+ .workspace .part-tabs button{flex:1;min-width:52px;min-height:44px;padding:6px 2px;font-size:12px}
+ .workspace .part-check{display:none}
+ .workspace .ensemble-hint{font-size:11px;margin:4px 0;line-height:1.4}
+ .workspace[data-view] .view-bar{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:5px 0;scrollbar-width:thin}
+ .workspace[data-view] .quick-listen{display:flex!important;flex:0 0 auto;width:auto;gap:6px}
+ .workspace .view-bar button{flex:0 0 auto;min-width:72px;min-height:44px;padding:6px;font-size:12px;white-space:nowrap}
+ .workspace .view-bar .group-switch{flex:0 0 auto;gap:4px}
+ .workspace .compose-context{margin:4px 0;padding:4px;gap:4px}
+ .workspace .compose-context span:last-of-type{display:none}
+ .workspace .score-scroll-hint{margin:3px 6px;font-size:11px}
+ .workspace .measure-select{padding-top:4px;padding-bottom:4px}
+ .workspace .palette{margin-top:6px;padding:4px;gap:4px}
+ .workspace .duration-group{width:100%;gap:4px}
+ .workspace .duration-group button{flex:1;display:flex;flex-direction:row;justify-content:center;padding:2px;gap:2px;min-height:44px}
+ .workspace .duration-icon{height:24px;width:18px}
+ .workspace .palette>button,.workspace .history-buttons button{min-height:44px;padding:4px;font-size:12px}
+ .workspace .duration-help{margin:3px 0;font-size:11px}
+ .workspace .keyboard-panel{padding:6px;margin-top:4px}
+ .workspace .carol-guide{font-size:12px;padding:5px;margin:0 0 4px;line-height:1.4}
+ .workspace .carol-guide small{display:none}
+ .workspace .piano-nav{margin:3px 0}
+ .workspace .piano .key{height:120px;min-height:120px}
+ .workspace .piano .key small{font-size:10px}
+}
+@media(max-width:600px){
+ body.forest-mode:not(.forest-cinema) .workspace{margin-top:56px}
+ .workspace .focus-card{margin:4px 0;padding:4px}
+ .workspace .focus-card .sheet{width:100%;min-width:0;max-height:140px}
+ .workspace .piano{min-height:126px;height:126px}
+ .workspace .piano-keys{min-height:120px;height:120px}
+}
+@media(max-width:600px){
+ .workspace .view-bar .focus-name{flex:0 0 auto;min-width:64px;white-space:nowrap;font-size:13px}
+ .workspace .view-bar [data-action=prev],.workspace .view-bar [data-action=next]{min-width:44px}
+ .workspace>.forest-bar{position:static;width:auto;margin:0 0 6px;padding:0}
+ .workspace>.forest-bar .forest-map-choice{padding:0;max-width:none}
+ .workspace>.forest-bar .forest-map-choice small{font-size:10px}
+ body.forest-mode:not(.forest-cinema) .workspace{margin-top:12px}
+ .workspace .keyboard-panel .piano-nav{gap:4px}
+}
+@media(max-width:600px){
+ .workspace .keyboard-panel{display:flex;flex-direction:column;gap:4px}
+ .workspace .keyboard-panel .piano-scroll{order:0}
+ .workspace .keyboard-panel .piano-nav{order:1}
+ .workspace .keyboard-panel .carol-guide{order:2}
+ .workspace .keyboard-panel .free-choice{order:3}
+ .workspace .keyboard-panel .piano-hint,.workspace .keyboard-panel .harmony-note{order:4}
+ .workspace .focus-card .sheet{max-height:120px}
+}
+
+.entrance-overlay.christmas-entrance.portrait-entrance{background-image:linear-gradient(#101d32cc,#101d32e6),url('./assets/art/christmas-entrance-portrait-poster.jpg')}
+.entrance-overlay.christmas-entrance.portrait-entrance .entrance-film{width:min(calc(100% - 24px),1080px,calc((100vh - 120px)*9/16));width:min(calc(100% - 24px),1080px,calc((100dvh - 120px)*9/16));aspect-ratio:9/16;max-height:1920px}

@@ -4,12 +4,12 @@ import {forestQuality} from './forest-quality.mjs';
 import {pianoPressure} from './performance-motion.mjs';
 import {loadChristmasTree,loadChristmasLantern,loadChristmasArch,loadDistantChristmasTree} from './christmas-tree.mjs';
 import * as THREE from './lib/three.module.min.js';
-import {loadFriendArt,createForestFriends,companionSpace} from './forest-friends.mjs?v=20261120-film23';
-import {loadGarden} from './forest-garden.mjs?v=20261120-film23';
-import {pianoKey, WHITE_KEYS, BLACK_KEY_STEPS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs?v=20261120-film23';
-import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261120-film23';
-import {createStorybookChild,backingKey} from './forest-character.mjs?v=20261120-film23';
-import {forestInput, forestStep, forestOrbit, forestRoute, forestLook, forestEye, forestTurnToward} from './forest-controls.mjs?v=20261120-film23';
+import {loadFriendArt,createForestFriends,companionSpace} from './forest-friends.mjs?v=20261120-review25';
+import {loadGarden} from './forest-garden.mjs?v=20261120-review25';
+import {pianoKey, WHITE_KEYS, BLACK_KEY_STEPS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs?v=20261120-review25';
+import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261120-review25';
+import {createStorybookChild,backingKey} from './forest-character.mjs?v=20261120-review25';
+import {forestInput, forestStep, forestOrbit, forestRoute, forestLook, forestEye, forestTurnToward} from './forest-controls.mjs?v=20261120-review25';
 
 const V = (x, y, z) => new THREE.Vector3(x, y, z), C = h => new THREE.Color(h);
 // The full A0–C8 piano has 52 white keys; the existing C3–C6 animation occupies slots 16–37.
@@ -446,8 +446,8 @@ function buildGirl(scene, atlas, seatedGirl, seatedBoy, posesGirl, posesBoy, pup
 
 // ---------- stage ----------
 const prepareYield=()=>new Promise(resolve=>setTimeout(resolve,0));
-export async function createForest(host, {onEvent = () => {}, audioTime = () => 0} = {}) {
-  const gardenReady=loadGarden();
+export async function createForest(host, {onEvent = () => {}, audioTime = () => 0,initialMap='basic'} = {}) {
+  const gardenReady=loadGarden(initialMap);
   const christmasTreeReady=loadChristmasTree();
   const christmasLanternReady=loadChristmasLantern();
   const christmasArchReady=loadChristmasArch();
@@ -524,8 +524,14 @@ export async function createForest(host, {onEvent = () => {}, audioTime = () => 
     group.traverse(o=>{if(o.geometry)geometries.add(o.geometry);for(const m of [].concat(o.material||[],o.customDepthMaterial||[])){materials.add(m);for(const v of Object.values(m))if(v?.isTexture&&v!==leafTexture)textures.add(v);}});
     textures.forEach(t=>t.dispose());materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose());
   }
+  let requestedMap=null;
   function setMap(id){
-    id=forestMapId(id);if(id===mapId)return;
+    id=forestMapId(id);
+    if(!garden.ready(id)){
+      if(requestedMap!==id){requestedMap=id;onEvent('map-loading');garden.ensure(id).then(()=>{if(!state.dead&&requestedMap===id)setMap(id);});}
+      return;
+    }
+    requestedMap=id;if(id===mapId)return;
     const nextTheme=PALETTES[id],next=new THREE.Group();
     let nextWorld,nextLandmarks;
     try{nextWorld=buildScenery(next,rng(20261021),leafTexture,nextTheme);nextLandmarks=buildLandmarks(next,id,groundY,leafTexture,piano.woodMap,nextWorld.glow,christmasTree,christmasLantern,christmasArch,distantTree);nextWorld.colliders.push(...garden.build(next,groundY,id));}

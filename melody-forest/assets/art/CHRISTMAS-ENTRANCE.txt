@@ -7,3 +7,9 @@ Content: Christmas forest, lantern path, golden tree, wooden piano, cottage, sle
 File: christmas-entrance.mp4. Poster: christmas-entrance-poster.jpg, captured from actual video frame using browser canvas.
 Silent film; existing ambience system unchanged. No personal/student data uploaded.
 Verified 145 decoded frames, 0 dropped in one headless Edge standalone playback; visual samples at .1, 1.5, 3, 4.5 and 5.8 seconds. Actual mobile performance not measured.
+
+2026-11-20 review25 portrait entrance:
+Runway connected workspace 쌤 (69057733), task ea4954b9-2e8c-45ac-a556-f9e27cb49990.
+Model seedance-2.5, requested native 9:16 1080p silent 6 seconds. Actual browser metadata 1080x1920, 6.041667 seconds. Original output retained, no upscaling or landscape crop.
+Credits verified 10312 before / 9904 submission result, cost 408. No purchases, subscription changes, topup.
+christmas-entrance-portrait.mp4, poster extracted at .1sec (540x960). Frames inspected .1/2/4/5.8 seconds, browser autoplay/end checked phone/tablet. Existing landscape film preserved. Conceptual storybook scene, not identical live map geometry.
