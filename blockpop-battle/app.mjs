@@ -1,4 +1,4 @@
-import{match,step,snapshot,training,progress,resolve,queued,readyAttack,landingRows,attack,TICK,DURATION,W,H,TOP}from'./engine.mjs?v=232';
+import{match,step,snapshot,training,progress,resolve,queued,readyAttack,landingRows,attack,TICK,DURATION,W,H,TOP}from'./engine.mjs?v=233';
 import{drawBoard,drawNext,drawFlights,flightDuration,flightHits}from'./render.mjs?v=232';
 import{Sound}from'./audio.mjs?v=232';
 import{RIVALS,accessible,completeStage,advanceSeries,createBot,rivalActions}from'./rivals.mjs';
@@ -135,6 +135,10 @@ function update(){
  if(state.mode==='training'&&state.stage===3&&!state.stageDone&&p.hold===null)hint='막대는 잠깐 저장! 보관함을 눌러 봐.';
  const q=queued(p),due=p.queue.filter(x=>x.due<=g.time).reduce((n,x)=>n+x.n,0);const count=$('myQueueCount').firstChild;if(count.data!==String(q))count.data=q;setText('otherQueueCount',queued(other));const dots=$('myQueue');if(dots.children.length!==8)dots.replaceChildren(...Array.from({length:8},()=>document.createElement('i')));for(let i=0;i<8;i++){const name=i<q?'on'+(i<due?' due':''):'';if(dots.children[i].className!==name)dots.children[i].className=name;}
  const rising=readyAttack(p,g.time),ready=rising>0;
+ if(!state.stageDone&&rows.length&&state.mode==='challenge'){
+  const power=attack(rows.length,p.combo+rows.length),send=Math.min(Math.max(0,power-q),8-queued(other));
+  hint=`${p.combo+rows.length}콤보 예상 · ${send?`공격 ${send}줄 예상`:q?'오는 공격부터 막아!':power?'상대 공격칸이 가득 찼어':'한 줄 완성!'}`;
+ }
  if(!state.stageDone&&ready&&!rows.length)hint=`줄을 못 지우면 ${rising}줄 올라와!`;
  if(state.mode==='training'&&state.stage===2&&!state.stageDone&&rows.length)hint='내려놓으면 공격을 막아!';
  setText('actionHint',hint);

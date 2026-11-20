@@ -21,7 +21,7 @@ export function landingRows(p){
 export function player(seed){const p={board:blank(),rows:Array(H).fill(false),seq:sequence(seed),index:0,piece:null,pieceId:0,hold:null,holdUsed:false,gravity:0,ground:0,contact:null,resets:0,combo:0,comboMisses:0,best:0,lines:0,score:0,blocked:0,sent:0,queue:[],dead:false,locks:0,lastLock:-1000};spawn(p);return p;}
 export function spawn(p,type=p.seq[p.index++%p.seq.length]){p.piece={type,rot:0,x:Math.floor((W-SHAPES[type][0].length)/2),y:TOP};p.pieceId++;p.holdUsed=false;p.gravity=0;p.ground=0;p.contact=null;p.resets=0;if(!fits(p,p.piece))p.dead=true;}
 export function hold(p){if(p.dead||!p.piece||p.holdUsed)return false;const old=p.hold;p.hold=p.piece.type;spawn(p,old??undefined);p.holdUsed=true;return true;}
-export function comboBonus(c){return c<4?0:c<8?1:2;}
+export function comboBonus(c){return c<4?0:c<5?1:c<7?2:c<9?3:4;}
 export function attack(l,c){return l?Math.min(4,[0,0,1,2,4][l]+comboBonus(c)):0;}
 export const queued=p=>p.queue.reduce((s,q)=>s+q.n,0);
 export function cancel(p,n){let rest=n;while(rest&&p.queue.length){const q=p.queue[0],take=Math.min(rest,q.n);q.n-=take;rest-=take;if(!q.n)p.queue.shift();}return n-rest;}
