@@ -1,7 +1,7 @@
-import {NATURAL_SAMPLES} from './natural-samples.mjs?v=20261120-keys42';
-import {timing, chordAt, PITCHES} from './core.mjs?v=20261120-keys42';
-import {ensembleAccompaniment as accompanimentPattern} from './accompaniment.mjs?v=20261120-keys42';
-import {instrumentById, instrumentRoot} from './instruments.mjs?v=20261120-keys42';
+import {NATURAL_SAMPLES} from './natural-samples.mjs?v=20261120-fit43';
+import {timing, chordAt, PITCHES} from './core.mjs?v=20261120-fit43';
+import {ensembleAccompaniment as accompanimentPattern} from './accompaniment.mjs?v=20261120-fit43';
+import {instrumentById, instrumentRoot} from './instruments.mjs?v=20261120-fit43';
 
 const PIANO_ROOTS = Array.from({length: 16}, (_, index) => 39 + index * 3);
 const SAMPLE_INSTRUMENTS = new Set(['piano', 'bass', 'pluck']);

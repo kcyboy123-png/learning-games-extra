@@ -1,5 +1,5 @@
-import { PITCHES, clone, used, isChordTone, chordAt, editableSong, partBars, firstPart, emptyBars, complete, songParts } from './core.mjs?v=20261120-keys42';
-import {instrumentById} from './instruments.mjs?v=20261120-keys42';
+import { PITCHES, clone, used, isChordTone, chordAt, editableSong, partBars, firstPart, emptyBars, complete, songParts } from './core.mjs?v=20261120-fit43';
+import {instrumentById} from './instruments.mjs?v=20261120-fit43';
 
 // Pure editing steps: every operation returns { song } or { error } and never mutates its input.
 export const LENGTHS = { 1: '반 박', 2: '1박', 3: '1.5박', 4: '2박', 8: '4박' };

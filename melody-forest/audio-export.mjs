@@ -1,5 +1,5 @@
-import {Player} from './audio.mjs?v=20261120-keys42';
-import {timing,validateSong} from './core.mjs?v=20261120-keys42';
+import {Player} from './audio.mjs?v=20261120-fit43';
+import {timing,validateSong} from './core.mjs?v=20261120-fit43';
 
 export function encodeWav(buffer){
   const channels=buffer.numberOfChannels, frames=buffer.length, bytes=frames*channels*2;
