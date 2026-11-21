@@ -548,7 +548,7 @@ dialog.dialog{max-width:min(520px,calc(100vw - 28px));max-height:calc(100dvh - 3
 @media(max-width:820px){.rhythm-workbench{grid-template-columns:1fr;gap:24px;padding:18px 0}.rhythm-board,.rhythm-arrangement{width:100%;max-width:520px;margin:0 auto}.rhythm-board-heading{justify-content:center}.rhythm-instruction{text-align:center}}
 @media(max-width:480px){.rhythm-board-heading h2{font-size:23px}.rhythm-orbit{width:min(100%,324px)}.rhythm-workbench .orbit-step{width:64px;height:64px}.rhythm-workbench .orbit-between{width:50px;height:50px}.rhythm-orbit-center{width:126px}.rhythm-orbit-center>strong{font-size:34px}.rhythm-orbit-key{gap:6px;font-size:11px}.rhythm-live-position:empty{display:none}}
 
-.carol-guide{padding:10px 14px;background:#fff4d9;border-left:4px solid #a97827;border-radius:8px;color:#4d3b20;margin:6px 0 12px}.carol-guide strong{margin-right:12px}.carol-guide small{display:block;margin-top:4px}.piano .key.carol-tone{box-shadow:inset 0 0 0 3px #b98836}
+.piano .key.carol-tone{box-shadow:inset 0 0 0 3px #b98836}
 .rhythm-workbench .rhythm-pad.current-beat{outline:3px solid #bb872f;outline-offset:4px}
 .rhythm-workbench .rhythm-pad.playing-note{box-shadow:0 0 0 6px #f0dba4}
 
@@ -557,15 +557,8 @@ dialog.dialog{max-width:min(520px,calc(100vw - 28px));max-height:calc(100dvh - 3
 .ensemble-hint{margin:8px 0 0;color:#40604d;font-size:13px;line-height:1.5}
 .forest-start-card{position:fixed;z-index:4;right:24px;bottom:30px;display:grid;gap:10px;max-width:310px;padding:16px;background:#fffdf3ed;border:1px solid #b9ccb5;border-radius:18px;box-shadow:0 8px 28px #142a3024;color:#284c3c}
 .forest-start-card span{font-size:14px;line-height:1.5}
-body.forest-mode .entrance-control{display:block}
 @media(max-width:600px){.forest-start-card{left:16px;right:16px;bottom:215px;max-width:none;padding:12px;gap:6px}.forest-start-card span{font-size:13px}}
 
-.christmas-entrance{background:radial-gradient(ellipse at center,#294359,#101d32 75%)}
-.entrance-title{position:absolute;z-index:1;top:7%;left:16px;right:16px;margin:0;text-align:center;color:#fff1ce;font-size:clamp(22px,4vw,36px);text-shadow:0 2px 12px #16273b}
-
-/* Keep the original 720p frame intact instead of magnifying a portrait crop. */
-.entrance-overlay.christmas-entrance{background:linear-gradient(#101d32cc,#101d32e6),url('./assets/art/christmas-entrance-poster.jpg') center/cover no-repeat}
-.entrance-overlay.christmas-entrance .entrance-film{inset:auto;left:50%;top:50%;transform:translate(-50%,-50%);width:min(calc(100% - 32px),1280px,calc((100vh - 152px)*16/9));width:min(calc(100% - 32px),1280px,calc((100dvh - 152px)*16/9));height:auto;aspect-ratio:16/9;max-height:720px;object-fit:contain;object-position:center;border-radius:12px;box-shadow:0 12px 60px #0007}
 
 /* Phone composer: keep the same controls, but remove stacked toolbar rows. */
 @media(max-width:600px){
@@ -592,8 +585,6 @@ body.forest-mode .entrance-control{display:block}
  .workspace .palette>button,.workspace .history-buttons button{min-height:44px;padding:4px;font-size:12px}
  .workspace .duration-help{margin:3px 0;font-size:11px}
  .workspace .keyboard-panel{padding:6px;margin-top:4px}
- .workspace .carol-guide{font-size:12px;padding:5px;margin:0 0 4px;line-height:1.4}
- .workspace .carol-guide small{display:block;font-size:11px;margin-top:3px}
  .workspace .piano-nav{margin:3px 0}
  .workspace .piano .key,.workspace .piano .key.tone{height:120px;min-height:120px}
  .workspace .piano .key small{font-size:10px}
@@ -618,14 +609,11 @@ body.forest-mode .entrance-control{display:block}
  .workspace .keyboard-panel{display:flex;flex-direction:column;gap:4px}
  .workspace .keyboard-panel .piano-scroll{order:0}
  .workspace .keyboard-panel .piano-nav{order:1}
- .workspace .keyboard-panel .carol-guide{order:2}
- .workspace .keyboard-panel .free-choice{order:3}
- .workspace .keyboard-panel .piano-hint,.workspace .keyboard-panel .harmony-note{order:4}
+ .workspace .keyboard-panel .free-choice{order:2}
+ .workspace .keyboard-panel .piano-hint,.workspace .keyboard-panel .harmony-note{order:3}
  .workspace .focus-card .sheet{max-height:120px}
 }
 
-.entrance-overlay.christmas-entrance.portrait-entrance{background-image:linear-gradient(#101d32cc,#101d32e6),url('./assets/art/christmas-entrance-portrait-poster.jpg')}
-.entrance-overlay.christmas-entrance.portrait-entrance .entrance-film{width:min(calc(100% - 24px),1080px,calc((100vh - 120px)*9/16));width:min(calc(100% - 24px),1080px,calc((100dvh - 120px)*9/16));aspect-ratio:9/16;max-height:1920px}
 
 /* Keep listening and score controls visible instead of clipping them sideways. */
 @media(max-width:600px){
