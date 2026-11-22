@@ -47,14 +47,23 @@ export function contactZones(id='puppy',pose=0,facing=-1){
   head=[x,y,.22,.19];chin=[x,y+.16,.15,.09];back=[x>.55?.30:.72,pose>=38?.36:.60,.18,.17];
   if(id==='cat-cheese'&&pose<38)back[0]=.50;
  }
+ for(const [zone,wide,deep] of [[head,.045,.026],[chin,.050,.026],[back,.062,.066]]){zone[2]+=wide;zone[3]+=deep;}
  return {head,chin,back};
 }
 export function contactPart(box,p,current,id='puppy',pose=0,facing=-1,zones=contactZones(id,pose,facing)){
  const x=(p.x-box.x)/box.w,y=(p.y-box.y)/box.h;
- if(x<0||x>1||y<0||y>(pose===26?.92:.82))return null;
+ if(x<0||x>1||y<0||y>(pose===26?.92:.89))return null;
  const distance=z=>((x-z[0])/z[2])**2+((y-z[1])/z[3])**2;
  let best=null,score=1;for(const part in zones){const d=distance(zones[part]);if(d<score){best=part;score=d;}}
  if(current&&zones[current]){const d=distance(zones[current]);if(d<1.16&&score>d*.65)return current;}return best;
+}
+export function strokeRegion(box,p,part,zones){
+ const z=zones?.[part];if(!z)return part;
+ const x=(p.x-box.x)/box.w,y=(p.y-box.y)/box.h;
+ if(part==='head'&&Math.abs(x-z[0])>z[2]*.42)return 'ear';
+ if(part==='chin'&&(Math.abs(x-z[0])>z[2]*.4||y>z[1]+z[3]*.33))return 'neck';
+ if(part==='back'&&y>z[1]+z[3]*.15)return 'side';
+ return part;
 }
 export function sampleStroke(stroke,now){
  const dt=Math.max(0,Math.min(200,now-(stroke.sampleAt??now)));stroke.sampleAt=now;
@@ -65,8 +74,9 @@ export function sampleStroke(stroke,now){
 }
 
 // Briefly retain the just-visible target when a contact pose moves under a new tap.
-export function contactTarget(box,p,id,pose,facing,previous,now){
- const target=(box,pose,facing)=>{const zones=contactZones(id,pose,facing),part=contactPart(box,p,null,id,pose,facing,zones);if(!part)return null;const z=zones[part],score=(((p.x-box.x)/box.w-z[0])/z[2])**2+(((p.y-box.y)/box.h-z[1])/z[3])**2;return {box,pose,facing,part,score};};
+export function contactTarget(box,p,id,pose,facing,previous,now,reclining=false){
+ if(!box)return null;
+ const target=(box,pose,facing)=>{const zones=reclining&&pose===3?contactZones(id,39,facing):contactZones(id,pose,facing),part=contactPart(box,p,null,id,pose,facing,zones);if(!part)return null;const z=zones[part],score=(((p.x-box.x)/box.w-z[0])/z[2])**2+(((p.y-box.y)/box.h-z[1])/z[3])**2;return {box,pose,facing,part,score,zones,region:strokeRegion(box,p,part,zones)};};
  const current=target(box,pose,facing);
  if(!previous||now-previous.at<0||now-previous.at>100||!((pose>=8&&pose<=11)||(pose>=28&&pose<=39))||!((previous.pose>=8&&previous.pose<=11)||(previous.pose>=28&&previous.pose<=39)))return current;
  const old=target(previous.box,previous.pose,previous.facing);

@@ -178,6 +178,34 @@ footer {
 @media (max-width:360px) { header h1 { font-size: 15px; white-space: nowrap; } }
 /* Keep the credit clear of activity controls and the device safe area. */
 footer { bottom: calc(42px + env(safe-area-inset-bottom)); }
-.creator-credit { position: fixed; right: max(14px, env(safe-area-inset-right)); bottom: calc(5px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 5px; pointer-events: none; color: #fffdf3; font-size: 12px; font-weight: 600; text-shadow: 0 1px 3px #342b20, 0 0 5px #342b20; }
-.creator-credit img { display: block; object-fit: contain; }
-@media (max-width: 600px) { .creator-credit { right: 50%; transform: translateX(50%); white-space: nowrap; } }
+.creator-credit { display:flex; align-items:center; gap:5px; margin:4px 0 9px; width:fit-content; color:#fffaf0; font-size:clamp(11px,3vw,15px); font-weight:700; line-height:1.1; text-shadow:0 1px 3px #241d12,0 0 5px #241d12; }
+.creator-credit img { display:block; width:24px; height:24px; object-fit:contain; }
+#hint.drag-instruction { font-size:clamp(14px,2.4vw,17px); font-weight:700; padding:8px 15px; }
+@media(max-width:600px){.creator-credit img{width:21px;height:21px}}
+
+/* One persistent instruction, only changing when the play step changes. */
+#playGuide{position:fixed;top:130px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 28px);padding:12px 20px;border-radius:18px;background:#fff9eaf5;color:#274737;box-shadow:0 4px 18px #203e3026;pointer-events:none;text-align:center}
+#playGuide small,#playGuide strong,#playGuide span{display:block}
+#playGuide small{font-size:12px;color:#67765a}#playGuide strong{font-size:clamp(17px,2vw,22px);margin:5px 0 7px}#playGuide span{font-size:13px;line-height:1.5}
+body[data-play-guide="true"] #hint{visibility:hidden}
+@media(max-width:600px) and (min-height:501px){#playGuide{top:clamp(170px,24vh,205px)}}
+@media(max-width:350px) and (min-height:501px){#playGuide{top:clamp(188px,26vh,205px)}}
+@media(max-height:500px){#playGuide{top:87px;left:auto;right:16px;transform:none;max-width:min(320px,48vw);padding:8px 12px}#playGuide strong{font-size:16px}#playGuide span{font-size:11px}}
+@media(max-height:420px) and (orientation:landscape){
+ #playGuide{top:auto;bottom:calc(8px + env(safe-area-inset-bottom));left:50%;right:auto;transform:translateX(-50%);display:flex;align-items:center;gap:8px;max-width:calc(100% - 24px);padding:5px 12px}
+ #playGuide small{flex-shrink:0}
+ #playGuide strong{margin:0;font-size:14px}
+ #playGuide #playSteps{display:none}
+}
+#speech:empty{visibility:hidden}
+
+#entryIntro{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#26372b;color:#fff9e7;overflow:hidden}
+#entryIntro::backdrop{background:#26372b}
+#entryIntro video,#entryIntro .entry-shade{position:absolute;inset:0;width:100%;height:100%}
+#entryIntro video{object-fit:cover;object-position:55% 50%;opacity:0;transition:opacity .24s ease-out}
+#entryIntro[data-playing="true"] video{opacity:1}
+.entry-shade{pointer-events:none;background:linear-gradient(0deg,#16241dde 0%,#18271f44 26%,transparent 54%),linear-gradient(180deg,#18271f48,transparent 18%)}
+.entry-title{position:absolute;left:max(clamp(24px,5vw,80px),env(safe-area-inset-left));bottom:calc(clamp(22px,6vh,70px) + env(safe-area-inset-bottom));margin:0;font-size:clamp(32px,6vw,68px);line-height:1.13;letter-spacing:-.04em;text-shadow:0 2px 16px #1e2a20}
+.entry-skip{position:absolute;right:max(16px,env(safe-area-inset-right));top:max(16px,env(safe-area-inset-top));height:44px;padding:0 16px;border:1px solid #fff4d98c;border-radius:30px;color:inherit;background:#22352bd9;font-size:15px;font-weight:700}
+.entry-skip:focus-visible{outline-color:#fff4d9}
+@media(orientation:portrait){.entry-title{left:16px;right:16px;text-align:center}}

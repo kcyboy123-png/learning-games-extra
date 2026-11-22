@@ -1,4 +1,5 @@
 import {petById} from './pets.mjs';
+import {validateHealth} from './health.mjs?v=hospital-20261122';
 export const KEY='pet-bond-20261116-v1', DAY=86400000, PHOTO_LIMIT=350000;
 export const cleanName=s=>String(s??'').replace(/[<>\x00-\x1f]/g,'').trim().slice(0,12);
 export function createPet(name,t=Date.now()){return {v:1,variant:'puppy',name:cleanName(name)||'모아',adoptedAt:t,seenAt:t,affection:0,lastBondAt:0,toys:{ball:0,bone:0},memories:[],photos:[],restUntil:0,care:{water:0,food:0,brush:0,touch:0},sound:false,music:true,weather:'auto',bond:{lastToy:null,lastEnding:null,discoveryAttemptDay:0,discoveryAttempts:0,discoveryAt:0,discoveryDay:0,days:[],plays:0,invitations:0,spot:.55,toy:null,toyX:.73,last:'',touches:{head:0,chin:0,back:0},calmMs:{head:0,chin:0,back:0},experiences:[]}};}
@@ -44,6 +45,7 @@ export function validate(raw,t=Date.now()){
  s.memories=keepMemories((Array.isArray(raw.memories)?raw.memories:[]).slice(0,1000).filter(m=>m&&typeof m.text==='string'&&finite(m.at,0,t+DAY)&&finite(m.day,1,100000)).map(m=>({text:m.text.slice(0,100),day:Math.floor(m.day),at:m.at}))); 
  const days=Array.isArray(b?.days)?b.days:s.affection>0?s.memories.map(m=>m.day):[];s.bond.days=[...new Set(days.filter(d=>Number.isInteger(d)&&d>=1&&d<=day(s,t)))].sort((a,b)=>a-b).slice(0,30);
  s.photos=(Array.isArray(raw.photos)?raw.photos:[]).slice(0,12).filter(p=>p&&typeof p.url==='string'&&/^data:image\/webp;base64,[A-Za-z0-9+/=]+$/.test(p.url)&&p.url.length<=PHOTO_LIMIT&&finite(p.at,0,t+DAY)).map(p=>({url:p.url,at:p.at}));
+ if(raw.health!=null)s.health=validateHealth(raw.health);
  return s;
 }
 // Invitations survive petting; only actual invitations consume the schedule.

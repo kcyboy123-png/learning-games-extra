@@ -8,7 +8,15 @@ export function touchPose(room,now,fallback){
  if(s.inside===false)return now-(s.exitedAt??now)<150?(s.visualPose??fallback):fallback;
  if(room.variant){
   // Direction is expressed by a small lean, not repeated whole-sprite swaps.
-  const next=s.part==='chin'?29:s.part==='back'?30:28;
+  const stable=now-(s.partStarted??s.started)>520,softHold=stable&&now-s.at>270;
+  let next=s.part==='chin'?29:s.part==='back'?30:28;
+  if(stable&&!room.reduced){
+   if(s.region==='ear')next=32;
+   else if(s.region==='neck')next=34;
+   else if(s.region==='side')next=31;
+   else if(softHold&&s.part==='head'&&room.actionArt?.[37])next=37;
+  }
+  if(!room.actionArt?.[next])next=s.part==='chin'?29:s.part==='back'?30:28;
   if(s.visualPose==null)s.visualPose=s.pose>=28&&s.pose<=36?s.pose:next;
   if(s.visualCandidate!==next){s.visualCandidate=next;s.visualSince=now;}
   if(now-s.visualSince>=(CONTACT_RESPONSE[room.species]??CONTACT_RESPONSE.cat).hold)s.visualPose=next;
