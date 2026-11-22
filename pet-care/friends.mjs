@@ -1,4 +1,4 @@
-import {KEY,validate} from './model.mjs?v=hospital-20261122';
+import {KEY,validate} from './model.mjs?v=weekend-20261123';
 import {PETS} from './pets.mjs';
 const slot=id=>KEY+'-pet-'+id;
 const archivePrefix=KEY+'-memory-';
@@ -73,9 +73,9 @@ function sameFriend(a,b){
  return a.health&&b.health?a.health.id===b.health.id:a.adoptedAt===b.adoptedAt;
 }
 function protectedRecord(incoming,previous){
- if(!sameFriend(incoming,previous)||!previous.health)return incoming;
- if(previous.health.endedAt!==null)return validateRecord(previous);
- if(!incoming.health||incoming.health.wall<previous.health.wall||incoming.health.elapsed<previous.health.elapsed||!retains(incoming,previous))return validateRecord(previous);
+ if(!sameFriend(incoming,previous))return incoming;
+ if(previous.health&&(previous.health.endedAt!==null||!incoming.health||incoming.health.wall<previous.health.wall||incoming.health.elapsed<previous.health.elapsed||!retains(incoming,previous)))return validateRecord(previous);
+ if((previous.weekendCareAt??0)>(incoming.weekendCareAt??0))return {...incoming,weekendCareAt:previous.weekendCareAt};
  return incoming;
 }
 export function replaceRememberedFriend(storage,previous,next){

@@ -1,3 +1,4 @@
+import {weekendCareThrough} from './weekend-care.mjs?v=weekend-20261123';
 export const HOUR=3600000;
 export const CARE_RATE=Object.freeze({water:1.5,food:1.25,brush:.75});
 export const CARE_KINDS=Object.keys(CARE_RATE);
@@ -19,42 +20,49 @@ export function validateHealth(raw){
  return {id:raw.id,startedAt,wall:raw.wall,elapsed:raw.elapsed,paused:raw.paused,last:{water:raw.last.water,food:raw.last.food,brush:raw.last.brush},sickAt:raw.sickAt,recoverAt:raw.recoverAt,endedAt:raw.endedAt,examinedAt,recoveredAt,recoverySeenAt};
 }
 
-const valueAt=(state,kind,at)=>Math.max(0,Math.min(100,100-(at-state.last[kind])/HOUR*CARE_RATE[kind]));
-export function healthView(saved,now){
+const valueAt=(last,kind,at)=>Math.max(0,Math.min(100,100-(at-last[kind])/HOUR*CARE_RATE[kind]));
+export function healthView(saved,now,weekendCareAt=0){
  const wall=Math.max(saved.wall,now);
  const elapsed=saved.elapsed+(saved.paused||saved.endedAt!==null?0:wall-saved.wall);
  let {sickAt,recoverAt}=saved;
+ let last=saved.last;
+ const caredThrough=weekendCareThrough(weekendCareAt,wall);
+ if(caredThrough>0&&caredThrough>=saved.wall&&!saved.paused&&saved.endedAt===null&&sickAt===null){
+  const caredAt=saved.elapsed+caredThrough-saved.wall;
+  last={water:caredAt,food:caredAt,brush:caredAt};
+ }
  let recoveredAt=saved.recoveredAt??null;
  if(recoverAt!==null&&elapsed>=recoverAt+recoveryTime){
   const finish=recoverAt+recoveryTime;
-  if(essential.every(kind=>valueAt(saved,kind,finish)>=40)){sickAt=null;recoveredAt=finish;}
+  if(essential.every(kind=>valueAt(last,kind,finish)>=40)){sickAt=null;recoveredAt=finish;}
   recoverAt=null;
  }
- const values=Object.fromEntries(CARE_KINDS.map(kind=>[kind,valueAt(saved,kind,elapsed)]));
- if(recoverAt!==null&&essential.some(kind=>values[kind]<40))recoverAt=null;
- const onset=Math.ceil(Math.min(...essential.map(kind=>saved.last[kind]+80/CARE_RATE[kind]*HOUR+sicknessDelay)));
+ const values={water:valueAt(last,'water',elapsed),food:valueAt(last,'food',elapsed),brush:valueAt(last,'brush',elapsed)};
+ if(recoverAt!==null&&(values.water<40||values.food<40))recoverAt=null;
+ const onset=Math.ceil(Math.min(last.water+80/CARE_RATE.water*HOUR+sicknessDelay,last.food+80/CARE_RATE.food*HOUR+sicknessDelay));
  if(sickAt===null&&elapsed>=onset)sickAt=onset;
- const absent=elapsed-Math.max(saved.last.water,saved.last.food);
+ const absent=elapsed-Math.max(last.water,last.food);
  const remaining=Math.max(0,absenceLimit-absent);
- const critical=sickAt!==null&&absent>=120*HOUR&&essential.every(kind=>values[kind]===0);
- const issue=CARE_KINDS.reduce((a,b)=>values[a]<=values[b]?a:b);
- const state={...saved,wall,elapsed,sickAt,recoverAt,recoveredAt};
+ const critical=sickAt!==null&&absent>=120*HOUR&&values.water===0&&values.food===0;
+ const essentialIssue=values.water<=values.food?'water':'food';
+ const issue=values[essentialIssue]<=values.brush?essentialIssue:'brush';
+ const state={...saved,wall,elapsed,last,sickAt,recoverAt,recoveredAt};
  const phase=saved.endedAt!==null?'memorial':critical&&remaining===0?'clock':saved.paused?'paused':critical?'critical':recoverAt!==null?'recovery':sickAt!==null?'sick':values[issue]<=30?'warning':'well';
  return {state,values,phase,issue,remaining,progress:recoverAt===null?0:Math.min(1,(elapsed-recoverAt)/recoveryTime),recoveryRemaining:recoverAt===null?0:Math.max(0,recoverAt+recoveryTime-elapsed)};
 }
 
-export function healthCare(saved,kind,now){
- const view=healthView(saved,now);
+export function healthCare(saved,kind,now,weekendCareAt=0){
+ const view=healthView(saved,now,weekendCareAt);
  if(!CARE_KINDS.includes(kind)||['clock','memorial','paused'].includes(view.phase))return saved;
- return {...view.state,last:{...saved.last,[kind]:view.state.elapsed}};
+ return {...view.state,last:{...view.state.last,[kind]:view.state.elapsed}};
 }
 
 export function nextTreatment(values){
  return CARE_KINDS.find(kind=>values[kind]<(kind==='brush'?40:60))??null;
 }
 
-export function changeHealth(saved,command,now){
- const view=healthView(saved,now),{state,phase}=view;
+export function changeHealth(saved,command,now,weekendCareAt=0){
+ const view=healthView(saved,now,weekendCareAt),{state,phase}=view;
  if(command==='pause'&&!['clock','memorial','paused'].includes(phase))return {...state,paused:true};
  if(command==='resume'&&phase==='paused')return {...state,paused:false};
  if(command==='exam'&&phase==='sick')return {...state,examinedAt:state.sickAt};

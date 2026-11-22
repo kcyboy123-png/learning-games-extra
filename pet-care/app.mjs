@@ -1,12 +1,13 @@
-import {HOUR,startHealth,healthView,healthCare,nextTreatment,changeHealth,healthBlocksPlay} from './health.mjs?v=drop-guide-20261122';
-import {playGuide} from './play-guide.mjs?v=opening-20261122';
+import {HOUR,startHealth,healthView,healthCare,nextTreatment,changeHealth,healthBlocksPlay} from './health.mjs?v=weekend-20261123';
+import {weekendCareStatus,weekendCareThrough} from './weekend-care.mjs?v=weekend-20261123';
+import {playGuide} from './play-guide.mjs?v=weekend-20261123';
 import {playFeedback,startContactFeedback} from './contact-feedback.mjs?v=drop-guide-20261122';
 import {prepareAudio} from './audio.mjs';
 import {SCENT_SPOTS,featherReady,scentWarmth,scentReady,rubScent,scentSpot} from './hunt.mjs?v=drop-guide-20261122';
 import {dragSample,flickVector,toyRoll,makeToyDrop} from './fetch.mjs?v=opening-20261122';
 import {HIDE_SPOTS,nextHideSpot} from './hide.mjs';
 import {PLACES,outingPose,loadPlaceImage,outdoorMoment,curiosityPose} from './places.mjs';
-import {collectFriends,validateFriends,restoreFriends,validateFriend,restoreFriend,completeWebp,archivedFriends,replaceRememberedFriend} from './friends.mjs?v=drop-guide-20261122';
+import {collectFriends,validateFriends,restoreFriends,validateFriend,restoreFriend,completeWebp,archivedFriends,replaceRememberedFriend} from './friends.mjs?v=weekend-20261123';
 import {toyName,lifeSuggestion} from './activities.mjs';
 import {createMusic} from './music.mjs';
 import {foley} from './foley.mjs';
@@ -14,15 +15,15 @@ import {contactPhase,responsePose,afterContact,contactTap,nextInvitation} from '
 import {contactTarget,sampleStroke} from './contact.mjs?v=drop-guide-20261122';
 import {moveStroke,settleStrokePart} from './stroke.mjs?v=drop-guide-20261122';
 import {PETS,petById} from './pets.mjs';
-import {KEY,DAY,PHOTO_LIMIT,createPet,careGauge,playBondPose,age,day,asleep as ordinaryAsleep,canEndRest,favorite,interact,remember,inviteReady,cleanName,experience,creditTouch,familiarTouch,sleepReady as ordinarySleepReady,bondStage,preferredPart,reunionMemory,lifeMoment,companionPlace} from './model.mjs?v=drop-guide-20261122';
+import {KEY,DAY,PHOTO_LIMIT,createPet,careGauge,playBondPose,age,day,asleep as ordinaryAsleep,canEndRest,favorite,interact,remember,inviteReady,cleanName,experience,creditTouch,familiarTouch,sleepReady as ordinarySleepReady,bondStage,preferredPart,reunionMemory,lifeMoment,companionPlace} from './model.mjs?v=weekend-20261123';
 import {playEntryIntro} from './entry-intro.mjs?v=opening-20261122';
-import {Room} from './scene.mjs?v=opening-20261122';
+import {Room} from './scene.mjs?v=weekend-20261123';
 const $=id=>document.getElementById(id);const petGuide='동물의 몸을 누른 채 천천히 움직여 보세요.';
 const brushGuide='털 위를 누른 채 천천히 쓸어 주세요. 빗이 따라와요.';
 let room;let s=null,broken=false,mode='home',busyUntil=0,lastInput=Date.now(),nextInvite=Date.now()+22000,action=null,speechUntil=0,ready=false,conflict=false,lastSleep=false,pending=null,offer=null,nextApproach=Date.now()+45000,nextDiscovery=Date.now()+60000;
 let initialRaw=null;try{initialRaw=localStorage.getItem(KEY);if(initialRaw)s=validateFriend(JSON.parse(initialRaw));}catch(e){broken=true;$('saveError').hidden=false;$('saveError').textContent='이전 기록을 읽지 못했어요. 덮어쓰지 않았습니다. 메뉴에서 원본 내보내기 또는 기록 복구를 해 주세요.';}
 const originalRecord=initialRaw;const requestedPet=petById(new URLSearchParams(location.search).get('pet')).id;room=new Room($('scene'),s?.variant??requestedPet);
-function persist(){if(!s||broken||conflict)return false;const now=Date.now();const view=s.health?healthView(s.health,Math.max(now,observedHealthWall)):null;if(view?.phase!=='clock'&&view?.phase!=='memorial'){s.seenAt=Math.max(s.seenAt,now);if(view)s.health=view.state;}try{localStorage.setItem(KEY,JSON.stringify(s));$('saveError').hidden=true;return true;}catch(e){$('saveError').hidden=false;$('saveError').textContent='이 기기에 저장하지 못했어요. 메뉴에서 기록 파일을 내보내 주세요. 현재 화면의 기록은 유지됩니다.';return false;}}
+function persist(){if(!s||broken||conflict)return false;const now=Date.now();const view=s.health?healthView(s.health,Math.max(now,observedHealthWall),s.weekendCareAt):null;if(view?.phase!=='clock'&&view?.phase!=='memorial'){s.seenAt=Math.max(s.seenAt,now);if(view)s.health=view.state;}try{localStorage.setItem(KEY,JSON.stringify(s));$('saveError').hidden=true;return true;}catch(e){$('saveError').hidden=false;$('saveError').textContent='이 기기에 저장하지 못했어요. 메뉴에서 기록 파일을 내보내 주세요. 현재 화면의 기록은 유지됩니다.';return false;}}
 function say(text,ms=4500){if($('speech').textContent!==text)$('speech').textContent=text;speechUntil=Date.now()+ms;}
 function reactionPose(extra,previous){return room.extraArtReady?extra:previous;}
 function sound(type='touch'){if(s?.sound){music.duck();foley(type,room.species);}}
@@ -49,13 +50,13 @@ function renderQueue(){
  if(queueButton.hidden!==!queued)queueButton.hidden=!queued;
 }
 function queue(next,message){pending=next;renderQueue();say(message);}
-function controls(){const el=$('actions'),keyboard=el.contains(document.activeElement)&&document.activeElement.matches(':focus-visible');el.dataset.mode=mode;el.replaceChildren();$('hint').classList.toggle('drag-instruction',mode==='hand'||action?.kind==='brush');if(!['fetch','hunt'].includes(mode)){$('playGuide').hidden=true;room.playGuide=null;room.playAction=null;document.body.dataset.playGuide='false';}const hand=mode==='hand'&&s&&!asleep(s);$('handExit').hidden=!hand;$('camera').hidden=!!hand;$('scene').setAttribute('aria-label',petById(room.variant).name+(hand?'. 직접 눌러 쓰다듬기. 키보드 1은 머리, 2는 턱, 3은 등, Escape는 마치기.':'. 눌러서 인사할 수 있어요.'));if(mode==='hide')$('scene').setAttribute('aria-label','숨바꼭질. 화면의 쿠션을 눌러 친구를 찾아요.');if(mode==='fetch')$('scene').setAttribute('aria-label','장난감을 끌고 놓아요. Enter로 굴리거나 받고 Escape로 마쳐요.');if(mode==='hunt')$('scene').setAttribute('aria-label',room.species==='pig'?'주머니를 문질러 찾기. 방향키 왼쪽/아래/오른쪽으로 주머니 선택, Enter로 문지르기, Escape로 마치기.':room.species==='cat'?'깃털을 끌고 놓아 잡기. Enter로 깃털 움직이기, Escape로 마치기.':'공을 끌고 놓기. Enter로 굴리거나 받기, Escape로 마치기.');if(!s||!ready)return;$('place').hidden=false;$('place').textContent=PLACES[room.place||'home'].name+' · '+(room.place?'장소 바꾸기':'외출');const add=(name,fn,ic)=>el.append(button(name,fn,ic));if(lockedHealth(healthPhase())){$('hint').textContent='';return;}if(asleep(s)){add('조용히 머물기',()=>say('편히 쉬고 있어요. 곁에 있어도 좋아요.'),'☾');add('사진',takePhoto,'◎');add('추억',showAlbum,'▤');if(canEndRest(s))add('함께 쉬기 마치기',()=>{if(canEndRest(s)){s.restUntil=0;persist();update();}controls();},'☀');$('hint').textContent='잠든 친구를 깨우지 않고 함께 있어요.';return;}
+function controls(){const el=$('actions'),keyboard=el.contains(document.activeElement)&&document.activeElement.matches(':focus-visible');el.dataset.mode=mode;el.replaceChildren();$('hint').classList.toggle('drag-instruction',mode==='hand'||action?.kind==='brush');if(!['fetch','hunt'].includes(mode)){$('playGuide').hidden=true;room.playGuide=null;room.playAction=null;document.body.dataset.playGuide='false';}const hand=mode==='hand'&&s&&!asleep(s);$('handExit').hidden=!hand;$('camera').hidden=!!hand;$('scene').setAttribute('aria-label',petById(room.variant).name+(hand?'. 직접 눌러 쓰다듬기. 키보드 1은 머리, 2는 턱, 3은 등, Escape는 마치기.':'. 눌러서 인사할 수 있어요.'));if(mode==='hide')$('scene').setAttribute('aria-label','숨바꼭질. 화면의 쿠션을 눌러 친구를 찾아요.');if(mode==='fetch')$('scene').setAttribute('aria-label','장난감을 끌고 놓아요. Enter로 굴리거나 받고 Escape로 마쳐요.');if(mode==='hunt')$('scene').setAttribute('aria-label',room.species==='pig'?'주머니를 문질러 찾기. 방향키 왼쪽/아래/오른쪽으로 주머니 선택, Enter로 문지르기, Escape로 마치기.':room.species==='cat'?'깃털을 끌고 놓아 잡기. Enter로 깃털 움직이기, Escape로 마치기.':'공을 끌고 놓기. Enter로 굴리거나 받기, Escape로 마치기.');if(!s||!ready)return;$('place').hidden=false;$('place').textContent=PLACES[room.place||'home'].name+' · '+(room.place?'장소 바꾸기':'외출');const add=(name,fn,ic)=>el.append(button(name,fn,ic));if(lockedHealth(healthPhase())){$('hint').textContent='';return;}if(asleep(s)&&mode==='care'){add('주말 돌봄',showWeekendCare);add('돌아가기',home,'←');$('hint').textContent='친구를 깨우지 않고 돌봄을 맡길 수 있어요.';return;}if(asleep(s)){add('돌봄',()=>chooseMode('care'),'∪');add('조용히 머물기',()=>say('편히 쉬고 있어요. 곁에 있어도 좋아요.'),'☾');add('사진',takePhoto,'◎');add('추억',showAlbum,'▤');if(canEndRest(s))add('함께 쉬기 마치기',()=>{if(canEndRest(s)){s.restUntil=0;persist();update();}controls();},'☀');$('hint').textContent='잠든 친구를 깨우지 않고 함께 있어요.';return;}
  if(mode==='hand'){$('hint').textContent=petGuide;}
  else if(mode==='hide'){if(action?.kind!=='hide')add('다시 숨기',hide,'↻');add('마치기',home,'←');$('hint').textContent=action?.kind==='hide'?'쿠션을 하나씩 눌러 살펴봐요.':'';}
  else if(mode==='hunt'){add('손길',()=>{finish();mode='hand';controls();},'♡');add('같이 쉬기',()=>{finish();quiet('rest');},'☾');add('마치기',home,'←');huntHint();}
  else if(mode==='fetch'){add('손길',()=>{finish();mode='hand';controls();},'♡');add('같이 쉬기',()=>{finish();quiet('rest');},'☾');add('마치기',home,'←');$('hint').textContent='공을 끌거나 빈 바닥을 눌러 그쪽으로 굴려요. 가져오면 눌러 받아요.';}
  else if(mode==='play'){add(room.species==='dog'?'공 주고받기':toyName(room.species,'ball'),()=>play('ball'),'ball');add(room.species==='cat'?'낚싯대 놀이':room.species==='pig'?'냄새로 찾기':toyName(room.species,'bone'),()=>play('bone'),'◇');if(!room.place)add('숨바꼭질',hide,'⌕');else add('같이 쉬기',()=>quiet('rest'),'☾');add('돌아가기',home,'←');$('hint').textContent='장난감을 고르거나 바닥을 눌러 굴릴 방향을 정해요.';}
- else if(mode==='care'){add('물',()=>care('water'),'♧');add('먹이',()=>care('food'),'∪');add('빗질',()=>care('brush'),'≋');add('돌아가기',home,'←');$('hint').textContent=action?.kind==='brush'?brushGuide:'빗질을 누른 뒤 몸 위를 쓸어 보세요.';}
+ else if(mode==='care'){add('물',()=>care('water'),'♧');add('먹이',()=>care('food'),'∪');add('빗질',()=>care('brush'),'≋');add('주말 돌봄',showWeekendCare);add('돌아가기',home,'←');$('hint').textContent=action?.kind==='brush'?brushGuide:'빗질을 누른 뒤 몸 위를 쓸어 보세요.';}
  else{add('손길',()=>{chooseMode('hand');say('',0);$('scene').focus({preventScroll:true});},'♡');if(!healthBlocksPlay(healthPhase()))add('놀이',()=>{chooseMode('play');say('무엇으로 놀까?');},'toy');add('돌봄',()=>{chooseMode('care');say('편안하게 돌봐 주세요.');},'∪');$('hint').textContent=room.place?'바닥을 누르면 걸어요 · 친구를 눌러 쓰다듬어요':'펫을 눌러 인사 · 바닥을 누르면 가까이 다가와요';}
  if(keyboard)(hand||mode==='fetch'||mode==='hunt'?$('scene'):el.querySelector('button'))?.focus({preventScroll:true});
 }
@@ -271,7 +272,7 @@ function finish(){room.playFeedback=null;
  room.hunt=null;room.toyLift=0;room.ballRoll=null;room.ballDrag=false;room.toyDragY=null;room.toyFloorY=null;room.rollingFrame=null;if(['fetch','hunt'].includes(kind)){mode='home';controls();}
  if(kind==='discovery'&&completed){s.bond.discoveryDay=day(s);persist();}
  if(kind==='brush'){$('hint').classList.remove('drag-instruction');if(mode==='care')$('hint').textContent='빗질을 누른 뒤 몸 위를 쓸어 보세요.';}
- if(completed&&['water','food','brush'].includes(kind)&&!lockedHealth(readHealth(true)?.phase)){if(kind==='water'&&s.bond.last==='play')experience(s,'waterAfterPlay');if(kind==='brush'&&s.bond.last==='food')experience(s,'brushAfterFood');s.care[kind]=Date.now();if(s.health){s.health=healthCare(s.health,kind,Math.max(s.care[kind],observedHealthWall));warningDismissed=false;readHealth(true);}interact(s,kind);remember(s,{water:'깨끗한 물을 마셨어요',food:'편안하게 식사했어요',brush:'털을 부드럽게 빗었어요'}[kind]);}
+ if(completed&&['water','food','brush'].includes(kind)&&!lockedHealth(readHealth(true)?.phase)){if(kind==='water'&&s.bond.last==='play')experience(s,'waterAfterPlay');if(kind==='brush'&&s.bond.last==='food')experience(s,'brushAfterFood');s.care[kind]=Date.now();if(s.health){s.health=healthCare(s.health,kind,Math.max(s.care[kind],observedHealthWall),s.weekendCareAt);warningDismissed=false;readHealth(true);}interact(s,kind);remember(s,{water:'깨끗한 물을 마셨어요',food:'편안하게 식사했어요',brush:'털을 부드럽게 빗었어요'}[kind]);}
  if(kind==='outing'&&mode==='home')controls();
  if(completed&&kind==='outing'){interact(s,'outing');remember(s,PLACES[room.place].memory);persist();}
  if(completed&&kind==='water'&&room.place==='picnic'){remember(s,PLACES.picnic.memory);persist();}
@@ -312,17 +313,25 @@ function discover(){
  else room.target=kind==='window'?.34:.5;
  say(kind==='toy'?'오늘은 먼저 익숙한 장난감을 골랐어요.':kind==='window'?(room.rain?'창밖의 빗방울을 살피다가 네 쪽을 돌아봐요.':'햇살을 살피다가 네 쪽을 돌아봐요.'):'네 곁에 먼저 자리를 잡고 편하게 기대어요.',5200);persist();
 }
-function update(){
- syncMusic();
+const playGuideNodes=['playGuide','playTitle','playSteps','playRound'].map($);
+let shownPlayGuide=null;
+function renderPlayGuide(){
  const guide=['fetch','hunt'].includes(mode)&&!$('panel').open?playGuide(action,room.species,room.x,room.reduced):null;
  room.playGuide=guide;room.playAction=guide?action:null;
- const guideEl=$('playGuide');guideEl.hidden=!guide;
- if(document.body.dataset.playGuide!==String(!!guide))document.body.dataset.playGuide=String(!!guide);
+ const [box,title,steps,round]=playGuideNodes;
+ if(box.hidden===!!guide)box.hidden=!guide;
+ const visible=String(!!guide);
+ if(document.body.dataset.playGuide!==visible)document.body.dataset.playGuide=visible;
  if(guide){
-  const title=guide.title,steps=guide.steps.map((text,i)=>(i<guide.step?'✓ ':i===guide.step?'▶ ':'')+text).join('  →  '),round='함께 놀기 · '+guide.round+' / 3';
-  for(const [id,text] of [['playTitle',title],['playSteps',steps],['playRound',round]])if($(id).textContent!==text)$(id).textContent=text;
+  if(guide.title!==shownPlayGuide?.title)title.textContent=guide.title;
+  if(guide.steps!==shownPlayGuide?.steps||guide.step!==shownPlayGuide?.step)steps.textContent=guide.steps.map((text,i)=>(i<guide.step?'✓ ':i===guide.step?'▶ ':'')+text).join('  →  ');
+  if(guide.round!==shownPlayGuide?.round)round.textContent='함께 놀기 · '+guide.round+' / 3';
  }
-
+ shownPlayGuide=guide;
+}
+function update(){
+ syncMusic();
+ renderPlayGuide();
  if(!s||!ready)return;
  drawHideTargets();
  const priorPhase=document.body.dataset.health,view=renderHealth(),phase=view?.phase;
@@ -494,7 +503,7 @@ function choosePet(){
 function showPlaces(){if(!s||!ready||healthBlocksPlay(healthPhase()))return;const body=panel('어디로 함께 갈까요?');para(body,'장소를 바꾸면 하던 활동은 멈춰요. 추억과 사진은 그대로 간직해요.');for(const [id,place]of Object.entries(PLACES)){const b=option(body,place.name,()=>travel(id,body));b.classList.add('place-choice');b.dataset.place=id;if((room.place||'home')===id)b.setAttribute('aria-current','location');b.disabled=(room.place||'home')===id||(id!=='home'&&asleep(s));const small=document.createElement('small');small.textContent=(room.place||'home')===id?'지금 함께 있는 곳':place.description;b.append(small);}para(body,'다시 접속하면 우리 집에서 만나요.');}
 async function travel(id,body){if(!s||conflict||clinic||healthBlocksPlay(healthPhase())||!Object.hasOwn(PLACES,id))return;if(id!=='home'&&asleep(s)){say('친구가 깨어나면 함께 나가요.');return;}const request=++travelRequest,friend=s;let loading=body.querySelector('[data-travel-status]');if(!loading){loading=para(body,'');loading.dataset.travelStatus='';loading.setAttribute('role','status');}loading.textContent=PLACES[id].name+' · 준비하고 있어요…';try{const image=id==='home'?(await room.loadBackground(room.night,true),null):await loadPlaceImage(id);if(request!==travelRequest||s!==friend||conflict||!$('panel').open)return;if(id!=='home'&&asleep(s))throw Error('친구가 잠들었어요. 깨어나면 다시 나가요.');let soft=null;if(image){soft=placeSoft.get(id);if(!soft){soft=room.softBackground(image);placeSoft.set(id,soft);}}pending=null;releaseStroke('pointercancel');finish();room.place=id==='home'?null:id;room.placeArt=image?{image,soft}:null;room.x=Math.max(.34,Math.min(.66,room.x));room.target=room.x;room.velocity=0;room.moveStartedAt=null;room.lastWalkAt=-1000;room.depth=0;room.toy=null;room.prop=null;mode='home';controls();close();if(!room.reduced)$('scene').animate([{opacity:.75},{opacity:1}],{duration:240,easing:'ease-out'});nextInvite=Date.now()+20000;nextDiscovery=Date.now()+60000;nextOutdoor=Date.now()+12000;if(room.place){remember(s,PLACES[id].name+'에 함께 나왔어요');persist();}say('',0);update();if(room.place&&!asleep(s))noticeOutdoors();}catch(error){if(request===travelRequest&&$('panel').open){loading.textContent='장소를 바꾸지 못했어요. 지금 있는 곳은 그대로예요. 다시 선택해 주세요.';}}}
 function outdoorActivity(){if(!s||!room.place||asleep(s)||conflict)return;markInput();const place=PLACES[room.place];if(action?.kind==='curiosity')finish();else if(action)return;if(place.kind==='water'){care('water');return;}if(!begin(5,7600,'outing'))return;action.activity=place.kind;action.anchor=place.kind==='watch'?.58:.36;busyUntil=0;room.target=action.anchor;if(['sniff','petal'].includes(place.kind))$('hint').textContent='바닥을 눌러 함께 살펴볼 곳을 골라요.';say(place.kind==='sniff'?({dog:'잠깐 멈춰 새로운 냄새를 맡아요.',cat:'풀숲을 조심스럽게 살펴봐요.',pig:'코를 낮춰 풀 냄새를 맡아요.'}[room.species]):place.kind==='petal'?'꽃잎을 따라가다가 네 쪽을 돌아봐요.':'잔잔한 물결을 바라보다가 눈을 맞춰요.',4000);}
-function showStatus(){if(!s)return;const body=panel(s.name+'의 상태');para(body,['아직 서로 알아가는 중','익숙해진 친구','먼저 찾는 친구','편안한 단짝'][bondStage(s)]+' · '+(asleep(s)?'지금은 쉬는 중':'함께한 '+day(s)+'일'));const label=document.createElement('label'),meter=document.createElement('meter');label.className='bond-meter';label.textContent='친밀감 '+s.affection+' / 100';meter.min=0;meter.max=100;meter.value=s.affection;meter.setAttribute('aria-label','친밀감');label.append(meter);body.append(label);para(body,'함께한 날, 놀이와 편안한 손길이 쌓이면 먼저 다가오고 좋아하는 부위를 맡겨요. 쉬었다 와도 친밀감은 줄지 않아요.');const careTitle=document.createElement('h3');careTitle.textContent='돌봄 상태';body.append(careTitle);const gauges=document.createElement('div');gauges.className='care-gauges';for(const [kind,name] of [['water','물'],['food','먹이'],['brush','청결 · 빗질']]){const row=document.createElement('label'),bar=document.createElement('meter'),value=s.health?Math.ceil(readHealth(true).values[kind]):careGauge(s,kind);row.className='bond-meter';row.textContent=name+' '+value+' / 100';bar.min=0;bar.max=100;bar.value=value;bar.dataset.care=kind;bar.setAttribute('aria-label',name);row.append(bar);gauges.append(row);}body.append(gauges);para(body,s.health?'책임 돌봄 · 돌봄을 끝내면 해당 게이지가 채워져요.':'편안한 돌봄 · 게이지가 낮아져도 아프지 않아요.');option(body,s.health?'책임 돌봄 설정':'책임 돌봄 알아보기',healthSettings);const shortcut=option(body,'돌봄 하러 가기',()=>{if(asleep(s)){shortcut.disabled=true;return;}close();home();mode='care';controls();});shortcut.id='statusCare';shortcut.disabled=asleep(s);const h=document.createElement('h3');h.textContent='익숙한 손길';body.append(h);const touches=document.createElement('div');touches.className='touch-status';for(const part of ['head','chin','back']){const item=document.createElement('div'),name=document.createElement('strong'),detail=document.createElement('span');name.textContent={head:'머리',chin:'턱 밑',back:'등'}[part];detail.textContent=familiarTouch(s,part)?'편안해해요':'알아가는 중';item.append(name,detail);touches.append(item);}body.append(touches);const heading=document.createElement('h3');heading.textContent='최근 돌봄';body.append(heading);for(const kind of ['food','water','brush']){const row=document.createElement('div');row.className='care-record';const name=document.createElement('span'),when=document.createElement('span');name.textContent={food:'먹이',water:'물',brush:'빗질'}[kind];when.textContent=s.care[kind]?new Date(s.care[kind]).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'아직 함께하지 않았어요';row.append(name,when);body.append(row);}para(body,'돌봄 시간은 마지막으로 끝낸 활동의 기록이에요.');}
+function showStatus(){if(!s)return;const body=panel(s.name+'의 상태');para(body,['아직 서로 알아가는 중','익숙해진 친구','먼저 찾는 친구','편안한 단짝'][bondStage(s)]+' · '+(asleep(s)?'지금은 쉬는 중':'함께한 '+day(s)+'일'));const label=document.createElement('label'),meter=document.createElement('meter');label.className='bond-meter';label.textContent='친밀감 '+s.affection+' / 100';meter.min=0;meter.max=100;meter.value=s.affection;meter.setAttribute('aria-label','친밀감');label.append(meter);body.append(label);para(body,'함께한 날, 놀이와 편안한 손길이 쌓이면 먼저 다가오고 좋아하는 부위를 맡겨요. 쉬었다 와도 친밀감은 줄지 않아요.');const careTitle=document.createElement('h3');careTitle.textContent='돌봄 상태';body.append(careTitle);const gauges=document.createElement('div');gauges.className='care-gauges';for(const [kind,name] of [['water','물'],['food','먹이'],['brush','청결 · 빗질']]){const row=document.createElement('label'),bar=document.createElement('meter'),value=s.health?Math.ceil(readHealth(true).values[kind]):careGauge(s,kind);row.className='bond-meter';row.textContent=name+' '+value+' / 100';bar.min=0;bar.max=100;bar.value=value;bar.dataset.care=kind;bar.setAttribute('aria-label',name);row.append(bar);gauges.append(row);}body.append(gauges);para(body,s.health?'책임 돌봄 · 돌봄을 끝내면 해당 게이지가 채워져요.':'편안한 돌봄 · 게이지가 낮아져도 아프지 않아요.');option(body,s.health?'책임 돌봄 설정':'책임 돌봄 알아보기',healthSettings);const shortcut=option(body,'돌봄 하러 가기',()=>{if(asleep(s)){shortcut.disabled=true;return;}close();home();mode='care';controls();});shortcut.id='statusCare';shortcut.disabled=asleep(s);const h=document.createElement('h3');h.textContent='익숙한 손길';body.append(h);const touches=document.createElement('div');touches.className='touch-status';for(const part of ['head','chin','back']){const item=document.createElement('div'),name=document.createElement('strong'),detail=document.createElement('span');name.textContent={head:'머리',chin:'턱 밑',back:'등'}[part];detail.textContent=familiarTouch(s,part)?'편안해해요':'알아가는 중';item.append(name,detail);touches.append(item);}body.append(touches);const heading=document.createElement('h3');heading.textContent='최근 돌봄';body.append(heading);for(const kind of ['food','water','brush']){const row=document.createElement('div');row.className='care-record';const name=document.createElement('span'),when=document.createElement('span');name.textContent={food:'먹이',water:'물',brush:'빗질'}[kind];when.textContent=s.care[kind]?new Date(s.care[kind]).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'아직 함께하지 않았어요';row.append(name,when);body.append(row);}para(body,'돌봄 시간은 직접 끝낸 활동의 기록이에요.');const weekend=weekendCareStatus(s);if(weekend.active)para(body,'주말 돌봄 중 · '+weekendDate.format(weekend.endsAt)+'까지');}
 function showMenu(){const body=panel('잠깐, 우리 이야기');
  const classic=document.createElement('a');
  classic.href='classic/';classic.textContent='기존 펫키우기';classic.className='classic';
@@ -517,7 +526,7 @@ function readHealth(force=false){
  if(force||healthFriend!==s||healthSecond!==second){
   if(healthFriend!==s){treating=false;warningDismissed=false;observedHealthWall=0;}
   healthFriend=s;healthSecond=second;
-  health=s?.health?healthView(s.health,Math.max(now,observedHealthWall)):null;
+  health=s?.health?healthView(s.health,Math.max(now,observedHealthWall),s.weekendCareAt):null;
   // A suspected clock jump can be corrected before the memorial is confirmed.
   if(health&&health.phase!=='clock')observedHealthWall=health.state.wall;
  }
@@ -562,7 +571,7 @@ async function openClinic(){
  renderHealth();
 }
 function completeExam(){
- const next=changeHealth(s.health,'exam',Math.max(Date.now(),observedHealthWall));
+ const next=changeHealth(s.health,'exam',Math.max(Date.now(),observedHealthWall),s.weekendCareAt);
  if(next===s.health||!saveHealth(next))return false;
  return true;
 }
@@ -581,6 +590,42 @@ function clinicCard(view){
  return {title:'수의사의 돌봄 안내',detail:advice,button:'집으로 돌아가기',act:()=>{treating=true;leaveClinic();say('집에 돌아왔어요. '+s.name+' 곁에서 돌봐 주세요.',3600);}};
 }
 const formatTime=t=>new Date(t).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+const weekendDate=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',month:'numeric',day:'numeric',weekday:'short',hour:'2-digit',minute:'2-digit'});
+function showWeekendCare(){
+ if(!s)return;
+ const record=s,body=panel('주말 돌봄'),plan=weekendCareStatus(s);
+ para(body,'이틀(48시간) 동안 물·먹이·청결을 자동으로 챙겨요. 게임을 닫아도 계속돼요.');
+ para(body,'친구마다 일주일에 한 번 사용할 수 있어요. 매주 월요일에 다시 맡길 수 있어요.');
+ if(plan.active)para(body,weekendDate.format(plan.endsAt)+'까지 돌봄을 맡겼어요.');
+ else if(!plan.available)para(body,'이번 주에는 이미 사용했어요. '+weekendDate.format(plan.nextWeekAt)+'부터 다시 맡길 수 있어요.');
+ else if(s.health&&healthBlocksPlay(readHealth(true)?.phase))para(body,'치료 중이거나 쉬어가는 친구는 평소 돌봄으로 돌아온 뒤 맡길 수 있어요.');
+ else if(!broken&&!conflict)option(body,'이틀 맡기기',()=>{
+  if(navigator.locks)navigator.locks.request(KEY+'-weekend-care',book).catch(()=>para(body,'돌봄을 맡기지 못했어요. 다시 시도해 주세요.'));
+  else book();
+ });
+ function book(){
+  if(s!==record||broken||conflict||s.health&&healthBlocksPlay(readHealth(true)?.phase))return;
+  const latest=weekendCareStatus(s);
+  if(!latest.available){showWeekendCare();return;}
+  const previous=s.weekendCareAt,healthBefore=s.health,seen=s.seenAt;
+  try{
+   const stored=JSON.parse(localStorage.getItem(KEY));
+   if(!stored||stored.variant!==s.variant||stored.adoptedAt!==s.adoptedAt||stored.weekendCareAt!==previous){
+    para(body,'기록이 바뀌었어요. 새로고침한 뒤 돌봄을 맡겨 주세요.');return;
+   }
+  }catch{
+   para(body,'저장된 기록을 확인하지 못했어요. 새로고침한 뒤 다시 시도해 주세요.');return;
+  }
+  s.weekendCareAt=latest.time;
+  if(!persist()){
+   if(previous===undefined)delete s.weekendCareAt;else s.weekendCareAt=previous;
+   s.health=healthBefore;s.seenAt=seen;
+   para(body,'주말 돌봄을 저장하지 못했어요. 다시 시도해 주세요.');return;
+  }
+  if(s.health)readHealth(true);
+  showWeekendCare();
+ }
+}
 function saveHealth(next){
  const previous=s.health,seen=s.seenAt,observed=observedHealthWall;
  if(next.endedAt!==null&&previous?.endedAt==null)s.seenAt=Math.max(seen,next.wall-(next.elapsed-next.endedAt));
@@ -610,7 +655,7 @@ function healthSettings(){
 }
 function runHealthCommand(command){
  if(!s?.health||broken||conflict||photoPending)return;
- const next=changeHealth(s.health,command,Math.max(Date.now(),observedHealthWall));
+ const next=changeHealth(s.health,command,Math.max(Date.now(),observedHealthWall),s.weekendCareAt);
  if(next===s.health||!saveHealth(next))return;
  if(command==='recover'||command==='remember')treating=false;
  if(command==='remember'){mode='home';say('',0);room.place=null;room.placeArt=null;}
@@ -635,7 +680,7 @@ function healthCard(view){
  }
  if(phase==='recovery')return {title:'회복 중이에요',label:'회복',value:Math.floor(view.progress*100),detail:formatTime(Date.now()+view.recoveryRemaining)+' 회복 예정',button:'곁에 있기',act:()=>{chooseMode('hand');$('scene').focus({preventScroll:true});}};
  if(phase==='paused')return {title:view.state.recoverAt==null?'잠시 쉬어가는 중이에요':'회복 시간 멈춤',detail:view.state.recoverAt==null?'돌봄 시간이 멈춰 있어요.':'회복까지 '+Math.ceil(view.recoveryRemaining/60000)+'분 남았어요.',button:'돌봄 이어가기',act:()=>runHealthCommand('resume')};
- if(phase==='clock')return {title:'마지막 돌봄 후 7일이 지났어요',detail:'돌봄 기준 '+formatTime(Math.max(s.care.water,s.care.food,s.health.startedAt))+'\n현재 '+formatTime(Date.now())+'\n시간이 다르면 기기 설정에서 확인해 주세요.',button:'시간 확인 후 추억 남기기',act:confirmMemorial,other:'시간 다시 확인',alternative:()=>{readHealth(true);renderHealth();}};
+ if(phase==='clock')return {title:'마지막 돌봄 후 7일이 지났어요',detail:'돌봄 기준 '+formatTime(Math.max(s.care.water,s.care.food,s.health.startedAt,weekendCareThrough(s.weekendCareAt,Date.now())))+'\n현재 '+formatTime(Date.now())+'\n시간이 다르면 기기 설정에서 확인해 주세요.',button:'시간 확인 후 추억 남기기',act:confirmMemorial,other:'시간 다시 확인',alternative:()=>{readHealth(true);renderHealth();}};
  if(phase==='memorial')return {title:s.name+'를 기억해요',detail:'함께한 사진과 이야기를 간직했어요.',button:'추억 앨범',act:()=>showMemorial(s)};
  return null;
 }
@@ -643,7 +688,7 @@ function recoveryNotice(view){
  return !!view&&['well','warning'].includes(view.phase)&&view.state.recoveredAt!=null&&view.state.recoverySeenAt!==view.state.recoveredAt;
 }
 function acknowledgeRecovery(next){
- const state=changeHealth(s.health,'seenRecovery',Math.max(Date.now(),observedHealthWall));
+ const state=changeHealth(s.health,'seenRecovery',Math.max(Date.now(),observedHealthWall),s.weekendCareAt);
  if(state===s.health||!saveHealth(state))return;
  if(next==='water')care('water');
  if(next==='play')chooseMode('play');

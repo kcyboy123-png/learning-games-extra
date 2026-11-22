@@ -1,10 +1,14 @@
 import {flickVector,toyRoll,toyFrame} from './fetch.mjs?v=opening-20261122';
 import {scentSpot} from './hunt.mjs?v=play-direct-20261120';
+const ballSteps=['공 밀기','기다리기','공 받기'];
+const boneSteps=['뼈 인형 밀기','기다리기','뼈 인형 받기'];
+const featherSteps=['깃털 끌기','멈추기','잡았다!'];
+const scentSteps=['주머니 문지르기','냄새 맡기','찾았다!'];
 export function playGuide(a,species,x,reduced=false){
  if(!a||!['fetch','hunt'].includes(a.kind))return null;
  let step=0,title='',target=null;
  const toy=a.toy==='bone'?'뼈 인형':'공';
- const steps=a.kind==='fetch'?[toy+' 밀기','기다리기',toy+' 받기']:species==='cat'?['깃털 끌기','멈추기','잡았다!']:['주머니 문지르기','냄새 맡기','찾았다!'];
+ const steps=a.kind==='fetch'?(a.toy==='bone'?boneSteps:ballSteps):species==='cat'?featherSteps:scentSteps;
  if(a.kind==='fetch'){
   if(a.phase==='ready'){
    title=a.drag?(reduced?'손을 떼면 장난감이 바닥에 놓여요':'점선으로 굴러갈 길이 보여요. 손을 놓으세요'):a.round?'다시 '+toy+'을 잡고 밀어 보세요':toy+'을 잡고 원하는 방향으로 밀어 보세요';

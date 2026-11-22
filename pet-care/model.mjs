@@ -1,5 +1,6 @@
 import {petById} from './pets.mjs';
-import {validateHealth} from './health.mjs?v=hospital-20261122';
+import {validateHealth} from './health.mjs?v=weekend-20261123';
+import {weekendCareThrough} from './weekend-care.mjs?v=weekend-20261123';
 export const KEY='pet-bond-20261116-v1', DAY=86400000, PHOTO_LIMIT=350000;
 export const cleanName=s=>String(s??'').replace(/[<>\x00-\x1f]/g,'').trim().slice(0,12);
 export function createPet(name,t=Date.now()){return {v:1,variant:'puppy',name:cleanName(name)||'모아',adoptedAt:t,seenAt:t,affection:0,lastBondAt:0,toys:{ball:0,bone:0},memories:[],photos:[],restUntil:0,care:{water:0,food:0,brush:0,touch:0},sound:false,music:true,weather:'auto',bond:{lastToy:null,lastEnding:null,discoveryAttemptDay:0,discoveryAttempts:0,discoveryAt:0,discoveryDay:0,days:[],plays:0,invitations:0,spot:.55,toy:null,toyX:.73,last:'',touches:{head:0,chin:0,back:0},calmMs:{head:0,chin:0,back:0},experiences:[]}};}
@@ -27,6 +28,7 @@ export function validate(raw,t=Date.now()){
  for(const k of ['ball','bone'])s.toys[k]=finite(raw.toys?.[k],0,100000)?Math.floor(raw.toys[k]):0;
  s.restUntil=finite(raw.restUntil,0,t+DAY)?raw.restUntil:0;
  for(const k of ['water','food','brush','touch'])s.care[k]=finite(raw.care?.[k],0,t+DAY)?raw.care[k]:0;
+ if(finite(raw.weekendCareAt,s.adoptedAt,t+DAY))s.weekendCareAt=raw.weekendCareAt;
  s.sound=raw.sound===true;s.music=raw.music!==false;s.weather=['auto','rain','clear'].includes(raw.weather)?raw.weather:'auto';
  const b=raw.bond;
  s.bond.discoveryDay=finite(b?.discoveryDay,0,day(s,t))?Math.floor(b.discoveryDay):0;
@@ -65,7 +67,7 @@ export function bondStage(s){const b=s.bond,calm=b.calmMs.head+b.calmMs.chin+b.c
 export function preferredPart(s){let part='head';for(const p of ['chin','back'])if(s.bond.calmMs[p]>s.bond.calmMs[part])part=p;return part;}
 export function playBondPose(s){const stage=bondStage(s);return stage>=2?{head:8,chin:9,back:10}[preferredPart(s)]:stage===1?8:11;}
 // Game care indicators, not real animal feeding or health recommendations.
-export function careGauge(s,kind,t=Date.now()){const span=(kind==='brush'?24:12)*3600000,last=s.care[kind]||s.adoptedAt;return Math.round(Math.max(20,100-Math.max(0,Math.max(t,s.seenAt)-last)/span*80));}
+export function careGauge(s,kind,t=Date.now()){const now=Math.max(t,s.seenAt),span=(kind==='brush'?24:12)*3600000,last=Math.max(s.care[kind]||s.adoptedAt,weekendCareThrough(s.weekendCareAt,now));return Math.round(Math.max(20,100-Math.max(0,now-last)/span*80));}
 export function reunionMemory(s,t=Date.now()){if(t-s.seenAt<60000||asleep(s,t))return null;if(['rest','window'].includes(s.bond.last)&&s.bond.experiences.includes(s.bond.last))return {kind:s.bond.last};if(s.bond.last==='play'&&(s.toys.ball||s.toys.bone))return {kind:'toy',toy:s.bond.lastToy&&s.toys[s.bond.lastToy]>0?s.bond.lastToy:favorite(s)};const part=preferredPart(s);if(s.bond.calmMs[part]>=2400)return {kind:'touch',part};if(s.toys.ball||s.toys.bone)return {kind:'toy',toy:favorite(s)};return null;}
 
 export function lifeMoment(s,t=Date.now()){const stage=bondStage(s),today=day(s,t);if(!stage||asleep(s,t)||s.bond.discoveryDay===today||(s.bond.discoveryAttemptDay===today&&(s.bond.discoveryAttempts>=2||t-s.bond.discoveryAt<180000)))return null;const choices=['window'];if(stage>=2&&(s.toys.ball||s.toys.bone))choices.push('toy');if(stage>=3)choices.push('beside');return choices[(today+petById(s.variant).id.length)%choices.length];}
