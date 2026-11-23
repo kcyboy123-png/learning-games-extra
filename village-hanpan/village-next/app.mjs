@@ -346,11 +346,70 @@ function housingCompletion(ids){
  const road=linked.length<completed.length?'입주하려면 집 옆길을 마을 입구까지 이어 주세요.':'';
  return [title,arrival,road].filter(Boolean).join('\n');
 }
+const openingFilms = new Map([
+ ['house', '새 이웃이 이사 왔어요'], ['snack', '분식집의 첫 손님'],
+ ['bakery', '첫 빵이 나왔어요'], ['florist', '꽃 한 송이를 선물해요'],
+ ['dokdoFlag', '우리의 독도 · 태극기 전망쉼터']
+]);
+const filmQueue = [];
+function queueOpeningFilms(ids) {
+ if (viewing) return;
+ const types = new Set(state.buildings.filter(b => ids.includes(b.id)).map(b => b.type));
+ for (const type of types) if (openingFilms.has(type)) filmQueue.push(type);
+ showOpeningFilm();
+}
+function showOpeningFilm() {
+ if (!filmQueue.length || document.querySelector('.opening-film')) return;
+ const type = filmQueue.shift();
+ const card = document.createElement('aside');
+ card.className = 'opening-film';
+ card.setAttribute('aria-label', '완공 기념 영상');
+ const heading = document.createElement('strong');
+ heading.textContent = openingFilms.get(type);
+ const close = document.createElement('button');
+ close.type = 'button';
+ close.textContent = '닫기';
+ const video = document.createElement('video');
+ video.muted = true;
+ video.playsInline = true;
+ video.setAttribute('aria-label', heading.textContent);
+ let timeout;
+ function dismiss() {
+  if (!card.isConnected) return;
+  clearTimeout(timeout);
+  video.onended = video.onerror = null;
+  video.pause();
+  card.remove();
+  video.removeAttribute('src');
+  video.load();
+  showOpeningFilm();
+ }
+ close.onclick = dismiss;
+ video.onended = video.onerror = dismiss;
+ const bar = document.createElement('div');
+ bar.append(heading, close);
+ card.append(bar);
+ document.body.append(card);
+ const start = () => {
+  clearTimeout(timeout);
+  card.append(video);
+  video.src = './assets/celebrations/' + type + '.mp4';
+  video.play().catch(dismiss);
+  timeout = setTimeout(dismiss, 15000);
+ };
+ if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  const play = document.createElement('button');
+  play.textContent = '영상 보기';
+  bar.insertBefore(play, close);
+  play.onclick = () => { play.remove(); start(); };
+  timeout = setTimeout(dismiss, 8000);
+ } else start();
+}
 function loop(now){if(photo.active){last=now;requestAnimationFrame(loop);return;}if(document.hidden){last=now;requestAnimationFrame(loop);return;}const real=document.hidden?0:Math.max(0,(now-last)/1000),dt=Math.min(.25,real);last=now;time+=dt;
  if(world.entrance){world.updateEntrance(dt);if(!world.entrance)finishEntrance();}
  const previousPopulation=state.populationPeak??state.pop,before=pendingConstruction,done=completedConstruction;before.length=0;done.length=0;for(const b of state.buildings)if(b.progress<1)before.push(b);if(owned)advancePlay(Math.min(real,60));for(const b of before)if(b.progress>=1)done.push(b.id);
  if(!state.cozyV&&state.economyV===4&&!done.length&&month(state)===lastMonth&&Math.floor(state.pop/4)>lastIncomeMilestone){lastIncomeMilestone=Math.floor(state.pop/4);if(state.pop===12||state.pop===16)toast(`이웃 ${state.pop}명! 지금 순수입 ${incomeRate(metrics(state))} · 손님과 생활시설이 함께 늘면 수입도 자라요.`);}
- if(done.length){sound.effect('complete');world.sync(state,!reduced);save('완공');const b=state.buildings.find(b=>b.id===done[0]);toast(housingCompletion(done)||completionMessage(state,done));if(buildingSpec(state,b.type).cap)npcHomes();}
+ if(done.length){sound.effect('complete');world.sync(state,!reduced);save('완공');queueOpeningFilms(done);const b=state.buildings.find(b=>b.id===done[0]);toast(housingCompletion(done)||completionMessage(state,done));if(buildingSpec(state,b.type).cap)npcHomes();}
  if(state.cozyV===1&&state.populationPeak>previousPopulation){const opened=Object.keys(TYPES).filter(t=>populationRequired(t)>previousPopulation&&populationRequired(t)<=state.populationPeak);if(opened.length){toast(`인구 ${state.pop}명! ${opened.slice(0,2).map(t=>TYPES[t].name).join('·')}${opened.length>2?` 외 ${opened.length-2}종`:''}이 열렸어요.`);save('인구 해금');}}
  const m=month(state);if(m!==lastMonth){lastMonth=m;world.sync(state,false);save(monthLabel(state));}
  if(owned&&state.cozyReview){const years=Math.floor(state.cozyReview.months.length/12);if(years>state.cozyReview.seen&&!document.querySelector('dialog[open]')){state.cozyReview.seen=years;save('연차 평가');showGrowthReview();}}
