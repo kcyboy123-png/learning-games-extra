@@ -2,12 +2,12 @@ import {forestQuality} from './forest-quality.mjs';
 // '햇살이 머무는 숲' — a real-time three.js stage that follows the app; it never owns the song or the sound.
 // Illustrated cutouts live in a real 3D woodland; vegetation is instanced to keep draw calls low.
 import {pianoPressure} from './performance-motion.mjs';
-import {loadChristmasTree,loadChristmasLantern,loadChristmasArch,loadDistantChristmasTree} from './christmas-tree.mjs';
+import {loadChristmasTree,loadChristmasLantern,loadChristmasArch,loadDistantChristmasTree} from './christmas-tree.mjs?v=20261124-carol';
 import * as THREE from './lib/three.module.min.js';
 import {loadFriendArt,createForestFriends,companionSpace} from './forest-friends.mjs?v=20261120-opt48';
 import {loadGarden} from './forest-garden.mjs?v=20261120-opt48';
 import {pianoKey, WHITE_KEYS, BLACK_KEY_STEPS, loadForestArt, forestCamera, forestCharacter, forestMapId, forestAtPiano, forestOpeningShot, FOREST_OPENING_SECONDS} from './forest-state.mjs?v=20261120-opt48';
-import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261120-opt48';
+import {PALETTES,buildLandmarks} from './forest-landmarks.mjs?v=20261124-carol';
 import {createStorybookChild,backingKey} from './forest-character.mjs?v=20261120-opt48';
 import {forestInput, forestStep, forestOrbit, forestRoute, forestLook, forestEye, forestTurnToward} from './forest-controls.mjs?v=20261120-opt48';
 
@@ -521,7 +521,7 @@ export async function createForest(host, {onEvent = () => {}, audioTime = () => 
   await prepareYield();
   function releaseScenery(group){
     const geometries=new Set(),materials=new Set(),textures=new Set();
-    group.traverse(o=>{if(o.geometry)geometries.add(o.geometry);for(const m of [].concat(o.material||[],o.customDepthMaterial||[])){materials.add(m);for(const v of Object.values(m))if(v?.isTexture&&v!==leafTexture)textures.add(v);}});
+    group.traverse(o=>{if(o.isInstancedMesh)o.dispose();if(o.geometry)geometries.add(o.geometry);for(const m of [].concat(o.material||[],o.customDepthMaterial||[])){materials.add(m);for(const v of Object.values(m))if(v?.isTexture&&v!==leafTexture)textures.add(v);}});
     textures.forEach(t=>t.dispose());materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose());
   }
   let requestedMap=null;
@@ -537,7 +537,7 @@ export async function createForest(host, {onEvent = () => {}, audioTime = () => 
     try{nextWorld=buildScenery(next,rng(20261021),leafTexture,nextTheme);nextLandmarks=buildLandmarks(next,id,groundY,leafTexture,piano.woodMap,nextWorld.glow,christmasTree,christmasLantern,christmasArch,distantTree);nextWorld.colliders.push(...garden.build(next,groundY,id));}
     catch(error){releaseScenery(next);throw error;}
     scene.remove(scenery);releaseScenery(scenery);scenery=next;scene.add(scenery);
-    mapId=id;theme=nextTheme;world=nextWorld;landmarks=nextLandmarks;world.colliders.push(...landmarks.colliders);
+    mapId=id;theme=nextTheme;renderer.shadowMap.autoUpdate=id!=='christmas';renderer.shadowMap.needsUpdate=true;world=nextWorld;landmarks=nextLandmarks;world.colliders.push(...landmarks.colliders);
     scene.fog.color.set(theme.fog);scene.fog.near=id==='journey'?35:18;scene.fog.far=id==='journey'?100:60;scene.background.set(theme.horizon);
     ambient.intensity=theme.ambient*.94;sun.color.set(theme.sun);sun.intensity=theme.power;sun.position.set(...theme.light);
     ambient.color.set(theme.character ? 0xc7d6f5 : 0xe7eef0);
@@ -548,7 +548,7 @@ export async function createForest(host, {onEvent = () => {}, audioTime = () => 
     renderer.toneMappingExposure=theme.exposure;world.shaftMat.uniforms.opacity.value=theme.shafts;world.shaftMat.uniforms.color.value.set(theme.sun);
     input={x:0,z:0};state.moving=false;route=[];routeIndex=0;state.hands.forEach(h=>{h.hit=0;h.end=0;});
     if(forestCamera(state.phase)!=='seated'){placeOnPath(WALK_FROM);view={...FIRST_VIEW};state.openingT=motion.matches?1:0;shotFor(state.phase==='opening'?'opening':'arrive');camPos.copy(goalPos);camLook.copy(goalLook);}
-    piano.press.fill(0);piano.drawKeys();refreshEnvironment();applyQuality();
+    piano.press.fill(0);piano.drawKeys();refreshEnvironment();resize();
   }
 
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -578,7 +578,8 @@ export async function createForest(host, {onEvent = () => {}, audioTime = () => 
   }
   function resize() {
     const w = host.clientWidth || innerWidth, h = host.clientHeight || innerHeight;
-    const ratio=applyQuality().ratio;
+    const quality=applyQuality();
+    const ratio=mapId==='christmas'&&qualityMode!=='clear'?Math.min(quality.ratio,Math.sqrt((quality.smooth?750000:1800000)/(w*h))):quality.ratio;
     if(w!==lastWidth||h!==lastHeight||ratio!==lastRatio){
       lastWidth=w;lastHeight=h;lastRatio=ratio;renderer.setPixelRatio(ratio);
       renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w/h<.8?52:40;camera.updateProjectionMatrix();
@@ -692,6 +693,7 @@ export async function createForest(host, {onEvent = () => {}, audioTime = () => 
     if(!rm){world.moteTime.value=state.time;world.moteActive.value=1;}
     return busy;
   }
+  let lastShadowFrame=-Infinity;
   function tick(now) {
     raf = requestAnimationFrame(tick);
     if (document.hidden) { input={x:0,z:0};state.moving=false;last = now; return; }
@@ -699,6 +701,8 @@ export async function createForest(host, {onEvent = () => {}, audioTime = () => 
     const busy = update(dt);
     // A calm composing view renders at half rate to spare tablet batteries.
     if (state.phase === 'compose' && !state.cinema && !busy && state.hands.every(h => h.hit <= 0) && !friends.isMoving(audioTime()) && frame % 2) return;
+    // Static firs and lamps keep their shadows; refresh moving performers eight times a second.
+    if(mapId==='christmas' && now-lastShadowFrame>=125){renderer.shadowMap.needsUpdate=true;lastShadowFrame=now;}
     renderer.render(scene, camera);
   }
   function start() { if (!raf && !state.dead) { last = 0; resize(); raf = requestAnimationFrame(tick); } }

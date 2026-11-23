@@ -5,3 +5,4 @@ Prompt: instrumental storybook forest exploration, 68 BPM, warm harp, sparse fel
 forest-chime.mp3: https://suno.com/song/5420031a-854e-4ae2-b0b6-70aaace5fa64
 Prompt: delicate fairy forest arrival chime, soft wooden celesta notes with airy shimmer; restrained one-shot, no voice, drums or loud sparkle.
 Both are downloaded original MP3 files. Runtime attenuates gain and stops all ambience when sitting or composing.
+christmas-carol.m4a: local 30.72-second instrumental carol arrangement with bells and plucked accompaniment, incorporating the existing Suno forest-chime.mp3 above. Mixed 2026-11-24.

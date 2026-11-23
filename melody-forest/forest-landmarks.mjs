@@ -442,7 +442,7 @@ export function buildLandmarks(parent,id,groundY,leafTexture,woodTexture,glowTex
     const detailedFir=root.getObjectByName('tripo-christmas-tree');
     const farFir=distantTree&&detailedFir?copyChristmasTree(distantTree,detailedFir.getObjectByProperty('isMesh',true).material):null;
     for(const [x,z,h] of [[-5,-9,3.2],[-9,-14,4.5],[7,-15,4],[1,-19,3.5],[-11,-22,5],[10,-25,5.5],[-3,-28,5.2],[4,-32,6],[-15,-34,6],[14,-36,6.2],[-12,-9,4.8],[10,-10,5.2],[-5,-17,4.2],[5,-21,5.2],[-16,-18,6.2],[15,-20,6.5],[-20,-25,3.8],[-15,-29,3.2],[-8,-25,3.4],[-2,-24,3.6],[5,-27,3.3],[12,-30,3.5],[19,-26,3.8],[-12,-35,3.5],[0,-36,3.6],[9,-38,3.4],[-7,-11,4.2],[5,-12,4.4],[-3,-15,4.5],[3,-16,4.8],[-11,-17,5.3],[11,-17,5.5],[-18,-13,5.6],[18,-14,5.4],[-14,-23,4.6],[15,-25,4.8],[-6,-22,4.2],[2,-23,4.4],[-10,-30,4.4],[8,-32,4.5],[-21,-18,5.2],[22,-20,5.4],[-25,-27,5.5],[25,-28,5.7],[-18,-33,4.3],[18,-35,4.5],[-6,-35,4],[5,-36,4.2],[-9,-6,3.5],[9,-6,3.7],[-12,-3,4.2],[12,-3,4.3]]){
-      if(christmasTree){const tx=x+Math.sin(z)*.8,tz=z+Math.cos(x)*1.3;const tree=(farFir&&tz<-12?farFir:detailedFir).clone(true);tree.name='winter-fir';tree.position.set(tx,groundY(tx,tz),tz);tree.scale.multiplyScalar(h/5.4);tree.scale.x*=.86+.09*Math.sin(x);tree.scale.z*=.91;tree.rotation.y=x*.7;if(tz<-18)tree.traverse(o=>{if(o.isMesh)o.castShadow=false;});root.add(tree);continue;}
+      if(christmasTree){const tx=x+Math.sin(z)*.8,tz=z+Math.cos(x)*1.3;const tree=(farFir||detailedFir).clone(true);tree.name='winter-fir';tree.position.set(tx,groundY(tx,tz),tz);tree.scale.multiplyScalar(h/5.4);tree.scale.x*=.86+.09*Math.sin(x);tree.scale.z*=.91;tree.rotation.y=x*.7;if(Math.hypot(tx,tz)>12)tree.traverse(o=>{if(o.isMesh)o.castShadow=false;});root.add(tree);continue;}
       const y=groundY(x,z);pole(x,y,z,h,.13,0x78604f);
       for(let j=0;j<3;j++){mesh(new THREE.ConeGeometry(h*.34-j*.22,h*.55,12),0x496c68,x,y+h*.35+j*h*.23,z);mesh(new THREE.ConeGeometry(h*.29-j*.2,.25,12),0xdce8ee,x,y+h*.6+j*h*.23,z);}
     }
@@ -490,6 +490,26 @@ export function buildLandmarks(parent,id,groundY,leafTexture,woodTexture,glowTex
     }
     const snow=batches(sphere,id==='sunset'?0xe7d8ce:0xc8d9e5,dusting);snow.name='first-snow-banks';snow.castShadow=false;
   }
+  if(id==='christmas'){
+    // Group background firs by spatial cell so offscreen sections can still be culled.
+    root.updateMatrixWorld(true);
+    const groups=new Map(), inverse=root.matrixWorld.clone().invert();
+    for(const tree of root.children.filter(o=>o.name==='winter-fir')){
+      tree.traverse(o=>{
+        if(!o.isMesh)return;
+        const key=[Math.floor(tree.position.x/12),Math.floor(tree.position.z/12),o.geometry.uuid,o.material.uuid,o.castShadow].join('/');
+        if(!groups.has(key))groups.set(key,[]);
+        groups.get(key).push(o);
+      });
+      root.remove(tree);
+    }
+    for(const meshes of groups.values()){
+      const first=meshes[0],batch=new THREE.InstancedMesh(first.geometry,first.material,meshes.length);
+      batch.castShadow=first.castShadow;batch.receiveShadow=first.receiveShadow;
+      meshes.forEach((m,i)=>batch.setMatrixAt(i,new THREE.Matrix4().multiplyMatrices(inverse,m.matrixWorld)));
+      batch.computeBoundingSphere();root.add(batch);
+    }
+  }
   {
     // Batch only static primitives; moving objects and their descendants retain individual transforms.
     root.updateMatrixWorld(true);const inverse=root.matrixWorld.clone().invert(),groups=new Map();
@@ -502,7 +522,7 @@ export function buildLandmarks(parent,id,groundY,leafTexture,woodTexture,glowTex
       if(items.length<3)continue;
       const first=items[0],batch=new THREE.InstancedMesh(first.geometry,first.material,items.length);
       batch.name=id==='christmas'?'christmas-prop-batch':'landmark-prop-batch';batch.castShadow=first.castShadow;batch.receiveShadow=first.receiveShadow;
-      items.forEach((o,i)=>{batch.setMatrixAt(i,new THREE.Matrix4().multiplyMatrices(inverse,o.matrixWorld));o.visible=false;});
+      items.forEach((o,i)=>{batch.setMatrixAt(i,new THREE.Matrix4().multiplyMatrices(inverse,o.matrixWorld));if(id==='christmas'&&!o.children.length)o.removeFromParent();else o.visible=false;});
       batch.computeBoundingSphere();root.add(batch);
     }
     root.traverse(o=>{if(!animatedTransforms.has(o)){o.updateMatrix();o.matrixAutoUpdate=false;}});

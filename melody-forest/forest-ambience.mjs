@@ -6,8 +6,10 @@ export function createForestAmbience({AudioClass=globalThis.Audio,chime=false,on
     audio.loop=loop;audio.preload='none';audio.volume=0;audio.muted=true;
     return {audio,gain,pending:null,playing:false,blocked:false};
   };
-  const bgm=make('forest-entry.mp3',true,.18),bell=chime?make('forest-chime.mp3',false,.14):null;
-  const tracks=[bgm,bell].filter(Boolean);
+  const forestMusic=make('forest-entry.mp3',true,.18),bell=chime?make('forest-chime.mp3',false,.14):null;
+  const carol=make('christmas-carol.m4a',true,.49);
+  let bgm=forestMusic;
+  const tracks=[forestMusic,carol,bell].filter(Boolean);
   let state={phase:null,screen:'edit',volume:.45,hidden:false,enabled:true},unlocked=false,dead=false,chimed=false;
   const exploring=()=>!dead&&unlocked&&state.enabled&&!state.hidden&&state.screen==='edit'&&['loading','opening','arrive','walk'].includes(state.phase)&&state.volume>0;
   function halt(track){
@@ -29,6 +31,7 @@ export function createForestAmbience({AudioClass=globalThis.Audio,chime=false,on
     try{play=track.audio.play();}catch{failed();return;}
     Promise.resolve(play).then(()=>{
       // A late play() must never resurrect audio over the notebook or a hidden tab.
+      if(track.pending!==attempt)return;
       if(!exploring()){halt(track);return;}
       if(track.pending===attempt){track.pending=null;track.playing=true;if(track===bgm)onPlayback(true);}
     },failed);
@@ -36,14 +39,14 @@ export function createForestAmbience({AudioClass=globalThis.Audio,chime=false,on
   function reconcile(){
     if(!exploring()){tracks.forEach(halt);return;}
     if(bgm)start(bgm);
-    if(bell&&!chimed&&state.phase!=='loading')start(bell);
+    if(bgm!==carol&&bell&&!chimed&&state.phase!=='loading')start(bell);
     else if(bell&&!bell.blocked)bell.audio.volume=state.volume*bell.gain;
   }
   return {
     get playing(){return !!bgm?.playing;},
     sync(next={}){
       if(dead)return;
-      if(next.map!==undefined&&next.map!==state.map){tracks.forEach(halt);chimed=false;}
+      if(next.map!==undefined&&next.map!==state.map){tracks.forEach(halt);bgm=next.map==='christmas'?carol:forestMusic;chimed=false;}
       state={...state,...next};state.volume=Number.isFinite(state.volume)?Math.max(0,Math.min(1,state.volume)):0;
       reconcile();
     },

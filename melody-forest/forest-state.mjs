@@ -48,7 +48,7 @@ export function forestCharacter(phase, sitT = 0, openingT = 0) {
 
 // Every scenery starts a fresh score with its own default backing.
 export const FOREST_MAPS = [
-  {id:'christmas',name:'1장 · 크리스마스 숲',icon:'🎄',progression:'christmas-carol',art:'basic',version:3},
+  {id:'christmas',name:'크리스마스 숲',icon:'🎄',progression:'christmas-carol',art:'basic',version:3},
   {id: 'basic', name: '햇살이 머무는 숲', icon: '☀', progression:'basic'},
   {id: 'pop', name: '리듬 놀이터', icon: '🎈', progression:'pop'},
   {id: 'warm', name: '바람의 숲', icon: '🌾', progression:'warm'},
