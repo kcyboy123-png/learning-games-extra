@@ -393,7 +393,7 @@ function showOpeningFilm() {
  const start = () => {
   clearTimeout(timeout);
   card.append(video);
-  video.src = './assets/celebrations/' + type + '.mp4';
+  video.src = './assets/celebrations/' + type + '.mp4?v=keyframes-20261125';
   video.play().catch(dismiss);
   timeout = setTimeout(dismiss, 15000);
  };
