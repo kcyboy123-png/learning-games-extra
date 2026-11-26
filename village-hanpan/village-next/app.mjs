@@ -196,6 +196,7 @@ const paintUI=createPaintUI({world,getState:()=>state,getBuilding:()=>state.buil
 function info(v=metrics(state)){const b=state.buildings.find(b=>b.id===infoId);if(!b){closePanels();infoId=null;return;}const d=buildingSpec(state,b.type),live=b.progress>=1,con=connected(state,b,v.net),road=state.cozyV===1&&b.type==='road',removable=state.cozyV===1||!b.starter||isGarden(b);
  if(world.highlightBuilding(b))focusPlace(b.x+(foot(b.type)-1)/2,b.y+(foot(b.type)-1)/2);if(upgradeBuilding!==b)$('manageBuilding').open=road;$('manageBuilding').hidden=!removable;$('manageBuilding').querySelector('summary').textContent=road?'길 관리':'휴업 · 철거';
  $('rotateBuilding').hidden=!rotatable(b.type)||(state.island==='mist'&&fixedTypes.has(b.type));$('rotateBuilding').disabled=state.paused||state.ended;$('infoTitle').textContent=d.name+(b.starter?' (시작 시설)':'');panelHTML('infoBody',`<p>${cozyDescription(b.type)}</p><p class="facility-effects">${b.starter&&!d.cap?'시작 시설 · 추가 수입·행복·복지 +0':cozyEffectText(state,b.type,false,b)}</p><p class="facility-state">${live?b.closed?'휴업 중 · 재개하면 효과를 받아요':d.cap&&!con?'길을 이어야 새 이웃이 입주해요':(state.cozyV===1||con||isGarden(b))?'이용 중':'길과 연결하면 이용할 수 있어요':constructionText(state,b)}</p>`);
+ $('sunsetFilm').hidden = !(live && b.type === 'dokdoFlag');
  paintUI.update();
  const ecoEligible=UPGRADE_TYPES.includes(b.type);
  $('upgradeSection').hidden=!ecoEligible;$('upgradeNote').textContent=b.opts.length>=2?'개선 2개 완료 · 친환경 점수의 부족한 항목은 마을 현황에서 확인해요.':`남은 개선 ${2-b.opts.length}개 · 설계 점수는 건물당 첫 개선에 반영돼요.`;const html=ecoEligible?upgradeCards(state,b):'';
@@ -205,7 +206,14 @@ function info(v=metrics(state)){const b=state.buildings.find(b=>b.id===infoId);i
  $('remove').hidden=!removable;$('remove').textContent=live?'철거 (환급 없음)':'공사 취소 (65% 환급)';}
 $('rotateBuilding').onclick=()=>{paintUI.close();const b=state.buildings.find(b=>b.id===infoId);if(!b)return;if(otherOwnerAlive()){toast('다른 탭에서 진행 중이에요. 이 탭에서 이어받은 뒤 바꿔 주세요.');return;}const r=rotateBuilding(state,b.id,(facing(state,b)+1)%4);if(r.error){toast(r.error);return;}world.sync(state,false);save('방향 변경');ui();};
 $('move').onclick=()=>{const b=state.buildings.find(b=>b.id===infoId);if(!b)return;startPlace(b.type,b.id);};
-$('closeShop').onclick=()=>{const r=toggleClosed(state,infoId);if(r.error){toast(r.error);return;}world.sync(state,false);save('휴업');toast(r.closed?'휴업했어요. 유지비와 효과가 0이 돼요. 언제든 무료로 재개할 수 있어요.':'영업을 재개했어요.');info();};
+$('sunsetFilm').onclick = () => {
+ const lookout = state.buildings.find(b => b.id === infoId);
+ if (lookout?.type !== 'dokdoFlag' || lookout.progress < 1) return;
+ closePanels();
+ filmQueue.push('dokdoSunset');
+ showOpeningFilm();
+};
+$('closeShop').onclick=()=>{const r=toggleClosed(state,infoId);if(r.error){toast(r.error);return;}world.sync(state,false);save('휴업');toast(r.closed?'휴업했어요. 유지비와 효과가 0이 돼요. 언제든 무료로 재개할 수 있어요.':'영업을 재개했어요.');info();if(!r.closed)queueFactoryFilm(state.buildings.find(b=>b.id===infoId));};
 $('remove').onclick=()=>askRemove({id:infoId});
 $('confirmRemove').onclick=()=>{const target=removeTarget;if(!target)return;if(otherOwnerAlive()){toast('다른 탭이 진행 중이에요. 이 탭에서 이어받은 뒤 철거해 주세요.');$('removeDialog').close();return;}const prev=$('removeDialog').dataset.prev==='1';$('removeDialog').dataset.keep='1';$('removeDialog').close();state.paused=prev;removeTarget=null;const r=target.id?demolish(state,target.id):clearLandscape(state,target.gx,target.gy);if(r.error){toast(r.error);return;}const repeat=removing;closePanels();if(repeat)setRemoving(true);world.sync(state,false);save('철거');toast(r.refund?`철거하고 ${r.refund}코인을 돌려받았어요.`:'철거했어요.');ui();sound.effect('remove');};
 $('cancelRemove').onclick=()=>$('removeDialog').close();
@@ -352,9 +360,17 @@ const openingFilms = new Map([
  ['dokdoFlag', '우리의 독도 · 태극기 전망쉼터']
 ]);
 const filmQueue = [];
+let factoryFilmShown = false;
+function queueFactoryFilm(building) {
+ if (viewing || factoryFilmShown || building?.type !== 'cookieFactory' || building.closed || building.progress < 1) return;
+ factoryFilmShown = true;
+ filmQueue.push('cookieFactory');
+ showOpeningFilm();
+}
 function queueOpeningFilms(ids) {
  if (viewing) return;
  const types = new Set(state.buildings.filter(b => ids.includes(b.id)).map(b => b.type));
+ if (types.has('cookieFactory')) queueFactoryFilm(state.buildings.find(b => ids.includes(b.id) && b.type === 'cookieFactory'));
  for (const type of types) if (openingFilms.has(type)) filmQueue.push(type);
  showOpeningFilm();
 }
@@ -363,9 +379,11 @@ function showOpeningFilm() {
  const type = filmQueue.shift();
  const card = document.createElement('aside');
  card.className = 'opening-film';
- card.setAttribute('aria-label', '완공 기념 영상');
+ const portrait = type === 'cookieFactory' || type === 'dokdoSunset';
+ if (portrait) card.classList.add('portrait-film');
+ card.setAttribute('aria-label', '마을 영상');
  const heading = document.createElement('strong');
- heading.textContent = openingFilms.get(type);
+ heading.textContent = type === 'cookieFactory' ? '과자공장이 가동됐어요' : type === 'dokdoSunset' ? '전망쉼터에서 보는 노을' : openingFilms.get(type);
  const close = document.createElement('button');
  close.type = 'button';
  close.textContent = '닫기';
@@ -389,11 +407,16 @@ function showOpeningFilm() {
  const bar = document.createElement('div');
  bar.append(heading, close);
  card.append(bar);
+ if (type === 'cookieFactory') {
+  const caption = document.createElement('p');
+  caption.textContent = `가동 중 친환경 −${buildingSpec(state, type).pollution}점 · 휴업하면 이 감점이 사라져요.`;
+  card.append(caption);
+ }
  document.body.append(card);
  const start = () => {
   clearTimeout(timeout);
   card.append(video);
-  video.src = './assets/celebrations/' + type + '.mp4?v=keyframes-20261125';
+  video.src = './assets/celebrations/' + type + (portrait || type === 'snack' ? '.mp4?v=film-20261126' : '.mp4?v=keyframes-20261125');
   video.play().catch(dismiss);
   timeout = setTimeout(dismiss, 15000);
  };
