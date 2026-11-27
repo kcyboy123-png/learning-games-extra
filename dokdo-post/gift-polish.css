@@ -123,3 +123,53 @@
 .portrait .postal .answer-workbench:has(.net-reference)>.answer-fields{padding:14px!important}
 .portrait .postal .answer-workbench:has(.net-reference) .field:not([hidden]){padding:6px 0!important;gap:8px!important}
 .postal .net-reference>h3{display:none}
+
+/* Repair desk: larger paper and a nearby, explicit removal target. */
+.postal .repair-layout{width:100%;justify-content:center;gap:18px!important;flex-wrap:wrap!important}
+.postal .repair-layout .net-board>svg{max-height:370px!important;width:auto!important;max-width:100%}
+.postal .repair-layout .repair-shelf{max-width:220px!important;min-width:190px!important}
+.postal .repair-shelf .row{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.postal .repair-shelf button{min-height:44px}
+.postal .repair-shelf .tray button svg{width:72px;height:48px}
+.postal .repair-shelf .paper-return-pad{width:100%;border:2px dashed #9aa67b;background:#f0e8d2;margin-top:8px;white-space:normal}
+.postal .repair-shelf .paper-return-pad.available{background:#fff5d9;color:#46613e}
+.postal .repair-shelf .paper-return-pad.drop-target{background:#d2e5b9;outline:3px solid #5a794c}
+.postal .repair-layout .result{margin:8px auto;max-width:290px}
+.postal .repair-length[hidden]{display:none!important}
+.portrait .postal .repair-layout{flex-direction:column;align-items:center!important}
+.portrait .postal .repair-layout .net-board{width:100%;text-align:center}
+.portrait .postal .repair-layout .net-board>svg{width:min(100%,560px)!important;max-height:none!important;height:auto}
+.portrait .postal .repair-layout .repair-shelf{width:100%;max-width:560px!important}
+.portrait .postal .repair-shelf .tray{display:flex;flex-wrap:wrap;gap:8px}
+.portrait .postal .repair-shelf .tray>button:not(.paper-return-pad){flex:1;min-width:110px}
+.portrait .postal .repair-shelf .tray>p{flex-basis:100%}
+.postal .repair-layout[data-phase="preview"]>.net-board,.postal .repair-layout[data-phase="preview"]>.repair-shelf,.postal .repair-layout[data-phase="length"]>.repair-shelf,.postal .repair-layout[data-phase="length"]>div:last-child{display:none}
+.postal .repair-layout[data-phase="preview"]{align-self:center}
+.postal:has(.repair-layout):not(.inline-complete) .stage{bottom:105px!important}
+.postal:has(.repair-layout[data-phase="length"]):not(.inline-complete) .stage{bottom:185px!important}
+.postal .repair-shelf .tray>button:not(.paper-return-pad){min-height:48px;padding:5px 10px}
+.postal .repair-shelf .tray button svg{height:36px}
+.postal .repair-shelf .held-preview{display:none!important}
+.postal .repair-shelf .held-piece{padding:6px;font-size:15px}
+.postal .repair-shelf .held-piece:before{display:none}
+.postal .repair-shelf .paper-return-pad{margin:0 0 8px}
+.postal:has(.repair-layout) .tools:has(.repair-length[hidden]){display:none!important}
+.portrait .postal .repair-layout{flex-direction:row;flex-wrap:nowrap!important;height:auto!important;align-items:flex-start!important}
+.portrait .postal .repair-layout .net-board{width:auto;max-width:60%;flex-shrink:1}
+.portrait .postal .repair-layout .net-board>svg{width:100%!important;max-width:560px;max-height:440px!important;height:auto}
+.portrait .postal .repair-layout .repair-shelf{width:220px;min-width:220px!important;max-width:220px!important;flex-shrink:0}
+.portrait .postal .repair-shelf .tray{display:block}
+.portrait .postal .repair-shelf .tray>button{width:100%}
+.postal .repair-shelf .row{display:grid!important;grid-template-columns:1fr 1fr;gap:6px}
+.postal .repair-shelf .row button{min-width:0!important;padding:8px 4px!important;font-size:15px;white-space:nowrap}
+.postal .repair-shelf .tray button span{white-space:nowrap}
+.postal .repair-shelf .tray>button:not(.paper-return-pad){display:flex;align-items:center;gap:6px}
+.postal .repair-shelf .tray button svg{width:48px;flex-shrink:0}
+.postal .repair-shelf .tray .cnt{font-size:14px}
+.portrait .postal .repair-layout .repair-shelf{width:280px;min-width:280px!important;max-width:280px!important}
+.portrait .postal .repair-shelf .tray>button:not(.paper-return-pad){min-width:0;font-size:22px}
+.portrait .postal .repair-shelf .tray .cnt{font-size:18px}
+.portrait .postal .repair-shelf .row button{font-size:20px;min-height:60px}
+
+.postal:has(.repair-layout):not(.inline-complete) .mat{bottom:100px!important}
+.portrait .postal .repair-shelf .tray>button:not(.paper-return-pad){min-height:60px!important}

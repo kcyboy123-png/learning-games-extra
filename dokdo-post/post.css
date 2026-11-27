@@ -101,3 +101,5 @@ dialog.post-menu{border:1px solid #c4b996;border-radius:28px;box-shadow:0 12px 0
 .post-menu summary:focus-visible,.post-menu button:focus-visible{outline:3px solid #805b20;outline-offset:3px}
 .post-menu details[open]>summary{color:#294e37}.post-menu details[open]{padding-bottom:4px}
 @media(prefers-reduced-motion:reduce){.post-menu .menu-grid button{transition:none}}
+
+.graphics-recovery{position:fixed;z-index:2000;inset:40% 10% auto;padding:24px;background:#fff9e9;color:#345e4c;border-radius:24px;text-align:center;font-weight:700;pointer-events:none}.graphics-recovery[hidden]{display:none}

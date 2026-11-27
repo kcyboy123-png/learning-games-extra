@@ -7,7 +7,7 @@ import {unfoldByFolds} from '../lib/net.mjs';
 import {planBoard} from '../lib/board-layout.mjs';
 import {createSolidView, meshFor, solidFigure} from './solid-view.mjs?v=gifts-math-final-20261119';
 import {createSketchView, orthoFigure, sketchFigure, fullEdges} from './sketch-view.mjs?v=gifts-math-final-20261119';
-import {createNetBoard, netFigure, createFoldView} from './net-board.mjs?v=paper-guidance-20261120';
+import {createNetBoard, netFigure, createFoldView} from './net-board.mjs?v=net-touch-20261123';
 import {createRobotView} from './robot-view.mjs?v=ui-journey-20261118';
 import {node, svg, button, setPressed, clear, announce, reducedMotion, pressable} from './dom.mjs?v=tactile-audit-e-20261118';
 
@@ -441,25 +441,36 @@ const RENDERERS = {
   'net-build'(step, ctx = {}) {
     // 모눈 크기는 실제 정답 배치가 들어가도록 계산한다(lib/board-layout.mjs). 빈 바탕(자유 설계)은 15×12(셀 30px).
     const free = !step.base.length;
+    const repair=ctx.postal&&(step.movable||step.replaceable);
+    let phase='edit',blankField=null;
+    const phaseGuide=()=>ctx.onGuide?.(phase==='edit'?'repair-edit':phase==='preview'?'repair-preview':'repair-length');
     const plan = planBoard(step);
     const foldSlot = node('div');
     let fold = null, robot = null;
     function clearResult(){fold?.stop();robot?.destroy();fold=null;robot=null;clear(foldSlot);}
+    function changed(){clearResult();if(repair){phase='edit';if(blankField)blankField.hidden=true;phaseGuide();}}
     const board = createNetBoard({postal:ctx.postal,pieces: step.base, fixedIds: step.fixedBase ? step.base.map(p => p.id) : [], tray: step.tray, rotatable: step.rotatable, movable: step.movable, replaceable: step.replaceable,
       showLengths: !!step.dims, blank: step.blankLength ? {piece: step.blankLength.piece, side: step.blankLength.side} : null,
-      cols: plan.cols, rows: plan.rows, ox: plan.ox, oy: plan.oy, width: free ? 450 : 500, height: free ? 360 : 380,onGuide:ctx.onGuide,onChange:clearResult});
+      cols: plan.cols, rows: plan.rows, ox: plan.ox, oy: plan.oy, width: free ? 450 : 500, height: free ? 360 : 380,onGuide:repair?phaseGuide:ctx.onGuide,onChange:changed});
     let blankInput = null;
-    const side = node('div', {class: 'panel compact', style: {minWidth: '150px', maxWidth: '190px'}}, [node('h3', {text: step.movable?'조각 옮기기':'① 종이 고르기'}), board.trayEl, board.msgEl]);
-    const tools = [board.toolsEl];
+    const side = node('div', {class: 'panel compact', style: {minWidth: '150px', maxWidth: '190px'}}, [node('h3', {text: step.replaceable?'붙일 종이':step.movable?'집은 종이':'① 종이 고르기'}), board.trayEl, board.msgEl]);
+    const tools = repair?[]:[board.toolsEl];
+    if(repair){side.classList.add('repair-shelf');side.insertBefore(board.toolsEl,board.trayEl);}
     if (step.blankLength) {
       blankInput = node('input', {type: 'text', inputmode: 'numeric', id: 'blank-len', 'aria-label': '빈칸(?)의 길이'});
       blankInput.addEventListener('input', () => blankInput.parentElement.classList.remove('wrong'));
-      tools.push(node('div', {class: 'field'}, [node('label', {for: 'blank-len', text: '빈칸 ? 길이'}), blankInput, node('span', {class: 'unit', text: 'cm'})]));
+      blankField=node('div', {class: 'field repair-length'}, [node('label', {for: 'blank-len', text: '? 길이'}), blankInput, node('span', {class: 'unit', text: 'cm'})]);
+      blankField.hidden=repair;tools.push(blankField);
+      if(repair)blankField.append(button('종이 다시 고치기',()=>{changed();el.dispatchEvent(new Event('input',{bubbles:true}));},{cls:'small'}));
     }
     if (step.part) side.prepend(node('p', {class: 'note', text: ctx.postal?step.part.replace('(2개 복제)',' · 하나 만들면 두 개가 돼요'):`부품: ${step.part}`}));
-    const el = node('div', {class: 'row net-layout', style: {gap: '14px', alignItems: 'flex-start', flexWrap: 'nowrap'}}, [board.el, side, foldSlot]);
-    return {el, tools, destroy(){board.destroy();clearResult();}, getAnswer: () => ({pieces: board.getPieces(), values: blankInput ? {blank: blankInput.value} : {}, board:board.snapshot()}), restore(a){if(a.board)board.restore(a.board);else if(a.pieces)board.restore({...board.snapshot(),pieces:a.pieces});if(blankInput)blankInput.value=a.values?.blank??'';},
-      markWrong(result) { board.markWrong((result.wrong || []).filter(id => id !== 'blank')); blankInput?.parentElement.classList.toggle('wrong',(result.wrong || []).includes('blank')); },
+    const el = node('div', {class: 'row net-layout'+(repair?' repair-layout':''), style: {gap: '14px', alignItems: 'flex-start', flexWrap: 'nowrap'}}, [board.el, side, foldSlot]);
+    if(repair)phaseGuide();
+    function preview(){clearResult();fold=createFoldView({pieces:board.getPieces(),dims:step.dims||null,size:250});foldSlot.append(node('div',{class:'panel compact result'},[node('h3',{text:'접힌 모습을 살펴봐요'}),fold.el,button('다시 고치기',()=>{changed();el.dispatchEvent(new Event('input',{bubbles:true}));},{cls:'small'})]));fold.play();phase='preview';phaseGuide();}
+    return {el, tools, primaryAction:repair?()=>{el.dataset.phase=phase;return {label:phase==='edit'?'접어 보기':phase==='preview'?(blankInput?'길이 쓰기':'내 답 확인'):'내 답 확인',disabled:Boolean(board.heldPiece())||board.getPieces().length!==6||(phase==='length'&&!blankInput.value.trim())};}:null,
+      beforeSubmit:repair?()=>{if(phase==='edit'){preview();return true;}if(phase==='preview'&&blankInput){phase='length';blankField.hidden=false;phaseGuide();blankInput.focus({preventScroll:true});return true;}return false;}:null,
+      destroy(){board.destroy();clearResult();}, getAnswer: () => ({pieces: board.getPieces(), values: blankInput ? {blank: blankInput.value} : {}, board:board.snapshot(),...(repair?{repairPhase:phase}:{})}), restore(a){if(a.board)board.restore(a.board);else if(a.pieces)board.restore({...board.snapshot(),pieces:a.pieces});if(blankInput)blankInput.value=a.values?.blank??'';if(repair&&['preview','length'].includes(a.repairPhase)&&!board.heldPiece()&&board.getPieces().length===6){preview();if(a.repairPhase==='length'&&blankInput){phase='length';blankField.hidden=false;phaseGuide();}}},
+      markWrong(result) { if(repair&&!(result.wrong||[]).includes('blank'))changed();board.markWrong((result.wrong || []).filter(id => id !== 'blank')); blankInput?.parentElement.classList.toggle('wrong',(result.wrong || []).includes('blank')); },
       afterCheck(result) {
         clearResult();
         if (!result.fold && !result.ok) return;
@@ -590,6 +601,7 @@ function blanksFigure(fig) {
   const labels = ['ㄱ', 'ㄴ', 'ㄷ'];
   return node('p', {class: 'note', text: fig.blanks.map((b, i) => `${labels[i]}: ${names[b.piece]}의 ${b.side === 'w' ? '가로' : '세로'}`).join(' · ')});
 }
+
 
 
 

@@ -3,9 +3,9 @@ import {parcelCustomizer,parcelDimensions,packingMilestone} from '../../parcel-l
 // 상황 한 문장 → 직접 조작 → 명시적 제출 → 피드백(오답 시 조작 보존) → 학습 정리 → 명시적 다음 버튼.
 import {STORIES,portrait,itemImage,coachFor} from '../../story.mjs?v=gifts-math-final-20261119';
 import {createSolidView} from './solid-view.mjs?v=gifts-math-final-20261119';
-import {netFigure} from './net-board.mjs?v=paper-guidance-20261120';
+import {netFigure} from './net-board.mjs?v=net-touch-20261123';
 import {actionFor,questionFor,moveFor,hasResponse} from './postal-instructions.mjs?v=three-more-20261120';
-import {renderStep} from './steps.mjs?v=paper-guidance-20261120';
+import {renderStep} from './steps.mjs?v=net-touch-20261123';
 import {newEventId, answerSignature} from '../lib/progress.mjs';
 import {sfx} from './audio.mjs?v=audio-journey-20261117';
 import {createRobotView} from './robot-view.mjs?v=ui-journey-20261118';
@@ -52,6 +52,7 @@ export function runMission({activity, workshop, progress, scored = true, contain
     if(!activity.postal||!view||solvedStep)return;
     const step=steps[index],answer=view.getAnswer(),ready=hasResponse(step,answer);
     const submit=primarySlot.querySelector('button');if(!submit)return;
+    if(view.primaryAction){const a=view.primaryAction();submit.disabled=a.disabled;submit.querySelector('span:last-child').textContent=a.label;submit.querySelector('.btn-icon').hidden=a.disabled;return;}
     const currentInput=ws.querySelector('.answer-fields .field:not([hidden]) input,.answer-fields .field:not([hidden]) select,.link-table > :not([hidden]) select');
     const nextButton=ws.querySelector('.field-nav button:last-child'),nextInput=nextButton?.textContent.trim();
     const navigate=!ready&&['fill','link'].includes(step.kind)&&Boolean(currentInput?.value.trim())&&nextButton&&!nextButton.disabled;
@@ -95,6 +96,7 @@ export function runMission({activity, workshop, progress, scored = true, contain
     const guide=kind=>{
       lastGuide=kind;
       if(!activity.postal)return;
+      if(String(kind).startsWith('repair-')){banner.replaceChildren(node('strong',{text:kind==='repair-edit'?(step.replaceable?'맞지 않는 종이를 바꿔요':'종이를 옮겨 전개도를 고쳐요'):kind==='repair-preview'?'접힌 모습을 살펴봐요':'?에 들어갈 길이를 써요'}),node('small',{text:kind==='repair-edit'?'종이 끌기 · 눌러 집고 놓기':kind==='repair-preview'?'다시 고치거나 다음으로':'맞닿는 변의 길이를 살펴봐요'}));return;}
       const ready=['ready','check'].includes(kind);
       ws.classList.toggle('ready-to-check',ready);
       if(liveGuide())speak(moveFor(step,kind));
@@ -156,6 +158,7 @@ export function runMission({activity, workshop, progress, scored = true, contain
   function onSubmit() {
     if (solvedStep) return;
     const step = steps[index];
+    if(view.beforeSubmit?.()){syncResponse();snapshot();return;}
     const answer = view.getAnswer();
     if(activity.postal&&!hasResponse(step,answer)){
       const current=ws.querySelector('.answer-fields .field:not([hidden]) input,.answer-fields .field:not([hidden]) select,.link-table > :not([hidden]) select');
@@ -181,7 +184,8 @@ export function runMission({activity, workshop, progress, scored = true, contain
       primarySlot.firstChild.focus();
       return;
     }
-    const penalty = scored ? progress.wrong(activity.id, newEventId(), answerSignature({step: index, answer})) : null;
+    const {repairPhase,...gradedAnswer}=answer;
+    const penalty = scored ? progress.wrong(activity.id, newEventId(), answerSignature({step: index, answer:gradedAnswer})) : null;
     sfx.wrong();
     hud.update(); onSave?.();
     view.markWrong(result);if(activity.postal){ws.classList.add('needs-review');if(progress.wrongCount(activity.id)>=2&&!tools.querySelector('.free-coach'))tools.append(button('조작 같이 보기 · 무료',()=>explainCurrent?.(),{cls:'free-coach'}));}

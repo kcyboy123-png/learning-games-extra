@@ -9,6 +9,10 @@ import {paperSurface} from './paper-surface.mjs';
 
 export function createNetBoard(opts = {}) {
   const mode = opts.mode || 'build';
+  const repair=opts.postal&&(opts.movable||opts.replaceable);
+  function paperButton(label,handler,options){const b=button(label,null,options);pressable(b,e=>{if(!b.disabled)handler(e);},label);return b;}
+  let undoState=null;
+  const remember=()=>{if(repair&&!drag?.active)undoState=api.snapshot();};
   const fixedIds = new Set(opts.fixedIds || []);
   const state = {
     pieces: (opts.pieces || []).map(p => ({...p})), held: null, tray: (opts.tray || []).map(t => ({...t})),
@@ -177,12 +181,13 @@ export function createNetBoard(opts = {}) {
       const [nx, ny] = toNet(c, r);
       if (c<0 || r<0 || c + state.held.w > cols || r + state.held.h > rows) { say('모눈 밖으로 나가요. 다른 칸을 골라요.'); draw(); return; }
       if (overlapsAny(nx, ny, state.held.w, state.held.h)) { say('이미 조각이 있는 칸이에요. 조각끼리 겹칠 수 없어요.'); draw(); return; }
-      landed=state.held.id;
+      remember();landed=state.held.id;
       state.pieces.push({id: state.held.id, x: nx, y: ny, w: state.held.w, h: state.held.h, fromTray: state.held.fromTray});
       state.held = null; state.wrong.clear();
       say(opts.postal?(state.pieces.length<6?`면 ${state.pieces.length}/6 · 종이를 한 장 더 골라요.`:state.pieces.length===6?(opts.blank?'여섯 면을 놓았어요. 빈칸 길이도 확인해요.':'여섯 면을 놓았어요. 아래에서 접어서 확인해요.'):`면이 ${state.pieces.length}개예요. 필요한 면은 6개예요.`):'조각을 놓았어요.'); draw(); refreshTray(); if(opts.postal)sfx.place();onChange(api.getPieces()); return;
     }
     if (target && canPick(target)) {
+      remember();
       state.pieces = state.pieces.filter(p => p !== target);
       state.held = {id: target.id, w: target.w, h: target.h, fromTray: target.fromTray};
       state.wrong.clear();
@@ -198,32 +203,40 @@ export function createNetBoard(opts = {}) {
   const trayEl = node('div', {class: 'tray', role: 'group', 'aria-label': '조각 보관함'});
   const msgEl = node('p', {class: 'mini', role: 'status', text: ''});
   const toolsEl = node('div', {class: 'row'});
-  const bRotate = button('돌리기', () => { if (!state.held) { say('먼저 조각을 들어요.'); return; } [state.held.w, state.held.h] = [state.held.h, state.held.w];if(state.cursor)state.cursor=[Math.max(0,Math.min(cols-state.held.w,state.cursor[0])),Math.max(0,Math.min(rows-state.held.h,state.cursor[1]))]; say(`조각을 돌렸어요. 이제 ${state.held.w}×${state.held.h}예요.`); draw(); refreshTray(); if(opts.postal&&!reducedMotion())trayEl.querySelector('.held-preview')?.animate([{transform:'rotate(-90deg) scale(.9)'},{transform:'rotate(0) scale(1)'}],{duration:180,easing:'ease-out'}); }, {cls: 'small', icon: '⟳'});
-  const bReturn = button('보관함에 넣기', () => {
+  const bRotate = (repair?paperButton:button)('돌리기', () => { if (!state.held) { say('먼저 조각을 들어요.'); return; } remember(); [state.held.w, state.held.h] = [state.held.h, state.held.w];if(state.cursor)state.cursor=[Math.max(0,Math.min(cols-state.held.w,state.cursor[0])),Math.max(0,Math.min(rows-state.held.h,state.cursor[1]))]; say(`조각을 돌렸어요. 이제 ${state.held.w}×${state.held.h}예요.`); draw(); refreshTray(); if(repair)onChange(api.getPieces()); if(opts.postal&&!reducedMotion())trayEl.querySelector('.held-preview')?.animate([{transform:'rotate(-90deg) scale(.9)'},{transform:'rotate(0) scale(1)'}],{duration:180,easing:'ease-out'}); }, {cls: 'small', icon: '⟳'});
+  const bReturn = button(repair?'떼어 두기':'보관함에 넣기', () => {
     if (!state.held) { say('들고 있는 조각이 없어요.'); return; }
-    const keepFocus=document.activeElement===bReturn;
+    remember();const keepFocus=document.activeElement===bReturn;
     const slot = state.tray.find(t => (t.w === state.held.w && t.h === state.held.h) || (t.w === state.held.h && t.h === state.held.w));
     if (slot) slot.count++; else state.tray.push({w: state.held.w, h: state.held.h, count: 1});
     state.held = null; say(opts.postal?'종이를 돌려놓았어요. 옆에서 다시 골라요.':'조각을 보관함에 넣었어요.'); draw(); refreshTray();
+    onChange(api.getPieces());
     if(keepFocus)trayEl.querySelector('button:not(:disabled)')?.focus({preventScroll:true});
   }, {cls: 'small', icon:'↩'});
+  const bUndo=paperButton('되돌리기',()=>{if(!undoState)return;const previous=undoState;undoState=null;api.restore(previous);onChange(api.getPieces());root.dispatchEvent(new Event('input',{bubbles:true}));},{cls:'small',icon:'↶'});
+  const returnPad=paperButton('뗀 종이 놓는 곳',()=>bReturn.click(),{cls:'paper-return-pad'});
+  const overReturn=e=>{const r=returnPad.getBoundingClientRect();return repair&&e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;};
   if (mode === 'build') {
+    if(repair)toolsEl.append(bUndo);
     if (opts.rotatable) toolsEl.append(bRotate);
-    toolsEl.append(bReturn);
+    if(!repair)toolsEl.append(bReturn);
   }
   function refreshTray() {
     clear(trayEl);
     if (mode !== 'build') return;
     bRotate.disabled=!state.held||(opts.postal&&state.held.w===state.held.h);
     bReturn.disabled=!state.held;
+    bUndo.disabled=!undoState;returnPad.disabled=!state.held;returnPad.classList.toggle('available',Boolean(state.held));
     state.tray.forEach((t, i) => {
       const b = button('', () => {
         if (t.count <= 0) return;
+        remember();
         const keepFocus=document.activeElement===b&&!drag?.active;
         if (state.held) { const back = state.tray.find(s => (s.w === state.held.w && s.h === state.held.h)||(s.w === state.held.h && s.h === state.held.w)); if (back) back.count++; else state.tray.push({w: state.held.w, h: state.held.h, count: 1}); }
         t.count--; state.held = {id: `t${crypto.randomUUID()}`, w: t.w, h: t.h, fromTray: true};
         if(opts.postal&&!state.pieces.length)state.cursor=null;
         say(`${t.w}×${t.h} 조각을 들었어요. 끌어 놓거나 칸을 눌러요.`); draw(); refreshTray();
+        if(repair)onChange(api.getPieces());
         if(keepFocus)el.focus({preventScroll:true});
       }, {cls: 'small', attrs: {'aria-label': `${t.w}×${t.h} 조각, 남은 수 ${t.count}`}});
       b.disabled = t.count <= 0;
@@ -248,6 +261,7 @@ export function createNetBoard(opts = {}) {
       preview.addEventListener('pointerdown',e=>beginDrag(e,()=>{},null));
     }
     trayEl.append(heldInfo);
+    if(repair)trayEl.prepend(returnPad);
   }
   // 키보드 커서
   el.addEventListener('keydown', e => {
@@ -300,19 +314,21 @@ export function createNetBoard(opts = {}) {
       dragPaper.append(svg('rect',{width:state.held.w*cell,height:state.held.h*cell,rx:3}),svg('text',{x:state.held.w*cell/2,y:state.held.h*cell/2+6,'text-anchor':'middle',class:'label',text:`${state.held.w} × ${state.held.h}`}));
       dragHint=svg('text',{'text-anchor':'middle',class:'label'});dragLayer.append(dragGhost,dragPaper,dragHint);
     }
+    const dropping=overReturn(e);returnPad.classList.toggle('drop-target',dropping);
     const [c,r]=state.cursor,valid=canDrop(c,r);
     dragGhost.setAttribute('x',c*cell);dragGhost.setAttribute('y',r*cell);dragGhost.setAttribute('class','cell ghost '+(valid?'drop-valid':'drop-blocked'));
     dragPaper.setAttribute('transform',`translate(${x*cell} ${y*cell})`);
     dragHint.setAttribute('x',Math.max(65,Math.min(W-65,(c+state.held.w/2)*cell)));dragHint.setAttribute('y',Math.max(22,Math.min(H-10,r*cell-8)));
-    dragHint.textContent=valid?'손을 떼면 놓아요':c<0||r<0||c+state.held.w>cols||r+state.held.h>rows?'모눈 안으로 옮겨요':'종이가 겹쳐요 · 빈자리로';
+    dragHint.textContent=dropping?'손을 떼면 떼어 둬요':valid?'손을 떼면 놓아요':c<0||r<0||c+state.held.w>cols||r+state.held.h>rows?'모눈 안으로 옮겨요':'종이가 겹쳐요 · 빈자리로';
   }
   function endDrag(e,cancel=false){
     if(!drag||drag.id!==e.pointerId)return;
     const d=drag;if(d.active&&!cancel)updateDragPosition(e);drag=null;root.classList.remove('paper-dragging');d.source?.classList.remove('paper-pressed');
     if(root.hasPointerCapture(e.pointerId))root.releasePointerCapture(e.pointerId);
     if(!d.active)return;
-    suppressClickUntil=performance.now()+400;
-    if(!cancel&&state.cursor&&canDrop(...state.cursor)){actOn(...state.cursor);}
+    suppressClickUntil=performance.now()+400;returnPad.classList.remove('drop-target');
+    if(!cancel&&overReturn(e)){bReturn.disabled=false;bReturn.click();undoState=d.before;refreshTray();}
+    else if(!cancel&&state.cursor&&canDrop(...state.cursor)){actOn(...state.cursor);undoState=d.before;refreshTray();}
     else{
       const outside=state.cursor&&state.held&&(state.cursor[0]<0||state.cursor[1]<0||state.cursor[0]+state.held.w>cols||state.cursor[1]+state.held.h>rows);
       const returned=d.before.held?'들고 있던 종이는 그대로예요.':d.source?.dataset.pieceId?'원래 자리로 돌려놓았어요.':'종이를 보관함에 돌려놓았어요.';
@@ -444,5 +460,7 @@ function normalOf(pts) {
   return norm([u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]);
 }
 export {KOREAN_LABELS, segKey};
+
+
 
 

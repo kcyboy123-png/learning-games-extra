@@ -2,7 +2,7 @@ import {pressable} from './ui/dom.mjs';
 import {cupPractice} from '../opening.mjs?v=gifts-math-final-20261119';
 import {STORIES,portrait,itemImage,coachFor,placeNames} from '../story.mjs?v=gifts-math-final-20261119';
 import {findActivity} from './data/workshops.mjs';
-import {runMission} from './ui/mission.mjs?v=paper-guidance-20261120';
+import {runMission} from './ui/mission.mjs?v=net-touch-20261123';
 const host=parent.postGame,$=id=>document.getElementById(id);let mission;
 const residentPortrait=document.createElement('img');residentPortrait.id='residentPortrait';residentPortrait.alt='';document.querySelector('.card.loc').prepend(residentPortrait);
 const soundToggle=host.soundButton();soundToggle.id='lessonSound';$('leave').before(soundToggle);
